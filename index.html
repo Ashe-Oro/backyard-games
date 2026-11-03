@@ -79,6 +79,10 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #panel .go:hover{background:#fff07f}
 #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
 @media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{color:#ffe45e}
+#touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
+@media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
+@media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
 #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
@@ -95,6 +99,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <div id="conditions" class="ol"><div id="wind"></div><div id="setup"></div></div>
+    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button><button class="hb" data-control="s" aria-label="ARC −">ARC −</button><button class="hb" data-control="w" aria-label="ARC +">ARC +</button></div>
     <div id="hint" class="ol"></div>
     <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="mode" title="Toggle controls (M)">MOUSE</button></div>
   </div>
@@ -116,9 +122,9 @@ const BAG = 6 * IN, BAG_H = 0.016, BAG_R = 0.074; // 6x6 in, ~1.25 in thick
 const SIDES = { slick: { mu: 0.30, ms: 0.5, keep: 0.42 }, sticky: { mu: 0.62, ms: 0.85, keep: 0.30 } };
 const MU_GROUND = 1.1, BAG_E = 0.25;
 const ELEV = 35 * Math.PI / 180;
-const V_MIN = 7.15, V_MAX = 10.55;
+const V_MIN = 5.6;
 const AIM_MAX = 0.12;
-const FLICK_MIN = 0.5, FLICK_MAX = 5.5;     // screen heights / second
+const FLICK_MIN = 0.5, FLICK_MAX = 7.5;     // screen heights / second
 const REL_Y = 1.3, REL_Z = -0.45;           // feet stay behind the foul line (z = 0); the hand reaches past it on release
 const RX = [0.62, -0.62];                   // red throws from the right pitcher's box, blue from the left
 const TEAM = ['RED', 'BLUE'];
@@ -163,15 +169,15 @@ wrap.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog('#ffd3a8', 26, 75);
 const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
-const CAM_POS = new THREE.Vector3(0.5, 2.05, 2.45);
+const CAM_POS = new THREE.Vector3(0.5, 2.05, 1.4);
 camera.position.copy(CAM_POS); camera.lookAt(0, 0.5, -8.7);
 
 function resize() {
   const w = wrap.clientWidth, h = wrap.clientHeight;
-  const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 240));
+  const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  camera.fov = w / h < 1 ? 19 + (1 - w / h) * 30 : 19;
+  camera.fov = w / h < 1 ? 17 + (1 - w / h) * 22 : 17;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -480,14 +486,20 @@ const holeDist = (lp) => Math.hypot(lp.x - HOLE_LOCAL.x, lp.z - HOLE_LOCAL.z);
 // ---------- bag physics ----------
 // states: fly -> slide/board (on deck) | ground/grass (on lawn) | hole -> in | removed (dead bag taken away)
 function newBody(team, side = 'slick') {
-  return { team, side, state: 'fly', p: new THREE.Vector3(), v: new THREE.Vector3(), lp: new THREE.Vector3(), lv: new THREE.Vector3(), prev: new THREE.Vector3(), curl: 0, touched: false, dead: false, swish: false, offBoard: false, t: 0, restT: 0 };
+  return { team, side, spin: 0, tumble: 1, arc: 1, state: 'fly', p: new THREE.Vector3(), v: new THREE.Vector3(), lp: new THREE.Vector3(), lv: new THREE.Vector3(), prev: new THREE.Vector3(), curl: 0, touched: false, dead: false, swish: false, offBoard: false, t: 0, restT: 0 };
 }
-function launch(b, rx, power, aim, drift) {
-  const speed = V_MIN + clamp(power, 0, 1) * (V_MAX - V_MIN);
+const wind = { x: 0, z: 0, mph: 0, angle: 0 };
+const arcs = [24, 35, 58], arcNames = ['SLIDER', 'CLASSIC', 'KOBE'];
+function launch(b, rx, power, aim, drift, arc = 1, spin = 0) {
+  const pwr = clamp(power, 0, 1);
+  const speed = pwr < 0.4 ? V_MIN + pwr * 6 : 8 + (pwr - 0.4) * 3.2;
+  const elev = arcs[arc] * Math.PI / 180;
+  // Normalize range across arcs; a lob spends longer in the wind.
+  const velocity = speed * Math.sqrt(Math.sin(2 * ELEV) / Math.sin(2 * elev));
   const y = baseYaw(rx) + aim + drift * 0.04;
   b.p.set(rx, REL_Y, REL_Z);
-  b.v.set(Math.sin(y) * Math.cos(ELEV) * speed, Math.sin(ELEV) * speed, -Math.cos(y) * Math.cos(ELEV) * speed);
-  b.curl = drift * 0.8; b.state = 'fly';
+  b.v.set(Math.sin(y) * Math.cos(elev) * velocity, Math.sin(elev) * velocity, -Math.cos(y) * Math.cos(elev) * velocity);
+  b.arc = arc; b.english = spin; b.spin = spin * 3; b.curl = drift * 0.12 + spin * 0.10; b.state = 'fly';
   toLocal(b.p, b.prev);
 }
 const onDeck = (b) => b.state === 'slide' || b.state === 'board';
@@ -495,7 +507,7 @@ function step(b, dt) {
   b.t += dt;
   const S = SIDES[b.side];
   if (b.state === 'fly') {
-    b.v.y -= G * dt; b.p.addScaledVector(b.v, dt);
+    b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt; b.v.z += wind.z * dt; b.v.y -= G * dt; b.p.addScaledVector(b.v, dt);
     const lp = toLocal(b.p, b.lp);
     const inX = Math.abs(lp.x) <= W / 2, inZ = lp.z <= 0 && lp.z >= -L;
     if (inX && inZ && lp.y <= BAG_H && lp.y > -0.14 && !b.offBoard) {
@@ -503,7 +515,7 @@ function step(b, dt) {
         const lv = b.lv.copy(b.v).applyQuaternion(boardQi);
         b.touched = true;
         if (holeDist(lp) < HOLE_R * 0.9) { b.state = 'hole'; b.swish = true; b.hy = BAG_H; return 'hole'; }
-        lv.y = 0; lv.multiplyScalar(S.keep); lp.y = BAG_H; b.state = 'slide';
+        lv.y = 0; lv.multiplyScalar(S.keep * (b.arc === 2 ? 0.40 : b.arc === 0 ? 1.35 : 1)); lp.y = BAG_H; b.state = 'slide';
         return 'land';
       } else if (b.prev.z > 0) { b.touched = true; b.v.z = Math.abs(b.v.z) * 0.2; b.v.x *= 0.4; b.p.z = BOARD_Z + 0.03; }
       else { b.touched = true; b.v.x *= -0.3; }
@@ -515,6 +527,7 @@ function step(b, dt) {
     b.prev.copy(lp);
   } else if (b.state === 'slide') {
     const lp = b.lp, lv = b.lv;
+    lp.y += (BAG_H - lp.y) * Math.min(1, dt * 12);
     lv.x += (G_LOCAL.x + b.curl) * dt; lv.z += G_LOCAL.z * dt;
     const sp = Math.hypot(lv.x, lv.z), dec = S.mu * G_N * dt;
     if (sp <= dec) { lv.x = 0; lv.z = 0; } else { lv.x -= lv.x / sp * dec; lv.z -= lv.z / sp * dec; }
@@ -545,35 +558,47 @@ function step(b, dt) {
 // bag-to-bag contact on the deck: equal-mass discs with a soft, lossy bounce (blocks, push-ins, knock-offs)
 function collide(list) {
   for (let i = 0; i < list.length; i++) {
-    const a = list[i]; if (!onDeck(a)) continue;
+    const a = list[i];
+    if (a.state === 'fly' && !a.offBoard) {
+      toLocal(a.p, a.lp);
+      for (const b of list) if (onDeck(b) && Math.hypot(a.lp.x-b.lp.x,a.lp.z-b.lp.z) < BAG_R * 1.8 && a.lp.y < b.lp.y + BAG_H * 2 && a.lp.y > b.lp.y && a.v.y < 0) {
+        a.lv.copy(a.v).applyQuaternion(boardQi); a.lv.y = 0;
+        a.lv.multiplyScalar(a.arc === 2 ? 0.12 : 0.55); a.lp.y = BAG_H * 3;
+        a.state = 'slide'; a.touched = true; toWorld(a.lp,a.p); break;
+      }
+    }
+    if (!onDeck(a)) continue;
     for (let j = i + 1; j < list.length; j++) {
       const b = list[j]; if (!onDeck(b)) continue;
       const dx = b.lp.x - a.lp.x, dz = b.lp.z - a.lp.z, d = Math.hypot(dx, dz);
-      if (d >= 2 * BAG_R || d < 1e-6) continue;
-      const nx = dx / d, nz = dz / d, ov = 2 * BAG_R - d;
-      const am = a.state === 'slide', bm = b.state === 'slide';
-      const wa = am && !bm ? 0.8 : (!am && bm ? 0.2 : 0.5);
+      if (d >= 2 * BAG_R) continue;
+      const nx = d > 1e-6 ? dx / d : 1, nz = d > 1e-6 ? dz / d : 0, ov = 2 * BAG_R - d;
+      const am = a.state === 'slide';
+      const wa = 0.5;
       a.lp.x -= nx * ov * wa; a.lp.z -= nz * ov * wa; b.lp.x += nx * ov * (1 - wa); b.lp.z += nz * ov * (1 - wa);
       const vr = (b.lv.x - a.lv.x) * nx + (b.lv.z - a.lv.z) * nz;
       if (vr < 0) {
         const jn = -(1 + BAG_E) * vr / 2;
         a.lv.x -= jn * nx; a.lv.z -= jn * nz; b.lv.x += jn * nx; b.lv.z += jn * nz;
       }
+      // Soft fabric can ride over a blocker after a hard contact.
+      if (Math.abs(vr) > 0.8) { const rider = am ? a : b; rider.lp.y = Math.max(rider.lp.y, BAG_H * 2.8); }
+      for (const c of [a, b]) { toWorld(c.lp, c.p); }
       for (const c of [a, b]) if (c.state === 'board' && (Math.hypot(c.lv.x, c.lv.z) > 0.03 || ov > 0.004)) c.state = 'slide';
     }
   }
 }
-function simulate(rx, power, side, aim = 0, drift = 0) {
-  const b = newBody(0, side); launch(b, rx, power, aim, drift);
+function simulate(rx, power, side, aim = 0, drift = 0, arc = 1) {
+  const b = newBody(0, side); launch(b, rx, power, aim, drift, arc);
   for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
   return b.state === 'in' ? 3 : b.state === 'board' ? 1 : 0;
 }
 // power windows for the meter / CPU, per thrower box and bag side
 const WIN = {};
-for (const t of [0, 1]) for (const side of ['slick', 'sticky']) {
+for (const t of [0, 1]) for (const side of ['slick', 'sticky']) for (const arc of [0, 1, 2]) {
   let lo = 1, hi = 0, olo = 1, ohi = 0;
-  for (let p = 0; p <= 1; p += 0.0025) { const r = simulate(RX[t], p, side); if (r === 3) { lo = Math.min(lo, p); hi = Math.max(hi, p); } if (r >= 1) { olo = Math.min(olo, p); ohi = Math.max(ohi, p); } }
-  WIN[t + side] = { lo, hi, olo, ohi, mid: hi >= lo ? (lo + hi) / 2 : (olo + ohi) / 2 };
+  for (let p = 0; p <= 1; p += 0.0025) { const r = simulate(RX[t], p, side, 0, 0, arc); if (r === 3) { lo = Math.min(lo, p); hi = Math.max(hi, p); } if (r >= 1) { olo = Math.min(olo, p); ohi = Math.max(ohi, p); } }
+  WIN[t + side + arc] = { lo, hi, olo, ohi, mid: hi >= lo ? (lo + hi) / 2 : (olo + ohi) / 2 };
 }
 
 // ---------- bag meshes ----------
@@ -626,7 +651,7 @@ const $ = (id) => document.getElementById(id);
 const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), hint: $('hint'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
 const M = {
   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
-  side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+  position: [0, 0], spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
 };
 const thrower = (k = M.k) => (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
@@ -656,16 +681,16 @@ function renderHud() {
     ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
     ui.turn.style.opacity = 1;
   } else ui.turn.style.opacity = 0;
+  $('wind').textContent = `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
+  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
   ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
   ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
-  const w = WIN[t + M.side[t]];
+  const w = WIN[t + M.side[t] + M.arc];
   ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
   ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
 }
 function hint() {
-  ui.hint.innerHTML = M.ctrl === 'drag'
-    ? 'MOVE MOUSE TO LINE UP · PRESS, FLICK UP, RELEASE<span class="l2"><br>← → AIM · SPACE: HOLD FOR POWER · F: FLIP BAG · M: SPINNER</span>'
-    : 'SPINNER · ROLL SIDEWAYS TO LINE UP · FLICK UP TO TOSS<span class="l2"><br>' + (document.pointerLockElement ? 'ESC: RELEASE MOUSE' : 'CLICK: LOCK MOUSE') + ' · F: FLIP BAG · M: MOUSE</span>';
+  ui.hint.innerHTML = 'SWIPE / FLICK UP · TRACKPAD: TWO-FINGER SWIPE<span class="l2"><br>← → STEP · A/D AIM · Q/E SPIN · W/S ARC · F SIDE · M SPINNER</span>';
   ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
   wrap.classList.toggle('spin', M.ctrl === 'spin');
 }
@@ -693,6 +718,9 @@ function showMenu() {
 }
 function startMatch(opts = {}) {
   if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
+  wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
+  wind.x = Math.sin(wind.angle) * wind.mph * 0.025; wind.z = -Math.cos(wind.angle) * wind.mph * 0.025;
+  M.position = [0, 0]; M.spin = 0; M.arc = 1;
   M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
   M.first = opts.first != null ? opts.first : (Math.random() < 0.5 ? 0 : 1);   // coin toss
   ui.panel.hidden = true; ui.title.classList.add('gone');
@@ -711,8 +739,9 @@ function nextTurn() {
   else {
     const side = Math.random() < 0.3 ? 'sticky' : 'slick';
     M.side[1] = side;
-    const w = WIN[1 + side];
-    M.cpu = { t: 0, side, power: w.mid + gauss() * 0.055, aim: gauss() * 0.02, drift: gauss() * 0.18 };
+    M.arc = 1; M.spin = 0;
+    const w = WIN[1 + side + 1];
+    M.cpu = { t: 0, side, power: w.mid + wind.z * 0.04 + gauss() * 0.055, aim: -wind.x * 0.08 + gauss() * 0.012, drift: gauss() * 0.18 };
     M.phase = 'cpu';
   }
   renderHud();
@@ -720,9 +749,9 @@ function nextTurn() {
 function throwBag(power, drift = 0, team = thrower()) {
   if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
   const side = M.side[team];
-  const b = newBody(team, side); launch(b, RX[team], power, M.aim, drift);
+  const b = newBody(team, side); launch(b, RX[team] + M.position[team], power, M.aim, drift + gauss() * 0.025, M.arc, M.spin);
   b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
-  b.spin = drift * 14 + (Math.random() - 0.5) * 2; b.tumble = 0.6 + Math.random();
+  b.spin += drift * 2; b.tumble = 0.6 + Math.random();
   M.before = bags.map((o) => ({ o, s: o.state }));
   bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
   renderHud();
@@ -733,7 +762,7 @@ function afterThrow() {
   const knockedIn = M.before.filter(({ o, s }) => s !== 'in' && o.state === 'in');
   const knockedOff = M.before.filter(({ o, s }) => s === 'board' && !onDeck(o) && o.state !== 'in');
   if (b.state === 'in') { say(b.swish ? 'SWISH!' : 'CORNHOLE!', 'IN THE HOLE · 3'); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
-  else if (b.state === 'board') say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'WOODY', 'ON THE BOARD · 1');
+  else if (b.state === 'board') say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'ON THE BOARD', '1 POINT');
   else if (b.dead) say('GROUNDER', 'HIT THE GRASS FIRST · REMOVED', 1300);
   else say(b.offBoard ? 'OFF THE BOARD' : 'MISS', '0', 1100);
   if (knockedIn.length) { setTimeout(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
@@ -772,7 +801,7 @@ function advance() {
 }
 
 // ---------- input ----------
-let drag = null, keyAim = 0, spaceDown = null;
+let drag = null, keyAim = 0;
 const samples = [];
 const H = () => wrap.clientHeight || 1;
 const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
@@ -792,7 +821,7 @@ function release(up, side) {
 }
 wrap.addEventListener('pointerdown', (e) => {
   if (e.target.closest('button') || !ui.panel.hidden) return;
-  if (M.ctrl === 'spin') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
   if (!humanTurn()) return;
   if (e.pointerType !== 'mouse') M.aim = clamp((e.clientX / wrap.clientWidth - 0.5) * 2 * AIM_MAX, -AIM_MAX, AIM_MAX);
   drag = { id: e.pointerId, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
@@ -800,7 +829,7 @@ wrap.addEventListener('pointerdown', (e) => {
   try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
 });
 wrap.addEventListener('pointermove', (e) => {
-  if (M.ctrl === 'spin') { spinMove(e); return; }
+  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
   if (drag && e.pointerId === drag.id) {
     const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
@@ -852,27 +881,49 @@ function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl
 function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
 ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); });
 ui.side.addEventListener('click', (e) => { e.stopPropagation(); flipSide(); });
+function adjust(k) {
+  if (!humanTurn()) return;
+  const t = thrower();
+  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
+  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
+  if (k === 'w' || k === 's') M.arc = clamp(M.arc + (k === 'w' ? 1 : -1), 0, 2);
+  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
+  renderHud();
+}
+document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
+let wheelGesture = [], wheelTimer;
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (!humanTurn() || !ui.panel.hidden) return;
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
+  wheelGesture.push({t: performance.now(), x: e.deltaX * unit, y: e.deltaY * unit});
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => {
+    const g = wheelGesture; wheelGesture = [];
+    const up = -g.reduce((n,s) => n+s.y,0) / H() / Math.max(.08,(g.at(-1).t-g[0].t)/1000);
+    release(up, g.reduce((n,s)=>n+s.x,0) / H());
+  }, 90);
+}, {passive:false});
+addEventListener('blur', () => { keyAim = 0; drag = null; });
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
   const k = e.key.toLowerCase();
-  if (k === 'arrowleft' || k === 'a') keyAim = -1;
-  else if (k === 'arrowright' || k === 'd') keyAim = 1;
+  if (k === 'a') keyAim = -1;
+  else if (k === 'd') keyAim = 1;
+  else if (['arrowleft','arrowright','q','e','w','s'].includes(k)) { e.preventDefault(); adjust(k); }
   else if (k === 'm') toggleCtrl();
   else if (k === 'f') flipSide();
   else if (k === ' ' || k === 'enter') {
     e.preventDefault();
     if (M.phase === 'summary' || M.phase === 'over') advance();
     else if (M.phase === 'menu') startMatch();
-    else if (humanTurn()) spaceDown = performance.now();
   }
 });
 addEventListener('keyup', (e) => {
   const k = e.key.toLowerCase();
-  if ((k === 'arrowleft' || k === 'a') && keyAim < 0) keyAim = 0;
-  if ((k === 'arrowright' || k === 'd') && keyAim > 0) keyAim = 0;
-  if (k === ' ' && spaceDown != null) { const p = spacePower(); spaceDown = null; throwBag(p, 0); }
+  if (k === 'a' && keyAim < 0) keyAim = 0;
+  if (k === 'd' && keyAim > 0) keyAim = 0;
 });
-const spacePower = () => { const t = (performance.now() - spaceDown) / 1400; return 1 - Math.abs(1 - (t % 2)); };
 
 // ---------- loop ----------
 const clock = new THREE.Clock();
@@ -883,7 +934,6 @@ camera.userData.look = CAM_LOOK.clone();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); time += dt;
   if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
-  if (spaceDown != null) setMeter(spacePower());
   if (flick && performance.now() - lastMoveT > 60) finishFlick();
   if (M.phase === 'cpu') {
     const c = M.cpu; c.t += dt;
@@ -908,7 +958,7 @@ function frame() {
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
   // camera stands behind whoever is throwing
-  const t = thrower(), rx = RX[t];
+  const t = thrower(), rx = RX[t] + M.position[t];
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
   const yaw = baseYaw(rx) + M.aim;
   held.visible = showHeld;
@@ -920,7 +970,7 @@ function frame() {
     d.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(time * 6 - i * 0.6));
   });
   const camRx = M.phase === 'menu' ? 0.3 : rx;
-  camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 2.45);
+  camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 1.4);
   camera.position.lerp(camTmp, Math.min(1, dt * 3));
   const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
   lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
@@ -948,7 +998,7 @@ if (POSTER) {
 requestAnimationFrame(frame);
 
 window.__game = {
-  get state() { return { phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side })) }; },
+  get state() { return { phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
   win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
   startMatch, advance, lie: () => lie(),
   throwWith: (p, d = 0) => throwBag(p, d),
@@ -956,6 +1006,8 @@ window.__game = {
   // test hooks: drop a resting bag on the deck (board-local metres, z negative toward the back), or preset the match score
   _place: (team, lx, lz) => { const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = 'board'; b.touched = true; bags.push(b); renderHud(); },
   _setScores: (a, c) => { M.scores = [a, c]; renderHud(); },
+  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+  _slide: (x,z,vx,vz) => { const b=newBody(0); b.mesh=makeBagMesh(0,'slick'); b.lp.set(x,BAG_H,z); b.lv.set(vx,0,vz); b.state='slide'; b.touched=true; toWorld(b.lp,b.p); bags.push(b); },
   holeLocalZ: HOLE_LOCAL.z,
 };
 </script>

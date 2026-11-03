@@ -21,3 +21,9 @@ Update the on-screen hint/help text for the new controls (keep it compact; hide 
 Testing (required): verify with headless Chromium via Playwright (python playwright is available on the box; install if needed). Load the page with no console errors at 1280x800, 480x360, and a mobile viewport (e.g. iPhone 13 with touch emulation). Script: a mouse flick throw, a touch swipe throw, step left/right changing position, spin and arc changes affecting landing, wind indicator visible and constant across innings, bag-on-bag push. Save screenshots to /workspace/cornhole/shots/ (desktop.png, card.png, mobile.png). Commit your work in git in /workspace/cornhole.
 
 At the end write a concise summary of what changed, controls per device, test results, and rough edges to /workspace/cornhole/codex-summary.md.
+
+9. **(Added by Ashe mid-run) Remove the Space-to-charge power throw entirely.** Throwing must ONLY be a flick gesture: mouse, touchpad, spinner/trackball, or phone swipe. No keyboard way to throw. Update hint text.
+
+10. **(Added by Ashe) Arc control design — must be clearly discoverable.** Since flick speed = power, set ARC before the throw, separate from the flick: mouse wheel / two-finger trackpad scroll, or W/S keys, cycles Low (slider/push) / Normal / High (Kobe), with 5 steps if smooth; phone: a vertical arc slider/buttons on screen. Show a clear HUD arc indicator with a dotted trajectory preview line in the scene so the player sees the planned height. Keep hint text explaining it.
+
+11. **(Added by Ashe) Terminology:** never say "Woody". A bag on the board is called "Board" / "On the Board" (1 pt). Replace every "Woody"/"WOODY" label, pop-up and summary text.
