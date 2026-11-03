@@ -12,9 +12,9 @@ async def main():
   await page.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
   await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')
   assert await page.evaluate('__game.state.bags.length')==0
-  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('w')
+  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('h')
   st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
-  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('s')
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('h');await page.keyboard.press('h')
   await page.mouse.move(640,600);await page.mouse.down()
   for y in [550,490,420,340]:
    await page.mouse.move(640,y);await page.wait_for_timeout(25)
@@ -55,8 +55,11 @@ async def main():
   await mp.evaluate('__game.startMatch({vs:"2p",first:0})');await mp.wait_for_timeout(1100)
   cdp=await mobile.new_cdp_session(mp)
   await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':460}]})
+  before=await mp.evaluate('__game.state.aim')
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':460}]})
+  assert await mp.evaluate('__game.state.aim')>before
   for y in [430,390,340,280]:
-   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':195,'y':y}]});await mp.wait_for_timeout(30)
+   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':y}]});await mp.wait_for_timeout(30)
   await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
   assert await mp.evaluate('__game.state.bags.length')==1
   await mp.screenshot(path='shots/mobile.png')

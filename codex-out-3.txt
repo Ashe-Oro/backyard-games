@@ -1,0 +1,7 @@
+Completed TASK_3: closer camera, direct pointer aim, PUSH / NORMAL / KOBE controls, simplified HUD, exactly three menu modes, unlimited solo practice, and shifting career sweet spots.
+
+All three Playwright suites passed with no browser errors. `git diff --check` passed.
+
+Summary: [codex-summary-3.md](/workspace/cornhole/codex-summary-3.md)
+
+Changes remain in the working tree. Nothing committed or deployed.
