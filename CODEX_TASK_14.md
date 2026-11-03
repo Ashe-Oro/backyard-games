@@ -1,0 +1,7 @@
+# Codex Task 14: the held bag on phone portrait is still off to the right
+
+The live v6 phone screenshot (shots/live-v6-phone.png, 456x1024, RIGHT box selected) shows the held red bag far right, mid-screen beside the dog, instead of in the lower foreground near the aim path. The owner's original complaint (shots/owner-phone-bag-offset.png) isn't actually fixed on phones.
+- In portrait/narrow aspect ratios, the held bag and the thrower's start point must appear in the lower-center foreground, visibly at the start of the aim line toward the board. This applies to both LEFT and RIGHT boxes; the side difference can be a modest offset, not off at the screen edge.
+- Fix it with framing for narrow aspects: shift or lower the static camera, or widen the fov, so the pitcher's boxes and held bag fit near the bottom center. The camera must still be STATIC while aiming. Desktop (1280x800) framing must stay identical to now.
+- Screen-space check: at 456x1024 and 390x844, project the held bag's position to screen coordinates. For both LEFT and RIGHT boxes, assert x is within the center 50% of the width and y is in the lower 45% of the height (but above the left bag menu). Also keep the board visible and reasonably large.
+- Keep all other batch 9–13 behavior. Use short test timeouts. Save screenshots to shots/task14-{456x1024,390x844}-{left,right}.png. Don't write to .git. Write a summary to codex-summary-14.md.

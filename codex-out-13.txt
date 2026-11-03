@@ -1,0 +1,5 @@
+Implemented both polish items: scalable text outlines with 10px minimum fonts, three pooled flight afterimages, and a 14-piece board puff.
+
+Verified both phone sizes at 2× scale. Task 13 and batch 9–12 checks passed. Screenshots saved to `shots/task13-*.png`; `.git` untouched.
+
+[Summary]( /workspace/cornhole/codex-summary-13.md)

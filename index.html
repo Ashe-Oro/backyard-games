@@ -30,8 +30,8 @@ body{font-family:'Press Start 2P',ui-monospace,Menlo,monospace;color:#fff}
 #game.drag{cursor:grabbing}
 #game.spin{cursor:crosshair}
 canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-.ol{text-shadow:2px 0 #2b1a2e,-2px 0 #2b1a2e,0 2px #2b1a2e,0 -2px #2b1a2e,2px 2px #2b1a2e,-2px 2px #2b1a2e,2px -2px #2b1a2e,-2px -2px #2b1a2e}
-#hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(7px,1.9vmin,14px)}
+.ol{text-shadow:.13em 0 #2b1a2e,-.13em 0 #2b1a2e,0 .13em #2b1a2e,0 -.13em #2b1a2e,.13em .13em #2b1a2e,-.13em .13em #2b1a2e,.13em -.13em #2b1a2e,-.13em -.13em #2b1a2e}
+#hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(10px,1.9vmin,14px)}
 #hud.menu > :not(#title){display:none!important}
 #sb{position:absolute;left:0;right:0;top:1.4vmin;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;padding:0 1.6vmin}
 .team{min-width:0}.team.blue{grid-column:3;text-align:right}
@@ -64,7 +64,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
 .hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
 .hb:hover{background:#56405c}
-#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(7px,1.9vmin,14px);min-width:20em;max-width:94vw}
+#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(10px,1.9vmin,14px);min-width:20em;max-width:94vw}
 #panel[hidden]{display:none}
 #panel .pt{font-size:1.1em;color:#ffb36b}
 #panel .big{font-size:2.6em;color:#ffe45e;margin:.45em 0 .3em}
@@ -679,7 +679,43 @@ const confetti = [];
   const cc = ['#ffe45e', '#ff6a4d', '#7ee081', '#ff8fc0', '#9ff0e6', '#ffffff'];
   for (let i = 0; i < 70; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), basic(pick(cc))); m.visible = false; scene.add(m); confetti.push({ m, v: new THREE.Vector3(), life: 0 }); }
 }
-function burst(at) { for (const c of confetti) { c.m.position.copy(at); c.v.set((Math.random() - 0.5) * 2.4, 1.5 + Math.random() * 2.5, (Math.random() - 0.5) * 2.4); c.life = 1 + Math.random() * 0.6; c.m.visible = true; } }
+// Separate fixed pools keep board dust plain and preserve hole celebrations.
+const boardDust = [];
+for (let i = 0; i < 14; i++) {
+  const m = new THREE.Mesh(confetti[0].m.geometry, basic({color:'#e7cfaa',transparent:true,opacity:0}));
+  m.visible = false; scene.add(m); boardDust.push({m,v:new THREE.Vector3(),life:0});
+}
+function burst(at, plain = false) {
+  for (const c of plain ? boardDust : confetti) {
+    c.m.position.copy(at);
+    c.v.set((Math.random()-.5)*(plain ? .65 : 2.4), plain ? .3+Math.random()*.5 : 1.5+Math.random()*2.5, (Math.random()-.5)*(plain ? .65 : 2.4));
+    c.life = plain ? .4 : 1+Math.random()*.6; c.m.visible = true;
+    if (plain) c.m.material.opacity = .7;
+  }
+}
+// Three reusable afterimages; sampling and fading allocate nothing per frame.
+const flightTrail = [];
+for (let i=0;i<3;i++) {
+  const m=new THREE.Mesh(bagGeo,basic({color:'#e8423c',transparent:true,opacity:0,depthWrite:false}));
+  m.visible=false; scene.add(m); flightTrail.push({m,life:0});
+}
+let trailTime=0, trailIndex=0;
+function updateFlightTrail(dt) {
+  const b=M.active;
+  for (const c of flightTrail) {
+    c.life=Math.max(0,c.life-dt); c.m.visible=c.life>0 && M.phase==='flying';
+    c.m.material.opacity=.24*c.life/.18;
+  }
+  if (!b || b.state!=='fly') {trailTime=0;return;}
+  trailTime+=dt;
+  if (trailTime>=.06) {
+    trailTime%=.06;
+    const c=flightTrail[trailIndex]; trailIndex=(trailIndex+1)%3;
+    c.m.position.copy(b.mesh.position); c.m.quaternion.copy(b.mesh.quaternion);
+    c.m.material.color.setHex(b.team ? 0x6b93ff : 0xff6b5e);
+    c.life=.18;
+  }
+}
 
 // ---------- match state ----------
 const $ = (id) => document.getElementById(id);
@@ -926,7 +962,7 @@ function afterThrow() {
   const knockedIn = M.before.filter(({ o, s }) => s !== 'in' && o.state === 'in');
   const knockedOff = M.before.filter(({ o, s }) => s === 'board' && !onDeck(o) && o.state !== 'in');
   if (b.state === 'in') { say(b.swish ? 'SWISH!' : 'CORNHOLE!', 'IN THE HOLE · 3'); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
-  else if (b.state === 'board') say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'ON THE BOARD', '1 POINT');
+  else if (b.state === 'board') { say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'ON THE BOARD', '1 POINT'); burst(b.p, true); }
   else if (b.dead) say('GROUNDER', 'HIT THE GRASS FIRST · REMOVED', 1300);
   else say(b.offBoard ? 'OFF THE BOARD' : 'MISS', '0', 1100);
   if (knockedIn.length) { setTimeout(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
@@ -1162,6 +1198,7 @@ function frame() {
     m.visible = b.state !== 'in' && b.state !== 'removed';
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
+  updateFlightTrail(dt);
   // Held bag and indicators follow the thrower and aim; the camera stays fixed.
   const t = thrower(), rx = releaseX(t);
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
@@ -1188,6 +1225,10 @@ function frame() {
   dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;
   for (const s of smoke) { s.t = (s.t + dt * 0.25) % 1; s.b.position.set(-5.2 + Math.sin(s.t * 6 + 1) * 0.15, 1.25 + s.t * 1.6, -9.6 + s.t * 0.3); s.b.material.opacity = 0.55 * (1 - s.t); s.b.scale.setScalar(0.6 + s.t * 1.4); }
   for (const c of confetti) if (c.life > 0) { c.life -= dt; c.v.y -= 6 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += dt * 8; if (c.m.position.y < 0.02) { c.m.position.y = 0.02; c.v.set(0, 0, 0); } if (c.life <= 0) c.m.visible = false; }
+  for (const c of boardDust) if (c.life>0) {
+    c.life=Math.max(0,c.life-dt); c.v.y-=2*dt; c.m.position.addScaledVector(c.v,dt);
+    c.m.material.opacity=.7*c.life/.4; c.m.visible=c.life>0;
+  }
   animatePennant(time);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
