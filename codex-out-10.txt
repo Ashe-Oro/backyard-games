@@ -1,0 +1,10 @@
+Implemented fully.
+
+- KOBE window is now 78% of NORMAL, with a 60% tournament floor.
+- Meter targets match the scoring tolerance.
+- Camera and bag physics remain unchanged.
+- All nine Playwright suites passed.
+- Saved `shots/task10-{push,normal,kobe}.png`.
+- No writes to `.git`.
+
+Details: [codex-summary-10.md](/workspace/cornhole/codex-summary-10.md).

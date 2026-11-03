@@ -52,7 +52,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#ffb340 0 .5em,#ff8a3d .5em 1em)}
 #sweet,#onb{position:absolute;left:-.55em;right:-.55em;height:6%}
 #onb{border:.2em dashed rgba(255,255,255,.55)}
-#sweet{border:.2em solid #fff}
+#sweet{border:0}
 .mlbl{position:absolute;bottom:-.2em;right:calc(100% + .6em);font-size:.8em;white-space:nowrap}
 #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
 #msg.on{opacity:1;transform:scale(1)}
@@ -86,7 +86,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
 #bag-menu > *{flex-shrink:0}
 .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
-#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:inset 0 0 0 1px #fff,0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
 @media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
@@ -722,7 +722,7 @@ function renderHud() {
   $('setup').textContent = arcNames[M.arc];
   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
   const w = meterWindow();
-  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = ((w.hi - w.lo) * 100) + '%';
   ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
 }
 function hint() {
@@ -915,12 +915,19 @@ function advance() {
 
 function meterWindow(){
  const t=thrower(),w=WIN[t+M.side[t]+M.arc];
- if(!M.sweetShift)return {...w};
- const width=Math.max(.014,(w.hi-w.lo)*.78),mid=M.sweetShift;
- return {...w,lo:mid-width/2,hi:mid+width/2,mid};
+ const normal=WIN[t+M.side[t]+1],normalWidth=normal.hi-normal.lo;
+ // Keep the calibrated physics range intact; KOBE gets a friendlier input range.
+ const baseWidth=M.arc===2 ? normalWidth*.78 : w.hi-w.lo;
+ if(!M.sweetShift && M.arc!==2)return {...w};
+ const width=M.sweetShift ? Math.max(M.arc===2 ? normalWidth*.60 : .014,baseWidth*.78) : baseWidth;
+ const mid=M.sweetShift || w.mid;
+ const lo=mid-width/2,hi=mid+width/2;
+ // The dashed on-board range uses the same input coordinates as the solid target.
+ const inputPower=p=>p<w.lo ? p/w.lo*lo : p>w.hi ? hi+(p-w.hi)/(1-w.hi)*(1-hi) : lo+(p-w.lo)/(w.hi-w.lo)*width;
+ return {...w,lo,hi,mid,...(M.arc===2 ? {olo:inputPower(w.olo),ohi:inputPower(w.ohi)} : {})};
 }
 function physicalPower(p){
- if(!M.sweetShift)return p;
+ if(!M.sweetShift && M.arc!==2)return p;
  const t=thrower(),base=WIN[t+M.side[t]+M.arc],w=meterWindow();
  if(p<w.lo)return p/w.lo*base.lo;
  if(p>w.hi)return base.hi+(p-w.hi)/(1-w.hi)*(1-base.hi);
