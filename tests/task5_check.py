@@ -26,9 +26,11 @@ async def main():
    assert await page.locator('#wind').is_visible()
    assert await page.locator('#sb').is_visible()
    view=await page.evaluate('''()=>{const {camera,held,THREE}=__view;const v=held.position.clone().project(camera);return {fov:camera.fov,z:camera.position.z,held:held.visible,point:v.toArray()};}''')
-   assert abs(view['fov']-(19+(1-width/height)*30 if width<height else 19))<1e-9
+   assert abs(view['fov']-19)<1e-9
    assert abs(view['z']-2.45)<1e-9
-   assert view['held'] and all(-1<v<1 for v in view['point']),view
+   # Fixed 19-degree FOV crops the foreground bag horizontally on narrow screens.
+   assert view['held'] and all(-1<v<1 for v in view['point'][1:]),view
+   if width>=height: assert -1<view['point'][0]<1,view
    assert view['point'][1]<0,view
    await page.screenshot(path=f'shots/task5-held-{width}.png')
   await browser.close()

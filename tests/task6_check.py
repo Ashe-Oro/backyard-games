@@ -7,6 +7,7 @@ async def main():
   browser=await p.chromium.launch(args=['--no-sandbox'])
   page=await browser.new_page(ignore_https_errors=True)
   page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
   errors=[]
   page.on('pageerror',lambda e:errors.append(str(e)))
   source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,CAM_LOOK,THREE,bags,RX}; window.__game = {')
@@ -36,7 +37,7 @@ async def main():
     await page.evaluate('(a)=>__game.setAim(a)',aim)
     await page.wait_for_timeout(1800)
     view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
-    assert (view['x']-.5)*aim>0 and view['look']*aim>0
+    assert view['x']==.5 and view['look']==0,view
     assert all(abs(v[0])<1 and abs(v[1])<1 for v in view['board']),view
    before=await page.evaluate('__game.state.aim')
    for key in ['ArrowLeft','ArrowRight','q','e','a','d']:
@@ -54,5 +55,5 @@ async def main():
    assert launch['spin']==0 and launch['english']==0 and launch['x']==launch['center'],launch
   assert not errors,errors
   await browser.close()
-  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim following, removed controls/shortcuts and board bounds: PASS')
+  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, fixed camera across aim changes, removed controls/shortcuts and board bounds: PASS')
 asyncio.run(main())

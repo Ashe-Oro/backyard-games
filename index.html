@@ -176,14 +176,16 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog('#ffd3a8', 26, 75);
 const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
 const CAM_POS = new THREE.Vector3(0.5, 2.05, 2.45);
-camera.position.copy(CAM_POS); camera.lookAt(0, 0.5, -8.7);
+const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
+camera.userData.look = CAM_LOOK.clone();
 
 function resize() {
   const w = wrap.clientWidth, h = wrap.clientHeight;
   const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  camera.fov = w / h < 1 ? 19 + (1 - w / h) * 30 : 19;
+  camera.fov = 19;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -1073,9 +1075,6 @@ function animatePennant(seconds) {
 // ---------- loop ----------
 const clock = new THREE.Clock();
 let acc = 0, time = 0;
-const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
-const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
-camera.userData.look = CAM_LOOK.clone();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); time += dt;
   if (flick && performance.now() - lastMoveT > 60) finishFlick();
@@ -1101,7 +1100,7 @@ function frame() {
     m.visible = b.state !== 'in' && b.state !== 'removed';
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
-  // camera stands behind whoever is throwing
+  // Held bag and indicators follow the thrower and aim; the camera stays fixed.
   const t = thrower(), rx = RX[t] + M.position[t];
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
   const yaw = baseYaw(rx) + M.aim;
@@ -1116,16 +1115,6 @@ function frame() {
   // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
   const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
   trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
-  // Anchor neutral aim to v2; follow only a small part of the stance and aim line.
-  // Bound the turn so even extreme aim keeps the far board comfortably visible.
-  const follow = !['menu','intro','champion','poster'].includes(M.phase);
-  const stepOffset = follow ? M.position[t] : 0;
-  const aimOffset = follow ? clamp(M.aim,-AIM_MAX,AIM_MAX) : 0;
-  camTmp.copy(CAM_POS); camTmp.x += stepOffset * .65 + aimOffset * 1.2;
-  const ease = 1 - Math.exp(-dt * 3);
-  camera.position.lerp(camTmp, ease);
-  lookTmp.copy(CAM_LOOK); lookTmp.x += stepOffset * .18 + aimOffset * 3;
-  camera.userData.look.lerp(lookTmp, ease); camera.lookAt(camera.userData.look);
   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
   dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;

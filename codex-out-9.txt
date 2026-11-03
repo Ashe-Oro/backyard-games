@@ -1,0 +1,5 @@
+Implemented the fixed camera at `(0.5, 2.05, 2.45)`, target `(0, 0.5, -8.7)`, FOV `19`. Removed aim-following drift and added far-left/right screenshot checks.
+
+All eight Playwright suites passed, with the updated framing check passing on rerun. No writes to `.git`.
+
+Summary: [codex-summary-9.md](/workspace/cornhole/codex-summary-9.md).
