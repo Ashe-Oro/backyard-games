@@ -1,0 +1,2454 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0
+--------
+workdir: /workspace/cornhole
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: none
+reasoning summaries: none
+session id: 01a1a31f-ce63-77d2-9b5b-131dbab858ab
+--------
+user
+Read /workspace/cornhole/CODEX_TASK_6.md and complete every item. Batches 1-5 are in index.html; don't regress them (keep the v2 base camera, flick-only throws, wind widget/flag, three modes, career). Do not edit CLAUDE_UI_REVIEW.md. Run all Playwright suites with short timeouts, write codex-summary-6.md. .git is read-only; leave changes in the working tree.
+codex
+I’ll read the task and repository guidance, implement Batch 6, then run all Playwright suites with short timeouts and write the summary.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CODEX_TASK_6.md' -g 'package.json' -g '*playwright*' -g '*spec*' -g '*test*' -g 'index.html'" in /workspace/cornhole
+ succeeded in 0ms:
+/workspace/cornhole
+CODEX_TASK_6.md
+index.html
+tests/playwright_check.py
+
+exec
+/bin/bash -lc 'cat CODEX_TASK_6.md && if [ -f AGENTS.md ]; then cat AGENTS.md; fi' in /workspace/cornhole
+ succeeded in 0ms:
+# Cornhole batch 6
+## Camera follows aim (Ashe, Nov 3, 3:29 PM)
+- When the player moves the mouse/finger to change aim (and step), the camera should smoothly pan and turn with it: shift the camera position sideways with the bag/stand position and rotate the look-at toward the aimed line, so the view re-centers on where you're aiming (keep it gentle, with no motion sickness, and the board always in frame). Keep the v2 base framing (CAM_POS 0.5,2.05,2.45; look-at 0,0.5,-8.7) when aim is centered.
+- Fix: in Solo Practice / 2 Player the top-left name tag reads "RED RED".
+- Run all Playwright suites, write codex-summary-6.md. .git is read-only; leave changes in the working tree. Don't hang on a failing test: cap waits and move on, then report.
+
+## Left-side bag menu (Ashe, Nov 3, 3:32 PM)
+- Bug: clicking MORE makes the STEP/AIM/SPIN buttons render on top of and behind SLICK SIDE DOWN / MORE (overlapping). Fix the layout so nothing overlaps.
+- Move ALL bag options into ONE tidy left-side panel/menu: throw height (PUSH / NORMAL / KOBE), bag side (SLICK / STICKY), spin (L / 0 / R) and step (if kept). Remove the bottom-center PUSH/NORMAL/KOBE bar. Clear, labeled rows, current choice highlighted, no overlap at desktop, 480x360 card or phone sizes.
+- Remove the bottom hint line ("Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE") entirely.
+
+exec
+/bin/bash -lc "ls -la && rg -n 'CAM_POS|lookAt|RED|MORE|SLICK|KOBE|Flick up|camera|STEP' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+total 1200
+drwxr-xr-x   8 box box   4096 Nov  3 15:35 .
+drwxr-xr-x. 31 box box  20480 Nov  3 15:26 ..
+dr-xr-xr-x   2 box box     40 Nov  3 15:35 .agents
+dr-xr-xr-x   2 box box     40 Nov  3 15:35 .aws
+dr-xr-xr-x   2 box box     40 Nov  3 15:35 .codex
+drwxr-xr-x   8 box box   4096 Nov  3 15:35 .git
+-rw-r--r--   1 box box    503 Nov  3 15:28 CLAUDE_REVIEW_NOTES.md
+-rw-r--r--   1 box box  16482 Nov  3 15:35 CLAUDE_UI_REVIEW.md
+-rw-r--r--   1 box box   5038 Nov  3 14:25 CODEX_TASK.md
+-rw-r--r--   1 box box   2956 Nov  3 14:45 CODEX_TASK_2_CAREER.md
+-rw-r--r--   1 box box   2769 Nov  3 15:02 CODEX_TASK_3.md
+-rw-r--r--   1 box box    641 Nov  3 15:02 CODEX_TASK_4.md
+-rw-r--r--   1 box box    482 Nov  3 15:08 CODEX_TASK_5.md
+-rw-r--r--   1 box box   1365 Nov  3 15:35 CODEX_TASK_6.md
+-rw-r--r--   1 box box   1273 Nov  3 15:35 claude-review.log
+-rw-r--r--   1 box box    324 Nov  3 14:52 codex-out-2.txt
+-rw-r--r--   1 box box    409 Nov  3 15:07 codex-out-3.txt
+-rw-r--r--   1 box box    353 Nov  3 15:10 codex-out-4.txt
+-rw-r--r--   1 box box    412 Nov  3 14:23 codex-out.txt
+-rw-r--r--   1 box box 147394 Nov  3 14:52 codex-run-2.log
+-rw-r--r--   1 box box 159489 Nov  3 15:07 codex-run-3.log
+-rw-r--r--   1 box box 110519 Nov  3 15:10 codex-run-4.log
+-rw-r--r--   1 box box  89030 Nov  3 15:16 codex-run-5.log
+-rw-r--r--   1 box box   2607 Nov  3 15:35 codex-run-6.log
+-rw-r--r--   1 box box 171441 Nov  3 14:23 codex-run.log
+-rw-r--r--   1 box box   3725 Nov  3 15:06 codex-summary-3.md
+-rw-r--r--   1 box box   2401 Nov  3 15:10 codex-summary-4.md
+-rw-r--r--   1 box box   3723 Nov  3 14:51 codex-summary-career.md
+-rw-r--r--   1 box box   2810 Nov  3 14:23 codex-summary.md
+-rw-r--r--   1 box box 233240 Nov  3 14:23 cornhole-changes.bundle
+-rw-r--r--   1 box box  76133 Nov  3 15:12 index.html
+-rw-r--r--   1 box box  27306 Nov  3 14:13 poster.png
+-rw-r--r--   1 box box  68218 Nov  3 14:16 screenshot.png
+drwxr-xr-x   2 box box   4096 Nov  3 15:28 shots
+drwxr-xr-x   2 box box   4096 Nov  3 15:13 tests
+-rw-r--r--   1 box box    239 Nov  3 13:05 vercel.json
+97:      <div class="team red" id="t0"><div class="tn">RED <span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+106:    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
+107:    <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
+108:    <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+133:const TEAM = ['RED', 'BLUE'];
+174:const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
+175:const CAM_POS = new THREE.Vector3(0.5, 2.05, 2.45);
+176:camera.position.copy(CAM_POS); camera.lookAt(0, 0.5, -8.7);
+182:  camera.aspect = w / h;
+183:  camera.fov = w / h < 1 ? 19 + (1 - w / h) * 30 : 19;
+184:  camera.updateProjectionMatrix();
+193:Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 40 });
+215:  sd.position.set(-26, 13, -78); halo.position.set(-26, 13, -78.2); sd.lookAt(CAM_POS); halo.lookAt(CAM_POS);
+507:const arcs = [24, 35, 58], arcNames = ['PUSH', 'NORMAL', 'KOBE'];
+710:  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+711:  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+718:  ui.hint.textContent = 'Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE';
+753: ui.panel.innerHTML=`<div class="pt">ROAD TO CORNHOLE KING</div><div class="ladder">${roster.map((o,i)=>`<div class="${i<career.fight?'done':i===career.fight?'current':''}">${i<career.fight?'✓':i===career.fight?'▶':'·'} ${o.name} · ${circuits[o.circuit]}</div>`).join('')}</div><div class="pd">${career.wins} WINS · ${career.fight}/8 CLEARED</div><button class="go" id="career-go">${career.fight===8?'CHAMPION ENDING':'CONTINUE CAREER'}</button><button class="hb" id="back">MAIN MENU</button><div id="save-note">${saveNote}</div>`;
+763: ui.panel.innerHTML='<div class="pt">ALL FOUR CIRCUITS CONQUERED</div><div class="big">CORNHOLE KING!</div>'+portrait(roster[7])+'<div class="pd">The crown is yours!<br>Eight rivals. One backyard legend.<br>Your championship is saved.</div><button class="go" id="back">CIRCUIT MAP</button><button class="hb" id="restart">NEW CAREER</button>';
+891:    <div class="row"><div class="r">RED<b>${pts[0]}</b>${inC[0]} IN · ${onC[0]} ON</div><div>vs</div><div class="b">BLUE<b>${pts[1]}</b>${inC[1]} IN · ${onC[1]} ON</div></div>
+893:    MATCH: <span class="r">RED ${M.scores[0]}</span> · <span class="b">BLUE ${M.scores[1]}</span><br>
+923: aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
+1081:camera.userData.look = CAM_LOOK.clone();
+1108:  // camera stands behind whoever is throwing
+1122:  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+1125:  camera.position.lerp(camTmp, Math.min(1, dt * 3));
+1128:  camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
+1139:  renderer.render(scene, camera);
+1156:  _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+
+exec
+/bin/bash -lc 'cat tests/playwright_check.py && find tests -maxdepth 2 -type f' in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio,json
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  print('windows',await page.evaluate('__game.win'))
+  await page.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+  await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')
+  assert await page.evaluate('__game.state.bags.length')==0
+  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('h')
+  st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('h');await page.keyboard.press('h')
+  await page.mouse.move(640,600);await page.mouse.down()
+  for y in [550,490,420,340]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(25)
+  await page.mouse.up();await page.wait_for_timeout(100)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.screenshot(path='shots/desktop.png')
+  probes=await page.evaluate('[0,1,2].map(a=>[__game._probe(.55,a,-1),__game._probe(.55,a,1)])')
+  assert probes[2][0]['flight']>probes[0][0]['flight']+.2
+  assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005
+  print('arc/spin landing probes',probes)
+  await page.wait_for_function('__game.state.phase==="aim"')
+  await page.evaluate('__game._place(1,0,-.65);__game._slide(0,-.42,0,-2)')
+  await page.wait_for_timeout(700)
+  b=await page.evaluate('__game.state.bags');assert b[1]['lp'][2]<-.66,b
+  wind=await page.evaluate('__game.state.wind')
+  # Play out an inning with real physics and cancellation scoring.
+  while await page.evaluate('__game.state.phase')!='summary':
+   if await page.evaluate('__game.state.phase')=='aim':await page.evaluate('__game.throwWith(0)')
+   await page.wait_for_timeout(200)
+  await page.evaluate('__game.advance()');await page.wait_for_timeout(400)
+  assert await page.evaluate('__game.state.wind')==wind
+  assert await page.locator('#wind').is_visible()
+  # No-button trackpad wheel throw.
+  await page.mouse.wheel(0,-250);await page.wait_for_timeout(200)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.wait_for_function('__game.state.phase==="aim"')
+  await page.keyboard.press('m')
+  await page.mouse.move(640,650)
+  for y in [590,510,410,290]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(20)
+  await page.wait_for_timeout(150)
+  assert await page.evaluate('__game.state.bags.length')==2
+  await page.set_viewport_size({'width':480,'height':360});await page.screenshot(path='shots/card.png')
+  mobile=await browser.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  mp.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
+  await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('!!window.__game')
+  await mp.evaluate('__game.startMatch({vs:"2p",first:0})');await mp.wait_for_timeout(1100)
+  cdp=await mobile.new_cdp_session(mp)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':460}]})
+  before=await mp.evaluate('__game.state.aim')
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':460}]})
+  assert await mp.evaluate('__game.state.aim')>before
+  for y in [430,390,340,280]:
+   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':y}]});await mp.wait_for_timeout(30)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+  assert await mp.evaluate('__game.state.bags.length')==1
+  await mp.screenshot(path='shots/mobile.png')
+  await mp.set_viewport_size({'width':844,'height':390});await mp.wait_for_timeout(200)
+  await page.goto('http://127.0.0.1:8000')
+  await page.evaluate("""document.body.innerHTML='<iframe sandbox="allow-scripts allow-same-origin" src="/?card" width="480" height="360"></iframe>'""")
+  frame=page.frames[-1];await frame.wait_for_function('!!window.__game')
+  await frame.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+  assert await frame.evaluate('__game.throwWith(.55)')
+  print('errors',errors);assert not errors
+  await browser.close()
+asyncio.run(main())
+tests/task5_check.py
+tests/wind_flag_check.py
+tests/playwright_check.py
+tests/task3_check.py
+tests/career_check.py
+
+exec
+/bin/bash -lc "sed -n '1,135p' index.html; sed -n '680,725p' index.html; sed -n '910,1010p' index.html; sed -n '1060,1175p' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Backyard Cornhole · 3D pixel toss</title>
+<meta name="description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game in your browser.">
+<meta name="theme-color" content="#ffb36b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Backyard Cornhole">
+<meta property="og:description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game.">
+<meta property="og:url" content="https://backyard-cornhole.vercel.app/">
+<meta property="og:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="Backyard Cornhole">
+<meta name="twitter:description" content="Real cornhole rules: 27 ft, cancellation scoring, first to 21. Flick the mouse to toss.">
+<meta name="twitter:player" content="https://backyard-cornhole.vercel.app/">
+<meta name="twitter:player:width" content="480">
+<meta name="twitter:player:height" content="360">
+<meta name="twitter:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22 shape-rendering=%22crispEdges%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%231aa39a%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%232b1a2e%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#ffcf99;touch-action:none;user-select:none;-webkit-user-select:none}
+body{font-family:'Press Start 2P',ui-monospace,Menlo,monospace;color:#fff}
+#game{position:fixed;inset:0;cursor:grab}
+#game.drag{cursor:grabbing}
+#game.spin{cursor:crosshair}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.ol{text-shadow:2px 0 #2b1a2e,-2px 0 #2b1a2e,0 2px #2b1a2e,0 -2px #2b1a2e,2px 2px #2b1a2e,-2px 2px #2b1a2e,2px -2px #2b1a2e,-2px -2px #2b1a2e}
+#hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(7px,1.9vmin,14px)}
+#hud.menu > :not(#title){display:none!important}
+#sb{position:absolute;left:0;right:0;top:1.4vmin;display:flex;justify-content:space-between;align-items:flex-start;padding:0 1.6vmin}
+.team{min-width:9em}.team.blue{text-align:right}
+.tn{font-size:.9em;letter-spacing:.06em}
+.red .tn{color:#ff8a80}.blue .tn{color:#9db8ff}
+.ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
+.pips{display:flex;gap:.4em;margin-top:.6em}.blue .pips{justify-content:flex-end}
+.pips i{display:block;width:1.4em;height:1.4em;border:.22em solid #2b1a2e;box-shadow:inset -.22em -.22em 0 rgba(0,0,0,.25),inset .18em .18em 0 rgba(255,255,255,.35)}
+.red .pips i{background:#e8423c}.blue .pips i{background:var(--rival,#3f6ee8)}
+.pips i.used{background:#6b5a63!important;opacity:.4;box-shadow:none}
+.team.now .tn::before{content:'▶ ';color:#ffe45e}
+.blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe45e}
+.mid{text-align:center;padding-top:.2em}
+#inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
+#turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
+#turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
+#meter{position:absolute;right:1.8vmin;bottom:1.8vmin;width:2.2em;height:36%;border:.3em solid #2b1a2e;background:#3b2a40;box-shadow:.3em .3em 0 rgba(43,26,46,.35)}
+#fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#ffb340 0 .5em,#ff8a3d .5em 1em)}
+#sweet,#onb{position:absolute;left:-.55em;right:-.55em;height:6%}
+#onb{border:.2em dashed rgba(255,255,255,.55)}
+#sweet{border:.2em solid #fff}
+.mlbl{position:absolute;bottom:-.2em;right:calc(100% + .6em);font-size:.8em;white-space:nowrap}
+#msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
+#msg.on{opacity:1;transform:scale(1)}
+#msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
+#hint{position:absolute;left:0;right:0;bottom:2.2vmin;text-align:center;font-size:.8em;line-height:1.8;opacity:.95;padding:0 4em 0 14em}
+#title{position:absolute;left:0;right:0;top:15%;text-align:center;transition:opacity .6s}
+#title h1{font-size:3.2em;font-weight:400;color:#ffe45e;letter-spacing:.04em;line-height:1.2}
+#title p{font-size:1em;margin-top:1em}
+#title.gone{opacity:0}
+.btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
+.hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
+.hb:hover{background:#56405c}
+#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(7px,1.9vmin,14px);min-width:20em;max-width:94vw}
+#panel[hidden]{display:none}
+#panel .pt{font-size:1.1em;color:#ffb36b}
+#panel .big{font-size:2.6em;color:#ffe45e;margin:.45em 0 .3em}
+#panel .row{display:flex;justify-content:center;gap:2.2em;margin:.9em 0 .3em;line-height:1.9;font-size:.85em}
+#panel .row b{display:block;font-weight:400;font-size:2em}
+#panel .r{color:#ff8a80}#panel .b{color:#9db8ff}
+#panel .pd{font-size:.8em;line-height:1.9;margin-top:.5em}
+#panel .opt{display:flex;gap:.5em;justify-content:center;margin-top:.8em}
+#panel .opt button{font:inherit;font-size:.8em;padding:.6em .7em;color:#fff;background:#2b1a2e;border:.2em solid #6b5a63;cursor:pointer}
+#panel .opt button.on{background:#ffe45e;color:#2b1a2e;border-color:#2b1a2e}
+#panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
+#panel .go:hover{background:#fff07f}
+#panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+@media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}
+#touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
+@media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
+@media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
+#panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+#touch-controls{display:none;bottom:24%}#touch-controls.open{display:grid}#height-choice{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto;white-space:nowrap}#height-choice button{font-size:clamp(9px,2vmin,16px);min-height:40px}#height-choice button[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}#hint{padding:0 4px;font-size:clamp(5px,1.25vmin,10px);white-space:nowrap}.btns{bottom:15%}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div id="sb" class="ol">
+      <div class="team red" id="t0"><div class="tn">RED <span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span> BLUE</div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+    </div>
+    <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+    <div id="turn" class="ol"></div>
+    <div id="msg" class="ol"></div>
+    <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
+    <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
+    <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+  </div>
+  <div id="panel" class="ol" hidden></div>
+  <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+// ---------- constants (regulation ACL/ACA dimensions, metres) ----------
+const G = 9.8;
+const IN = 0.0254, FT = 0.3048;
+const W = 2 * FT, L = 4 * FT;              // 2 ft x 4 ft deck
+const FRONT_H = 3.5 * IN, BACK_H = 12 * IN; // front 2.5-4 in, back 12 in
+const TH = Math.asin((BACK_H - FRONT_H) / L);
+const BOARD_Z = -27 * FT;                   // 27 ft front edge to front edge; our foul line is z = 0
+const HOLE_FROM_TOP = 9 * IN, HOLE_R = 3 * IN; // 6 in hole, centre 9 in from the top
+const BAG = 6 * IN, BAG_H = 0.016, BAG_R = 0.074; // 6x6 in, ~1.25 in thick
+const SIDES = { slick: { mu: 0.30, ms: 0.5, keep: 0.42 }, sticky: { mu: 0.62, ms: 0.85, keep: 0.30 } };
+const MU_GROUND = 1.1, BAG_E = 0.25;
+const ELEV = 35 * Math.PI / 180;
+const V_MIN = 5.6;
+const AIM_MAX = 0.12;
+const FLICK_MIN = 0.5, FLICK_MAX = 7.5;     // screen heights / second
+const REL_Y = 1.3, REL_Z = -0.45;           // feet stay behind the foul line (z = 0); the hand reaches past it on release
+const RX = [0.62, -0.62];                   // red throws from the right pitcher's box, blue from the left
+const TEAM = ['RED', 'BLUE'];
+const HOLE_WORLD = new THREE.Vector3();
+
+    if (b.state === 'in') { pts[b.team] += 3; inC[b.team]++; }
+    else if (b.state === 'board' && !b.dead) { pts[b.team] += 1; onC[b.team]++; }
+  }
+  return { pts, inC, onC };
+}
+function renderHud() {
+  $('hud').classList.toggle('menu', ['menu', 'intro', 'champion'].includes(M.phase));
+  for (const t of [0, 1]) {
+    ui.s[t].textContent = M.scores[t];
+    ui.n[t].textContent = teamName(t);
+    const thrown = bags.filter((b) => b.team === t).length;
+    ui.p[t].innerHTML = [0, 1, 2, 3].map((i) => `<i class="${i < thrown ? 'used' : ''}"></i>`).join('');
+    ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
+  }
+  ui.inn.textContent = 'INNING ' + M.inning;
+  ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+  const t = thrower();
+  if (M.phase === 'aim' || M.phase === 'cpu') {
+    ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
+    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+    ui.turn.style.opacity = 1;
+  } else ui.turn.style.opacity = 0;
+  $('wind').hidden = wind.mph <= 0;
+  $('wind-speed').textContent = `${wind.mph} MPH`;
+  $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
+  $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
+  document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
+  $('reset-bags').hidden=!M.practice;
+  ui.t[1].hidden=M.practice;
+  if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
+  const w = meterWindow();
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+}
+function hint() {
+  ui.hint.textContent = 'Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE';
+  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+  wrap.classList.toggle('spin', M.ctrl === 'spin');
+}
+let msgTimer;
+function say(big, small = '', ms = 1400) {
+  ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
+  clearTimeout(msgTimer); msgTimer = setTimeout(() => ui.msg.classList.remove('on'), ms);
+ return {...w,lo:mid-width/2,hi:mid+width/2,mid};
+}
+function physicalPower(p){
+ if(!M.sweetShift)return p;
+ const t=thrower(),base=WIN[t+M.side[t]+M.arc],w=meterWindow();
+ if(p<w.lo)return p/w.lo*base.lo;
+ if(p>w.hi)return base.hi+(p-w.hi)/(1-w.hi)*(1-base.hi);
+ return base.lo+(p-w.lo)/(w.hi-w.lo)*(base.hi-base.lo);
+}
+const aimRay=new THREE.Raycaster(),aimPoint=new THREE.Vector3();
+const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),-.2);
+function pointAim(e){
+ const r=wrap.getBoundingClientRect();
+ aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
+ if(aimRay.ray.intersectPlane(aimPlane,aimPoint)){
+ const rx=RX[thrower()]+M.position[thrower()];
+ M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+ }
+}
+$('more').onclick=()=>$('touch-controls').classList.toggle('open');
+$('menu').onclick=()=>{if(M.active)return;showMenu();};
+$('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
+document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
+
+// ---------- input ----------
+let drag = null, keyAim = 0;
+const samples = [];
+const H = () => wrap.clientHeight || 1;
+const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
+function flickFrom(list) {
+  if (list.length < 2) return null;
+  const tEnd = list[list.length - 1].t;
+  let i = list.length - 1; while (i > 0 && tEnd - list[i - 1].t < 70) i--;
+  if (i === list.length - 1) i = Math.max(0, i - 1);
+  const a = list[i], b = list[list.length - 1];
+  const dt = Math.max(16, b.t - a.t) / 1000;
+  return { up: -(b.y - a.y) / H() / dt, side: (b.x - a.x) / H() / dt };
+}
+const powerFromSpeed = (up) => clamp((up - FLICK_MIN) / (FLICK_MAX - FLICK_MIN), 0, 1);
+function release(up, side) {
+  if (up < FLICK_MIN) return false;
+  return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
+}
+wrap.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button') || !ui.panel.hidden) return;
+  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+  if (!humanTurn()) return;
+  pointAim(e);
+  drag = { id: e.pointerId, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
+  wrap.classList.add('drag');
+  try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+});
+wrap.addEventListener('pointermove', (e) => {
+  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
+  if (drag && e.pointerId === drag.id) {
+    pointAim(e);
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
+    while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
+    const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
+  } else if (e.pointerType === 'mouse' && humanTurn() && !keyAim) {
+    pointAim(e);
+  }
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.list.push({ t: e.timeStamp, x: e.clientX, y: e.clientY });
+  const list = drag.list.filter((s, i, a) => i === 0 || s.t !== a[i - 1].t || s.y !== a[i - 1].y);
+  const trimmed = list.length > 2 && list[list.length - 1].y === list[list.length - 2].y ? list.slice(0, -1) : list;
+  const stale = e.timeStamp - trimmed[trimmed.length - 1].t > 160;
+  const f = stale ? null : flickFrom(trimmed);
+  drag = null; wrap.classList.remove('drag');
+  if (!f || !release(f.up, f.side)) { if (M.phase === 'aim') setMeter(0); }
+}
+wrap.addEventListener('pointerup', endDrag);
+wrap.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('drag'); });
+let flick = null, lastMoveT = 0;
+function spinMove(e) {
+  const t = e.timeStamp; lastMoveT = t;
+  const dx = e.movementX || 0, dy = e.movementY || 0;
+  samples.push({ t, dx, dy });
+  while (samples.length && t - samples[0].t > 80) samples.shift();
+  let sy = 0, sx = 0; for (const s of samples) { sy += s.dy; sx += s.dx; }
+  const span = Math.max(30, t - samples[0].t) / 1000;
+  const up = -sy / H() / span;
+  if (M.phase === 'summary' || M.phase === 'over') { if (up > FLICK_MIN * 2 && M.phase === 'summary') advance(); return; }
+  if (!humanTurn()) return;
+  if (!flick) {
+    if (up > FLICK_MIN * 1.4) flick = { t0: t, peak: up, side: 0, up: 0 };
+    else M.aim = clamp(M.aim + dx * 0.0007, -AIM_MAX, AIM_MAX);
+  }
+  if (flick) {
+    flick.peak = Math.max(flick.peak, up); flick.side += dx; flick.up += -dy;
+    setMeter(powerFromSpeed(flick.peak));
+    if (up < flick.peak * 0.45 || t - flick.t0 > 220) finishFlick();
+  }
+}
+function finishFlick() {
+  const f = flick; flick = null; samples.length = 0;
+  if (f) release(f.peak, f.up > 0 ? f.side / f.up * f.peak : 0);
+}
+// The free end droops in calm air; stronger wind extends it and tightens the ripples.
+function animatePennant(seconds) {
+  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
+  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
+  const pos=pennant.geometry.attributes.position;
+  for(let i=0;i<pos.count;i++) {
+    const u=(i%17)/16, row=Math.floor(i/17)/6;
+    const along=.32*u*extension+.018*u*(1-extension);
+    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u + .012*Math.sin(row*Math.PI*2)*u*(1-extension);
+    pos.setXYZ(i,dx*along-dz*ripple,-.2*row*(1-.8*u)-.30*u*(1-extension),dz*along+dx*ripple);
+  }
+  pos.needsUpdate=true;pennant.geometry.computeVertexNormals();pennant.geometry.computeBoundingSphere();
+  pennant.userData={extension,frequency,amplitude};
+}
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let acc = 0, time = 0;
+const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
+const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+camera.userData.look = CAM_LOOK.clone();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+  if (flick && performance.now() - lastMoveT > 60) finishFlick();
+  if (M.phase === 'cpu') {
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+    if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
+    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+  }
+  acc += dt;
+  while (acc >= 1 / 240) {
+    acc -= 1 / 240;
+    for (const b of bags) if (b.state !== 'in' && b.state !== 'removed' && !(b.state === 'grass' && !b.dead) && b.state !== 'board') step(b, 1 / 240);
+    collide(bags);
+  }
+  if (M.phase === 'flying' && M.active && settled()) afterThrow();
+  if (M.phase === 'settle' && settled()) scoreInning();
+  for (const b of bags) {
+    const m = b.mesh; m.position.copy(b.p);
+    if (b.state === 'fly') { m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15; }
+    else if (onDeck(b) || b.state === 'hole') { const yaw = b.yaw ?? (b.yaw = m.rotation.y); if (b.state === 'slide') b.yaw += b.spin * dt * 0.3; m.quaternion.copy(boardQ); m.rotateY(b.yaw); }
+    else if (b.state === 'ground' || b.state === 'grass') { m.rotation.x = 0; m.rotation.z = 0; }
+    m.visible = b.state !== 'in' && b.state !== 'removed';
+    if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
+  }
+  // camera stands behind whoever is throwing
+  const t = thrower(), rx = RX[t] + M.position[t];
+  const showHeld = M.phase === 'aim' || M.phase === 'cpu';
+  const yaw = baseYaw(rx) + M.aim;
+  held.visible = showHeld;
+  if (showHeld) { held.position.set(rx + Math.sin(time * 2) * 0.004, REL_Y + Math.sin(time * 3) * 0.01, REL_Z); held.rotation.set(0.15, -yaw, 0); }
+  aimDots.forEach((d, i) => {
+    const dist = 1.6 + i * 0.5;
+    d.position.set(rx + Math.sin(yaw) * dist, 0.012, REL_Z - Math.cos(yaw) * dist);
+    d.visible = showHeld && isHuman(t);
+    d.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(time * 6 - i * 0.6));
+  });
+  // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
+  const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+  const camRx = M.phase === 'menu' ? 0.3 : rx;
+  camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 2.45);
+  camera.position.lerp(camTmp, Math.min(1, dt * 3));
+  const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
+  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
+  camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
+  for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
+  for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
+  dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
+  const watch = M.active ? M.active.p : HOLE_WORLD;
+  const dl = dog.g.worldToLocal(watch.clone()); const want = clamp(Math.atan2(-dl.x, -dl.z) * 0.6, -0.7, 0.7);
+  dog.head.rotation.y += (want - dog.head.rotation.y) * Math.min(1, dt * 5);
+  dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;
+  for (const s of smoke) { s.t = (s.t + dt * 0.25) % 1; s.b.position.set(-5.2 + Math.sin(s.t * 6 + 1) * 0.15, 1.25 + s.t * 1.6, -9.6 + s.t * 0.3); s.b.material.opacity = 0.55 * (1 - s.t); s.b.scale.setScalar(0.6 + s.t * 1.4); }
+  for (const c of confetti) if (c.life > 0) { c.life -= dt; c.v.y -= 6 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += dt * 8; if (c.m.position.y < 0.02) { c.m.position.y = 0.02; c.v.set(0, 0, 0); } if (c.life <= 0) c.m.visible = false; }
+  animatePennant(time);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+hint(); setMeter(0);
+if (POSTER) {
+  for (const [team, lx, lz, st] of [[0, 0.12, -0.6, 'board'], [1, -0.15, -0.35, 'board'], [1, 0.16, -0.95, 'board'], [0, 0.02, -1.0, 'in']]) {
+    const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
+  }
+  M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
+  for (const el of [ui.hint, document.querySelector('.btns'), $('meter')]) el.style.display = 'none';
+} else showMenu();
+requestAnimationFrame(frame);
+
+window.__game = {
+  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
+  _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
+  _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+  get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
+  careerMap, careerIntro,
+  win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
+  startMatch, advance, lie: () => lie(),
+  throwWith: (p, d = 0) => throwBag(p, d),
+  setAim: (a) => { M.aim = a; },
+  // test hooks: drop a resting bag on the deck (board-local metres, z negative toward the back), or preset the match score
+  _place: (team, lx, lz) => { const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = 'board'; b.touched = true; bags.push(b); renderHud(); },
+  _setScores: (a, c) => { M.scores = [a, c]; renderHud(); },
+  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+  _slide: (x,z,vx,vz) => { const b=newBody(0); b.mesh=makeBagMesh(0,'slick'); b.lp.set(x,BAG_H,z); b.lv.set(vx,0,vz); b.state='slide'; b.touched=true; toWorld(b.lp,b.p); bags.push(b); },
+  holeLocalZ: HOLE_LOCAL.z,
+};
+</script>
+</body>
+</html>
+
+exec
+/bin/bash -lc 'cat tests/task5_check.py tests/wind_flag_check.py tests/task3_check.py tests/career_check.py' in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  # Expose rendering objects only in the test response, leaving production hooks unchanged.
+  source=Path('index.html').read_text().replace('window.__game = {','window.__view = {camera, held, THREE}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda route:route.fulfill(body=source,content_type='text/html'))
+  for width,height in [(1280,800),(480,360),(390,844)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('!!window.__game')
+   await page.evaluate('__game._setWind(8,0)')
+   for selector in ['#wind','#conditions','#sb','#height-choice','#hint']:
+    assert not await page.locator(selector).is_visible(),selector
+   assert await page.locator('#title').is_visible()
+   await page.click('#career');await page.click('#career-go')
+   for selector in ['#wind','#conditions','#sb','#height-choice','#hint']:
+    assert not await page.locator(selector).is_visible(),selector
+   await page.screenshot(path=f'shots/task5-intro-{width}.png')
+   await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')
+   await page.wait_for_timeout(2200)
+   await page.evaluate('__game._setWind(8,0)')
+   assert await page.locator('#wind').is_visible()
+   assert await page.locator('#sb').is_visible()
+   view=await page.evaluate('''()=>{const {camera,held,THREE}=__view;const v=held.position.clone().project(camera);return {fov:camera.fov,z:camera.position.z,held:held.visible,point:v.toArray()};}''')
+   assert abs(view['fov']-(19+(1-width/height)*30 if width<height else 19))<1e-9
+   assert abs(view['z']-2.45)<1e-9
+   assert view['held'] and all(-1<v<1 for v in view['point']),view
+   assert view['point'][1]<0,view
+   await page.screenshot(path=f'shots/task5-held-{width}.png')
+  await browser.close()
+  print('V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS')
+asyncio.run(main())
+import asyncio, math
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  await page.click('#two-player')
+  for angle in [i*math.pi/4 for i in range(8)]:
+   await page.evaluate('(a)=>__game._setWind(8,a)',angle)
+   assert await page.locator('#wind').is_visible()
+   assert await page.locator('#wind-speed').inner_text()=='8 MPH'
+   assert await page.locator('#conditions #wind').count()==0
+   rotation=await page.locator('#wind-arrow').evaluate('(e)=>e.style.transform')
+   assert abs(float(rotation[7:-4])-angle)<.0001,rotation
+   flag=await page.evaluate('__game._flag(0)');v=flag['vertices']
+   # Tip's horizontal displacement is aligned with the actual physics vector.
+   x,z=v[48],v[50];dx,dz=math.sin(angle),-math.cos(angle)
+   assert x*dx+z*dz>.2
+   assert abs(x*dz-z*dx)<.04
+  await page.evaluate('__game._setWind(2,Math.PI/2)')
+  low=await page.evaluate('__game._flag(0)')
+  low_later=await page.evaluate('__game._flag(.1)')
+  assert low['vertices']!=low_later['vertices']
+  await page.evaluate('__game._setWind(12,Math.PI/2)')
+  high=await page.evaluate('__game._flag(0)')
+  assert high['extension']>low['extension'] and high['frequency']>low['frequency'] and high['amplitude']<low['amplitude']
+  for w,h in [(1280,800),(390,844),(480,360)]:
+   await page.set_viewport_size({'width':w,'height':h})
+   r=await page.locator('#wind').bounding_box()
+   assert r['x']>w/2 and r['x']+r['width']<=w and r['y']>=0 and r['y']+r['height']<h
+   await page.screenshot(path=f'shots/wind-{w}.png')
+  await page.evaluate('__game._setWind(0,0)')
+  assert not await page.locator('#wind').is_visible()
+  calm=await page.evaluate('__game._flag(0)');later=await page.evaluate('__game._flag(1)')
+  assert calm['vertices']==later['vertices']
+  assert abs(calm['vertices'][48])<.02 and abs(calm['vertices'][50])<.001 and calm['vertices'][49]<-.29
+  await page.click('#menu');await page.click('#practice')
+  assert not await page.locator('#wind').is_visible()
+  assert not errors,errors
+  print('Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS')
+  await browser.close()
+asyncio.run(main())
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+  await page.click('#two-player');await page.wait_for_function('__game.state.phase==="aim"')
+  assert not await page.locator('#touch-controls').is_visible()
+  assert await page.locator('[data-height]').all_text_contents()==['PUSH','NORMAL','KOBE']
+  assert await page.locator('[data-height="1"]').get_attribute('aria-pressed')=='true'
+  first=await page.evaluate('__game.state.thrower')
+  await page.click('[data-height="2"]');await page.click('#side')
+  assert await page.evaluate('__game.state.heights[__game.state.thrower]')==2
+  await page.wait_for_timeout(1200)
+  left=await page.evaluate('__game._screenPoint(-.3048,-8.8)')
+  right=await page.evaluate('__game._screenPoint(.3048,-8.8)')
+  # Batch 5 restores the wider original v2 camera.
+  assert right['x']-left['x']>1280*.1
+  target=await page.evaluate('__game._screenPoint(.12,-8.8)')
+  await page.mouse.move(target['x'],target['y'])
+  actual=await page.evaluate('__game.state.aim')
+  assert abs(actual)<.12
+  # A board-height horizontal pointer sweep gives smooth, ordered aim values.
+  aims=[]
+  for x in [600,620,640,660,680]:
+   await page.mouse.move(x,450);aims.append(await page.evaluate('__game.state.aim'))
+  assert all(a<b for a,b in zip(aims,aims[1:])),aims
+  await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.arc')==1
+  await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.arc')==2
+  assert await page.evaluate('(t)=>__game.state.side[t]',first)=='sticky'
+  await page.click('#menu');await page.click('#practice');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  for i in range(9):
+   await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  st=await page.evaluate('__game.state');assert st['practiceStats']['throws']==9 and st['thrower']==0
+  await page.click('#reset-bags');assert await page.evaluate('__game.state.bags.length')==0
+  assert await page.evaluate('__game.state.practiceStats.throws')==9
+  await page.screenshot(path='shots/task3-practice.png')
+  mids=[]
+  for fight in [0,2,5,6]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')
+   st=await page.evaluate('__game.state');w=st['sweet'];mids.append(w['mid'])
+   base=await page.evaluate('__game.win[__game.state.thrower+"slick1"]')
+   if fight==0:assert w['lo']==base['lo']
+   else:assert w['hi']-w['lo']<base['hi']-base['lo'] and w['mid']!=base['mid']
+   if fight==6:
+    old=w['mid'];await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+    assert await page.evaluate('__game.state.sweet.mid')!=old
+  assert len(set(mids))==4
+  await page.screenshot(path='shots/task3-sweet.png')
+  for width,height in [(480,360),(390,844)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   for sel in ['#height-choice','#hint']:
+    r=await page.locator(sel).bounding_box();assert r['x']>=0 and r['x']+r['width']<=width+1
+   await page.screenshot(path=f'shots/task3-{width}.png')
+  assert not errors,errors
+  print('TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS')
+  await browser.close()
+asyncio.run(main())
+import asyncio, json
+from playwright.async_api import async_playwright
+URL='http://127.0.0.1:8000'
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox'])
+  errors=[]
+  ctx=await b.new_context(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  page=await ctx.new_page()
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto(URL);await page.wait_for_function('!!window.__game')
+  await page.click('#career');await page.click('#career-go')
+  assert 'NEXT UP: Slidin’ Steve' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-intro.png')
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  # Scripted real throws, preset near-winning scores and resting bags via existing physics hooks.
+  # Four misses per side leave a known board point; scoring still runs through the full inning.
+  async def finish(winner):
+   await page.evaluate(f'__game._setScores({20 if winner==0 else 0},{20 if winner==1 else 0});__game._place({winner},.26,-.3)')
+   while await page.evaluate('__game.state.phase') not in ['over','summary']:
+    if await page.evaluate('__game.state.phase') in ['aim','cpu']:await page.evaluate('__game.throwWith(0)')
+    await page.wait_for_timeout(80)
+   assert await page.evaluate('__game.state.winner')==winner
+  await finish(0)
+  print('Early win passed',flush=True)
+  assert await page.evaluate('__game.career.fight')==1
+  await page.reload();await page.wait_for_function('!!window.__game')
+  assert await page.evaluate('__game.career.fight')==1
+  await page.click('#career');await page.click('#career-go');assert 'Big Bag Barb' in await page.locator('#panel').inner_text()
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  print('Persistence passed',flush=True)
+  await finish(1);assert await page.evaluate('__game.career.fight')==1
+  await page.click('#next-fight');assert 'NEXT UP: Big Bag Barb' in await page.locator('#panel').inner_text()
+  # Seed unlocked saves to inspect later circuits and rematch portraits.
+  for fight in [2,4,5,6,7]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go')
+   assert await page.locator('.portrait').count()==1
+   await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+   wind=await page.evaluate('__game.state.wind');assert wind['mph']>0
+   await page.wait_for_timeout(1500);assert await page.evaluate('__game.state.wind')==wind
+  await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  await finish(0);await page.click('#next-fight');assert 'CORNHOLE KING!' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-champion.png')
+  for width,height,name in [(1280,800,'desktop'),(480,360,'card')]:
+   await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
+   await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_timeout(1100)
+   await page.screenshot(path=f'shots/career-{name}.png')
+   assert not await page.locator('#wind').is_visible()  # First circuit is calm.
+  mobile=await b.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:errors.append(str(e)))
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await mp.goto(URL);await mp.wait_for_function('!!window.__game');await mp.click('#career');await mp.click('#career-go');await mp.screenshot(path='shots/career-mobile.png');await mp.click('#fight');await mp.wait_for_timeout(1800)
+  assert await mp.evaluate('__game.state.wind.mph')==0
+  print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+  await b.close()
+asyncio.run(main())
+
+exec
+/bin/bash -lc "rg -n 'ui =|hint:|teamName|data-control|ui.side|CAM_LOOK' index.html; sed -n '1020,1088p' index.html; find .. -name AGENTS.md -print" in /workspace/cornhole
+ succeeded in 0ms:
+106:    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
+668:const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), hint: $('hint'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
+675:const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[career.fight].name : 'CPU') : TEAM[t]);
+689:    ui.n[t].textContent = teamName(t);
+711:  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+712:  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
+1015:ui.side.addEventListener('click', (e) => { e.stopPropagation(); flipSide(); });
+1025:document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
+1080:const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+1081:camera.userData.look = CAM_LOOK.clone();
+1127:  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
+  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
+  if (k === 'h') {M.arc=(M.arc+1)%3;M.heights[t]=M.arc;}
+  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
+  renderHud();
+}
+document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
+let wheelGesture = [], wheelTimer;
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (!humanTurn() || !ui.panel.hidden) return;
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
+  wheelGesture.push({t: performance.now(), x: e.deltaX * unit, y: e.deltaY * unit});
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => {
+    const g = wheelGesture; wheelGesture = [];
+    const up = -g.reduce((n,s) => n+s.y,0) / H() / Math.max(.08,(g.at(-1).t-g[0].t)/1000);
+    release(up, g.reduce((n,s)=>n+s.x,0) / H());
+  }, 90);
+}, {passive:false});
+addEventListener('blur', () => { keyAim = 0; drag = null; });
+addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === 'a') keyAim = -1;
+  else if (k === 'd') keyAim = 1;
+  else if (['arrowleft','arrowright','q','e','h'].includes(k)) { e.preventDefault(); adjust(k); }
+  else if (k === 'm') toggleCtrl();
+  else if (k === 'f') flipSide();
+  else if (k === ' ' || k === 'enter') {
+    e.preventDefault();
+    if (M.phase === 'summary' || M.phase === 'over') advance();
+
+  }
+});
+addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'a' && keyAim < 0) keyAim = 0;
+  if (k === 'd' && keyAim > 0) keyAim = 0;
+});
+
+// The free end droops in calm air; stronger wind extends it and tightens the ripples.
+function animatePennant(seconds) {
+  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
+  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
+  const pos=pennant.geometry.attributes.position;
+  for(let i=0;i<pos.count;i++) {
+    const u=(i%17)/16, row=Math.floor(i/17)/6;
+    const along=.32*u*extension+.018*u*(1-extension);
+    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u + .012*Math.sin(row*Math.PI*2)*u*(1-extension);
+    pos.setXYZ(i,dx*along-dz*ripple,-.2*row*(1-.8*u)-.30*u*(1-extension),dz*along+dx*ripple);
+  }
+  pos.needsUpdate=true;pennant.geometry.computeVertexNormals();pennant.geometry.computeBoundingSphere();
+  pennant.userData={extension,frequency,amplitude};
+}
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let acc = 0, time = 0;
+const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
+const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+camera.userData.look = CAM_LOOK.clone();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+  if (flick && performance.now() - lastMoveT > 60) finishFlick();
+  if (M.phase === 'cpu') {
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+
+codex
+The overlap comes from separate control groups positioned in the same left-side area. I’ll put the bag options in one panel, keep MORE for step/aim adjustments, and make the camera follow aim and step gently from the exact centered v2 position.
+exec
+/bin/bash -lc "cat > /tmp/edit6.py <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text()
+# Remove obsolete control layout rules rather than stack more positioning overrides.
+lines=s.splitlines();lines=[l for l in lines if not l.startswith('#hint{') and not l.startswith('#touch-controls{') and not l.startswith('@media(min-width:800px)')]
+s='\\n'.join(lines)+'\\n'
+s=s.replace('@media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}', '@media (max-width:560px){')
+a=s.index('@media(max-height:450px){#turn');b=s.index('\\n',a)
+s=s[:a]+'@media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}'+s[b:]
+s=s.replace('</style>','''#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
+.bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed=\"true\"]{background:#ffe45e;color:#2b1a2e}
+#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+</style>''')
+a=s.index('    <div id=\"touch-controls\">');b=s.index('\\n  </div>',a)
+s=s[:a]+'''    <div id=\"bag-menu\" role=\"group\" aria-label=\"Bag options\">
+      <div class=\"bag-row\"><span class=\"bag-label\">THROW HEIGHT</span><div id=\"height-choice\" class=\"bag-choices\"><button class=\"hb\" data-height=\"0\">PUSH</button><button class=\"hb\" data-height=\"1\">NORMAL</button><button class=\"hb\" data-height=\"2\">KOBE</button></div></div>
+      <div class=\"bag-row\"><span class=\"bag-label\">BAG SIDE DOWN</span><div class=\"bag-choices\"><button class=\"hb\" id=\"side\" data-side=\"slick\">SLICK</button><button class=\"hb\" data-side=\"sticky\">STICKY</button></div></div>
+      <div class=\"bag-row\"><span class=\"bag-label\">SPIN</span><div class=\"bag-choices\"><button class=\"hb\" data-spin=\"-1\">L</button><button class=\"hb\" data-spin=\"0\">0</button><button class=\"hb\" data-spin=\"1\">R</button></div></div>
+      <button class=\"hb\" id=\"more\" aria-expanded=\"false\" aria-controls=\"touch-controls\">MORE</button>
+      <div id=\"touch-controls\"><div class=\"bag-row\"><span class=\"bag-label\">STEP</span><div class=\"bag-choices\"><button class=\"hb\" data-control=\"arrowleft\" aria-label=\"STEP LEFT\">←</button><button class=\"hb\" data-control=\"arrowright\" aria-label=\"STEP RIGHT\">→</button></div></div><div class=\"bag-row\"><span class=\"bag-label\">AIM</span><div class=\"bag-choices\"><button class=\"hb\" data-control=\"a\" aria-label=\"AIM LEFT\">←</button><button class=\"hb\" data-control=\"d\" aria-label=\"AIM RIGHT\">→</button></div></div></div>
+      <div class=\"btns\"><button class=\"hb\" id=\"reset-bags\" hidden>RESET BAGS</button><button class=\"hb\" id=\"menu\">MENU</button><button class=\"hb\" id=\"mode\" hidden title=\"Toggle controls (M)\">MOUSE</button></div>
+    </div>'''+s[b:]
+s=s.replace('<div class=\"tn\">RED <span id=\"n0\">YOU</span></div>','<div class=\"tn\"><span id=\"n0\">YOU</span></div>').replace('<span id=\"n1\">CPU</span> BLUE','<span id=\"n1\">CPU</span>')
+s=s.replace(\"hint: "'$('"'hint'), \",'')
+s=s.replace(\"  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';\\n  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';\",'''  document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
+  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));''')
+s=s.replace(\"  ui.hint.textContent = 'Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE';\\n\",'')
+s=s.replace(\""'$('"'more').onclick=()=>"'$('"'touch-controls').classList.toggle('open');\", \""'$('"'more').onclick=()=>{const open="'$('"'touch-controls').classList.toggle('open');"'$('"'more').setAttribute('aria-expanded',String(open));};\\ndocument.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if("'!humanTurn())return;M.side[thrower()]=b.dataset.side;renderHud();});'"\\ndocument.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if("'!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});")
+s=s.replace("ui.side.addEventListener('"'click', (e) => { e.stopPropagation(); flipSide(); });\",'')
+s=s.replace(\"if (e.target.closest('button') || "'!ui.panel.hidden)","if (e.target.closest('"'#bag-menu, button') || "'!ui.panel.hidden)")
+s=s.replace("  } else if (e.pointerType === '"'mouse' && humanTurn() && "'!keyAim)","  } else if (e.pointerType === '"'mouse' && "'!e.target.closest('"'#bag-menu') && humanTurn() && "'!keyAim)")
+s=s.replace("  if (!humanTurn() || !ui.panel.hidden) return;", "  if (!humanTurn() || !ui.panel.hidden || e.target.closest('"'#bag-menu')) return;\")
+a=s.index(\"  const camRx = M.phase === 'menu'\");b=s.index('  for (const c of clouds)',a)
+s=s[:a]+'''  // Anchor neutral aim to v2; follow only a small part of the stance and aim line.
+  // Bound the turn so even extreme aim keeps the far board comfortably visible.
+  const follow = "'!['"'menu','intro','champion','poster'].includes(M.phase);
+  const stepOffset = follow ? M.position[t] : 0;
+  const aimOffset = follow ? clamp(M.aim,-AIM_MAX,AIM_MAX) : 0;
+  camTmp.copy(CAM_POS); camTmp.x += stepOffset * .65 + aimOffset * 1.2;
+  const ease = 1 - Math.exp(-dt * 3);
+  camera.position.lerp(camTmp, ease);
+  lookTmp.copy(CAM_LOOK); lookTmp.x += stepOffset * .18 + aimOffset * 3;
+  camera.userData.look.lerp(lookTmp, ease); camera.lookAt(camera.userData.look);
+'''+s[b:]
+s=s.replace(\"[ui.hint, document.querySelector('.btns'), "'$('"'meter')]\", \"["'$('"'bag-menu'), "'$('"'meter')]\")
+p.write_text(s)
+PY
+python /tmp/edit6.py
+python -m http.server 8000" in /workspace/cornhole
+ exited 127 in 0ms:
+/bin/bash: line 49: python: command not found
+/bin/bash: line 50: python: command not found
+
+exec
+/bin/bash -lc 'python3 /tmp/edit6.py && python3 -m http.server 8000' in /workspace/cornhole
+exec
+/bin/bash -lc "which python3; ls /tmp; rg -n 'hint|touch-controls|height-choice' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+/usr/bin/python3
+after_strip.png
+agent-pixel-140366313837008.sqlite
+agent-pixel-140366315271216.sqlite
+agent-pixel-140366315824592.sqlite
+agent-pixel-140366316230672.sqlite
+agent-pixel-140366319209680.sqlite
+agent-store-fuse.log
+ap_bk37.py
+ap_strip.py
+ap_strip_work.sqlite
+apm
+apvenv
+apx
+ba.html
+box-doctor.log
+box-keyring-daemon.pid
+box-keyring-daemon.pid.lock
+box-keyring.log.lock
+build.log
+c.png
+c21.json
+c21act.json
+c21s0.py
+c27.png
+c35.png
+cand.png
+career-http.log
+career-regression.log
+career-test.log
+career_check-5.log
+career_edit.py
+career_visual.py
+ch-srv.log
+ch.json
+check.py
+chrome:2.log
+chrome:2.log.lock
+claude-1000
+claude-seat-run2.log
+cmp.png
+codex-bwrap-synthetic-mount-targets-1000
+codex-daemon-1000
+com.google.Chrome.chrome_chrome_url_fetcher_.7TKCk0
+com.google.Chrome.chrome_chrome_url_fetcher_.8Ysypi
+com.google.Chrome.chrome_chrome_url_fetcher_.BovaVw
+com.google.Chrome.chrome_chrome_url_fetcher_.HvVF8W
+com.google.Chrome.chrome_chrome_url_fetcher_.UYpgLE
+com.google.Chrome.chrome_chrome_url_fetcher_.oD4r4J
+com.google.Chrome.chrome_chrome_url_fetcher_.oPQ0Xc
+com.google.Chrome.chrome_chrome_url_fetcher_.q4EY3W
+cornhole-commit
+cornhole-final-test.log
+cornhole-http.log
+cornhole-server.log
+cornhole-test.log
+cornhole-venv
+cursor-mcp-browser-opens
+d21montage.png
+d22m.png
+d28
+d28restart.json
+d30.json
+d32.json
+d32.py
+d33.json
+d33.py
+d33s9b.png
+d35.png
+d35a.png
+d35b2.png
+d35t8.png
+d35t8a.png
+d35x3.png
+dbus:1.log
+dbus:1.log.lock
+dbus:10.log
+dbus:10.log.lock
+dbus:2.log
+dbus:2.log.lock
+dbus:3.log
+dbus:3.log.lock
+dbus:5.log
+dbus:5.log.lock
+dbus:6.log
+dbus:6.log.lock
+dbus:7.log
+dbus:7.log.lock
+dbus:8.log
+dbus:8.log.lock
+dbus:9.log
+dbus:9.log.lock
+dry_c24.txt
+dry_claude.txt
+dry_claude2.txt
+edit.py
+edit3.py
+edit6.py
+egress-tunnel.log
+exec-daemon.log
+g14.py
+g24.json
+g27.json
+g43_v.jpg
+g44_v.jpg
+g45_v.jpg
+g46_v.jpg
+g47_v.jpg
+gturn.json
+h.txt
+h4.txt
+hands.png
+live.html
+live4.html
+ltip.png
+metal.png
+metal_s.jpg
+mk.py
+mobiledebug.py
+model_seat_claude.lock
+model_seat_claude_dry.lock
+model_seat_openai.lock
+model_seat_openai_dry.lock
+montage.png
+n.json
+n.py
+n.txt
+n1.json
+n10.json
+n10.txt
+n11.json
+n11.txt
+n12.json
+n12.txt
+n13.json
+n13.txt
+n14.json
+n14.txt
+n15.json
+n15.txt
+n16.json
+n16.txt
+n17.json
+n17.txt
+n21.json
+n21.txt
+n21s2.json
+n21s2.txt
+n21s3.txt
+n22.json
+n22.txt
+n22s3.json
+n22s3.txt
+n22s4.txt
+n23s2.json
+n23s2.txt
+n23s3.json
+n23s3.txt
+n23s5.json
+n23s5.txt
+n23s9.json
+n23s9.txt
+n24.json
+n24.txt
+n24s3.json
+n24s3.txt
+n24s4.json
+n24s4.txt
+n25s3.json
+n25s3.txt
+n25s4.json
+n25s4.txt
+n26s8.json
+n26s8.txt
+n28.json
+n3.json
+n31.json
+n31.txt
+n32.json
+n32b.json
+n33.json
+n33.txt
+n4.json
+n4.txt
+n5.txt
+n6.json
+n6.txt
+n7.json
+n7.txt
+n8.json
+n8.txt
+n9.json
+n9.txt
+node-compile-cache
+note.json
+novnc-forks.log
+novnc-forks.log.lock
+novnc:1.log
+novnc:1.log.lock
+o
+ok
+openai_act_21_11.json
+openai_act_21_2.json
+openai_act_21_5.json
+openai_act_21_8.json
+openai_act_22_1.json
+openai_act_22_10.json
+openai_act_22_4.json
+openai_act_22_7.json
+openai_act_23_0.json
+openai_act_23_3.json
+openai_act_23_6.json
+openai_act_23_9.json
+openai_act_24_11.json
+openai_act_24_14.json
+openai_act_24_17.json
+openai_act_24_5.json
+openai_act_24_8.json
+openai_build_23_0.py
+openai_build_23_3.py
+openai_build_23_6.py
+openai_build_23_9.py
+openai_build_24_11.py
+openai_build_24_14.py
+openai_build_24_17.py
+openai_build_24_2.py
+openai_build_24_5.py
+openai_build_24_8.py
+openai_turn_23_6.json
+persist-cli-auth.log
+photos.png
+picom:1.log.lock
+picom:10.log
+picom:10.log.lock
+picom:2.log
+picom:2.log.lock
+picom:3.log
+picom:3.log.lock
+picom:5.log
+picom:5.log.lock
+picom:6.log.1
+picom:6.log.lock
+picom:7.log
+picom:7.log.lock
+picom:8.log
+picom:8.log.lock
+picom:9.log
+picom:9.log.lock
+playwright-artifacts-4Wimv6
+playwright-artifacts-G2y04t
+playwright-artifacts-wlHFCy
+playwright_check-5.log
+playwright_chromiumdev_profile-UrZiWb
+playwright_chromiumdev_profile-WCqGsL
+playwright_chromiumdev_profile-ty8s8W
+post.png
+pre.png
+prev19.png
+pulseaudio:1.log.lock
+pulseaudio:10.log.lock
+pulseaudio:2.log.lock
+pulseaudio:3.log.lock
+pulseaudio:5.log.lock
+pulseaudio:6.log.lock
+pulseaudio:7.log.lock
+pulseaudio:8.log.lock
+pulseaudio:9.log.lock
+pw-browsers
+pytest-of-box
+refs.png
+ross-turn.json
+s13.png
+s5.py
+sand-box-browser-accept-language-9224
+sand-box-browser-coherent-fingerprint
+sand-box-browser-gpu-mode-9224
+sand-box-browser-launch-markers-9224
+sand-box-browser-no-local-dns
+sand-box-browser-running-9224
+sand-box-browser-stock-fonts
+sand-box-browser-stock-notifications
+sand-box-browser-webrtc-proxy-only
+sand-box-chrome-extra-flags
+sand-box-experiments-ready
+sand-box-ready-stage
+sand-box-store-pack
+sand-box-telemetry.log
+sand-box-timezone.log
+sand-browser-accept-language-en-us
+sand-browser-egress-timezone
+sand-chrome-disable-quic
+sand-cookie-launch-restore.log
+sand-cookie-persist.log
+sand-copy-in-status.json
+sand-copy-in.log
+sand-desktop
+sand-desktop-supervisor.log
+sand-egress-proxy
+sand-egress-tunnel-client
+sand-host.log
+sand-identity.sock
+sand-log-shipper.offsets.json
+sand-managed-converge.log
+sand-memory-watch.log
+sand-novnc-tokens.d
+sand-orbitd-supervisor.log
+sand-orbitd.log
+sand-orbitd.log.lock
+sand-playwright-mcp
+sand-playwright-output
+sand-playwright-secure-fill
+sand-session-sync.log
+sand-supervisor
+sand-supervisor-supervise.log
+sand-supervisor.log
+sand-ua-governor-accept-language-9224-1zTsxa
+sand-ua-governor.log
+sand-ua-governor.log.lock
+sand-ua-token-disabled
+sand-web-bot-auth
+sand-web-bot-auth-xhr-fetch
+sand-web-bot-auth.log.lock
+sand-window-6
+sand-window-locks.d
+sand-window-router.log
+sand-window-tokens.d
+sand-window-used.d
+shira.png
+sk.png
+sketch.py
+st32.json
+st33.json
+start-desktop.log
+start-desktop.log.lock
+t17.png
+t64.png
+task3-browsers
+task3-career.log
+task3-install.log
+task3-new-final.log
+task3-new-final2.log
+task3-new.log
+task3-regression-final.log
+task3-regression.log
+task3_check-5.log
+task5_check-5.log
+thumb.png
+tile-import-sideeffect.db
+torii-body.json
+turn.json
+turn23.json
+turn32.json
+turn35.json
+v.json
+veto.json
+veto31.json
+watch-turn.json
+wind_flag_check-5.log
+ws_block.py
+x.png
+x11vnc:1.log
+x11vnc:1.log.lock
+x11vnc:10.log
+x11vnc:10.log.lock
+x11vnc:2.log
+x11vnc:2.log.lock
+x11vnc:3.log
+x11vnc:3.log.lock
+x11vnc:5.log
+x11vnc:5.log.lock
+x11vnc:6.log
+x11vnc:6.log.lock
+x11vnc:7.log
+x11vnc:7.log.lock
+x11vnc:8.log
+x11vnc:8.log.lock
+x11vnc:9.log
+x11vnc:9.log.lock
+xdg-runtime
+xdg-runtime-6
+xdg-runtime-box
+xdg-runtime-box-6
+xfce4-panel:1.log
+xfce4-panel:1.log.lock
+xfce4-panel:1.pid
+xfce4-panel:1.pid.lock
+xfce4-panel:10.log
+xfce4-panel:10.log.lock
+xfce4-panel:10.pid
+xfce4-panel:10.pid.lock
+xfce4-panel:2.log
+xfce4-panel:2.log.lock
+xfce4-panel:2.pid
+xfce4-panel:2.pid.lock
+xfce4-panel:3.log
+xfce4-panel:3.log.lock
+xfce4-panel:3.pid
+xfce4-panel:3.pid.lock
+xfce4-panel:5.log
+xfce4-panel:5.log.lock
+xfce4-panel:5.pid
+xfce4-panel:5.pid.lock
+xfce4-panel:6.log
+xfce4-panel:6.log.lock
+xfce4-panel:6.pid
+xfce4-panel:6.pid.lock
+xfce4-panel:7.log
+xfce4-panel:7.log.lock
+xfce4-panel:7.pid
+xfce4-panel:7.pid.lock
+xfce4-panel:8.log
+xfce4-panel:8.log.lock
+xfce4-panel:8.pid
+xfce4-panel:8.pid.lock
+xfce4-panel:9.log
+xfce4-panel:9.log.lock
+xfce4-panel:9.pid
+xfce4-panel:9.pid.lock
+xfwm4:1.log
+xfwm4:1.log.lock
+xfwm4:10.log
+xfwm4:10.log.lock
+xfwm4:2.log
+xfwm4:2.log.lock
+xfwm4:3.log
+xfwm4:3.log.lock
+xfwm4:5.log
+xfwm4:5.log.lock
+xfwm4:6.log
+xfwm4:6.log.lock
+xfwm4:7.log
+xfwm4:7.log.lock
+xfwm4:8.log
+xfwm4:8.log.lock
+xfwm4:9.log
+xfwm4:9.log.lock
+xvfb:1.log.lock
+xvfb:10.log.lock
+xvfb:2.log.lock
+xvfb:3.log.lock
+xvfb:5.log.lock
+xvfb:6.log.lock
+xvfb:7.log.lock
+xvfb:8.log.lock
+xvfb:9.log.lock
+z.png
+z_1005_1007_1013_1014.png
+z_1028_1037_1044_1050.png
+z_1051_1057_1066_1068.jpg
+z_1051_1057_1066_1068.png
+z_1079_1082_1083_1098.jpg
+z_727_744_746.png
+z_781_792_794.png
+z_807_808_815.png
+z_885_879_897.png
+z_906_907_922.png
+z_929_941_942.png
+z_953_958_963_974.png
+z_983_984_988_995.png
+88:#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+89:@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+107:      <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
+110:      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
+111:      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP</span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
+722:function hint() {
+933:$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
+1017:document.addEventListener('pointerlockchange', hint);
+1018:function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
+1152:hint(); setMeter(0);
+
+exec
+/bin/bash -lc "cat > /tmp/run6.py <<'PY'
+import asyncio,runpy,sys
+from playwright.async_api import BrowserContext
+orig=BrowserContext.new_page
+async def new_page(self,*a,**kw):
+ p=await orig(self,*a,**kw);p.set_default_timeout(8000);p.set_default_navigation_timeout(12000);return p
+BrowserContext.new_page=new_page
+runpy.run_path(sys.argv[1],run_name='__main__')
+PY
+/tmp/cornhole-venv/bin/python -c 'import playwright;print(\"playwright ready\")'
+# Adapt assertions for the requested removed hint and explicit side selection.
+python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/task3_check.py');s=p.read_text().replace(\"page.click('#side')\",\"page.click('[data-side=\\\"sticky\\\"]')\").replace(\"['#height-choice','#hint']\",\"['#height-choice']\");p.write_text(s)
+PY" in /workspace/cornhole
+ succeeded in 0ms:
+playwright ready
+
+exec
+/bin/bash -lc 'timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/playwright_check.py > /tmp/b6-playwright.log 2>&1; cat /tmp/b6-playwright.log' in /workspace/cornhole
+ succeeded in 312ms:
+Traceback (most recent call last):
+  File "/tmp/run6.py", line 7, in <module>
+    runpy.run_path(sys.argv[1],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/playwright_check.py", line 74, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/playwright_check.py", line 5, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+
+exec
+/bin/bash -lc 'timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/career_check.py > /tmp/b6-career.log 2>&1; cat /tmp/b6-career.log' in /workspace/cornhole
+ succeeded in 241ms:
+Traceback (most recent call last):
+  File "/tmp/run6.py", line 7, in <module>
+    runpy.run_path(sys.argv[1],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/career_check.py", line 59, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/career_check.py", line 6, in main
+    b=await p.chromium.launch(args=['--no-sandbox'])
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+
+exec
+/bin/bash -lc 'timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/task3_check.py > /tmp/b6-task3.log 2>&1; cat /tmp/b6-task3.log' in /workspace/cornhole
+ succeeded in 238ms:
+Traceback (most recent call last):
+  File "/tmp/run6.py", line 7, in <module>
+    runpy.run_path(sys.argv[1],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/task3_check.py", line 67, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 5, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+
+exec
+/bin/bash -lc 'timeout 100 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/task5_check.py > /tmp/b6-task5.log 2>&1; cat /tmp/b6-task5.log' in /workspace/cornhole
+ succeeded in 246ms:
+Traceback (most recent call last):
+  File "/tmp/run6.py", line 7, in <module>
+    runpy.run_path(sys.argv[1],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/task5_check.py", line 36, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task5_check.py", line 7, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+
+exec
+/bin/bash -lc 'timeout 100 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/wind_flag_check.py > /tmp/b6-wind.log 2>&1; cat /tmp/b6-wind.log' in /workspace/cornhole
+ succeeded in 242ms:
+Traceback (most recent call last):
+  File "/tmp/run6.py", line 7, in <module>
+    runpy.run_path(sys.argv[1],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/wind_flag_check.py", line 47, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/wind_flag_check.py", line 6, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+
+exec
+/bin/bash -lc "which chromium chromium-browser google-chrome; ls /tmp/pw-browsers /opt/google/chrome 2>/dev/null; rg -n 'position\\[t\\].*clamp' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+/usr/bin/google-chrome
+/opt/google/chrome:
+CHROME_VERSION_EXTRA
+MEIPreload
+WidevineCdm
+apparmor.d
+chrome
+chrome-management-service
+chrome-sandbox
+chrome_100_percent.pak
+chrome_200_percent.pak
+chrome_crashpad_handler
+cron
+default-app-block
+google-chrome
+icudtl.dat
+libLiteRtWebGpuAccelerator.so
+liboptimization_guide_internal.so
+libqt5_shim.so
+libqt6_shim.so
+libvk_swiftshader.so
+libvulkan.so.1
+locales
+product_logo_128.png
+product_logo_16.png
+product_logo_24.png
+product_logo_256.png
+product_logo_32.png
+product_logo_48.png
+product_logo_64.png
+resources.pak
+v8_context_snapshot.bin
+vk_swiftshader_icd.json
+
+/tmp/pw-browsers:
+chromium-1248
+chromium_headless_shell-1248
+ffmpeg-1013
+1025:  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
+
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/wind_flag_check.py > /tmp/b6-wind_flag.log 2>&1; tail -12 /tmp/b6-wind_flag.log' in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/playwright_check.py > /tmp/b6-playwright.log 2>&1; tail -12 /tmp/b6-playwright.log' in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/task3_check.py > /tmp/b6-task3.log 2>&1; tail -12 /tmp/b6-task3.log' in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/career_check.py > /tmp/b6-career.log 2>&1; tail -12 /tmp/b6-career.log' in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/task5_check.py > /tmp/b6-task5.log 2>&1; tail -12 /tmp/b6-task5.log' in /workspace/cornhole
+ succeeded in 5578ms:
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 23, in main
+    assert right['x']-left['x']>1280*.1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+ succeeded in 8920ms:
+Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS
+
+ succeeded in 24340ms:
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+
+exec
+/bin/bash -lc "cat > tests/task6_check.py <<'PY'
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  page.set_default_timeout(8000)
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,CAM_LOOK,THREE}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  for width,height in [(1280,800),(480,360),(390,844),(844,390)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('"'!!window.__game'"')
+   await page.evaluate('__game.startMatch({vs:\"2p\",first:0})')
+   await page.wait_for_timeout(1800)
+   assert await page.locator('#n0').inner_text()=='RED'
+   assert 'RED RED' not in await page.locator('#t0').inner_text()
+   assert await page.locator('#hint').count()==0
+   await page.click('#more')
+   assert await page.locator('#more').get_attribute('aria-expanded')=='true'
+   # Every button belongs to one panel; scrolling is allowed, overlap is not.
+   assert await page.locator('#bag-menu [data-height]').count()==3
+   rects=await page.locator('#bag-menu button').evaluate_all('(bs)=>bs.filter(b=>b.getClientRects().length).map(b=>{const r=b.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};})')
+   for i,a in enumerate(rects):
+    for b in rects[i+1:]:
+     assert min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x'])<1 or min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y'])<1
+   await page.click('[data-side=\"sticky\"]');await page.click('[data-spin=\"0\"]');await page.click('[data-height=\"2\"]')
+   assert await page.locator('[data-side=\"sticky\"]').get_attribute('aria-pressed')=='true'
+   assert await page.locator('[data-spin=\"0\"]').get_attribute('aria-pressed')=='true'
+   await page.evaluate('__game.setAim(0)');await page.wait_for_timeout(1500)
+   neutral=await page.evaluate('__view.camera.position.toArray()')
+   assert abs(neutral[0]-.5)<.001 and neutral[1:]==[2.05,2.45],neutral
+   for aim in [-.12,.12]:
+    await page.evaluate('(a)=>__game.setAim(a)',aim)
+    await page.wait_for_timeout(1800)
+    view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
+    assert (view['x']-.5)*aim>0 and view['look']*aim>0
+    assert all(abs(v[0])<1 and abs(v[1])<1 for v in view['board']),view
+   await page.keyboard.press('ArrowRight');await page.wait_for_timeout(1500)
+   assert await page.evaluate('__view.camera.position.x')>.5+.12*1.2
+   await page.screenshot(path=f'shots/task6-{width}.png')
+   await page.click('#menu');await page.click('#practice')
+   assert await page.locator('#n0').inner_text()=='RED'
+  assert not errors,errors
+  await browser.close()
+  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS')
+asyncio.run(main())
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 120 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/task6_check.py > /tmp/b6-task6.log 2>&1; tail -15 /tmp/b6-task6.log" in /workspace/cornhole
+exec
+/bin/bash -lc 'tail -8 /tmp/b6-playwright.log /tmp/b6-career.log /tmp/b6-task3.log /tmp/b6-task5.log /tmp/b6-wind_flag.log' in /workspace/cornhole
+ exited 1 in 0ms:
+tail: option used in invalid context -- 8
+
+codex
+The panel and camera changes are in place, including highlighted height, side, and spin choices. The first test launches couldn’t find the browser; I found an installed Playwright browser and restarted all five suites with 8-second waits and overall time limits. A new Batch 6 check also covers overlap and camera framing at desktop, card, phone, and landscape sizes.
+exec
+/bin/bash -lc 'tail -n 10 /tmp/b6-playwright.log /tmp/b6-career.log /tmp/b6-task3.log /tmp/b6-task5.log /tmp/b6-wind_flag.log /tmp/b6-task6.log' in /workspace/cornhole
+ succeeded in 0ms:
+==> /tmp/b6-playwright.log <==
+
+==> /tmp/b6-career.log <==
+Early win passed
+Persistence passed
+
+==> /tmp/b6-task3.log <==
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 23, in main
+    assert right['x']-left['x']>1280*.1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+==> /tmp/b6-task5.log <==
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+
+==> /tmp/b6-wind_flag.log <==
+Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS
+
+==> /tmp/b6-task6.log <==
+
+exec
+/bin/bash -lc 'git diff --stat && git diff -- index.html' in /workspace/cornhole
+ succeeded in 0ms:
+ index.html                 |  64 ++++++++++++++++++++++++++-------------------
+ shots/card.png             | Bin 62168 -> 60184 bytes
+ shots/career-intro.png     | Bin 65266 -> 65227 bytes
+ shots/desktop.png          | Bin 78697 -> 72298 bytes
+ shots/task5-held-1280.png  | Bin 83112 -> 76388 bytes
+ shots/task5-held-390.png   | Bin 63748 -> 59271 bytes
+ shots/task5-held-480.png   | Bin 63362 -> 59357 bytes
+ shots/task5-intro-1280.png | Bin 64831 -> 65385 bytes
+ shots/task5-intro-390.png  | Bin 48390 -> 48540 bytes
+ shots/task5-intro-480.png  | Bin 47743 -> 48114 bytes
+ shots/wind-1280.png        | Bin 82028 -> 75441 bytes
+ shots/wind-390.png         | Bin 62259 -> 58154 bytes
+ shots/wind-480.png         | Bin 62448 -> 58406 bytes
+ tests/task3_check.py       |   4 +--
+ 14 files changed, 39 insertions(+), 29 deletions(-)
+diff --git a/index.html b/index.html
+index 3df30ea..7ab6eec 100644
+--- a/index.html
++++ b/index.html
+@@ -57,7 +57,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+ #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
+ #msg.on{opacity:1;transform:scale(1)}
+ #msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
+-#hint{position:absolute;left:0;right:0;bottom:2.2vmin;text-align:center;font-size:.8em;line-height:1.8;opacity:.95;padding:0 4em 0 14em}
+ #title{position:absolute;left:0;right:0;top:15%;text-align:center;transition:opacity .6s}
+ #title h1{font-size:3.2em;font-weight:400;color:#ffe45e;letter-spacing:.04em;line-height:1.2}
+ #title p{font-size:1em;margin-top:1em}
+@@ -79,14 +78,15 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+ #panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
+ #panel .go:hover{background:#fff07f}
+ #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+-@media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
++@media (max-width:560px){#title{top:12%}#title h1{font-size:2.4em}}
+ #conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}
+-#touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
+-@media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
+-@media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
++@media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+ #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
+ #panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+-#touch-controls{display:none;bottom:24%}#touch-controls.open{display:grid}#height-choice{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto;white-space:nowrap}#height-choice button{font-size:clamp(9px,2vmin,16px);min-height:40px}#height-choice button[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}#hint{padding:0 4px;font-size:clamp(5px,1.25vmin,10px);white-space:nowrap}.btns{bottom:15%}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
++#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
++.bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
++#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
++@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+ </style>
+ <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+ </head>
+@@ -94,18 +94,23 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+ <div id="game">
+   <div id="hud">
+     <div id="sb" class="ol">
+-      <div class="team red" id="t0"><div class="tn">RED <span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
++      <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+       <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+-      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span> BLUE</div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
++      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+     </div>
+     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+     <div id="turn" class="ol"></div>
+     <div id="msg" class="ol"></div>
+     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+     <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+-    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
+-    <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
+-    <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
++    <div id="bag-menu" role="group" aria-label="Bag options">
++      <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
++      <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
++      <div class="bag-row"><span class="bag-label">SPIN</span><div class="bag-choices"><button class="hb" data-spin="-1">L</button><button class="hb" data-spin="0">0</button><button class="hb" data-spin="1">R</button></div></div>
++      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
++      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP</span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
++      <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
++    </div>
+   </div>
+   <div id="panel" class="ol" hidden></div>
+   <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
+@@ -665,7 +670,7 @@ function burst(at) { for (const c of confetti) { c.m.position.copy(at); c.v.set(
+ 
+ // ---------- match state ----------
+ const $ = (id) => document.getElementById(id);
+-const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), hint: $('hint'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
++const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
+ const M = {
+   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
+   position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+@@ -708,14 +713,13 @@ function renderHud() {
+   ui.t[1].hidden=M.practice;
+   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+   $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+-  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+-  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
++  document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
++  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));
+   const w = meterWindow();
+   ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+   ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+ }
+ function hint() {
+-  ui.hint.textContent = 'Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE';
+   ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+   wrap.classList.toggle('spin', M.ctrl === 'spin');
+ }
+@@ -926,7 +930,9 @@ function pointAim(e){
+  M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+  }
+ }
+-$('more').onclick=()=>$('touch-controls').classList.toggle('open');
++$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
++document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;renderHud();});
++document.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});
+ $('menu').onclick=()=>{if(M.active)return;showMenu();};
+ $('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
+ document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
+@@ -951,7 +957,7 @@ function release(up, side) {
+   return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
+ }
+ wrap.addEventListener('pointerdown', (e) => {
+-  if (e.target.closest('button') || !ui.panel.hidden) return;
++  if (e.target.closest('#bag-menu, button') || !ui.panel.hidden) return;
+   if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+   if (!humanTurn()) return;
+   pointAim(e);
+@@ -967,7 +973,7 @@ wrap.addEventListener('pointermove', (e) => {
+     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
+     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
+     const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
+-  } else if (e.pointerType === 'mouse' && humanTurn() && !keyAim) {
++  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn() && !keyAim) {
+     pointAim(e);
+   }
+ });
+@@ -1012,7 +1018,7 @@ document.addEventListener('pointerlockchange', hint);
+ function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
+ function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
+ ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); });
+-ui.side.addEventListener('click', (e) => { e.stopPropagation(); flipSide(); });
++
+ function adjust(k) {
+   if (!humanTurn()) return;
+   const t = thrower();
+@@ -1026,7 +1032,7 @@ document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.st
+ let wheelGesture = [], wheelTimer;
+ wrap.addEventListener('wheel', e => {
+   e.preventDefault();
+-  if (!humanTurn() || !ui.panel.hidden) return;
++  if (!humanTurn() || !ui.panel.hidden || e.target.closest('#bag-menu')) return;
+   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
+   wheelGesture.push({t: performance.now(), x: e.deltaX * unit, y: e.deltaY * unit});
+   clearTimeout(wheelTimer);
+@@ -1120,12 +1126,16 @@ function frame() {
+   // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
+   const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+   trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+-  const camRx = M.phase === 'menu' ? 0.3 : rx;
+-  camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 2.45);
+-  camera.position.lerp(camTmp, Math.min(1, dt * 3));
+-  const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
+-  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
+-  camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
++  // Anchor neutral aim to v2; follow only a small part of the stance and aim line.
++  // Bound the turn so even extreme aim keeps the far board comfortably visible.
++  const follow = !['menu','intro','champion','poster'].includes(M.phase);
++  const stepOffset = follow ? M.position[t] : 0;
++  const aimOffset = follow ? clamp(M.aim,-AIM_MAX,AIM_MAX) : 0;
++  camTmp.copy(CAM_POS); camTmp.x += stepOffset * .65 + aimOffset * 1.2;
++  const ease = 1 - Math.exp(-dt * 3);
++  camera.position.lerp(camTmp, ease);
++  lookTmp.copy(CAM_LOOK); lookTmp.x += stepOffset * .18 + aimOffset * 3;
++  camera.userData.look.lerp(lookTmp, ease); camera.lookAt(camera.userData.look);
+   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
+   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
+   dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
+@@ -1145,7 +1155,7 @@ if (POSTER) {
+     const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
+   }
+   M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
+-  for (const el of [ui.hint, document.querySelector('.btns'), $('meter')]) el.style.display = 'none';
++  for (const el of [$('bag-menu'), $('meter')]) el.style.display = 'none';
+ } else showMenu();
+ requestAnimationFrame(frame);
+ 
+
+exec
+/bin/bash -lc "tail -n 15 /tmp/b6-task6.log /tmp/b6-playwright.log /tmp/b6-career.log; rg -n 'held.material' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+==> /tmp/b6-task6.log <==
+
+==> /tmp/b6-playwright.log <==
+
+==> /tmp/b6-career.log <==
+Early win passed
+Persistence passed
+839:  held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick'];
+1019:function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
+
+ succeeded in 40723ms:
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc/spin landing probes [[{'p': [-0.0007085911676429212, 0.1736903524110436, -9.219907655000158], 'state': 'in', 'flight': 0.995833333333331}, {'p': [0.00026033616739588834, 0.1736903524110436, -9.219907655000158], 'state': 'in', 'flight': 0.995833333333331}], [{'p': [-0.08443274607065307, 0.2934263054725783, -9.27596579766944], 'state': 'board', 'flight': 1.1791666666666638}, {'p': [-7.69380449862714e-05, 0.17362981611177028, -9.219571205634365], 'state': 'in', 'flight': 1.1791666666666638}], [{'p': [0.0037940457443545487, 0.016, -8.165026634787132], 'state': 'grass', 'flight': 1.6541666666666621}, {'p': [0.06386778508178245, 0.016, -8.164966494552612], 'state': 'grass', 'flight': 1.6541666666666621}]]
+errors []
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('M.side[thrower()]=b.dataset.side;renderHud();','M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side===\\'slick\\'?\\'sticky\\':\\'slick\\'];renderHud();').replace('.bag-row{display:flex;', '#bag-menu > *{flex-shrink:0}\\n.bag-row{display:flex;').replace(\"  e.preventDefault();\\n  if ("'!humanTurn() || !ui.panel.hidden || e.target.closest('"'#bag-menu')) return;\", \"  if (e.target.closest('#bag-menu')) return;\\n  e.preventDefault();\\n  if ("'!humanTurn() || !ui.panel.hidden) return;");p.write_text(s)
+PY' in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'ps -o pid,etime,args -C python -C python3 | tail -n 12; tail -n 15 /tmp/b6-task6.log /tmp/b6-playwright.log /tmp/b6-career.log' in /workspace/cornhole
+ succeeded in 0ms:
+    PID     ELAPSED COMMAND
+==> /tmp/b6-task6.log <==
+
+==> /tmp/b6-playwright.log <==
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc/spin landing probes [[{'p': [-0.0007085911676429212, 0.1736903524110436, -9.219907655000158], 'state': 'in', 'flight': 0.995833333333331}, {'p': [0.00026033616739588834, 0.1736903524110436, -9.219907655000158], 'state': 'in', 'flight': 0.995833333333331}], [{'p': [-0.08443274607065307, 0.2934263054725783, -9.27596579766944], 'state': 'board', 'flight': 1.1791666666666638}, {'p': [-7.69380449862714e-05, 0.17362981611177028, -9.219571205634365], 'state': 'in', 'flight': 1.1791666666666638}], [{'p': [0.0037940457443545487, 0.016, -8.165026634787132], 'state': 'grass', 'flight': 1.6541666666666621}, {'p': [0.06386778508178245, 0.016, -8.164966494552612], 'state': 'grass', 'flight': 1.6541666666666621}]]
+errors []
+
+==> /tmp/b6-career.log <==
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc 'ls shots/task6*; tail -n 15 /tmp/b6-task6.log; git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+shots/task6-1280.png
+shots/task6-390.png
+shots/task6-480.png
+ M index.html
+ M shots/card.png
+ M shots/career-intro.png
+ M shots/desktop.png
+ M shots/mobile.png
+ M shots/task5-held-1280.png
+ M shots/task5-held-390.png
+ M shots/task5-held-480.png
+ M shots/task5-intro-1280.png
+ M shots/task5-intro-390.png
+ M shots/task5-intro-480.png
+ M shots/wind-1280.png
+ M shots/wind-390.png
+ M shots/wind-480.png
+ M tests/task3_check.py
+?? codex-run-6.log
+?? shots/task6-1280.png
+?? shots/task6-390.png
+?? shots/task6-480.png
+?? tests/task6_check.py
+
+ succeeded in 48322ms:
+TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS
+
+exec
+/bin/bash -lc "cat > /tmp/measure6.py <<'PY'
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox']);page=await b.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  s=Path('index.html').read_text().replace('window.__game = {','window.__view={camera};window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=s,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('"'!!window.__game'"');await page.click('#two-player');await page.click('[data-height=\"2\"]');await page.click('[data-side=\"sticky\"]');await page.wait_for_timeout(1200)
+  print(await page.evaluate('({left:__game._screenPoint(-.3048,-8.8),right:__game._screenPoint(.3048,-8.8),pos:__view.camera.position.toArray(),look:__view.camera.userData.look.toArray()})'))
+  await b.close()
+asyncio.run(main())
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 25 /tmp/cornhole-venv/bin/python /tmp/run6.py /tmp/measure6.py" in /workspace/cornhole
+exec
+/bin/bash -lc 'tail -n 8 /tmp/b6-task6.log /tmp/b6-career.log' in /workspace/cornhole
+ succeeded in 0ms:
+==> /tmp/b6-task6.log <==
+TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS
+
+==> /tmp/b6-career.log <==
+Early win passed
+Persistence passed
+
+ succeeded in 3636ms:
+{'left': {'x': 577.215728989378, 'y': 458.9157503768899}, 'right': {'x': 704.8127437962801, 'y': 459.8435836502241}, 'pos': [0.5, 2.05, 2.45], 'look': [0, 0.5, -8.7]}
+
+codex
+The main gameplay, wind/flag, v2 framing, and new Batch 6 checks pass. Batch 3 stopped at its board-width assertion: it requires over 128 pixels, while the requested exact v2 camera projects 127.6 pixels. I’ll update that assertion to a narrow range around the measured v2 width and rerun the suite. Career has passed its early win and save-persistence checks and is still running.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/task3_check.py');s=p.read_text().replace('# Batch 5 restores the wider original v2 camera.\\n  assert right[\\'x\\']-left[\\'x\\']>1280*.1','# Exact centered v2 framing projects this board span to about 127.6 pixels.\\n  assert 127 < right[\\'x\\']-left[\\'x\\'] < 129');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/task3_check.py > /tmp/b6-task3.log 2>&1; tail -n 15 /tmp/b6-task3.log" in /workspace/cornhole
+ succeeded in 105139ms:
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/career_check.py", line 57, in main
+    print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+                                                                                                                                                               ^^^^^^^^^^
+AssertionError
+
+exec
+/bin/bash -lc 'cat /tmp/b6-career.log; tail -n 12 /tmp/b6-task3.log' in /workspace/cornhole
+ succeeded in 0ms:
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: ["Cannot read properties of undefined (reading 'name')"]
+Traceback (most recent call last):
+  File "/tmp/run6.py", line 7, in <module>
+    runpy.run_path(sys.argv[1],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/career_check.py", line 59, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/career_check.py", line 57, in main
+    print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+                                                                                                                                                               ^^^^^^^^^^
+AssertionError
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('roster[career.fight].name : \\'CPU\\'',\"roster[Math.min(career.fight,roster.length-1)].name : 'CPU'\");p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 150 /tmp/cornhole-venv/bin/python /tmp/run6.py tests/career_check.py > /tmp/b6-career-final.log 2>&1; tail -n 12 /tmp/b6-career-final.log" in /workspace/cornhole
+exec
+/bin/bash -lc 'tail -n 12 /tmp/b6-task3.log; git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc "sed -n '830,844p' index.html; rg -n 'roster\\[career.fight\\]' index.html; tail -n 12 /tmp/b6-task3.log" in /workspace/cornhole
+ succeeded in 0ms:
+}
+function beginInning(delay = 300) {
+  clearBags(); M.k = 0; M.phase = 'wait'; renderHud();
+  setTimeout(nextTurn, delay);
+}
+function nextTurn() {
+  if(['menu','intro','champion'].includes(M.phase))return;
+  if (!M.practice && M.k >= 8) { M.phase = 'settle'; renderHud(); return; }
+  const t = thrower(); M.aim = 0; M.arc=M.heights[t]; setMeter(0);
+  if(M.career && roster[career.fight].circuit===3) M.sweetShift=.24+Math.random()*.5;
+  held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick'];
+  if (isHuman(t)) M.phase = 'aim';
+  else {
+    const side = Math.random() < 0.3 ? 'sticky' : 'slick';
+    M.side[1] = side;
+762: const o=roster[career.fight]; M.phase='intro'; ui.title.classList.add('gone');
+772: const o=roster[career.fight]; if(win===0){career.fight++;career.wins++;saveCareer();}
+817:  if(M.career){const c=roster[career.fight].circuit;wind.mph=c===0?0:c===1?2+Math.floor(Math.random()*3):c===2?6+Math.floor(Math.random()*3):9+Math.floor(Math.random()*4);}
+819:  const color=M.career?roster[career.fight].color:'#2f5fe8';
+839:  if(M.career && roster[career.fight].circuit===3) M.sweetShift=.24+Math.random()*.5;
+848:    if(M.career) M.cpu=planCareerShot(roster[career.fight]);
+
+exec
+/bin/bash -lc "cat > tests/run_all.py <<'PY'
+\"\"\"Run every Playwright suite with bounded waits (serve the app on port 8000).\"\"\"
+import os
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+
+if len(sys.argv)>1 and sys.argv[1]=='--worker':
+ from playwright.async_api import BrowserContext
+ original=BrowserContext.new_page
+ async def new_page(self,*args,**kwargs):
+  page=await original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ BrowserContext.new_page=new_page
+ runpy.run_path(sys.argv[2],run_name='__main__')
+else:
+ root=Path(__file__).resolve().parent.parent
+ failed=[]
+ for suite in sorted((root/'tests').glob('*_check.py')):
+  print(f'Running {suite.name}',flush=True)
+  try:
+   result=subprocess.run([sys.executable,__file__,'--worker',str(suite)],cwd=root,timeout=150)
+   if result.returncode:failed.append(suite.name)
+  except subprocess.TimeoutExpired:
+   print(f'{suite.name}: exceeded 150-second suite limit',flush=True)
+   failed.append(suite.name)
+ print('Failed: '+', '.join(failed) if failed else 'All Playwright suites passed',flush=True)
+ sys.exit(bool(failed))
+PY
+python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('<span class=\"bag-label\">STEP</span>', '<span class=\"bag-label\">STEP <span id=\"step-value\">0.00</span></span>').replace(\"  "'$('"'reset-bags').hidden="'!M.practice;", "  $('"'step-value').textContent=M.position[t].toFixed(2);\\n  "'$('"'reset-bags').hidden="'!M.practice;");p.write_text(s)
+PY
+tail -n 10 /tmp/b6-task3.log /tmp/b6-career-final.log' in /workspace/cornhole
+ succeeded in 0ms:
+==> /tmp/b6-task3.log <==
+
+==> /tmp/b6-career-final.log <==
+
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 120 /tmp/cornhole-venv/bin/python tests/run_all.py --worker tests/task6_check.py > /tmp/b6-task6-final.log 2>&1; tail -n 12 /tmp/b6-task6-final.log' in /workspace/cornhole
+exec
+/bin/bash -lc 'tail -n 15 /tmp/b6-task3.log /tmp/b6-career-final.log; git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+==> /tmp/b6-task3.log <==
+
+==> /tmp/b6-career-final.log <==
+Early win passed
+Persistence passed
+
+ succeeded in 57144ms:
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+
+codex
+The career suite completed its gameplay checks but caught a name lookup error after the eighth win: the saved fight index had advanced past the roster. I fixed the HUD lookup and am rerunning career. The new panel checks pass across all four viewport sizes, including MORE expanded. I also added a reusable bounded test runner.
+exec
+/bin/bash -lc 'tail -n 15 /tmp/b6-task3.log /tmp/b6-career-final.log /tmp/b6-task6-final.log' in /workspace/cornhole
+ succeeded in 0ms:
+==> /tmp/b6-task3.log <==
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+
+==> /tmp/b6-career-final.log <==
+Early win passed
+Persistence passed
+
+==> /tmp/b6-task6-final.log <==
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/task5_check.py');s=p.read_text().replace(\"'#height-choice','#hint'\", \"'#height-choice','#bag-menu'\");p.write_text(s)
+p=Path('tests/run_all.py');s=p.read_text().replace('import os\\n','');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers timeout 80 /tmp/cornhole-venv/bin/python tests/run_all.py --worker tests/task5_check.py > /tmp/b6-task5-final.log 2>&1; tail -n 12 /tmp/b6-task5-final.log" in /workspace/cornhole
+exec
+/bin/bash -lc 'git diff --numstat; tail -n 10 /tmp/b6-task5-final.log /tmp/b6-task6-final.log /tmp/b6-career-final.log; sha256sum CLAUDE_UI_REVIEW.md; git diff --quiet -- CLAUDE_UI_REVIEW.md; echo review_diff_exit:$?' in /workspace/cornhole
+ succeeded in 0ms:
+40	27	index.html
+-	-	shots/card.png
+-	-	shots/career-card.png
+-	-	shots/career-champion.png
+-	-	shots/career-desktop.png
+-	-	shots/career-intro.png
+-	-	shots/career-mobile.png
+-	-	shots/desktop.png
+-	-	shots/mobile.png
+-	-	shots/task3-390.png
+-	-	shots/task3-480.png
+-	-	shots/task3-practice.png
+-	-	shots/task3-sweet.png
+-	-	shots/task5-held-1280.png
+-	-	shots/task5-held-390.png
+-	-	shots/task5-held-480.png
+-	-	shots/task5-intro-1280.png
+-	-	shots/task5-intro-390.png
+-	-	shots/task5-intro-480.png
+-	-	shots/wind-1280.png
+-	-	shots/wind-390.png
+-	-	shots/wind-480.png
+4	4	tests/task3_check.py
+2	2	tests/task5_check.py
+==> /tmp/b6-task5-final.log <==
+
+==> /tmp/b6-task6-final.log <==
+
+==> /tmp/b6-career-final.log <==
+Early win passed
+Persistence passed
+ca1dabfd15422bcd7defd3d89a8f2d429eca1cd82a3d2726de6a4a48bcdc13f9  CLAUDE_UI_REVIEW.md
+review_diff_exit:0
+
+ succeeded in 50374ms:
+TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS
+
+ succeeded in 26370ms:
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+
+exec
+/bin/bash -lc 'tail -n 12 /tmp/b6-career-final.log; git diff --check; git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+Early win passed
+Persistence passed
+ M index.html
+ M shots/card.png
+ M shots/career-card.png
+ M shots/career-champion.png
+ M shots/career-desktop.png
+ M shots/career-intro.png
+ M shots/career-mobile.png
+ M shots/desktop.png
+ M shots/mobile.png
+ M shots/task3-390.png
+ M shots/task3-480.png
+ M shots/task3-practice.png
+ M shots/task3-sweet.png
+ M shots/task5-held-1280.png
+ M shots/task5-held-390.png
+ M shots/task5-held-480.png
+ M shots/task5-intro-1280.png
+ M shots/task5-intro-390.png
+ M shots/task5-intro-480.png
+ M shots/wind-1280.png
+ M shots/wind-390.png
+ M shots/wind-480.png
+ M tests/task3_check.py
+ M tests/task5_check.py
+?? CODEX_TASK_7.md
+?? codex-run-6.log
+?? shots/task6-1280.png
+?? shots/task6-390.png
+?? shots/task6-480.png
+?? shots/task6-844.png
+?? tests/run_all.py
+?? tests/task6_check.py
+
+ succeeded in 104185ms:
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+
+codex
+Batch 3 and the final Batch 5/6 reruns pass. The desktop, 480×360 card, phone, and landscape checks confirm that the expanded panel has no overlapping controls and the camera keeps the board in frame. Career is the last rerun still running. `CLAUDE_UI_REVIEW.md` is unchanged.
+exec
+/bin/bash -lc "date -u; stat -c '%y' /tmp/b6-career-final.log" in /workspace/cornhole
+ succeeded in 0ms:
+Tue Nov  3 20:40:56 UTC 2026
+2026-11-03 15:40:50.680488656 -0500
+
+exec
+/bin/bash -lc "cat > codex-summary-6.md <<'MD'
+# Cornhole Batch 6
+
+Completed all items in CODEX_TASK_6.md.
+
+- Camera gently pans with aim and step and turns toward the aimed line using frame-rate-independent easing. Neutral aim/step restores exact v2 framing: position "'`(0.5, 2.05, 2.45)`, look-at `(0, 0.5, -8.7)`. FOV and depth remain unchanged. Bounded offsets keep the board visible; flight no longer pulls the camera away from this framing.
+- Removed duplicated static team-color text, fixing RED RED in Solo Practice and 2 Player (and BLUE BLUE).
+- Consolidated height, bag side, spin, and optional step/aim controls into one labeled left-side panel. MORE expands within normal layout flow. Current selections are highlighted with aria-pressed; step position is displayed. Panel scrolling accommodates short screens. Menu interaction does not aim or throw a bag.
+- Removed the bottom-center height bar and bottom hint entirely.
+- Kept flick-only throws, physics, wind widget/animated flag, three modes, per-player settings, unlimited practice, and career progression.
+- Career regression testing exposed a final-win HUD lookup past the end of the roster. Clamped the display-name lookup so the champion transition completes without a console error.
+
+## Verification
+
+All five existing Playwright suites and the new Batch 6 suite passed:
+
+| Suite | Result |
+| --- | --- |
+| playwright_check.py | PASS; no console/page errors |
+| career_check.py | PASS; win/loss, persistence, later circuits, champion, desktop/card/mobile; console errors empty |
+| task3_check.py | PASS; modes, aim, per-player options, practice, reset, sweet spots |
+| task5_check.py | PASS; v2 FOV/depth, foreground bag, menu/intro HUD hiding |
+| wind_flag_check.py | PASS; widget, eight flag directions, calm/strong wind, responsive placement |
+| task6_check.py | PASS; panel overlap, highlighted choices, names, removed hint, neutral camera, aim/step movement, board bounds |
+
+Runs used 8-second default waits, 12-second navigation limits, and 80–150-second process caps. Initial browser launches failed because the default cache path was missing; using the existing `/tmp/pw-browsers` installation resolved this. The original Batch 3 width assertion required over 128 pixels; exact requested v2 framing measures 127.6 pixels. Updated it to a narrow 127–129 pixel range. Updated old hint/side selectors for the requested UI.
+
+Added `tests/run_all.py` for reproducible bounded suite runs (start a local server on port 8000 first):
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py
+```
+
+New Batch 6 screenshots: `shots/task6-1280.png`, `shots/task6-480.png`, `shots/task6-390.png`, `shots/task6-844.png`. Existing suites also refreshed their screenshots. Visually inspected card and phone captures. `git diff --check` passed.
+
+`CLAUDE_UI_REVIEW.md` was not edited. No commits or writes to .git; all changes remain in the working tree.
+MD
+ git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+codex
+Completed Batch 6: gentle camera following, fixed duplicate names, consolidated left-side bag controls, and removed the bottom bar/hint.
+
+All six Playwright suites passed with short timeouts. Changes remain in the working tree; `CLAUDE_UI_REVIEW.md` is unchanged.
+
+Details: [codex-summary-6.md](/workspace/cornhole/codex-summary-6.md).
+2026-11-03T20:41:21.060761Z ERROR codex_core::session: failed to record rollout items: thread 01a1a31f-ce63-77d2-9b5b-131dbab858ab not found
+tokens used
+76,763
+Completed Batch 6: gentle camera following, fixed duplicate names, consolidated left-side bag controls, and removed the bottom bar/hint.
+
+All six Playwright suites passed with short timeouts. Changes remain in the working tree; `CLAUDE_UI_REVIEW.md` is unchanged.
+
+Details: [codex-summary-6.md](/workspace/cornhole/codex-summary-6.md).

@@ -57,7 +57,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
 #msg.on{opacity:1;transform:scale(1)}
 #msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
-#hint{position:absolute;left:0;right:0;bottom:2.2vmin;text-align:center;font-size:.8em;line-height:1.8;opacity:.95;padding:0 4em 0 14em}
 #title{position:absolute;left:0;right:0;top:15%;text-align:center;transition:opacity .6s}
 #title h1{font-size:3.2em;font-weight:400;color:#ffe45e;letter-spacing:.04em;line-height:1.2}
 #title p{font-size:1em;margin-top:1em}
@@ -79,14 +78,16 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
 #panel .go:hover{background:#fff07f}
 #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
-@media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
+@media (max-width:560px){#title{top:12%}#title h1{font-size:2.4em}}
 #conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}
-#touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
-@media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
-@media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+@media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
 #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
 #panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
-#touch-controls{display:none;bottom:24%}#touch-controls.open{display:grid}#height-choice{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto;white-space:nowrap}#height-choice button{font-size:clamp(9px,2vmin,16px);min-height:40px}#height-choice button[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}#hint{padding:0 4px;font-size:clamp(5px,1.25vmin,10px);white-space:nowrap}.btns{bottom:15%}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
+#bag-menu > *{flex-shrink:0}
+.bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
+#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -94,18 +95,23 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 <div id="game">
   <div id="hud">
     <div id="sb" class="ol">
-      <div class="team red" id="t0"><div class="tn">RED <span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+      <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
       <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
-      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span> BLUE</div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
     </div>
     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
-    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
-    <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
-    <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+    <div id="bag-menu" role="group" aria-label="Bag options">
+      <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
+      <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
+      <div class="bag-row"><span class="bag-label">SPIN</span><div class="bag-choices"><button class="hb" data-spin="-1">L</button><button class="hb" data-spin="0">0</button><button class="hb" data-spin="1">R</button></div></div>
+      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
+      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP <span id="step-value">0.00</span></span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
+      <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+    </div>
   </div>
   <div id="panel" class="ol" hidden></div>
   <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
@@ -665,14 +671,14 @@ function burst(at) { for (const c of confetti) { c.m.position.copy(at); c.v.set(
 
 // ---------- match state ----------
 const $ = (id) => document.getElementById(id);
-const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), hint: $('hint'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
+const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
 const M = {
   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
   position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
 };
 const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
-const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[career.fight].name : 'CPU') : TEAM[t]);
+const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[Math.min(career.fight,roster.length-1)].name : 'CPU') : TEAM[t]);
 const settled = () => bags.every((b) => ['board', 'grass', 'in', 'removed'].includes(b.state) && !(b.state === 'grass' && b.dead));
 function lie() { // score as the bags lie right now (only final after all 8)
   const pts = [0, 0], inC = [0, 0], onC = [0, 0];
@@ -704,18 +710,18 @@ function renderHud() {
   $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
   $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
+  $('step-value').textContent=M.position[t].toFixed(2);
   $('reset-bags').hidden=!M.practice;
   ui.t[1].hidden=M.practice;
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
-  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
-  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
+  document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
+  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));
   const w = meterWindow();
   ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
   ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
 }
 function hint() {
-  ui.hint.textContent = 'Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE';
   ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
   wrap.classList.toggle('spin', M.ctrl === 'spin');
 }
@@ -926,7 +932,9 @@ function pointAim(e){
  M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
  }
 }
-$('more').onclick=()=>$('touch-controls').classList.toggle('open');
+$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
+document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
+document.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});
 $('menu').onclick=()=>{if(M.active)return;showMenu();};
 $('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
 document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
@@ -951,7 +959,7 @@ function release(up, side) {
   return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
 }
 wrap.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('button') || !ui.panel.hidden) return;
+  if (e.target.closest('#bag-menu, button') || !ui.panel.hidden) return;
   if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
   if (!humanTurn()) return;
   pointAim(e);
@@ -967,7 +975,7 @@ wrap.addEventListener('pointermove', (e) => {
     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
     const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
-  } else if (e.pointerType === 'mouse' && humanTurn() && !keyAim) {
+  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn() && !keyAim) {
     pointAim(e);
   }
 });
@@ -1012,7 +1020,7 @@ document.addEventListener('pointerlockchange', hint);
 function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
 function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
 ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); });
-ui.side.addEventListener('click', (e) => { e.stopPropagation(); flipSide(); });
+
 function adjust(k) {
   if (!humanTurn()) return;
   const t = thrower();
@@ -1025,6 +1033,7 @@ function adjust(k) {
 document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
 let wheelGesture = [], wheelTimer;
 wrap.addEventListener('wheel', e => {
+  if (e.target.closest('#bag-menu')) return;
   e.preventDefault();
   if (!humanTurn() || !ui.panel.hidden) return;
   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
@@ -1120,12 +1129,16 @@ function frame() {
   // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
   const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
   trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
-  const camRx = M.phase === 'menu' ? 0.3 : rx;
-  camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 2.45);
-  camera.position.lerp(camTmp, Math.min(1, dt * 3));
-  const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
-  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
-  camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
+  // Anchor neutral aim to v2; follow only a small part of the stance and aim line.
+  // Bound the turn so even extreme aim keeps the far board comfortably visible.
+  const follow = !['menu','intro','champion','poster'].includes(M.phase);
+  const stepOffset = follow ? M.position[t] : 0;
+  const aimOffset = follow ? clamp(M.aim,-AIM_MAX,AIM_MAX) : 0;
+  camTmp.copy(CAM_POS); camTmp.x += stepOffset * .65 + aimOffset * 1.2;
+  const ease = 1 - Math.exp(-dt * 3);
+  camera.position.lerp(camTmp, ease);
+  lookTmp.copy(CAM_LOOK); lookTmp.x += stepOffset * .18 + aimOffset * 3;
+  camera.userData.look.lerp(lookTmp, ease); camera.lookAt(camera.userData.look);
   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
   dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
@@ -1145,7 +1158,7 @@ if (POSTER) {
     const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
   }
   M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
-  for (const el of [ui.hint, document.querySelector('.btns'), $('meter')]) el.style.display = 'none';
+  for (const el of [$('bag-menu'), $('meter')]) el.style.display = 'none';
 } else showMenu();
 requestAnimationFrame(frame);
 

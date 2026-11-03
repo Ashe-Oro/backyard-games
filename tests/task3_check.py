@@ -14,13 +14,13 @@ async def main():
   assert await page.locator('[data-height]').all_text_contents()==['PUSH','NORMAL','KOBE']
   assert await page.locator('[data-height="1"]').get_attribute('aria-pressed')=='true'
   first=await page.evaluate('__game.state.thrower')
-  await page.click('[data-height="2"]');await page.click('#side')
+  await page.click('[data-height="2"]');await page.click('[data-side="sticky"]')
   assert await page.evaluate('__game.state.heights[__game.state.thrower]')==2
   await page.wait_for_timeout(1200)
   left=await page.evaluate('__game._screenPoint(-.3048,-8.8)')
   right=await page.evaluate('__game._screenPoint(.3048,-8.8)')
-  # Batch 5 restores the wider original v2 camera.
-  assert right['x']-left['x']>1280*.1
+  # Exact centered v2 framing projects this board span to about 127.6 pixels.
+  assert 127 < right['x']-left['x'] < 129
   target=await page.evaluate('__game._screenPoint(.12,-8.8)')
   await page.mouse.move(target['x'],target['y'])
   actual=await page.evaluate('__game.state.aim')
@@ -58,7 +58,7 @@ async def main():
   await page.screenshot(path='shots/task3-sweet.png')
   for width,height in [(480,360),(390,844)]:
    await page.set_viewport_size({'width':width,'height':height})
-   for sel in ['#height-choice','#hint']:
+   for sel in ['#height-choice']:
     r=await page.locator(sel).bounding_box();assert r['x']>=0 and r['x']+r['width']<=width+1
    await page.screenshot(path=f'shots/task3-{width}.png')
   assert not errors,errors

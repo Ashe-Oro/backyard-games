@@ -13,11 +13,11 @@ async def main():
    await page.set_viewport_size({'width':width,'height':height})
    await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('!!window.__game')
    await page.evaluate('__game._setWind(8,0)')
-   for selector in ['#wind','#conditions','#sb','#height-choice','#hint']:
+   for selector in ['#wind','#conditions','#sb','#height-choice','#bag-menu']:
     assert not await page.locator(selector).is_visible(),selector
    assert await page.locator('#title').is_visible()
    await page.click('#career');await page.click('#career-go')
-   for selector in ['#wind','#conditions','#sb','#height-choice','#hint']:
+   for selector in ['#wind','#conditions','#sb','#height-choice','#bag-menu']:
     assert not await page.locator(selector).is_visible(),selector
    await page.screenshot(path=f'shots/task5-intro-{width}.png')
    await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')

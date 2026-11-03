@@ -1,0 +1,5 @@
+Completed Batch 6: gentle camera following, fixed duplicate names, consolidated left-side bag controls, and removed the bottom bar/hint.
+
+All six Playwright suites passed with short timeouts. Changes remain in the working tree; `CLAUDE_UI_REVIEW.md` is unchanged.
+
+Details: [codex-summary-6.md](/workspace/cornhole/codex-summary-6.md).
