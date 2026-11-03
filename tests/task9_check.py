@@ -26,7 +26,7 @@ async def main():
     await page.wait_for_timeout(650)
     view=await page.evaluate('''()=>{const {camera,aimDots,held}=__view;return {position:camera.position.toArray(),target:camera.userData.look.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,aim:__game.state.aim,dot:aimDots[3].position.toArray(),held:held.rotation.y};}''')
     fixed={k:view[k] for k in ['position','target','quaternion','fov']}
-    assert view['position']==[0,2.05,3.2] and view['target']==[0,.5,-8.7] and view['fov']>=19,view
+    assert view['position']==([0,5,14] if width/height<=.6 else [0,2.05,3.2]) and view['target']==[0,.5,-8.7] and view['fov']>=19,view
     if expected is None: expected=fixed
     assert fixed==expected,(fixed,expected)
     views.append(view)

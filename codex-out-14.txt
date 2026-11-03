@@ -1,0 +1,8 @@
+Implemented Task 14 fully.
+
+- Both phone sizes and box positions pass bag placement, menu clearance, and board visibility checks.
+- Camera stays static while aiming; desktop framing is unchanged.
+- Task 14 and batch 9–13 regression checks passed.
+- Saved all four requested screenshots. No writes to `.git`.
+
+Details: [codex-summary-14.md](/workspace/cornhole/codex-summary-14.md).

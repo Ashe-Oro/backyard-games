@@ -28,7 +28,7 @@ async def main():
    await page.evaluate('__game.setAim(0)');await page.wait_for_timeout(800)
    check=await page.evaluate('''()=>{const {held,trajectory,newBody,launch,releaseX,M,camera}=__test;const b=newBody(0);launch(b,releaseX(0),.5,0,0);return {gap:b.p.distanceTo(held.position),preview:trajectory[0].position.distanceTo(held.position),camera:camera.position.toArray()}}''')
    assert check['gap']<1e-9 and check['preview']<1e-9,check
-   assert check['camera']==[0,2.05,3.2]
+   assert check['camera']==([0,5,14] if w/h<=.6 else [0,2.05,3.2])
    if w!=1280:
     sizes=await page.locator('#bag-menu button:visible').evaluate_all('(bs)=>bs.map(b=>({h:b.getBoundingClientRect().height,font:parseFloat(getComputedStyle(b).fontSize)}))')
     assert all(b['h']>=(44 if w==456 else 36) and b['font']>=(12 if w==456 else 10) for b in sizes),sizes

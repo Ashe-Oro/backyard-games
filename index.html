@@ -197,8 +197,13 @@ function resize() {
   const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  // A fixed, centered view keeps both hand origins in frame on portrait phones.
+  // Pull back only on narrow portraits: both release origins fit above the menu.
+  // Framing depends only on viewport size, never on aim or selected box.
+  const portrait = Math.max(0, Math.min(1, (0.85 - camera.aspect) / 0.25));
+  camera.position.copy(CAM_POS).lerp(new THREE.Vector3(0, 5, 14), portrait);
+  camera.lookAt(CAM_LOOK);
   camera.fov = Math.max(19, 2 * Math.atan(Math.tan(11 * Math.PI / 180) / camera.aspect) * 180 / Math.PI);
+  camera.fov += (25 - camera.fov) * portrait;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();

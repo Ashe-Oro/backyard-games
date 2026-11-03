@@ -1,0 +1,1638 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0
+--------
+workdir: /workspace/cornhole
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: none
+reasoning summaries: none
+session id: 01a1a3d4-f676-7252-bb22-ee4177d6cc5c
+--------
+user
+Read /workspace/cornhole/CODEX_TASK_14.md and implement it fully in /workspace/cornhole.
+codex
+I’ll read the task and repository instructions, then implement and verify the changes.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CODEX_TASK_14.md' -g 'package.json' -g 'README*'" in /workspace/cornhole
+ succeeded in 0ms:
+/workspace/cornhole
+CODEX_TASK_14.md
+
+exec
+/bin/bash -lc 'cat CODEX_TASK_14.md' in /workspace/cornhole
+ succeeded in 0ms:
+# Codex Task 14: the held bag on phone portrait is still off to the right
+
+The live v6 phone screenshot (shots/live-v6-phone.png, 456x1024, RIGHT box selected) shows the held red bag far right, mid-screen beside the dog, instead of in the lower foreground near the aim path. The owner's original complaint (shots/owner-phone-bag-offset.png) isn't actually fixed on phones.
+- In portrait/narrow aspect ratios, the held bag and the thrower's start point must appear in the lower-center foreground, visibly at the start of the aim line toward the board. This applies to both LEFT and RIGHT boxes; the side difference can be a modest offset, not off at the screen edge.
+- Fix it with framing for narrow aspects: shift or lower the static camera, or widen the fov, so the pitcher's boxes and held bag fit near the bottom center. The camera must still be STATIC while aiming. Desktop (1280x800) framing must stay identical to now.
+- Screen-space check: at 456x1024 and 390x844, project the held bag's position to screen coordinates. For both LEFT and RIGHT boxes, assert x is within the center 50% of the width and y is in the lower 45% of the height (but above the left bag menu). Also keep the board visible and reasonably large.
+- Keep all other batch 9–13 behavior. Use short test timeouts. Save screenshots to shots/task14-{456x1024,390x844}-{left,right}.png. Don't write to .git. Write a summary to codex-summary-14.md.
+
+exec
+/bin/bash -lc 'ls -la && find .. -name AGENTS.md -print' in /workspace/cornhole
+ succeeded in 0ms:
+total 2824
+drwxr-xr-x   8 box box   4096 Nov  3 18:53 .
+drwxr-xr-x. 34 box box  20480 Nov  3 18:53 ..
+dr-xr-xr-x   2 box box     40 Nov  3 18:53 .agents
+dr-xr-xr-x   2 box box     40 Nov  3 18:53 .aws
+dr-xr-xr-x   2 box box     40 Nov  3 18:53 .codex
+drwxr-xr-x   8 box box   4096 Nov  3 18:53 .git
+-rw-r--r--   1 box box   1874 Nov  3 17:39 CLAUDE_REVIEW_2_PROMPT.md
+-rw-r--r--   1 box box    503 Nov  3 15:28 CLAUDE_REVIEW_NOTES.md
+-rw-r--r--   1 box box  16482 Nov  3 15:35 CLAUDE_UI_REVIEW.md
+-rw-r--r--   1 box box  11819 Nov  3 18:40 CLAUDE_UI_REVIEW_2.md
+-rw-r--r--   1 box box   5038 Nov  3 14:25 CODEX_TASK.md
+-rw-r--r--   1 box box   1117 Nov  3 17:16 CODEX_TASK_10.md
+-rw-r--r--   1 box box   3049 Nov  3 17:44 CODEX_TASK_11.md
+-rw-r--r--   1 box box   3934 Nov  3 18:15 CODEX_TASK_12.md
+-rw-r--r--   1 box box   1421 Nov  3 18:49 CODEX_TASK_13.md
+-rw-r--r--   1 box box   1422 Nov  3 18:50 CODEX_TASK_14.md
+-rw-r--r--   1 box box   2956 Nov  3 14:45 CODEX_TASK_2_CAREER.md
+-rw-r--r--   1 box box   2769 Nov  3 15:02 CODEX_TASK_3.md
+-rw-r--r--   1 box box    641 Nov  3 15:02 CODEX_TASK_4.md
+-rw-r--r--   1 box box    482 Nov  3 15:08 CODEX_TASK_5.md
+-rw-r--r--   1 box box   1365 Nov  3 15:35 CODEX_TASK_6.md
+-rw-r--r--   1 box box    666 Nov  3 15:38 CODEX_TASK_7.md
+-rw-r--r--   1 box box   1116 Nov  3 15:49 CODEX_TASK_8.md
+-rw-r--r--   1 box box   1199 Nov  3 17:14 CODEX_TASK_9.md
+-rw-r--r--   1 box box      9 Nov  3 17:43 chain-10.log
+-rw-r--r--   1 box box      7 Nov  3 18:30 chain-12.log
+-rw-r--r--   1 box box   1500 Nov  3 17:22 chain-9.log
+-rw-r--r--   1 box box     12 Nov  3 18:40 claude-review-2.log
+-rw-r--r--   1 box box   1273 Nov  3 15:35 claude-review.log
+-rw-r--r--   1 box box    353 Nov  3 17:43 codex-out-10.txt
+-rw-r--r--   1 box box    374 Nov  3 18:23 codex-out-11.txt
+-rw-r--r--   1 box box    374 Nov  3 18:30 codex-out-12.txt
+-rw-r--r--   1 box box    333 Nov  3 18:53 codex-out-13.txt
+-rw-r--r--   1 box box    324 Nov  3 14:52 codex-out-2.txt
+-rw-r--r--   1 box box    409 Nov  3 15:07 codex-out-3.txt
+-rw-r--r--   1 box box    353 Nov  3 15:10 codex-out-4.txt
+-rw-r--r--   1 box box    335 Nov  3 15:41 codex-out-6.txt
+-rw-r--r--   1 box box    365 Nov  3 15:53 codex-out-7.txt
+-rw-r--r--   1 box box    256 Nov  3 16:14 codex-out-8.txt
+-rw-r--r--   1 box box    338 Nov  3 17:22 codex-out-9.txt
+-rw-r--r--   1 box box    412 Nov  3 14:23 codex-out.txt
+-rw-r--r--   1 box box 426892 Nov  3 17:43 codex-run-10.log
+-rw-r--r--   1 box box 181924 Nov  3 18:23 codex-run-11.log
+-rw-r--r--   1 box box 147554 Nov  3 18:30 codex-run-12.log
+-rw-r--r--   1 box box 155499 Nov  3 18:53 codex-run-13.log
+-rw-r--r--   1 box box   2216 Nov  3 18:53 codex-run-14.log
+-rw-r--r--   1 box box 147394 Nov  3 14:52 codex-run-2.log
+-rw-r--r--   1 box box 159489 Nov  3 15:07 codex-run-3.log
+-rw-r--r--   1 box box 110519 Nov  3 15:10 codex-run-4.log
+-rw-r--r--   1 box box  89030 Nov  3 15:16 codex-run-5.log
+-rw-r--r--   1 box box 145667 Nov  3 15:41 codex-run-6.log
+-rw-r--r--   1 box box 112512 Nov  3 15:53 codex-run-7.log
+-rw-r--r--   1 box box  98383 Nov  3 16:14 codex-run-8.log
+-rw-r--r--   1 box box 237850 Nov  3 17:22 codex-run-9.log
+-rw-r--r--   1 box box 171441 Nov  3 14:23 codex-run.log
+-rw-r--r--   1 box box   1888 Nov  3 17:43 codex-summary-10.md
+-rw-r--r--   1 box box   4081 Nov  3 18:23 codex-summary-11.md
+-rw-r--r--   1 box box   3945 Nov  3 18:29 codex-summary-12.md
+-rw-r--r--   1 box box   2028 Nov  3 18:53 codex-summary-13.md
+-rw-r--r--   1 box box   3725 Nov  3 15:06 codex-summary-3.md
+-rw-r--r--   1 box box   2401 Nov  3 15:10 codex-summary-4.md
+-rw-r--r--   1 box box   2911 Nov  3 15:41 codex-summary-6.md
+-rw-r--r--   1 box box   2056 Nov  3 15:53 codex-summary-7.md
+-rw-r--r--   1 box box   2610 Nov  3 16:13 codex-summary-8.md
+-rw-r--r--   1 box box   2377 Nov  3 17:20 codex-summary-9.md
+-rw-r--r--   1 box box   3723 Nov  3 14:51 codex-summary-career.md
+-rw-r--r--   1 box box   2810 Nov  3 14:23 codex-summary.md
+-rw-r--r--   1 box box 233240 Nov  3 14:23 cornhole-changes.bundle
+-rw-r--r--   1 box box  81578 Nov  3 18:51 index.html
+-rw-r--r--   1 box box  27306 Nov  3 14:13 poster.png
+-rw-r--r--   1 box box  68218 Nov  3 14:16 screenshot.png
+drwxr-xr-x   3 box box   4096 Nov  3 18:50 shots
+drwxr-xr-x   2 box box   4096 Nov  3 18:50 tests
+-rw-r--r--   1 box box    239 Nov  3 13:05 vercel.json
+
+exec
+/bin/bash -lc "rg -n 'camera|heldBag|throwOrigin|project|portrait' index.html tests && cat codex-summary-13.md && ls tests" in /workspace/cornhole
+ succeeded in 0ms:
+tests/task6_check.py:13:  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,CAM_LOOK,THREE,bags,RX}; window.__game = {')
+tests/task6_check.py:34:   neutral=await page.evaluate('__view.camera.position.toArray()')
+tests/task6_check.py:39:    view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
+tests/task6_check.py:58:  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, fixed camera across aim changes, removed controls/shortcuts and board bounds: PASS')
+tests/task9_check.py:13:  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,aimDots,held}; window.__game = {')
+tests/task9_check.py:27:    view=await page.evaluate('''()=>{const {camera,aimDots,held}=__view;return {position:camera.position.toArray(),target:camera.userData.look.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,aim:__game.state.aim,dot:aimDots[3].position.toArray(),held:held.rotation.y};}''')
+tests/task9_check.py:38:  print('Batch 9: fixed camera position, target and rotation; responsive FOV stays fixed across pointer extremes; moving indicators and held bag PASS')
+tests/career_check.py:36:  # Seed unlocked saves to inspect later circuits and rematch portraits.
+tests/career_check.py:40:   assert await page.locator('.portrait').count()==1
+tests/task3_check.py:22:  # Exact centered v2 framing projects this board span to about 127.6 pixels.
+tests/task12_check.py:12:  source=Path('index.html').read_text().replace('window.__game = {','window.__test={M,roster,career,wind,planCareerShot,newBody,launch,step,RX,held,camera,releaseX,trajectory}; window.__game = {')
+tests/task12_check.py:17:  portraits=[]
+tests/task12_check.py:21:   portraits.append(await page.locator('.portrait').inner_html())
+tests/task12_check.py:23:  assert len(set(portraits))==8
+tests/task12_check.py:29:   check=await page.evaluate('''()=>{const {held,trajectory,newBody,launch,releaseX,M,camera}=__test;const b=newBody(0);launch(b,releaseX(0),.5,0,0);return {gap:b.p.distanceTo(held.position),preview:trajectory[0].position.distanceTo(held.position),camera:camera.position.toArray()}}''')
+tests/task12_check.py:31:   assert check['camera']==[0,2.05,3.2]
+tests/task5_check.py:10:  source=Path('index.html').read_text().replace('window.__game = {','window.__view = {camera, held, THREE}; window.__game = {')
+tests/task5_check.py:28:   view=await page.evaluate('''()=>{const {camera,held,THREE}=__view;const v=held.position.clone().project(camera);return {fov:camera.fov,z:camera.position.z,held:held.visible,point:v.toArray()};}''')
+tests/task5_check.py:37:  print('V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS')
+index.html:85:#panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+index.html:189:const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
+index.html:192:camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
+index.html:193:camera.userData.look = CAM_LOOK.clone();
+index.html:199:  camera.aspect = w / h;
+index.html:200:  // A fixed, centered view keeps both hand origins in frame on portrait phones.
+index.html:201:  camera.fov = Math.max(19, 2 * Math.atan(Math.tan(11 * Math.PI / 180) / camera.aspect) * 180 / Math.PI);
+index.html:202:  camera.updateProjectionMatrix();
+index.html:211:Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 40 });
+index.html:811:function portrait(o){
+index.html:823: return `<svg class="portrait" viewBox="0 0 16 16" role="img" aria-label="Pixel portrait of ${o.name}" shape-rendering="crispEdges"><rect width="16" height="16" fill="#252237"/><path fill="${o.color}" d="M2 12h12v4H2z"/><path fill="${hair}" d="${hairPath}"/><path fill="${skin}" d="M5 5h6v6H5zM6 11h4v2H6z"/><path fill="#272034" d="M6 6h1v1H6zM9 6h1v1H9zM7 9h3v1H7z"/><path fill="${o.level===4?hair:o.level===3?'#191c31':o.color}" d="${accessory}"/></svg>`;
+index.html:832: ui.panel.innerHTML=`<div class="pt">${circuits[o.circuit]} · FIGHT ${career.fight+1}/8</div><div class="pd">NEXT UP: ${o.name}</div>${portrait(o)}<div class="pd">“${o.nick}” · ${o.home}<br>RECORD ${o.record}<br>${o.taunt}<br>${o.style.toUpperCase()} · ${o.circuit===0?'CALM AIR':o.circuit===1?'LIGHT WIND':'STRONG WIND'}</div><button class="go" id="fight">LET’S TOSS</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+index.html:837: ui.panel.innerHTML='<div class="pt">ALL FOUR CIRCUITS CONQUERED</div><div class="big">CORNHOLE KING!</div>'+portrait(roster[7])+'<div class="pd">The crown is yours!<br>Eight rivals. One backyard legend.<br>Your championship is saved.</div><button class="go" id="back">CIRCUIT MAP</button><button class="hb" id="restart">NEW CAREER</button>';
+index.html:842: ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'TRY AGAIN'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+index.html:1030: aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
+index.html:1202:  // Held bag and indicators follow the thrower and aim; the camera stays fixed.
+index.html:1214:    d.quaternion.copy(camera.quaternion);
+index.html:1218:  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+index.html:1233:  renderer.render(scene, camera);
+index.html:1250:  _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+# Task 13 summary
+
+Implemented only the two approved polish items in `index.html`:
+
+- Changed the eight-direction `.ol` outline from fixed 2px offsets to .13em, and raised the HUD/panel font clamp floor to 10px. Existing responsive rules, wording and controls remain intact.
+- Added three pooled, team-colored bag afterimages, sampled every 60ms and fading over 180ms. The effect copies existing transforms and uses no per-frame mesh, material, geometry or vector allocations.
+- Added a separate pool of 14 plain tan pieces through `burst(at, true)` when a throw finishes on the board. The small puff fades over 400ms at the bag position. Existing 70-piece colorful hole celebrations are preserved.
+
+Verification:
+
+- `tests/task13_check.py`: PASS with 5-second interaction / 10-second navigation limits and a 45-second suite ceiling. Checks 390×844 and 456×1024 at deviceScaleFactor 2, opponent-card and recap bounds, the 10px HUD floor, visible pooled afterimages, 14 board pieces, puff expiration, and absence of hole confetti for a board score. No browser errors.
+- Visually inspected phone opponent cards, HUD, mid-flight captures and recaps: readable small text and cancellation minus sign, no panel clipping or text overlap. Narrow phone recap text wraps within its panel.
+- Batch 9 camera regression: PASS. Batch 10 meter/arc regression: PASS. Batch 11 menu/terminology and 3,200 simulated CPU throws: PASS.
+- Batch 12 responsive controls, eight distinct portraits, release alignment, practice-side persistence and 3,200 simulated CPU throws: PASS.
+- `git diff --check`: PASS. No writes to `.git`.
+
+Screenshots: `shots/task13-phone-card-{390,456}.png`, `shots/task13-phone-hud-{390,456}.png`, `shots/task13-phone-recap-{390,456}.png`, `shots/task13-mid-flight-{390,456}.png`, and `shots/task13-board-puff-{390,456}.png`.
+
+The board-puff check uses a controlled resting bag with the production throw-completion function; the mid-flight captures use a live throw. Existing unrelated workspace changes were left in place.
+career_check.py
+playwright_check.py
+review2_shots.py
+run_all.py
+task10_check.py
+task11_check.py
+task12_check.py
+task13_check.py
+task3_check.py
+task5_check.py
+task6_check.py
+task8_check.py
+task9_check.py
+wind_flag_check.py
+
+exec
+/bin/bash -lc "sed -n '180,208p' index.html; sed -n '1180,1222p' index.html; cat tests/task12_check.py; cat tests/task9_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+  renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+} catch (e) { document.getElementById('err').style.display = 'flex'; throw e; }
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.BasicShadowMap;
+wrap.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog('#ffd3a8', 26, 75);
+const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
+const CAM_POS = new THREE.Vector3(0, 2.05, 3.2);
+const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
+camera.userData.look = CAM_LOOK.clone();
+
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
+  renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
+  camera.aspect = w / h;
+  // A fixed, centered view keeps both hand origins in frame on portrait phones.
+  camera.fov = Math.max(19, 2 * Math.atan(Math.tan(11 * Math.PI / 180) / camera.aspect) * 180 / Math.PI);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+// ---------- lights ----------
+scene.add(new THREE.HemisphereLight('#d6ecff', '#7a8f3a', 1.4));
+const sun = new THREE.DirectionalLight('#ffe0b0', 2.6);
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+    if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
+    if (c.t > 1.3) { M.aim=c.aim; throwBag(c.power, c.drift, 1); }
+  }
+  acc += dt;
+  while (acc >= 1 / 240) {
+    acc -= 1 / 240;
+    for (const b of bags) if (b.state !== 'in' && b.state !== 'removed' && !(b.state === 'grass' && !b.dead) && b.state !== 'board') step(b, 1 / 240);
+    collide(bags);
+  }
+  if (M.phase === 'flying' && M.active && settled()) afterThrow();
+  if (M.phase === 'settle' && settled()) scoreInning();
+  for (const b of bags) {
+    const m = b.mesh; m.position.copy(b.p);
+    if (b.state === 'fly') { m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15; }
+    else if (onDeck(b) || b.state === 'hole') { const yaw = b.yaw ?? (b.yaw = m.rotation.y); if (b.state === 'slide') b.yaw += b.spin * dt * 0.3; m.quaternion.copy(boardQ); m.rotateY(b.yaw); }
+    else if (b.state === 'ground' || b.state === 'grass') { m.rotation.x = 0; m.rotation.z = 0; }
+    m.visible = b.state !== 'in' && b.state !== 'removed';
+    if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
+  }
+  updateFlightTrail(dt);
+  // Held bag and indicators follow the thrower and aim; the camera stays fixed.
+  const t = thrower(), rx = releaseX(t);
+  const showHeld = M.phase === 'aim' || M.phase === 'cpu';
+  const yaw = baseYaw(rx) + M.aim;
+  held.visible = showHeld;
+  if (showHeld) { held.position.set(rx, REL_Y, REL_Z); held.rotation.set(0.15, -yaw, 0); }
+  // Calm-air preview shares the exact release origin used by throwBag.
+  const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+  aimDots.forEach((d, i) => {
+    const seconds=i*.09;
+    d.position.copy(preview.p).addScaledVector(preview.v,seconds);
+    d.position.y-=.5*G*seconds*seconds;
+    d.quaternion.copy(camera.quaternion);
+    d.visible=showHeld && isHuman(t) && d.position.y>.03;
+    d.material.opacity=.5;
+  });
+  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+  for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
+  for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
+  dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
+  const watch = M.active ? M.active.p : HOLE_WORLD;
+"""Task 12: real CPU physics, saved side choice, release alignment and responsive captures."""
+import asyncio,json
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  page.set_default_timeout(8000);page.set_default_navigation_timeout(12000)
+  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__test={M,roster,career,wind,planCareerShot,newBody,launch,step,RX,held,camera,releaseX,trajectory}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('!!window.__game')
+  await page.evaluate('document.fonts.ready')
+  await page.set_viewport_size({'width':1280,'height':800})
+  portraits=[]
+  for i in range(8):
+   await page.evaluate('(i)=>{__test.career.fight=i;__game.careerIntro()}',i)
+   await page.wait_for_timeout(120 if i else 650)
+   portraits.append(await page.locator('.portrait').inner_html())
+   await page.screenshot(path=f'shots/task12-opp-{i+1}.png')
+  assert len(set(portraits))==8
+  for w,h in [(1280,800),(844,390),(456,1024)]:
+   await page.set_viewport_size({'width':w,'height':h})
+   await page.evaluate('__game.startMatch({practice:true,vs:"2p",first:0})')
+   await page.wait_for_function('__game.state.phase==="aim"')
+   await page.evaluate('__game.setAim(0)');await page.wait_for_timeout(800)
+   check=await page.evaluate('''()=>{const {held,trajectory,newBody,launch,releaseX,M,camera}=__test;const b=newBody(0);launch(b,releaseX(0),.5,0,0);return {gap:b.p.distanceTo(held.position),preview:trajectory[0].position.distanceTo(held.position),camera:camera.position.toArray()}}''')
+   assert check['gap']<1e-9 and check['preview']<1e-9,check
+   assert check['camera']==[0,2.05,3.2]
+   if w!=1280:
+    sizes=await page.locator('#bag-menu button:visible').evaluate_all('(bs)=>bs.map(b=>({h:b.getBoundingClientRect().height,font:parseFloat(getComputedStyle(b).fontSize)}))')
+    assert all(b['h']>=(44 if w==456 else 36) and b['font']>=(12 if w==456 else 10) for b in sizes),sizes
+    await page.screenshot(path=f'shots/task12-menu-{w}x{h}.png')
+   await page.screenshot(path=f'shots/task12-bag-{w}.png')
+  for side in ['left','right']:
+   await page.click(f'[data-box={side}]');await page.wait_for_timeout(60)
+   assert await page.evaluate('__test.releaseX(0)')==(-.62 if side=='left' else .62)
+   assert await page.evaluate('localStorage.getItem("backyard-cornhole-practice-box")')==side
+   await page.screenshot(path=f'shots/task12-practice-{side}.png')
+   gap=await page.evaluate('''()=>{const held=__test.held.position.toArray();__game.throwWith(.5);return Math.hypot(...__game.state.bags[0].p.map((x,i)=>x-held[i]));}''')
+   assert gap<1e-9,gap
+   await page.reload();await page.wait_for_function('!!window.__game')
+   await page.click('#practice');await page.wait_for_function('__game.state.phase==="aim"')
+   assert await page.locator(f'[data-box={side}]').get_attribute('aria-pressed')=='true'
+  results=[]
+  for level in range(8):
+   r=await page.evaluate('''level=>{
+    const {M,roster,wind,planCareerShot,newBody,launch,step,RX}=__test;
+    M.phase='menu';M.scores=[0,1];M.position=[0,0];
+    let seed=120031+level*1009;
+    Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+    const tally={name:roster[level].name,throws:400,in:0,on:0,miss:0,kobe:0};
+    for(let n=0;n<tally.throws;n++){
+     const mph=[0,0,3,3,7,7,10,10][level],a=(n%8)*Math.PI/4;
+     wind.x=Math.sin(a)*mph*.025;wind.z=-Math.cos(a)*mph*.025;
+     const c=planCareerShot(roster[level]);tally.kobe+=M.arc===2;
+     const b=newBody(1,c.side);launch(b,RX[1],c.power,c.aim,c.drift,M.arc,M.spin);
+     for(let j=0;j<1920;j++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
+     if(b.state==='in')tally.in++;else if(b.state==='board')tally.on++;else tally.miss++;
+    }return tally;
+   }''',level)
+   results.append(r);print(json.dumps(r),flush=True)
+  Path('shots/task12-rates.json').write_text(json.dumps(results,indent=2))
+  for i,r in enumerate(results):
+   assert abs(r['in']/400-[.07,.15,.25,.35,.45,.55,.67,.80][i])<.065,r
+   assert abs(r['on']/400-[.30,.35,.35,.35,.30,.30,.25,.15][i])<.065,r
+  assert results[0]['in']/400<.10 and results[0]['kobe']==0
+  assert not errors,errors
+  await browser.close()
+  print('TASK 12 PASS')
+asyncio.run(asyncio.wait_for(main(),timeout=150))
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,aimDots,held}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/')
+  await page.wait_for_function('!!window.__game')
+  expected=None
+  for width,height in [(1280,800),(390,844),(480,360),(844,390)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   await page.evaluate('__game.startMatch({practice:true,vs:"2p",first:0})')
+   await page.wait_for_function('__game.state.phase==="aim"')
+   expected=None
+   views=[]
+   for side,x in [('left',2),('right',width-2)]:
+    await page.mouse.move(x,height*.5)
+    await page.wait_for_timeout(650)
+    view=await page.evaluate('''()=>{const {camera,aimDots,held}=__view;return {position:camera.position.toArray(),target:camera.userData.look.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,aim:__game.state.aim,dot:aimDots[3].position.toArray(),held:held.rotation.y};}''')
+    fixed={k:view[k] for k in ['position','target','quaternion','fov']}
+    assert view['position']==[0,2.05,3.2] and view['target']==[0,.5,-8.7] and view['fov']>=19,view
+    if expected is None: expected=fixed
+    assert fixed==expected,(fixed,expected)
+    views.append(view)
+    await page.screenshot(path=f'shots/task9-{width}-{side}.png')
+   assert views[0]['aim']<0<views[1]['aim'],views
+   assert views[0]['dot']!=views[1]['dot'] and views[0]['held']!=views[1]['held'],views
+  assert not errors,errors
+  await browser.close()
+  print('Batch 9: fixed camera position, target and rotation; responsive FOV stays fixed across pointer extremes; moving indicators and held bag PASS')
+
+if __name__=='__main__':
+ asyncio.run(asyncio.wait_for(main(),timeout=150))
+
+exec
+/bin/bash -lc "rg -n 'REL_|bag-menu|BOARD_Z' index.html | head -25; cat tests/run_all.py | head -70; cat tests/task13_check.py | head -24" in /workspace/cornhole
+ succeeded in 0ms:
+86:#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
+87:#bag-menu > *{flex-shrink:0}
+90:@media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
+100:@media(pointer:coarse),(max-width:600px){#bag-menu{width:min(60vw,320px);font-size:12px;max-height:60%;padding:8px;gap:8px}#bag-menu .hb{min-height:44px;font-size:12px;padding:8px 3px}.btns .hb{flex:1}.bag-label{font-size:10px}}
+101:@media(max-height:450px) and (max-width:1000px){#bag-menu{width:260px;max-height:65%;padding:4px;gap:3px}#bag-menu .hb{min-height:36px;font-size:10px;padding:3px 2px}.bag-label{font-size:9px}.bag-row{gap:2px}}
+118:    <div id="bag-menu" role="group" aria-label="Bag options">
+137:const BOARD_Z = -27 * FT;                   // 27 ft front edge to front edge; our foul line is z = 0
+146:const REL_Y = 1.3, REL_Z = -0.45;           // feet stay behind the foul line (z = 0); the hand reaches past it on release
+492:target.outer.position.z = BOARD_Z; scene.add(target.outer);
+500:  for (const [zf, dir] of [[BOARD_Z, -1], [0, 1]]) {
+515:const baseYaw = (rx) => Math.atan2(HOLE_WORLD.x - rx, -(HOLE_WORLD.z - REL_Z));
+516:const inFootprint = (p) => Math.abs(p.x) < W / 2 + 0.02 && p.z < BOARD_Z + 0.02 && p.z > BOARD_Z - L * Math.cos(TH);
+533:  b.p.set(rx, REL_Y, REL_Z);
+553:      } else if (b.prev.z > 0) { b.touched = true; b.v.z = Math.abs(b.v.z) * 0.2; b.v.x *= 0.4; b.p.z = BOARD_Z + 0.03; }
+1033: M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+1062:  if (e.target.closest('#bag-menu, button') || !ui.panel.hidden) return;
+1078:  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn()) {
+1132:  if (e.target.closest('#bag-menu')) return;
+1207:  if (showHeld) { held.position.set(rx, REL_Y, REL_Z); held.rotation.set(0.15, -yaw, 0); }
+1218:  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+1242:  for (const el of [$('bag-menu'), $('meter')]) el.style.display = 'none';
+"""Run every Playwright suite with bounded waits (serve the app on port 8000)."""
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+
+if len(sys.argv)>1 and sys.argv[1]=='--worker':
+ from playwright.async_api import Browser, BrowserContext
+ original=BrowserContext.new_page
+ async def new_page(self,*args,**kwargs):
+  page=await original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ BrowserContext.new_page=new_page
+ browser_original=Browser.new_page
+ async def browser_new_page(self,*args,**kwargs):
+  page=await browser_original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ Browser.new_page=browser_new_page
+ runpy.run_path(sys.argv[2],run_name='__main__')
+else:
+ root=Path(__file__).resolve().parent.parent
+ failed=[]
+ for suite in sorted((root/'tests').glob('*_check.py')):
+  print(f'Running {suite.name}',flush=True)
+  try:
+   result=subprocess.run([sys.executable,__file__,'--worker',str(suite)],cwd=root,timeout=150)
+   if result.returncode:failed.append(suite.name)
+  except subprocess.TimeoutExpired:
+   print(f'{suite.name}: exceeded 150-second suite limit',flush=True)
+   failed.append(suite.name)
+ print('Failed: '+', '.join(failed) if failed else 'All Playwright suites passed',flush=True)
+ sys.exit(bool(failed))
+"""Task 13 phone text and pooled throw effects; short bounded browser checks."""
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
+  source=Path('index.html').read_text().replace('window.__game = {','window.__test={M,toWorld,flightTrail,boardDust,confetti,scoreInning,afterThrow,bags}; window.__game = {')
+  for w,h in [(390,844),(456,1024)]:
+   page=await browser.new_page(viewport={'width':w,'height':h},device_scale_factor=2,ignore_https_errors=True)
+   page.set_default_timeout(5000);page.set_default_navigation_timeout(10000)
+   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+   await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+   await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('!!window.__game');await page.evaluate('document.fonts.ready')
+   await page.evaluate('__game.careerIntro()')
+   await page.screenshot(path=f'shots/task13-phone-card-{w}.png')
+   async def bounds():
+    assert await page.locator('#panel').evaluate('(e)=>{const r=e.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight && e.scrollWidth<=e.clientWidth}')
+   await bounds()
+   await page.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_function('__game.state.phase==="aim"')
+   assert await page.locator('#hud').evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)')==10
+   await page.screenshot(path=f'shots/task13-phone-hud-{w}.png')
+   await page.evaluate('__game._setWind(0,0);__game.throwWith(.5)')
+
+exec
+/bin/bash -lc 'python -m http.server 8000' in /workspace/cornhole
+ exited 127 in 0ms:
+/bin/bash: line 1: python: command not found
+
+exec
+/bin/bash -lc 'python3 -m http.server 8000' in /workspace/cornhole
+exec
+/bin/bash -lc "cat > /tmp/probe14.py <<'PY'
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
+  page=await b.new_page(viewport={'width':390,'height':844},ignore_https_errors=True)
+  src=Path('index.html').read_text().replace('window.__game = {','window.__v={camera,held,THREE};window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=src,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/'); await page.wait_for_function('"'!!window.__game'"')
+  await page.evaluate('__game.startMatch({practice:true,vs:\"2p\",first:0})');await page.wait_for_timeout(200)
+  print(await page.locator('#bag-menu').bounding_box())
+  for y,z,look,fov in [(2.05,3.2,.5,47),(3,6,.5,35),(3,6,1.8,35),(3,6,2.7,35),(3,6,3,35),(2.5,6,2.2,35)]:
+   print(y,z,look,fov,await page.evaluate('''([y,z,l,f])=>{const {camera:c,THREE:T}=__v;c.position.set(0,y,z);c.lookAt(0,l,-8.7);c.fov=f;c.updateProjectionMatrix();c.updateMatrixWorld();const pt=(x,y,z)=>{let v=new T.Vector3(x,y,z).project(c);return [(v.x+1)*195,(1-v.y)*422]};return {bag:pt(.62,1.3,-.45),board:[pt(-.3048,.1,-8.23),pt(.3048,.4,-9.4)]}}''',[y,z,look,fov]))
+  await b.close()
+asyncio.run(main())
+PY
+python3 /tmp/probe14.py" in /workspace/cornhole
+ exited 1 in 0ms:
+Traceback (most recent call last):
+  File "/tmp/probe14.py", line 3, in <module>
+    from playwright.async_api import async_playwright
+ModuleNotFoundError: No module named 'playwright'
+
+exec
+/bin/bash -lc "ls /tmp; which python3; ls /opt; rg -n 'venv|python' codex-run-13.log | tail -5" in /workspace/cornhole
+ succeeded in 0ms:
+after_strip.png
+agent-pixel-140366313837008.sqlite
+agent-pixel-140366315271216.sqlite
+agent-pixel-140366315824592.sqlite
+agent-pixel-140366316230672.sqlite
+agent-pixel-140366319209680.sqlite
+agent-store-fuse.log
+ap_bk37.py
+ap_strip.py
+ap_strip_work.sqlite
+apm
+apvenv
+apx
+b6-career-final.log
+b6-career.log
+b6-playwright.log
+b6-task3.log
+b6-task5-final.log
+b6-task5.log
+b6-task6-final.log
+b6-task6.log
+b6-wind.log
+b6-wind_flag.log
+b7-tests.log
+b8-tests.log
+b9-server.log
+b9-task5-rerun.log
+b9-tests.log
+ba.html
+base12.py
+box-doctor.log
+box-keyring-daemon.pid
+box-keyring-daemon.pid.lock
+box-keyring.log.lock
+build.log
+c.png
+c21.json
+c21act.json
+c21s0.py
+c27.png
+c35.png
+calibrate11.py
+calibration11.log
+calibration11b.log
+calibration11c.log
+calibration11d.log
+calibration11e.log
+cand.png
+career-http.log
+career-regression.log
+career-test.log
+career_check-5.log
+career_edit.py
+career_visual.py
+ch-srv.log
+ch.json
+check.py
+chrome:2.log
+chrome:2.log.lock
+claude-1000
+claude-seat-run2.log
+cmp.png
+codex-bwrap-synthetic-mount-targets-1000
+codex-daemon-1000
+com.google.Chrome.chrome_chrome_url_fetcher_.3rHbzw
+com.google.Chrome.chrome_chrome_url_fetcher_.6IcSiT
+com.google.Chrome.chrome_chrome_url_fetcher_.76xyu0
+com.google.Chrome.chrome_chrome_url_fetcher_.7TKCk0
+com.google.Chrome.chrome_chrome_url_fetcher_.8Ysypi
+com.google.Chrome.chrome_chrome_url_fetcher_.B5D5A8
+com.google.Chrome.chrome_chrome_url_fetcher_.BovaVw
+com.google.Chrome.chrome_chrome_url_fetcher_.HvVF8W
+com.google.Chrome.chrome_chrome_url_fetcher_.Od6XqR
+com.google.Chrome.chrome_chrome_url_fetcher_.PA1oNk
+com.google.Chrome.chrome_chrome_url_fetcher_.UYpgLE
+com.google.Chrome.chrome_chrome_url_fetcher_.UoftiZ
+com.google.Chrome.chrome_chrome_url_fetcher_.amDBEa
+com.google.Chrome.chrome_chrome_url_fetcher_.cfKc9T
+com.google.Chrome.chrome_chrome_url_fetcher_.dUvPRg
+com.google.Chrome.chrome_chrome_url_fetcher_.fAC1se
+com.google.Chrome.chrome_chrome_url_fetcher_.i459nO
+com.google.Chrome.chrome_chrome_url_fetcher_.oD4r4J
+com.google.Chrome.chrome_chrome_url_fetcher_.oPQ0Xc
+com.google.Chrome.chrome_chrome_url_fetcher_.q4EY3W
+com.google.Chrome.chrome_chrome_url_fetcher_.vPmV1R
+com.google.Chrome.chrome_chrome_url_fetcher_.x05I4w
+com.google.Chrome.chrome_chrome_url_fetcher_.xaHVED
+cornhole-commit
+cornhole-final-test.log
+cornhole-http.log
+cornhole-server.log
+cornhole-test.log
+cornhole-venv
+cornhole13-server.log
+cursor-mcp-browser-opens
+d21montage.png
+d22m.png
+d28
+d28restart.json
+d30.json
+d32.json
+d32.py
+d33.json
+d33.py
+d33s9b.png
+d35.png
+d35a.png
+d35b2.png
+d35t8.png
+d35t8a.png
+d35x3.png
+dbus:1.log
+dbus:1.log.lock
+dbus:10.log
+dbus:10.log.lock
+dbus:2.log
+dbus:2.log.lock
+dbus:3.log
+dbus:3.log.lock
+dbus:5.log
+dbus:5.log.lock
+dbus:6.log
+dbus:6.log.lock
+dbus:7.log
+dbus:7.log.lock
+dbus:8.log
+dbus:8.log.lock
+dbus:9.log
+dbus:9.log.lock
+dry_c24.txt
+dry_claude.txt
+dry_claude2.txt
+edit.py
+edit11.py
+edit12.py
+edit13.py
+edit3.py
+edit6.py
+edit7.py
+egress-tunnel.log
+exec-daemon.log
+g14.py
+g24.json
+g27.json
+g43_v.jpg
+g44_v.jpg
+g45_v.jpg
+g46_v.jpg
+g47_v.jpg
+gturn.json
+h.txt
+h4.txt
+h5.txt
+h6.txt
+hands.png
+live.html
+live4.html
+live5.html
+live6.html
+ltip.png
+measure6.py
+metal.png
+metal_s.jpg
+mk.py
+mobiledebug.py
+model_seat_claude.lock
+model_seat_claude_dry.lock
+model_seat_openai.lock
+model_seat_openai_dry.lock
+montage.png
+n.json
+n.py
+n.txt
+n1.json
+n10.json
+n10.txt
+n11.json
+n11.txt
+n12.json
+n12.txt
+n13.json
+n13.txt
+n14.json
+n14.txt
+n15.json
+n15.txt
+n16.json
+n16.txt
+n17.json
+n17.txt
+n21.json
+n21.txt
+n21s2.json
+n21s2.txt
+n21s3.txt
+n22.json
+n22.txt
+n22s3.json
+n22s3.txt
+n22s4.txt
+n23s2.json
+n23s2.txt
+n23s3.json
+n23s3.txt
+n23s5.json
+n23s5.txt
+n23s9.json
+n23s9.txt
+n24.json
+n24.txt
+n24s3.json
+n24s3.txt
+n24s4.json
+n24s4.txt
+n25s3.json
+n25s3.txt
+n25s4.json
+n25s4.txt
+n26s8.json
+n26s8.txt
+n28.json
+n3.json
+n31.json
+n31.txt
+n32.json
+n32b.json
+n33.json
+n33.txt
+n4.json
+n4.txt
+n5.txt
+n6.json
+n6.txt
+n7.json
+n7.txt
+n8.json
+n8.txt
+n9.json
+n9.txt
+node-compile-cache
+note.json
+novnc-forks.log
+novnc-forks.log.lock
+novnc:1.log
+novnc:1.log.lock
+o
+ok
+openai_act_21_11.json
+openai_act_21_2.json
+openai_act_21_5.json
+openai_act_21_8.json
+openai_act_22_1.json
+openai_act_22_10.json
+openai_act_22_4.json
+openai_act_22_7.json
+openai_act_23_0.json
+openai_act_23_3.json
+openai_act_23_6.json
+openai_act_23_9.json
+openai_act_24_11.json
+openai_act_24_14.json
+openai_act_24_17.json
+openai_act_24_5.json
+openai_act_24_8.json
+openai_build_23_0.py
+openai_build_23_3.py
+openai_build_23_6.py
+openai_build_23_9.py
+openai_build_24_11.py
+openai_build_24_14.py
+openai_build_24_17.py
+openai_build_24_2.py
+openai_build_24_5.py
+openai_build_24_8.py
+openai_turn_23_6.json
+persist-cli-auth.log
+photos.png
+picom:1.log.lock
+picom:10.log
+picom:10.log.lock
+picom:2.log
+picom:2.log.lock
+picom:3.log
+picom:3.log.lock
+picom:5.log
+picom:5.log.lock
+picom:6.log.1
+picom:6.log.lock
+picom:7.log
+picom:7.log.lock
+picom:8.log
+picom:8.log.lock
+picom:9.log
+picom:9.log.lock
+playwright-artifacts-4Wimv6
+playwright-artifacts-C9R71t
+playwright-artifacts-G2y04t
+playwright-artifacts-JkJtsC
+playwright-artifacts-KTZtJT
+playwright-artifacts-MmTHaZ
+playwright-artifacts-Ra6UlR
+playwright-artifacts-V1lAAR
+playwright-artifacts-aIiyuM
+playwright-artifacts-baaOgm
+playwright-artifacts-hEUaUL
+playwright-artifacts-pyjxxy
+playwright-artifacts-wlHFCy
+playwright-artifacts-wvxMeJ
+playwright-artifacts-yl6Sm8
+playwright_check-5.log
+playwright_chromiumdev_profile-5xYRgh
+playwright_chromiumdev_profile-6PXMnT
+playwright_chromiumdev_profile-71Be0c
+playwright_chromiumdev_profile-7cEQ5P
+playwright_chromiumdev_profile-7jS1pT
+playwright_chromiumdev_profile-GfjAHR
+playwright_chromiumdev_profile-Hc48dd
+playwright_chromiumdev_profile-JQk4kw
+playwright_chromiumdev_profile-SBTeXz
+playwright_chromiumdev_profile-UrZiWb
+playwright_chromiumdev_profile-WCqGsL
+playwright_chromiumdev_profile-dKvvcY
+playwright_chromiumdev_profile-rzryRf
+playwright_chromiumdev_profile-ty8s8W
+playwright_chromiumdev_profile-w9RAXp
+post.png
+pre.png
+prev19.png
+probe14.py
+pulseaudio:1.log.lock
+pulseaudio:10.log.lock
+pulseaudio:2.log.lock
+pulseaudio:3.log.lock
+pulseaudio:5.log.lock
+pulseaudio:6.log.lock
+pulseaudio:7.log.lock
+pulseaudio:8.log.lock
+pulseaudio:9.log.lock
+pw-browsers
+pytest-of-box
+refs.png
+ross-turn.json
+run6.py
+s13.png
+s5.py
+sand-box-browser-accept-language-9224
+sand-box-browser-coherent-fingerprint
+sand-box-browser-gpu-mode-9224
+sand-box-browser-launch-markers-9224
+sand-box-browser-no-local-dns
+sand-box-browser-running-9224
+sand-box-browser-stock-fonts
+sand-box-browser-stock-notifications
+sand-box-browser-webrtc-proxy-only
+sand-box-chrome-extra-flags
+sand-box-experiments-ready
+sand-box-ready-stage
+sand-box-store-pack
+sand-box-telemetry.log
+sand-box-timezone.log
+sand-browser-accept-language-en-us
+sand-browser-egress-timezone
+sand-chrome-disable-quic
+sand-cookie-launch-restore.log
+sand-cookie-persist.log
+sand-copy-in-status.json
+sand-copy-in.log
+sand-desktop
+sand-desktop-supervisor.log
+sand-egress-proxy
+sand-egress-tunnel-client
+sand-host.log
+sand-identity.sock
+sand-log-shipper.offsets.json
+sand-managed-converge.log
+sand-memory-watch.log
+sand-novnc-tokens.d
+sand-orbitd-supervisor.log
+sand-orbitd.log
+sand-orbitd.log.lock
+sand-playwright-mcp
+sand-playwright-output
+sand-playwright-secure-fill
+sand-session-sync.log
+sand-supervisor
+sand-supervisor-supervise.log
+sand-supervisor.log
+sand-ua-governor-accept-language-9224-1zTsxa
+sand-ua-governor.log
+sand-ua-governor.log.lock
+sand-ua-token-disabled
+sand-web-bot-auth
+sand-web-bot-auth-xhr-fetch
+sand-web-bot-auth.log.lock
+sand-window-6
+sand-window-locks.d
+sand-window-router.log
+sand-window-tokens.d
+sand-window-used.d
+server2.log
+shira.png
+sk.png
+sketch.py
+st32.json
+st33.json
+start-desktop.log
+start-desktop.log.lock
+t17.png
+t64.png
+task10-tests.log
+task11-final.log
+task11-original-shots
+task11-rates.json
+task11-regression.log
+task11-test.log
+task11-test2.log
+task11-ui.log
+task12-captures.py
+task12-regression.py
+task12-release.py
+task12-server.log
+task13-final.log
+task13-reg10.log
+task13-reg11.log
+task13-reg12.log
+task13-reg9.log
+task3-browsers
+task3-career.log
+task3-install.log
+task3-new-final.log
+task3-new-final2.log
+task3-new.log
+task3-regression-final.log
+task3-regression.log
+task3_check-5.log
+task5_check-5.log
+thumb.png
+tile-import-sideeffect.db
+torii-body.json
+tune11.log
+tune11.py
+turn.json
+turn23.json
+turn32.json
+turn35.json
+v.json
+veto.json
+veto31.json
+watch-turn.json
+wind_flag_check-5.log
+ws_block.py
+x.png
+x11vnc:1.log
+x11vnc:1.log.lock
+x11vnc:10.log
+x11vnc:10.log.lock
+x11vnc:2.log
+x11vnc:2.log.lock
+x11vnc:3.log
+x11vnc:3.log.lock
+x11vnc:5.log
+x11vnc:5.log.lock
+x11vnc:6.log
+x11vnc:6.log.lock
+x11vnc:7.log
+x11vnc:7.log.lock
+x11vnc:8.log
+x11vnc:8.log.lock
+x11vnc:9.log
+x11vnc:9.log.lock
+xdg-runtime
+xdg-runtime-6
+xdg-runtime-box
+xdg-runtime-box-6
+xfce4-panel:1.log
+xfce4-panel:1.log.lock
+xfce4-panel:1.pid
+xfce4-panel:1.pid.lock
+xfce4-panel:10.log
+xfce4-panel:10.log.lock
+xfce4-panel:10.pid
+xfce4-panel:10.pid.lock
+xfce4-panel:2.log
+xfce4-panel:2.log.lock
+xfce4-panel:2.pid
+xfce4-panel:2.pid.lock
+xfce4-panel:3.log
+xfce4-panel:3.log.lock
+xfce4-panel:3.pid
+xfce4-panel:3.pid.lock
+xfce4-panel:5.log
+xfce4-panel:5.log.lock
+xfce4-panel:5.pid
+xfce4-panel:5.pid.lock
+xfce4-panel:6.log
+xfce4-panel:6.log.lock
+xfce4-panel:6.pid
+xfce4-panel:6.pid.lock
+xfce4-panel:7.log
+xfce4-panel:7.log.lock
+xfce4-panel:7.pid
+xfce4-panel:7.pid.lock
+xfce4-panel:8.log
+xfce4-panel:8.log.lock
+xfce4-panel:8.pid
+xfce4-panel:8.pid.lock
+xfce4-panel:9.log
+xfce4-panel:9.log.lock
+xfce4-panel:9.pid
+xfce4-panel:9.pid.lock
+xfwm4:1.log
+xfwm4:1.log.lock
+xfwm4:10.log
+xfwm4:10.log.lock
+xfwm4:2.log
+xfwm4:2.log.lock
+xfwm4:3.log
+xfwm4:3.log.lock
+xfwm4:5.log
+xfwm4:5.log.lock
+xfwm4:6.log
+xfwm4:6.log.lock
+xfwm4:7.log
+xfwm4:7.log.lock
+xfwm4:8.log
+xfwm4:8.log.lock
+xfwm4:9.log
+xfwm4:9.log.lock
+xvfb:1.log.lock
+xvfb:10.log.lock
+xvfb:2.log.lock
+xvfb:3.log.lock
+xvfb:5.log.lock
+xvfb:6.log.lock
+xvfb:7.log.lock
+xvfb:8.log.lock
+xvfb:9.log.lock
+z.png
+z_1005_1007_1013_1014.png
+z_1028_1037_1044_1050.png
+z_1051_1057_1066_1068.jpg
+z_1051_1057_1066_1068.png
+z_1079_1082_1083_1098.jpg
+z_727_744_746.png
+z_781_792_794.png
+z_807_808_815.png
+z_885_879_897.png
+z_906_907_922.png
+z_929_941_942.png
+z_953_958_963_974.png
+z_983_984_988_995.png
+/usr/bin/python3
+google
+sand
+sand-managed
+ungoogled-chromium
+1736:/tmp/cornhole-venv/bin/python /tmp/task12-regression.py tests/task11_check.py >/tmp/task13-reg11.log 2>&1
+1737:/tmp/cornhole-venv/bin/python tests/task12_check.py >/tmp/task13-reg12.log 2>&1' in /workspace/cornhole
+1846:/bin/bash -lc "python3 - <<'PY'
+1868:/bin/bash -lc '/tmp/cornhole-venv/bin/python tests/task13_check.py >/tmp/task13-final.log 2>&1' in /workspace/cornhole
+2031:python3 - <<'PY'
+
+exec
+/bin/bash -lc '/tmp/cornhole-venv/bin/python /tmp/probe14.py' in /workspace/cornhole
+ succeeded in 2118ms:
+{'x': 6.234375, 'y': 572.984375, 'width': 234, 'height': 264}
+2.05 3.2 0.5 47 {'bag': [356.91676760729246, 493.10753721051316], 'board': [[169.46784834968543, 460.3112239058225], [218.27892325699707, 422.6682471730227]]}
+3 6 0.5 35 {'bag': [319.90228820480456, 541.7701640688927], 'board': [[166.89429745119145, 465.62824069354104], [221.12051403444343, 420.39077790343856]]}
+3 6 1.8 35 {'bag': [321.3628383361689, 660.3730769067473], 'board': [[166.7071407370239, 582.827824427548], [221.2169400597985, 537.1210141622232]]}
+3 6 2.7 35 {'bag': [322.9919866870239, 745.7042944358793], 'board': [[166.4446088230287, 666.4304542519583], [221.40468600155836, 619.9691716044571]]}
+3 6 3 35 {'bag': [323.6536533473351, 774.7600172426929], 'board': [[166.33181416648983, 694.7616106206676], [221.49014833836685, 647.965832282657]]}
+2.5 6 2.2 35 {'bag': [323.1937077062312, 642.8539665732621], 'board': [[166.42420249491903, 619.7385803192368], [221.42213326335403, 576.7656113086581]]}
+
+codex
+The phone view uses the desktop camera position, which magnifies the nearby bag toward the screen edge. I’m adjusting the camera framing only for narrow portrait screens and adding checks for both box positions, menu clearance, board size, and camera stability while aiming.
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='index.html'
+s=open(p).read().replace('  // A fixed, centered view keeps both hand origins in frame on portrait phones.','  // Pull back only on narrow portraits: both release origins fit above the menu.\\n  // Framing depends only on viewport size, never on aim or selected box.\\n  const portrait = Math.max(0, Math.min(1, (0.85 - camera.aspect) / 0.25));\\n  camera.position.copy(CAM_POS).lerp(new THREE.Vector3(0, 5, 14), portrait);\\n  camera.lookAt(CAM_LOOK);')
+s=s.replace('  camera.updateProjectionMatrix();','  camera.fov += (25 - camera.fov) * portrait;\\n  camera.updateProjectionMatrix();',1)
+open(p,'w').write(s)
+PY
+cp /tmp/probe14.py /tmp/probe14-old.py
+sed -i \"s/\\[(2.05,3.2,.5,47).*:/[(5,14,.5,25)]:/\" /tmp/probe14.py
+/tmp/cornhole-venv/bin/python /tmp/probe14.py" in /workspace/cornhole
+ succeeded in 1901ms:
+{'x': 6.234375, 'y': 572.984375, 'width': 234, 'height': 264}
+5 14 0.5 25 {'bag': [274.24058555546975, 526.7400740364217], 'board': [[169.506543207818, 462.46149318410477], [219.3289562625848, 418.9647446729]]}
+
+exec
+/bin/bash -lc "cat > tests/task14_check.py <<'PY'
+\"\"\"Portrait framing, real release projection, static aim and desktop regression.\"\"\"
+import asyncio,json
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,device_scale_factor=1)
+  page.set_default_timeout(5000);page.set_default_navigation_timeout(10000)
+  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,held,trajectory,THREE,CAM_POS,CAM_LOOK,newBody,launch,releaseX}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('"'!!window.__game'"');await page.evaluate('document.fonts.ready')
+  results=[]
+  for w,h in [(456,1024),(390,844),(1280,800)]:
+   await page.set_viewport_size({'width':w,'height':h})
+   await page.evaluate('__game.startMatch({practice:true,vs:\"2p\",first:0})')
+   await page.wait_for_function('__game.state.phase===\"aim\"')
+   for side in ['left','right']:
+    await page.click(f'[data-box={side}]');await page.wait_for_timeout(80)
+    data=await page.evaluate('''()=>{const {camera:c,held,trajectory,THREE:T,newBody,launch,releaseX}=__view;c.updateMatrixWorld();const pt=v=>{v=v.clone().project(c);return {x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2}};const b=newBody(0);launch(b,releaseX(0),.5,0,0);return {bag:pt(held.position),gap:b.p.distanceTo(held.position),preview:trajectory[0].position.distanceTo(held.position),board:[-.3048,.3048].flatMap(x=>[0,1.2192].map(z=>pt(new T.Vector3(x,.1016+z*Math.sin(Math.atan( .2032/1.2192)),-8.2296-z*Math.cos(Math.atan(.2032/1.2192))))))}}''')
+    assert data['gap']<1e-9 and data['preview']<1e-9,data
+    if w"'!=1280:
+     menu=await page.locator('"'#bag-menu').bounding_box()
+     assert .25*w<=data['bag']['x']<=.75*w,data
+     assert .55*h<=data['bag']['y']<menu['y']-12,data
+     xs=[v['x'] for v in data['board']];ys=[v['y'] for v in data['board']]
+     assert min(xs)>0 and max(xs)<w and min(ys)>0 and max(ys)<menu['y'],data
+     assert max(xs)-min(xs)>=w*.10 and max(ys)-min(ys)>=h*.025,data
+     await page.screenshot(path=f'shots/task14-{w}x{h}-{side}.png')
+    else:
+     assert await page.evaluate('''()=>{const {camera:c,CAM_POS,CAM_LOOK,THREE:T}=__view;const q=new T.Quaternion();const m=new T.Matrix4().lookAt(CAM_POS,CAM_LOOK,c.up);q.setFromRotationMatrix(m);return c.position.equals(CAM_POS)&&c.quaternion.equals(q)&&c.fov===19}''')
+    async def camera():
+     return await page.evaluate('''()=>{const c=__view.camera;return [c.position.toArray(),c.quaternion.toArray(),c.fov]}''')
+    fixed=await camera()
+    for x in [2,w-2]:
+     await page.mouse.move(x,h*.48);await page.wait_for_timeout(80)
+     assert await camera()==fixed
+    results.append({'viewport':[w,h],'side':side,**data})
+  assert not errors,errors
+  Path('shots/task14-projections.json').write_text(json.dumps(results,indent=2))
+  await browser.close()
+  print('TASK 14 PASS: portrait projections, menu clearance, board size, release alignment, static camera and exact desktop framing')
+asyncio.run(asyncio.wait_for(main(),timeout=45))
+PY
+/tmp/cornhole-venv/bin/python tests/task14_check.py" in /workspace/cornhole
+exec
+/bin/bash -lc 'cat tests/task5_check.py; cat tests/task6_check.py | tail -25; cat /tmp/task12-regression.py | head -60' in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  # Expose rendering objects only in the test response, leaving production hooks unchanged.
+  source=Path('index.html').read_text().replace('window.__game = {','window.__view = {camera, held, THREE}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda route:route.fulfill(body=source,content_type='text/html'))
+  for width,height in [(1280,800),(480,360),(390,844)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('!!window.__game')
+   await page.evaluate('__game._setWind(8,0)')
+   for selector in ['#wind','#conditions','#sb','#height-choice','#bag-menu']:
+    assert not await page.locator(selector).is_visible(),selector
+   assert await page.locator('#title').is_visible()
+   await page.click('#career');await page.click('#career-go')
+   for selector in ['#wind','#conditions','#sb','#height-choice','#bag-menu']:
+    assert not await page.locator(selector).is_visible(),selector
+   await page.screenshot(path=f'shots/task5-intro-{width}.png')
+   await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')
+   await page.wait_for_timeout(2200)
+   await page.evaluate('__game._setWind(8,0)')
+   assert await page.locator('#wind').is_visible()
+   assert await page.locator('#sb').is_visible()
+   view=await page.evaluate('''()=>{const {camera,held,THREE}=__view;const v=held.position.clone().project(camera);return {fov:camera.fov,z:camera.position.z,held:held.visible,point:v.toArray()};}''')
+   assert abs(view['fov']-19)<1e-9
+   assert abs(view['z']-2.45)<1e-9
+   # Fixed 19-degree FOV crops the foreground bag horizontally on narrow screens.
+   assert view['held'] and all(-1<v<1 for v in view['point'][1:]),view
+   if width>=height: assert -1<view['point'][0]<1,view
+   assert view['point'][1]<0,view
+   await page.screenshot(path=f'shots/task5-held-{width}.png')
+  await browser.close()
+  print('V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS')
+asyncio.run(main())
+   assert abs(neutral[0]-.5)<.001 and neutral[1:]==[2.05,2.45],neutral
+   for aim in [-.12,.12]:
+    await page.evaluate('(a)=>__game.setAim(a)',aim)
+    await page.wait_for_timeout(1800)
+    view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
+    assert view['x']==.5 and view['look']==0,view
+    assert all(abs(v[0])<1 and abs(v[1])<1 for v in view['board']),view
+   before=await page.evaluate('__game.state.aim')
+   for key in ['ArrowLeft','ArrowRight','q','e','a','d']:
+    await page.keyboard.press(key)
+   await page.wait_for_timeout(200)
+   state=await page.evaluate('__game.state')
+   assert state['position']==[0,0] and state['spin']==0 and state['aim']==before
+   assert 'SPIN' not in await page.locator('#conditions').text_content()
+   assert 'STEP' not in await page.locator('#conditions').text_content()
+   await page.screenshot(path=f'shots/task6-{width}.png')
+   await page.click('#menu');await page.click('#practice')
+   assert await page.locator('#n0').inner_text()=='RED'
+   await page.wait_for_function('__game.state.phase==="aim"')
+   launch=await page.evaluate('''()=>{__game.throwWith(.55,.8);const b=__view.bags.at(-1);return {spin:b.spin,english:b.english,x:b.p.x,center:__view.RX[0]};}''')
+   assert launch['spin']==0 and launch['english']==0 and launch['x']==launch['center'],launch
+  assert not errors,errors
+  await browser.close()
+  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, fixed camera across aim changes, removed controls/shortcuts and board bounds: PASS')
+asyncio.run(main())
+import runpy,sys
+from playwright.async_api import BrowserType
+original=BrowserType.launch
+async def launch(self,*args,**kwargs):
+ kwargs['executable_path']='/usr/bin/google-chrome'
+ return await original(self,*args,**kwargs)
+BrowserType.launch=launch
+runpy.run_path(sys.argv[1],run_name='__main__')
+
+ succeeded in 10256ms:
+TASK 14 PASS: portrait projections, menu clearance, board size, release alignment, static camera and exact desktop framing
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='tests/task9_check.py';s=open(p).read().replace(\"view['position']==[0,2.05,3.2]\", \"view['position']==([0,5,14] if width/height<=.6 else [0,2.05,3.2])\");open(p,'w').write(s)
+p='tests/task12_check.py';s=open(p).read().replace(\"check['camera']==[0,2.05,3.2]\", \"check['camera']==([0,5,14] if w/h<=.6 else [0,2.05,3.2])\");open(p,'w').write(s)
+PY
+/tmp/cornhole-venv/bin/python /tmp/task12-regression.py tests/task9_check.py > /tmp/task14-reg9.log 2>&1
+" in /workspace/cornhole
+exec
+/bin/bash -lc '/tmp/cornhole-venv/bin/python /tmp/task12-regression.py tests/task10_check.py > /tmp/task14-reg10.log 2>&1' in /workspace/cornhole
+exec
+/bin/bash -lc '/tmp/cornhole-venv/bin/python tests/task12_check.py > /tmp/task14-reg12.log 2>&1' in /workspace/cornhole
+exec
+/bin/bash -lc '/tmp/cornhole-venv/bin/python tests/task13_check.py > /tmp/task14-reg13.log 2>&1' in /workspace/cornhole
+ succeeded in 4841ms:
+ succeeded in 12995ms:
+exec
+/bin/bash -lc '/tmp/cornhole-venv/bin/python /tmp/task12-regression.py tests/task11_check.py > /tmp/task14-reg11.log 2>&1' in /workspace/cornhole
+exec
+/bin/bash -lc 'cat shots/task14-projections.json; cat /tmp/task14-reg9.log /tmp/task14-reg10.log /tmp/task14-reg12.log /tmp/task14-reg13.log; git diff --stat; git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+[
+  {
+    "viewport": [
+      456,
+      1024
+    ],
+    "side": "left",
+    "bag": {
+      "x": 131.8597634966813,
+      "y": 639.078004518123
+    },
+    "gap": 0,
+    "preview": 0,
+    "board": [
+      {
+        "x": 197.0685939281234,
+        "y": 560.9408622122794
+      },
+      {
+        "x": 198.54495820916534,
+        "y": 517.006254893373
+      },
+      {
+        "x": 258.9314060718766,
+        "y": 560.9408622122794
+      },
+      {
+        "x": 257.4550417908346,
+        "y": 517.006254893373
+      }
+    ]
+  },
+  {
+    "viewport": [
+      456,
+      1024
+    ],
+    "side": "right",
+    "bag": {
+      "x": 324.1402365033187,
+      "y": 639.078004518123
+    },
+    "gap": 0,
+    "preview": 0,
+    "board": [
+      {
+        "x": 197.0685939281234,
+        "y": 560.9408622122794
+      },
+      {
+        "x": 198.54495820916534,
+        "y": 517.006254893373
+      },
+      {
+        "x": 258.9314060718766,
+        "y": 560.9408622122794
+      },
+      {
+        "x": 257.4550417908346,
+        "y": 517.006254893373
+      }
+    ]
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "side": "left",
+    "bag": {
+      "x": 115.7594144445303,
+      "y": 526.7400740364217
+    },
+    "gap": 0,
+    "preview": 0,
+    "board": [
+      {
+        "x": 169.50575515169544,
+        "y": 462.3379762765272
+      },
+      {
+        "x": 170.7226022739605,
+        "y": 426.1262491503973
+      },
+      {
+        "x": 220.49424484830456,
+        "y": 462.3379762765272
+      },
+      {
+        "x": 219.27739772603948,
+        "y": 426.1262491503973
+      }
+    ]
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "side": "right",
+    "bag": {
+      "x": 274.24058555546975,
+      "y": 526.7400740364217
+    },
+    "gap": 0,
+    "preview": 0,
+    "board": [
+      {
+        "x": 169.50575515169544,
+        "y": 462.3379762765272
+      },
+      {
+        "x": 170.7226022739605,
+        "y": 426.1262491503973
+      },
+      {
+        "x": 220.49424484830456,
+        "y": 462.3379762765272
+      },
+      {
+        "x": 219.27739772603948,
+        "y": 426.1262491503973
+      }
+    ]
+  },
+  {
+    "viewport": [
+      1280,
+      800
+    ],
+    "side": "left",
+    "bag": {
+      "x": 241.21875438384166,
+      "y": 575.1291894010651
+    },
+    "gap": 0,
+    "preview": 0,
+    "board": [
+      {
+        "x": 577.114150711908,
+        "y": 494.044099217255
+      },
+      {
+        "x": 582.867348441812,
+        "y": 419.06920669491336
+      },
+      {
+        "x": 702.885849288092,
+        "y": 494.044099217255
+      },
+      {
+        "x": 697.132651558188,
+        "y": 419.06920669491336
+      }
+    ]
+  },
+  {
+    "viewport": [
+      1280,
+      800
+    ],
+    "side": "right",
+    "bag": {
+      "x": 1038.7812456161582,
+      "y": 575.1291894010651
+    },
+    "gap": 0,
+    "preview": 0,
+    "board": [
+      {
+        "x": 577.114150711908,
+        "y": 494.044099217255
+      },
+      {
+        "x": 582.867348441812,
+        "y": 419.06920669491336
+      },
+      {
+        "x": 702.885849288092,
+        "y": 494.044099217255
+      },
+      {
+        "x": 697.132651558188,
+        "y": 419.06920669491336
+      }
+    ]
+  }
+]Batch 9: fixed camera position, target and rotation; responsive FOV stays fixed across pointer extremes; moving indicators and held bag PASS
+TASK 10: KOBE width, tournament floor/shift, input mapping and exact visual bounds PASS
+ index.html                      |   7 ++++++-
+ shots/task10-kobe.png           | Bin 75505 -> 75434 bytes
+ shots/task10-normal.png         | Bin 80353 -> 75545 bytes
+ shots/task10-push.png           | Bin 83930 -> 79922 bytes
+ shots/task12-bag-1280.png       | Bin 82023 -> 82058 bytes
+ shots/task12-opp-1.png          | Bin 68728 -> 68781 bytes
+ shots/task12-opp-2.png          | Bin 69642 -> 69805 bytes
+ shots/task12-opp-3.png          | Bin 69645 -> 69583 bytes
+ shots/task12-opp-4.png          | Bin 70498 -> 70506 bytes
+ shots/task12-opp-5.png          | Bin 69359 -> 69213 bytes
+ shots/task12-opp-6.png          | Bin 69805 -> 69619 bytes
+ shots/task12-opp-7.png          | Bin 70983 -> 70902 bytes
+ shots/task12-opp-8.png          | Bin 70122 -> 70085 bytes
+ shots/task13-board-puff-390.png | Bin 88724 -> 107523 bytes
+ shots/task13-mid-flight-390.png | Bin 76399 -> 98527 bytes
+ shots/task13-phone-card-390.png | Bin 63110 -> 80968 bytes
+ shots/task13-phone-hud-390.png  | Bin 90826 -> 109515 bytes
+ shots/task9-1280-left.png       | Bin 82143 -> 82133 bytes
+ shots/task9-1280-right.png      | Bin 81891 -> 81893 bytes
+ shots/task9-390-left.png        | Bin 65044 -> 82501 bytes
+ shots/task9-390-right.png       | Bin 62478 -> 80858 bytes
+ shots/task9-480-left.png        | Bin 57642 -> 59469 bytes
+ shots/task9-480-right.png       | Bin 56268 -> 56239 bytes
+ shots/task9-844-left.png        | Bin 88048 -> 86527 bytes
+ shots/task9-844-right.png       | Bin 86369 -> 86406 bytes
+ tests/task12_check.py           |   2 +-
+ tests/task9_check.py            |   2 +-
+ 27 files changed, 8 insertions(+), 3 deletions(-)
+
+exec
+/bin/bash -lc 'cat /tmp/task14-reg11.log /tmp/task14-reg12.log /tmp/task14-reg13.log; git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+ M index.html
+ M shots/task10-kobe.png
+ M shots/task10-normal.png
+ M shots/task10-push.png
+ M shots/task11-1280.png
+ M shots/task11-390.png
+ M shots/task11-844.png
+ M shots/task12-bag-1280.png
+ M shots/task12-bag-456.png
+ M shots/task12-bag-844.png
+ M shots/task12-menu-456x1024.png
+ M shots/task12-menu-844x390.png
+ M shots/task12-opp-1.png
+ M shots/task12-opp-2.png
+ M shots/task12-opp-3.png
+ M shots/task12-opp-4.png
+ M shots/task12-opp-5.png
+ M shots/task12-opp-6.png
+ M shots/task12-opp-7.png
+ M shots/task12-opp-8.png
+ M shots/task13-board-puff-390.png
+ M shots/task13-mid-flight-390.png
+ M shots/task13-mid-flight-456.png
+ M shots/task13-phone-card-390.png
+ M shots/task13-phone-card-456.png
+ M shots/task13-phone-hud-390.png
+ M shots/task13-phone-hud-456.png
+ M shots/task13-phone-recap-390.png
+ M shots/task9-1280-left.png
+ M shots/task9-1280-right.png
+ M shots/task9-390-left.png
+ M shots/task9-390-right.png
+ M shots/task9-480-left.png
+ M shots/task9-480-right.png
+ M shots/task9-844-left.png
+ M shots/task9-844-right.png
+ M tests/task12_check.py
+ M tests/task9_check.py
+?? codex-run-14.log
+?? shots/task14-390x844-left.png
+?? shots/task14-390x844-right.png
+?? shots/task14-456x1024-left.png
+?? shots/task14-456x1024-right.png
+?? shots/task14-projections.json
+?? tests/task14_check.py
+
+ succeeded in 14702ms:
+codex
+Both phone sizes now pass the projection checks: the bag is within the center 50% of the screen, about 62% down, and above the bag menu for both LEFT and RIGHT. The board remains visible at about 13% of screen width. The camera stays fixed during aiming, and the 1280×800 framing matches the original exactly. The four requested screenshots are saved; regression checks are still running.
+exec
+/bin/bash -lc "cat /tmp/task14-reg13.log; cat /tmp/task14-reg12.log; cat /tmp/task14-reg11.log; ps -eo pid,etime,args | rg 'task(11|12)_check'" in /workspace/cornhole
+ exited 1 in 0ms:
+TASK 13 PASS
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 25, "on": 114, "miss": 261, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 63, "on": 115, "miss": 222, "kobe": 0}
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 18, "on": 121, "miss": 261, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 50, "on": 141, "miss": 209, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 98, "on": 137, "miss": 165, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 146, "on": 138, "miss": 116, "kobe": 0}
+
+exec
+/bin/bash -lc 'tail -15 /tmp/task14-reg12.log; tail -15 /tmp/task14-reg11.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 25, "on": 114, "miss": 261, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 63, "on": 115, "miss": 222, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 89, "on": 144, "miss": 167, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 138, "on": 144, "miss": 118, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 181, "on": 119, "miss": 100, "kobe": 0}
+{"name": "Sierra Spin", "throws": 400, "in": 226, "on": 114, "miss": 60, "kobe": 0}
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 18, "on": 121, "miss": 261, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 50, "on": 141, "miss": 209, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 98, "on": 137, "miss": 165, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 146, "on": 138, "miss": 116, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 183, "on": 127, "miss": 90, "kobe": 0}
+{"name": "Sierra Spin", "throws": 400, "in": 216, "on": 131, "miss": 53, "kobe": 0}
+{"name": "Duke Dozer", "throws": 400, "in": 262, "on": 103, "miss": 35, "kobe": 0}
+
+ succeeded in 39520ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+# Keep regression captures in /tmp and retain the task's four requested captures in shots/.
+backup=Path('/tmp/task14-regression-shots');backup.mkdir(exist_ok=True)
+for name in subprocess.check_output(['git','diff','--name-only','--','shots/'],text=True).splitlines():
+ p=Path(name)
+ if p.suffix=='.png' and any(p.name.startswith(f'task{i}-') for i in range(9,14)):
+  (backup/p.name).write_bytes(p.read_bytes())
+  p.write_bytes(subprocess.check_output(['git','show',f'HEAD:{name}']))
+PY
+cat /tmp/task14-reg12.log | tail -3; cat /tmp/task14-reg11.log | tail -3" in /workspace/cornhole
+ succeeded in 24ms:
+{"name": "Tailgate Ted", "throws": 400, "in": 181, "on": 119, "miss": 100, "kobe": 0}
+{"name": "Sierra Spin", "throws": 400, "in": 226, "on": 114, "miss": 60, "kobe": 0}
+{"name": "Duke Dozer", "throws": 400, "in": 251, "on": 121, "miss": 28, "kobe": 0}
+{"name": "Duke Dozer", "throws": 400, "in": 262, "on": 103, "miss": 35, "kobe": 0}
+{"name": "Reign Supreme", "throws": 400, "in": 325, "on": 57, "miss": 18, "kobe": 0}
+TASK 11: menu layouts, round terminology, CPU calibration PASS
+
+ succeeded in 53415ms:
+exec
+/bin/bash -lc 'tail -4 /tmp/task14-reg12.log; git diff --check; git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Sierra Spin", "throws": 400, "in": 226, "on": 114, "miss": 60, "kobe": 0}
+{"name": "Duke Dozer", "throws": 400, "in": 251, "on": 121, "miss": 28, "kobe": 0}
+{"name": "Reign Supreme", "throws": 400, "in": 321, "on": 57, "miss": 22, "kobe": 0}
+TASK 12 PASS
+ M index.html
+ M tests/task12_check.py
+ M tests/task9_check.py
+?? codex-run-14.log
+?? shots/task14-390x844-left.png
+?? shots/task14-390x844-right.png
+?? shots/task14-456x1024-left.png
+?? shots/task14-456x1024-right.png
+?? shots/task14-projections.json
+?? tests/task14_check.py
+
+codex
+The Task 14 checks and batch 9–13 regressions all passed, including release alignment, controls, CPU behavior, and throw effects. I also inspected the phone capture and confirmed the held bag is visible above the menu. I’m writing the summary with the measured coordinates and validation results.
+exec
+/bin/bash -lc "cat > codex-summary-14.md <<'MD'
+# Task 14 summary
+
+Implemented portrait camera framing in "'`index.html`. Narrow portraits use a static camera at (0, 5, 14) with a 25° vertical FOV, looking at the existing board target. Framing blends into the original view between aspect ratios 0.60 and 0.85. Aim and box selection never change the camera. The held bag, real throw release and first preview point continue to share exactly the same world position.
+
+At 1280×800 the camera position, orientation and 19° FOV match the previous framing exactly. Landscape framing and gameplay logic remain unchanged.
+
+## Screen-space verification
+
+Coordinates are CSS pixels, measured by projecting the real held mesh position through the active camera:
+
+| Viewport | LEFT bag | RIGHT bag | Board width |
+| --- | --- | --- | --- |
+| 456×1024 | (131.86, 639.08) | (324.14, 639.08) | 61.86 px |
+| 390×844 | (115.76, 526.74) | (274.24, 526.74) | 50.99 px |
+
+Both sides are inside the center 50% horizontally and the lower 45% vertically, with at least 12 pixels of clearance above the menu. The board is fully visible, about 13% of viewport width. Visually inspected the 390×844 RIGHT screenshot to confirm bag visibility and framing.
+
+Saved the requested screenshots:
+
+- `shots/task14-456x1024-left.png`
+- `shots/task14-456x1024-right.png`
+- `shots/task14-390x844-left.png`
+- `shots/task14-390x844-right.png`
+
+Detailed projections: `shots/task14-projections.json`.
+
+## Validation
+
+- New `tests/task14_check.py`: PASS. Uses 5-second interaction and 10-second navigation timeouts with a 45-second suite ceiling. Checks both portrait sizes and boxes, menu clearance, board bounds and minimum size, exact release/preview alignment, static camera across aim extremes, exact desktop framing, and browser errors.
+- Batch 9: PASS, including static camera and moving aim indicators. Updated the old phone camera position expectation for the newly required framing.
+- Batch 10: PASS, meter/arc behavior and bounds.
+- Batch 11: PASS, menus, terminology and 3,200 simulated CPU throws.
+- Batch 12: PASS, responsive controls, portraits, saved practice box, release alignment and 3,200 simulated CPU throws. Updated its phone camera position expectation.
+- Batch 13: PASS, phone text, panels and pooled throw effects.
+- `git diff --check`: PASS.
+
+Regression screenshot captures were retained under `/tmp/task14-regression-shots`; existing tracked screenshots were restored after verification. No writes to `.git`.
+MD
+ git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+codex
+Implemented Task 14 fully.
+
+- Both phone sizes and box positions pass bag placement, menu clearance, and board visibility checks.
+- Camera stays static while aiming; desktop framing is unchanged.
+- Task 14 and batch 9–13 regression checks passed.
+- Saved all four requested screenshots. No writes to `.git`.
+
+Details: [codex-summary-14.md](/workspace/cornhole/codex-summary-14.md).
+2026-11-03T23:56:27.585182Z ERROR codex_core::session: failed to record rollout items: thread 01a1a3d4-f676-7252-bb22-ee4177d6cc5c not found
+tokens used
+36,892
+Implemented Task 14 fully.
+
+- Both phone sizes and box positions pass bag placement, menu clearance, and board visibility checks.
+- Camera stays static while aiming; desktop framing is unchanged.
+- Task 14 and batch 9–13 regression checks passed.
+- Saved all four requested screenshots. No writes to `.git`.
+
+Details: [codex-summary-14.md](/workspace/cornhole/codex-summary-14.md).
