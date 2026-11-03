@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 if len(sys.argv)>1 and sys.argv[1]=='--worker':
- from playwright.async_api import BrowserContext
+ from playwright.async_api import Browser, BrowserContext
  original=BrowserContext.new_page
  async def new_page(self,*args,**kwargs):
   page=await original(self,*args,**kwargs)
@@ -13,6 +13,13 @@ if len(sys.argv)>1 and sys.argv[1]=='--worker':
   page.set_default_navigation_timeout(12000)
   return page
  BrowserContext.new_page=new_page
+ browser_original=Browser.new_page
+ async def browser_new_page(self,*args,**kwargs):
+  page=await browser_original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ Browser.new_page=browser_new_page
  runpy.run_path(sys.argv[2],run_name='__main__')
 else:
  root=Path(__file__).resolve().parent.parent

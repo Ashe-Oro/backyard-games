@@ -1,0 +1,5 @@
+Completed all four Batch 8 fixes. All seven Playwright suites passed with short timeouts; `git diff --check` passed.
+
+Summary: [codex-summary-8.md](/workspace/cornhole/codex-summary-8.md)
+
+Changes remain in the working tree. No writes to `.git` or commits.

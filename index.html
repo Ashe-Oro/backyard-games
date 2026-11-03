@@ -33,8 +33,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .ol{text-shadow:2px 0 #2b1a2e,-2px 0 #2b1a2e,0 2px #2b1a2e,0 -2px #2b1a2e,2px 2px #2b1a2e,-2px 2px #2b1a2e,2px -2px #2b1a2e,-2px -2px #2b1a2e}
 #hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(7px,1.9vmin,14px)}
 #hud.menu > :not(#title){display:none!important}
-#sb{position:absolute;left:0;right:0;top:1.4vmin;display:flex;justify-content:space-between;align-items:flex-start;padding:0 1.6vmin}
-.team{min-width:9em}.team.blue{text-align:right}
+#sb{position:absolute;left:0;right:0;top:1.4vmin;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;padding:0 1.6vmin}
+.team{min-width:0}.team.blue{grid-column:3;text-align:right}
 .tn{font-size:.9em;letter-spacing:.06em}
 .red .tn{color:#ff8a80}.blue .tn{color:#9db8ff}
 .ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
@@ -44,7 +44,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .pips i.used{background:#6b5a63!important;opacity:.4;box-shadow:none}
 .team.now .tn::before{content:'▶ ';color:#ffe45e}
 .blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe45e}
-.mid{text-align:center;padding-top:.2em}
+.mid{grid-column:2;text-align:center;padding-top:.2em;max-width:58vw}#goal.practice{white-space:pre-line;line-height:1.7}
 #inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
 #turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
 #turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
@@ -79,7 +79,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #panel .go:hover{background:#fff07f}
 #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
 @media (max-width:560px){#title{top:12%}#title h1{font-size:2.4em}}
-#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#3b2a40e6;border:.25em solid #2b1a2e;box-shadow:.25em .25em 0 rgba(43,26,46,.35);color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;margin:2px auto 8px;width:36px;height:36px}#wind-speed{white-space:nowrap}
 @media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
 #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
 #panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
@@ -87,7 +87,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #bag-menu > *{flex-shrink:0}
 .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
 #height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
-@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+@media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -103,7 +103,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
-    <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+    <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
@@ -685,7 +685,13 @@ function lie() { // score as the bags lie right now (only final after all 8)
   }
   return { pts, inC, onC };
 }
+// Draw the wind arrow once at sprite resolution; CSS rotates it with the wind.
+const windArrow = $('wind-arrow').getContext('2d');
+windArrow.fillStyle = '#ffe45e';
+for (const [y,x,w] of [[1,5,2],[2,4,4],[3,3,6],[4,2,8],[5,1,10],[6,5,2],[7,5,2],[8,5,2],[9,5,2],[10,5,2]]) windArrow.fillRect(x,y,w,1);
 function renderHud() {
+  // Keep human height in sync even during the incoming thrower's wait phase.
+  if (isHuman(thrower())) M.arc = M.heights[thrower()];
   $('hud').classList.toggle('menu', ['menu', 'intro', 'champion'].includes(M.phase));
   for (const t of [0, 1]) {
     ui.s[t].textContent = M.scores[t];
@@ -696,6 +702,7 @@ function renderHud() {
   }
   ui.inn.textContent = 'INNING ' + M.inning;
   ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+  ui.goal.classList.toggle('practice', M.practice);
   const t = thrower();
   if (M.phase === 'aim' || M.phase === 'cpu') {
     ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
@@ -709,7 +716,7 @@ function renderHud() {
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
   $('reset-bags').hidden=!M.practice;
   ui.t[1].hidden=M.practice;
-  if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+  if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
   const w = meterWindow();
