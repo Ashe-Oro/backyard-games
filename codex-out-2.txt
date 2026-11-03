@@ -1,0 +1,5 @@
+Implemented career mode and all leftovers. Playwright career and gameplay tests pass with no console errors across desktop, 480×360, and mobile.
+
+Summary: [codex-summary-career.md](/workspace/cornhole/codex-summary-career.md)
+
+Nothing deployed. Commit failed because `.git` is read-only; changes remain in the working tree.

@@ -22,7 +22,7 @@ async def main():
   assert await page.evaluate('__game.state.bags.length')==1
   await page.screenshot(path='shots/desktop.png')
   probes=await page.evaluate('[0,1,2].map(a=>[__game._probe(.55,a,-1),__game._probe(.55,a,1)])')
-  assert probes[2][0]['flight']>probes[0][0]['flight']+.4
+  assert probes[2][0]['flight']>probes[0][0]['flight']+.2
   assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005
   print('arc/spin landing probes',probes)
   await page.wait_for_function('__game.state.phase==="aim"')

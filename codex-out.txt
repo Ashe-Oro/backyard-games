@@ -1,0 +1,3 @@
+Implemented all feature items, including removing Space charging. Playwright checks passed with no browser errors; screenshots and [summary](/workspace/cornhole/codex-summary.md) are saved. Nothing deployed.
+
+The in-place commit was blocked by read-only `.git`. Commit `48a757f` is preserved in [cornhole-changes.bundle](/workspace/cornhole/cornhole-changes.bundle), with application instructions in the summary.

@@ -39,7 +39,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
 .pips{display:flex;gap:.4em;margin-top:.6em}.blue .pips{justify-content:flex-end}
 .pips i{display:block;width:1.4em;height:1.4em;border:.22em solid #2b1a2e;box-shadow:inset -.22em -.22em 0 rgba(0,0,0,.25),inset .18em .18em 0 rgba(255,255,255,.35)}
-.red .pips i{background:#e8423c}.blue .pips i{background:#3f6ee8}
+.red .pips i{background:#e8423c}.blue .pips i{background:var(--rival,#3f6ee8)}
 .pips i.used{background:#6b5a63!important;opacity:.4;box-shadow:none}
 .team.now .tn::before{content:'▶ ';color:#ffe45e}
 .blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe45e}
@@ -84,6 +84,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 @media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
 @media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
 #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
+#panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -177,7 +178,8 @@ function resize() {
   const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  camera.fov = w / h < 1 ? 17 + (1 - w / h) * 22 : 17;
+  camera.userData.aimFov = w / h < 1 ? 9 + (1 - w / h) * 13 : 9;
+  camera.fov = camera.userData.aimFov;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -634,6 +636,8 @@ function makeBagMesh(team, side) {
   mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
 }
 const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); held.castShadow = true; scene.add(held);
+const trajectory=[];
+for(let i=0;i<48;i++){const d=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.035),basic('#ffe45e'));scene.add(d);trajectory.push(d);}
 const aimDots = [];
 {
   const dm = basic({ color: '#ffffff', transparent: true, opacity: 0.75 });
@@ -655,7 +659,7 @@ const M = {
 };
 const thrower = (k = M.k) => (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
-const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : 'CPU') : TEAM[t]);
+const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[career.fight].name : 'CPU') : TEAM[t]);
 const settled = () => bags.every((b) => ['board', 'grass', 'in', 'removed'].includes(b.state) && !(b.state === 'grass' && b.dead));
 function lie() { // score as the bags lie right now (only final after all 8)
   const pts = [0, 0], inC = [0, 0], onC = [0, 0];
@@ -681,7 +685,7 @@ function renderHud() {
     ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
     ui.turn.style.opacity = 1;
   } else ui.turn.style.opacity = 0;
-  $('wind').textContent = `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
+  $('wind').textContent = wind.mph===0 ? 'CALM AIR · 0 MPH' : `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
   $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
   ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
   ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
@@ -703,10 +707,75 @@ function setMeter(p) { ui.fill.style.height = (clamp(p, 0, 1) * 100) + '%'; }
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 
 function clearBags() { for (const b of bags) scene.remove(b.mesh); bags.length = 0; }
+// Career saves only completed fights; an interrupted match restarts the current opponent.
+const roster = [
+ ['Slidin’ Steve','The Patio Pusher','Beanbag Bend','2–7','Your bags are in my driveway!','slider','#45bca4',0],
+ ['Big Bag Barb','Queen of the Cookout','Biscuit Bay','5–3','Hope you brought a bigger picnic!','blocker','#ed83bb',0],
+ ['Kobe Kowalski','The Sky Slinger','Popcorn Plains','9–4','Forecast: bags from above!','lobber','#f6b642',1],
+ ['Sticky Vicky','The Suede Sorceress','Velcro Valley','12–3','This victory is going to stick!','sniper','#a57cf0',1],
+ ['Tailgate Ted','The Parking Lot Tornado','Grillville','16–5','I put the wild in wild card!','wild','#73b5f3',2],
+ ['Slidin’ Steve II','Patio Pusher: Reloaded','Beanbag Bend','21–7','Same driveway. Double trouble!','slider','#26dcbb',2],
+ ['Big Bag Barb II','The Cookout Empress','Biscuit Bay','28–3','You’re the side dish today!','blocker','#ff509f',3],
+ ['Reign Supreme','The Bag Baroness','Crown Corners','35–0','The throne has no room for two!','champion','#ffe45e',3]
+].map((r,i)=>({name:r[0],nick:r[1],home:r[2],record:r[3],taunt:r[4],style:r[5],color:r[6],circuit:r[7],level:i}));
+const circuits=['Backyard Circuit','County Fair','Tailgate Pro','King’s Court'];
+const SAVE_KEY='backyard-cornhole-career-v1';
+let career={fight:0,wins:0}, saveNote='';
+try { const c=JSON.parse(localStorage.getItem(SAVE_KEY)); if(c && Number.isInteger(c.fight) && c.fight>=0 && c.fight<=roster.length && Number.isInteger(c.wins) && c.wins>=c.fight) career={fight:c.fight,wins:c.wins}; } catch { saveNote='Storage unavailable: progress lasts this visit.'; }
+function saveCareer(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(career));}catch{saveNote='Storage unavailable: progress lasts this visit.';}}
+function portrait(o){
+ const female=[1,3,6,7].includes(o.level), hair=['#633b29','#45283a','#c07431','#282338'][o.level%4];
+ return `<svg class="portrait" viewBox="0 0 16 16" role="img" aria-label="Pixel portrait of ${o.name}" shape-rendering="crispEdges"><rect width="16" height="16" fill="#252237"/><path fill="${o.color}" d="M2 12h12v4H2z"/><path fill="${hair}" d="M4 3h8v9H4z${female?'M3 5h2v8H3zM11 5h2v8h-2z':''}"/><path fill="${['#f5be91','#b97851','#df9c70'][o.level%3]}" d="M5 5h6v6H5zM6 11h4v2H6z"/><path fill="#272034" d="M6 6h1v1H6zM9 6h1v1H9zM7 9h3v1H7z"/><path fill="${o.color}" d="M3 3h10v2H3zM5 2h6v1H5z"/>${o.level>=5?'<path fill="#ffe45e" d="M4 1h1v2H4zM7 0h2v3H7zM11 1h1v2h-1z"/>':''}</svg>`;
+}
+function careerMap(){
+ M.career=false; M.phase='menu'; clearBags(); ui.title.classList.add('gone');
+ ui.panel.innerHTML=`<div class="pt">ROAD TO CORNHOLE KING</div><div class="ladder">${roster.map((o,i)=>`<div class="${i<career.fight?'done':i===career.fight?'current':''}">${i<career.fight?'✓':i===career.fight?'▶':'·'} ${o.name} · ${circuits[o.circuit]}</div>`).join('')}</div><div class="pd">${career.wins} WINS · ${career.fight}/8 CLEARED</div><button class="go" id="career-go">${career.fight===8?'CHAMPION ENDING':'CONTINUE CAREER'}</button><button class="hb" id="back">QUICK MATCH</button><div id="save-note">${saveNote}</div>`;
+ ui.panel.hidden=false; $('career-go').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=showMenu; renderHud();
+}
+function careerIntro(){
+ const o=roster[career.fight]; M.phase='intro'; ui.title.classList.add('gone');
+ ui.panel.innerHTML=`<div class="pt">${circuits[o.circuit]} · FIGHT ${career.fight+1}/8</div><div class="pd">NEXT UP: ${o.name}</div>${portrait(o)}<div class="pd">“${o.nick}” · ${o.home}<br>RECORD ${o.record}<br>${o.taunt}<br>${o.style.toUpperCase()} · ${o.circuit===0?'CALM AIR':o.circuit===1?'LIGHT WIND':'STRONG WIND'}</div><button class="go" id="fight">LET’S TOSS</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ ui.panel.hidden=false; $('fight').onclick=()=>startMatch({career:true,vs:'cpu',exact:false}); $('back').onclick=careerMap;
+}
+function champion(){
+ M.phase='champion'; ui.panel.hidden=false; ui.title.classList.add('gone');
+ ui.panel.innerHTML='<div class="pt">ALL FOUR CIRCUITS CONQUERED</div><div class="big">CORNHOLE KING!</div>'+portrait(roster[7])+'<div class="pd">The crown is yours!<br>Eight rivals. One backyard legend.<br>Your championship is saved.</div><button class="go" id="back">CIRCUIT MAP</button><button class="hb" id="restart">NEW CAREER</button>';
+ $('back').onclick=careerMap; $('restart').onclick=()=>{career={fight:0,wins:0};saveCareer();careerMap();}; burst(HOLE_WORLD);
+}
+function careerResult(win){
+ const o=roster[career.fight]; if(win===0){career.fight++;career.wins++;saveCareer();}
+ ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'REMATCH'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ $('next-fight').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=careerMap;
+}
+function planCareerShot(o){
+ // Predict actual flight and board friction, then value strategic landing targets.
+ const deck=bags.filter(onDeck), blockers=deck.filter(b=>b.lp.z>HOLE_LOCAL.z+.12);
+ let arc=o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
+ if(o.level>=3 && blockers.length) arc=2;
+ let side=o.style==='sniper'||o.style==='blocker'?'sticky':'slick';
+ let target=HOLE_LOCAL.clone(), goal='hole';
+ const own=deck.find(b=>b.team===1 && holeDist(b.lp)<.35), enemy=deck.find(b=>b.team===0);
+ if(o.level>=2 && own && o.style!=='lobber'){target.copy(own.lp);arc=0;side='slick';goal='push';}
+ else if(o.level>=4 && enemy && M.scores[0]>=18){target.copy(enemy.lp);arc=0;goal='knock';}
+ else if(o.style==='blocker' && !blockers.length && M.scores[1]>=M.scores[0]){target.z+=.38;goal='block';}
+ let best={cost:Infinity,power:.55,aim:0};
+ // Later opponents compensate with the full match wind; early opponents are less precise.
+ for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012){
+  const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc);
+  for(let i=0;i<960;i++){step(b,1/120);if(['board','grass','in','removed'].includes(b.state))break;}
+  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2:.5;
+  if(b.state==='grass'||b.state==='removed')cost+=3;
+  if(cost<best.cost)best={cost,power,aim};
+ }
+ const error=.045-o.level*.005, wild=o.style==='wild'?2:1;
+ M.arc=arc;M.spin=0;M.side[1]=side;
+ return {t:0,side,power:clamp(best.power+gauss()*error*wild,0,1),aim:best.aim+gauss()*error*.23*wild,drift:gauss()*.05,goal};
+}
 function showMenu() {
   M.phase = 'menu'; ui.title.classList.remove('gone');
+  M.career=false;
   const opt = (k, v, label) => `<button data-k="${k}" data-v="${v}" class="${String(M[k]) === String(v) ? 'on' : ''}">${label}</button>`;
-  ui.panel.innerHTML = `<div class="pt">SINGLES MATCH</div>
+  ui.panel.innerHTML = `<div class="pt">QUICK MATCH</div><button class="go" id="career">CAREER · ROAD TO THE CROWN</button>
     <div class="opt">${opt('vs', 'cpu', 'VS CPU')}${opt('vs', '2p', '2 PLAYERS')}</div>
     <div class="opt">${opt('exact', false, 'TO 21+')}${opt('exact', true, 'EXACT 21 (BUST→13)')}</div>
     <button class="go" id="go">${M.winner >= 0 ? 'REMATCH' : 'START MATCH'}</button>
@@ -714,11 +783,18 @@ function showMenu() {
   ui.panel.hidden = false;
   ui.panel.querySelectorAll('.opt button').forEach((b) => b.onclick = (e) => { e.stopPropagation(); const k = b.dataset.k; M[k] = k === 'exact' ? b.dataset.v === 'true' : b.dataset.v; showMenu(); renderHud(); });
   $('go').onclick = (e) => { e.stopPropagation(); startMatch(); };
+  $('career').onclick=careerMap;
   renderHud();
 }
 function startMatch(opts = {}) {
   if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
+  M.career = opts.career === true;
   wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
+  if(M.career){const c=roster[career.fight].circuit;wind.mph=c===0?0:c===1?2+Math.floor(Math.random()*3):c===2?6+Math.floor(Math.random()*3):9+Math.floor(Math.random()*4);}
+  const color=M.career?roster[career.fight].color:'#2f5fe8';
+  for(const mat of Object.values(TEAM_MATS[1])){mat.map.dispose();mat.dispose();}
+  TEAM_MATS[1]=bagMats(color,'#252237','#ffffff');
+  document.documentElement.style.setProperty('--rival',color);
   wind.x = Math.sin(wind.angle) * wind.mph * 0.025; wind.z = -Math.cos(wind.angle) * wind.mph * 0.025;
   M.position = [0, 0]; M.spin = 0; M.arc = 1;
   M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
@@ -742,6 +818,7 @@ function nextTurn() {
     M.arc = 1; M.spin = 0;
     const w = WIN[1 + side + 1];
     M.cpu = { t: 0, side, power: w.mid + wind.z * 0.04 + gauss() * 0.055, aim: -wind.x * 0.08 + gauss() * 0.012, drift: gauss() * 0.18 };
+    if(M.career) M.cpu=planCareerShot(roster[career.fight]);
     M.phase = 'cpu';
   }
   renderHud();
@@ -794,6 +871,7 @@ function scoreInning() {
     <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT INNING'}</button>`;
   ui.panel.hidden = false;
   $('go').onclick = (e) => { e.stopPropagation(); advance(); };
+  if(win>=0 && M.career) careerResult(win);
 }
 function advance() {
   if (M.phase === 'summary') { ui.panel.hidden = true; M.inning++; beginInning(); }
@@ -929,7 +1007,7 @@ addEventListener('keyup', (e) => {
 const clock = new THREE.Clock();
 let acc = 0, time = 0;
 const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
-const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+const CAM_LOOK = new THREE.Vector3(0, 0.25, -8.7);
 camera.userData.look = CAM_LOOK.clone();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); time += dt;
@@ -969,11 +1047,16 @@ function frame() {
     d.visible = showHeld && isHuman(t);
     d.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(time * 6 - i * 0.6));
   });
+  // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
+  const preview=newBody(t);launch(preview,rx,drag ? clamp(parseFloat(ui.fill.style.height)/100,0,1) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
   const camRx = M.phase === 'menu' ? 0.3 : rx;
   camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 1.4);
   camera.position.lerp(camTmp, Math.min(1, dt * 3));
   const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
-  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
+  const flightFov=camera.userData.aimFov+(fb?Math.min(22,Math.max(0,fb.y-.3)*7):0);
+  camera.fov+=(flightFov-camera.fov)*Math.min(1,dt*5);camera.updateProjectionMatrix();
+  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.18);
   camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
@@ -999,6 +1082,8 @@ requestAnimationFrame(frame);
 
 window.__game = {
   get state() { return { phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
+  careerMap, careerIntro,
   win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
   startMatch, advance, lie: () => lie(),
   throwWith: (p, d = 0) => throwBag(p, d),

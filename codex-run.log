@@ -1,0 +1,1885 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0
+--------
+workdir: /workspace/cornhole
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: none
+reasoning summaries: none
+session id: 01a1a2d8-180b-7912-ac3d-2b0df2125550
+--------
+user
+Read /workspace/cornhole/CODEX_TASK.md and complete every item in it, including the required testing, git commits, and codex-summary.md.
+codex
+I’ll read the task instructions and repository guidance, then complete the changes, required tests, commits, and summary.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CODEX_TASK.md' -g 'package.json' -g 'codex-summary.md'" in /workspace/cornhole
+ succeeded in 0ms:
+/workspace/cornhole
+CODEX_TASK.md
+
+exec
+/bin/bash -lc 'cat CODEX_TASK.md' in /workspace/cornhole
+ succeeded in 0ms:
+# Backyard Cornhole — feature batch (from Ashe)
+
+Game: single-file Three.js 3D pixel-art cornhole at /workspace/cornhole/index.html (live at https://backyard-cornhole.vercel.app; deployment is handled separately — do NOT deploy). It already has: real ACL rules vs CPU / 2P hot-seat, cancellation scoring to 21, flick-to-throw (mouse press-flick-release), spinner mode (M, no click), slick/sticky side (F), on-board bag collisions, X Player Card meta + vercel.json CSP frame-ancestors (keep those intact). Keep it a single self-contained index.html, small payload, no build step.
+
+Implement ALL of the following:
+
+1. **Step left/right (position).** Left/Right arrow keys move the thrower's standing position sideways within the pitcher's box (reasonable range left/right of the board). This is SEPARATE from the existing aim-angle control, so there are two movements: position (arrows) and angle (mouse sideways / A-D). Move existing arrow-key aim to A/D only. Mobile on-screen buttons for both.
+2. **Board farther out / power scale.** Light, easy flicks currently overthrow the board by too much. Re-tune so gentle flicks land short/near the board and it takes deliberate effort to reach the hole; board should feel farther out. Keep the hole window at least as wide as now.
+3. **Bag-to-bag physics.** Proper pushes and slides: momentum transfer, bags sliding each other along/off the board, knock-ins, bags riding up onto/over other bags if feasible, low throws that push. Make it look and feel right.
+4. **Spin.** Player can add slight left or right spin (e.g. Q/E keys + mobile buttons, and/or derived from sideways flick curve). On board contact the bag rotates and drifts just barely in the spin direction. Subtle.
+5. **Throw height / arc.** Selectable arc from a high "Kobe" lob (steep drop, can clear blocker bags into the hole, little slide) to a low line drive/slider (flat, slides and pushes bags). E.g. W/S or up-down mouse gesture shape + mobile control; show current arc in HUD.
+6. **Tighter pixel art + board framing.** Slightly finer pixels (raise internal render resolution modestly — "a little less blocky, just a little"), same style. Camera framed so the target board is bigger and the clear focal point of the scene (tighter FOV / closer framing), still showing enough scenery.
+7. **Input support everywhere.**
+   - Laptop touchpad: flick works without holding a button (tap-and-drag and two-finger swipe / wheel-delta flick are fine), plus spinner mode.
+   - Phone: touch swipe-up to throw (swipe speed/length = power, sideways = aim drift), on-screen buttons for step, aim, spin, arc, slick/sticky; no page scroll/zoom while playing (touch-action none, viewport meta), works in portrait and landscape.
+   - Playable inside an X Player Card iframe (~480x360 and smaller, sandboxed iframe; pointer lock may be unavailable — degrade gracefully).
+8. **Wind.** A wind variable (direction + mph) chosen randomly at match start and constant for the whole match (same per game, not per inning). Shown as an on-screen indicator (arrow + mph). It pushes bags in flight proportional to flight time (high Kobe drifts more). Also add slight natural inaccuracy: sideways wobble in the flick adds a little random-ish curve so perfectly straight throws aren't trivial. CPU must also account for wind (imperfectly).
+
+Update the on-screen hint/help text for the new controls (keep it compact; hide extras on narrow screens).
+
+Testing (required): verify with headless Chromium via Playwright (python playwright is available on the box; install if needed). Load the page with no console errors at 1280x800, 480x360, and a mobile viewport (e.g. iPhone 13 with touch emulation). Script: a mouse flick throw, a touch swipe throw, step left/right changing position, spin and arc changes affecting landing, wind indicator visible and constant across innings, bag-on-bag push. Save screenshots to /workspace/cornhole/shots/ (desktop.png, card.png, mobile.png). Commit your work in git in /workspace/cornhole.
+
+At the end write a concise summary of what changed, controls per device, test results, and rough edges to /workspace/cornhole/codex-summary.md.
+
+exec
+/bin/bash -lc 'ls -la && find .. -name AGENTS.md -print && git status --short && cat index.html' in /workspace/cornhole
+ succeeded in 0ms:
+total 200
+drwxr-xr-x   6 box box  4096 Nov  3 14:17 .
+drwxr-xr-x. 29 box box 20480 Nov  3 12:56 ..
+dr-xr-xr-x   2 box box    40 Nov  3 14:17 .agents
+dr-xr-xr-x   2 box box    40 Nov  3 14:17 .aws
+dr-xr-xr-x   2 box box    40 Nov  3 14:17 .codex
+drwxr-xr-x   8 box box  4096 Nov  3 14:17 .git
+-rw-r--r--   1 box box  4158 Nov  3 14:17 CODEX_TASK.md
+-rw-r--r--   1 box box  5035 Nov  3 14:17 codex-run.log
+-rw-r--r--   1 box box 57330 Nov  3 14:13 index.html
+-rw-r--r--   1 box box 27306 Nov  3 14:13 poster.png
+-rw-r--r--   1 box box 68218 Nov  3 14:16 screenshot.png
+-rw-r--r--   1 box box   239 Nov  3 13:05 vercel.json
+?? codex-run.log
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Backyard Cornhole · 3D pixel toss</title>
+<meta name="description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game in your browser.">
+<meta name="theme-color" content="#ffb36b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Backyard Cornhole">
+<meta property="og:description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game.">
+<meta property="og:url" content="https://backyard-cornhole.vercel.app/">
+<meta property="og:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="Backyard Cornhole">
+<meta name="twitter:description" content="Real cornhole rules: 27 ft, cancellation scoring, first to 21. Flick the mouse to toss.">
+<meta name="twitter:player" content="https://backyard-cornhole.vercel.app/">
+<meta name="twitter:player:width" content="480">
+<meta name="twitter:player:height" content="360">
+<meta name="twitter:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22 shape-rendering=%22crispEdges%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%231aa39a%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%232b1a2e%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#ffcf99;touch-action:none;user-select:none;-webkit-user-select:none}
+body{font-family:'Press Start 2P',ui-monospace,Menlo,monospace;color:#fff}
+#game{position:fixed;inset:0;cursor:grab}
+#game.drag{cursor:grabbing}
+#game.spin{cursor:crosshair}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.ol{text-shadow:2px 0 #2b1a2e,-2px 0 #2b1a2e,0 2px #2b1a2e,0 -2px #2b1a2e,2px 2px #2b1a2e,-2px 2px #2b1a2e,2px -2px #2b1a2e,-2px -2px #2b1a2e}
+#hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(7px,1.9vmin,14px)}
+#sb{position:absolute;left:0;right:0;top:1.4vmin;display:flex;justify-content:space-between;align-items:flex-start;padding:0 1.6vmin}
+.team{min-width:9em}.team.blue{text-align:right}
+.tn{font-size:.9em;letter-spacing:.06em}
+.red .tn{color:#ff8a80}.blue .tn{color:#9db8ff}
+.ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
+.pips{display:flex;gap:.4em;margin-top:.6em}.blue .pips{justify-content:flex-end}
+.pips i{display:block;width:1.4em;height:1.4em;border:.22em solid #2b1a2e;box-shadow:inset -.22em -.22em 0 rgba(0,0,0,.25),inset .18em .18em 0 rgba(255,255,255,.35)}
+.red .pips i{background:#e8423c}.blue .pips i{background:#3f6ee8}
+.pips i.used{background:#6b5a63!important;opacity:.4;box-shadow:none}
+.team.now .tn::before{content:'▶ ';color:#ffe45e}
+.blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe45e}
+.mid{text-align:center;padding-top:.2em}
+#inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
+#turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
+#turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
+#meter{position:absolute;right:1.8vmin;bottom:1.8vmin;width:2.2em;height:36%;border:.3em solid #2b1a2e;background:#3b2a40;box-shadow:.3em .3em 0 rgba(43,26,46,.35)}
+#fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#ffb340 0 .5em,#ff8a3d .5em 1em)}
+#sweet,#onb{position:absolute;left:-.55em;right:-.55em;height:6%}
+#onb{border:.2em dashed rgba(255,255,255,.55)}
+#sweet{border:.2em solid #fff}
+.mlbl{position:absolute;bottom:-.2em;right:calc(100% + .6em);font-size:.8em;white-space:nowrap}
+#msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
+#msg.on{opacity:1;transform:scale(1)}
+#msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
+#hint{position:absolute;left:0;right:0;bottom:2.2vmin;text-align:center;font-size:.8em;line-height:1.8;opacity:.95;padding:0 4em 0 14em}
+#title{position:absolute;left:0;right:0;top:15%;text-align:center;transition:opacity .6s}
+#title h1{font-size:3.2em;font-weight:400;color:#ffe45e;letter-spacing:.04em;line-height:1.2}
+#title p{font-size:1em;margin-top:1em}
+#title.gone{opacity:0}
+.btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
+.hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
+.hb:hover{background:#56405c}
+#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(7px,1.9vmin,14px);min-width:20em;max-width:94vw}
+#panel[hidden]{display:none}
+#panel .pt{font-size:1.1em;color:#ffb36b}
+#panel .big{font-size:2.6em;color:#ffe45e;margin:.45em 0 .3em}
+#panel .row{display:flex;justify-content:center;gap:2.2em;margin:.9em 0 .3em;line-height:1.9;font-size:.85em}
+#panel .row b{display:block;font-weight:400;font-size:2em}
+#panel .r{color:#ff8a80}#panel .b{color:#9db8ff}
+#panel .pd{font-size:.8em;line-height:1.9;margin-top:.5em}
+#panel .opt{display:flex;gap:.5em;justify-content:center;margin-top:.8em}
+#panel .opt button{font:inherit;font-size:.8em;padding:.6em .7em;color:#fff;background:#2b1a2e;border:.2em solid #6b5a63;cursor:pointer}
+#panel .opt button.on{background:#ffe45e;color:#2b1a2e;border-color:#2b1a2e}
+#panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
+#panel .go:hover{background:#fff07f}
+#panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+@media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div id="sb" class="ol">
+      <div class="team red" id="t0"><div class="tn">RED <span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span> BLUE</div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+    </div>
+    <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+    <div id="turn" class="ol"></div>
+    <div id="msg" class="ol"></div>
+    <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <div id="hint" class="ol"></div>
+    <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="mode" title="Toggle controls (M)">MOUSE</button></div>
+  </div>
+  <div id="panel" class="ol" hidden></div>
+  <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+
+// ---------- constants (regulation ACL/ACA dimensions, metres) ----------
+const G = 9.8;
+const IN = 0.0254, FT = 0.3048;
+const W = 2 * FT, L = 4 * FT;              // 2 ft x 4 ft deck
+const FRONT_H = 3.5 * IN, BACK_H = 12 * IN; // front 2.5-4 in, back 12 in
+const TH = Math.asin((BACK_H - FRONT_H) / L);
+const BOARD_Z = -27 * FT;                   // 27 ft front edge to front edge; our foul line is z = 0
+const HOLE_FROM_TOP = 9 * IN, HOLE_R = 3 * IN; // 6 in hole, centre 9 in from the top
+const BAG = 6 * IN, BAG_H = 0.016, BAG_R = 0.074; // 6x6 in, ~1.25 in thick
+const SIDES = { slick: { mu: 0.30, ms: 0.5, keep: 0.42 }, sticky: { mu: 0.62, ms: 0.85, keep: 0.30 } };
+const MU_GROUND = 1.1, BAG_E = 0.25;
+const ELEV = 35 * Math.PI / 180;
+const V_MIN = 7.15, V_MAX = 10.55;
+const AIM_MAX = 0.12;
+const FLICK_MIN = 0.5, FLICK_MAX = 5.5;     // screen heights / second
+const REL_Y = 1.3, REL_Z = -0.45;           // feet stay behind the foul line (z = 0); the hand reaches past it on release
+const RX = [0.62, -0.62];                   // red throws from the right pitcher's box, blue from the left
+const TEAM = ['RED', 'BLUE'];
+const HOLE_WORLD = new THREE.Vector3();
+
+const params = new URLSearchParams(location.search);
+const POSTER = params.has('poster');
+
+// ---------- utils ----------
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(7);
+const pick = a => a[Math.floor(R() * a.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function pixTex(w, h, draw, rep = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false;
+  t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]);
+  return t;
+}
+const px = (g, x, y, c, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+const lam = (o) => new THREE.MeshLambertMaterial(typeof o === 'string' ? { color: o } : o);
+const basic = (o) => new THREE.MeshBasicMaterial(typeof o === 'string' ? { color: o } : o);
+function box(w, h, d, mat, x = 0, y = 0, z = 0, parent) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true;
+  if (parent) parent.add(m); return m;
+}
+
+// ---------- renderer ----------
+const wrap = document.getElementById('game');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+} catch (e) { document.getElementById('err').style.display = 'flex'; throw e; }
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.BasicShadowMap;
+wrap.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog('#ffd3a8', 26, 75);
+const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
+const CAM_POS = new THREE.Vector3(0.5, 2.05, 2.45);
+camera.position.copy(CAM_POS); camera.lookAt(0, 0.5, -8.7);
+
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 240));
+  renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
+  camera.aspect = w / h;
+  camera.fov = w / h < 1 ? 19 + (1 - w / h) * 30 : 19;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+// ---------- lights ----------
+scene.add(new THREE.HemisphereLight('#d6ecff', '#7a8f3a', 1.4));
+const sun = new THREE.DirectionalLight('#ffe0b0', 2.6);
+sun.position.set(-7, 12, 5); sun.target.position.set(0, 0, -5);
+sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 40 });
+sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+
+// ---------- sky ----------
+{
+  const g = new THREE.SphereGeometry(90, 24, 16);
+  const cols = []; const c = new THREE.Color();
+  const top = new THREE.Color('#3f7fe0'), mid = new THREE.Color('#9cc9ff'), low = new THREE.Color('#ffd09a'), hor = new THREE.Color('#ffb98a');
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const y = p.getY(i) / 90;
+    if (y > 0.35) c.copy(mid).lerp(top, (y - 0.35) / 0.65);
+    else if (y > 0.08) c.copy(low).lerp(mid, (y - 0.08) / 0.27);
+    else c.copy(hor).lerp(low, clamp((y + 0.1) / 0.18, 0, 1));
+    cols.push(c.r, c.g, c.b);
+  }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  scene.add(new THREE.Mesh(g, basic({ vertexColors: true, side: THREE.BackSide, fog: false })));
+  // sun disk
+  const sd = new THREE.Mesh(new THREE.CircleGeometry(4.2, 12), basic({ color: '#fff4c2', fog: false }));
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(6.5, 12), basic({ color: '#ffe39a', fog: false, transparent: true, opacity: 0.45 }));
+  sd.position.set(-26, 13, -78); halo.position.set(-26, 13, -78.2); sd.lookAt(CAM_POS); halo.lookAt(CAM_POS);
+  scene.add(halo, sd);
+}
+const clouds = [];
+{
+  const cw = basic({ color: '#ffffff', fog: false }), cp = basic({ color: '#ffd9e8', fog: false });
+  const spots = [[-14, 17, -70], [12, 20, -74], [30, 15, -66], [-38, 22, -62], [4, 25, -80]];
+  for (const [x, y, z] of spots) {
+    const grp = new THREE.Group();
+    const n = 4 + Math.floor(R() * 4);
+    for (let i = 0; i < n; i++) {
+      const s = 2 + R() * 3;
+      const b = new THREE.Mesh(new THREE.BoxGeometry(s * 1.6, s * 0.8, s), i % 3 === 0 ? cp : cw);
+      b.position.set((i - n / 2) * 2.2 + R(), (R() - 0.3) * 1.5, R() * 2);
+      grp.add(b);
+    }
+    grp.position.set(x, y, z); scene.add(grp); clouds.push(grp);
+  }
+}
+
+// ---------- ground ----------
+{
+  const grass = pixTex(32, 32, (g, w, h) => {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const light = x < 16;
+      const pal = light ? ['#6fcf4a', '#79d651', '#66c444', '#82dc59'] : ['#5bb83e', '#63bf43', '#52aa38', '#6cc648'];
+      px(g, x, y, pick(pal));
+    }
+    for (let i = 0; i < 6; i++) { const x = Math.floor(R() * w), y = Math.floor(R() * h); px(g, x, y, '#9be86b'); px(g, x, y + 1, '#4a9a32'); }
+  }, [24, 24]);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(72, 72), lam({ map: grass }));
+  ground.rotation.x = -Math.PI / 2; ground.rotation.z = Math.PI / 2; ground.position.z = -6; ground.receiveShadow = true;
+  scene.add(ground);
+  // flowers scattered in lawn
+  const fl = new THREE.InstancedMesh(new THREE.BoxGeometry(0.045, 0.03, 0.045), basic('#ffffff'), 110);
+  const fc = ['#ffffff', '#ffe45e', '#ff8fb6', '#ffffff', '#b98cff'];
+  const m4 = new THREE.Matrix4(), col = new THREE.Color();
+  for (let i = 0; i < 110; i++) {
+    let x = (R() - 0.5) * 14, z = -1 - R() * 11.5;
+    if (Math.abs(x) < 1.6) x += Math.sign(x || 1) * 1.8;
+    m4.makeTranslation(x, 0.03, z); fl.setMatrixAt(i, m4); fl.setColorAt(i, col.set(pick(fc)));
+  }
+  scene.add(fl);
+}
+
+// ---------- fence ----------
+{
+  const wood = pixTex(4, 16, (g) => {
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 4; x++) px(g, x, y, pick(['#e0a96b', '#d89f60', '#e6b376']));
+    for (let y = 0; y < 16; y++) px(g, 3, y, '#b97f47');
+    px(g, 1, 5, '#a86f3c'); px(g, 2, 11, '#a86f3c');
+  });
+  const pickets = [];
+  const addRun = (x0, z0, x1, z1) => {
+    const len = Math.hypot(x1 - x0, z1 - z0), n = Math.floor(len / 0.19);
+    for (let i = 0; i <= n; i++) { const t = i / n; pickets.push([x0 + (x1 - x0) * t, z0 + (z1 - z0) * t, Math.atan2(x1 - x0, z1 - z0) + Math.PI / 2]); }
+  };
+  addRun(-7.5, -12.8, 7.5, -12.8); addRun(-7.5, 3, -7.5, -12.8); addRun(7.5, -12.8, 7.5, 3);
+  const pg = new THREE.BoxGeometry(0.15, 1.35, 0.04);
+  const tg = new THREE.BoxGeometry(0.107, 0.107, 0.04);
+  const pm = lam({ map: wood });
+  const P = new THREE.InstancedMesh(pg, pm, pickets.length), T = new THREE.InstancedMesh(tg, pm, pickets.length);
+  P.castShadow = P.receiveShadow = T.castShadow = true;
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = new THREE.Vector3(1, 1, 1), v = new THREE.Vector3(), c = new THREE.Color();
+  pickets.forEach(([x, z, r], i) => {
+    const hh = 1.35 + (R() - 0.5) * 0.04;
+    q.setFromEuler(e.set(0, r, 0)); m.compose(v.set(x, hh / 2, z), q, s); P.setMatrixAt(i, m);
+    q.setFromEuler(e.set(0, r, Math.PI / 4)); m.compose(v.set(x, hh, z), q, s); T.setMatrixAt(i, m);
+    c.setHSL(0.08, 0.5, 0.9 + R() * 0.1); P.setColorAt(i, c); T.setColorAt(i, c);
+  });
+  scene.add(P, T);
+  const rail = lam('#a8703e');
+  for (const y of [0.35, 1.0]) {
+    box(15, 0.09, 0.05, rail, 0, y, -12.86, scene);
+    box(0.05, 0.09, 15.8, rail, -7.56, y, -4.9, scene);
+    box(0.05, 0.09, 15.8, rail, 7.56, y, -4.9, scene);
+  }
+}
+
+// ---------- trees, houses, bushes ----------
+const leafMats = ['#3f9b3a', '#4fb246', '#2f8235', '#5cc24f', '#46a83f'].map(c => lam({ color: c, flatShading: true }));
+const trunkMat = lam('#7a4b2a');
+function tree(x, z, s) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(0.35 * s, 2.2 * s, 0.35 * s, trunkMat, 0, 1.1 * s, 0, g);
+  const n = 5 + Math.floor(R() * 3);
+  for (let i = 0; i < n; i++) {
+    const b = 1.2 + R() * 1.2;
+    box(b * s, b * 0.8 * s, b * s, pick(leafMats), (R() - 0.5) * 1.6 * s, (2.2 + R() * 1.8) * s, (R() - 0.5) * 1.6 * s, g);
+  }
+  scene.add(g); return g;
+}
+[[-11, -16, 1.1], [-5.5, -18.5, 1.3], [1.5, -20, 1.0], [6.5, -17, 1.2], [12, -18, 1.2], [-13, -9, 1.2], [13, -6, 1.1], [-12, -1, 1.0], [12.5, -13, 1.0], [-2.5, -25, 1.5], [9, -27, 1.3]].forEach(t => tree(...t));
+function house(x, z, w, d, h, wall, roof, rot = 0) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot;
+  box(w, h, d, lam(wall), 0, h / 2, 0, g);
+  const r = new THREE.Mesh(new THREE.CylinderGeometry(d * 0.62, d * 0.62, w + 0.4, 3, 1), lam({ color: roof, flatShading: true }));
+  r.rotation.z = Math.PI / 2; r.rotation.x = Math.PI / 2 * 0; r.rotation.y = 0;
+  r.rotation.set(0, 0, Math.PI / 2); r.rotateY(Math.PI / 6 + Math.PI / 2);
+  r.position.y = h + d * 0.3; r.castShadow = true; g.add(r);
+  const win = basic('#ffe39a');
+  for (let i = -1; i <= 1; i += 2) box(0.8, 0.9, 0.05, win, i * w * 0.25, h * 0.55, d / 2 + 0.03, g);
+  scene.add(g);
+}
+house(-9.5, -23, 7, 5, 3.4, '#f3d2a2', '#d4553f');
+house(8.5, -25, 6, 5, 3.0, '#a9cdee', '#4b5f9c');
+{
+  const fc = ['#ff7fa8', '#ffe45e', '#ffffff', '#ff6a4d', '#c79bff'].map(c => basic(c));
+  const bushX = [-6.6, -5.2, -3.6, -2.1, 2.3, 3.9, 5.4, 6.7];
+  for (const x of bushX) {
+    const s = 0.55 + R() * 0.35;
+    box(s * 1.4, s, s, pick(leafMats), x, s / 2, -12.4, scene);
+    box(s, s * 0.7, s * 0.8, pick(leafMats), x + 0.4, s * 0.35, -12.1, scene);
+    for (let i = 0; i < 5; i++) box(0.09, 0.09, 0.09, pick(fc), x + (R() - 0.5) * s * 1.3, s + 0.02 - R() * 0.15, -12.4 + (R() - 0.3) * s, scene).castShadow = false;
+  }
+}
+
+// ---------- string lights ----------
+const bulbs = [];
+{
+  const poleMat = lam('#5a3a24');
+  const poles = [[-4.6, -12.2], [4.6, -12.2], [-4.6, -4.8], [4.6, -4.8]];
+  const PH = 2.9;
+  for (const [x, z] of poles) { box(0.12, PH, 0.12, poleMat, x, PH / 2, z, scene); }
+  const wireMat = new THREE.LineBasicMaterial({ color: '#2b1a2e' });
+  const bulbCols = ['#fff3b0', '#ffcf5e', '#ff9f6b', '#ff8fc0', '#9ff0e6'];
+  const glowTex = pixTex(8, 8, (g) => { for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { const d = Math.hypot(x - 3.5, y - 3.5); if (d < 4) px(g, x, y, `rgba(255,220,140,${(1 - d / 4) * 0.9})`); } });
+  const spans = [[0, 1], [2, 3], [0, 3], [1, 2], [0, 2], [1, 3]];
+  for (const [a, b] of spans) {
+    const A = new THREE.Vector3(poles[a][0], PH - 0.05, poles[a][1]), B = new THREE.Vector3(poles[b][0], PH - 0.05, poles[b][1]);
+    const pts = []; const N = 24; const sag = A.distanceTo(B) * 0.07;
+    for (let i = 0; i <= N; i++) { const t = i / N; const p = A.clone().lerp(B, t); p.y -= sag * 4 * t * (1 - t); pts.push(p); }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
+    for (let i = 1; i < N; i += 2) {
+      const col = bulbCols[(i + a) % bulbCols.length];
+      const bm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08), basic(col));
+      bm.position.copy(pts[i]); bm.position.y -= 0.07; scene.add(bm);
+      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+      gl.scale.set(0.3, 0.3, 1); gl.position.copy(bm.position); scene.add(gl);
+      bulbs.push({ gl, ph: R() * 6.28 });
+    }
+  }
+}
+
+// ---------- props ----------
+{
+  // cooler + cups
+  const cg = new THREE.Group(); cg.position.set(2.5, 0, -7.0); cg.rotation.y = -0.4;
+  box(0.7, 0.42, 0.42, lam('#2f86e0'), 0, 0.21, 0, cg);
+  box(0.74, 0.08, 0.46, lam('#f4f4f4'), 0, 0.46, 0, cg);
+  box(0.3, 0.04, 0.06, lam('#f4f4f4'), 0, 0.52, 0, cg);
+  box(0.72, 0.05, 0.43, lam('#1f5fae'), 0, 0.06, 0, cg);
+  const cupG = new THREE.CylinderGeometry(0.045, 0.034, 0.11, 6);
+  for (const [x, z] of [[-0.2, 0.08], [0.22, -0.05]]) {
+    const c = new THREE.Mesh(cupG, lam({ color: '#e8423c', flatShading: true })); c.position.set(x, 0.555, z); c.castShadow = true; cg.add(c);
+    box(0.09, 0.02, 0.09, lam('#ffffff'), x, 0.6, z, cg);
+  }
+  scene.add(cg);
+  // hay bales
+  const hay = pixTex(16, 8, (g) => { for (let y = 0; y < 8; y++) for (let x = 0; x < 16; x++) px(g, x, y, pick(['#f2cf6b', '#e8c05a', '#f7da7e', '#d9ad48'])); for (let x = 0; x < 16; x++) { px(g, x, 2, '#b98a34'); px(g, x, 5, '#b98a34'); } });
+  const hm = lam({ map: hay });
+  const hb = new THREE.Group(); hb.position.set(-2.7, 0, -9.6); hb.rotation.y = 0.35; hb.scale.setScalar(0.8);
+  box(1.0, 0.45, 0.5, hm, 0, 0.225, 0, hb); box(1.0, 0.45, 0.5, hm, 0.15, 0.225, -0.55, hb); box(1.0, 0.45, 0.5, hm, 0.05, 0.675, -0.3, hb);
+  const pen = new THREE.Group(); pen.position.set(0.1, 0.9, -0.3); hb.add(pen);
+  box(0.03, 0.5, 0.03, lam('#7a4b2a'), 0, 0.25, 0, pen);
+  const flag = box(0.32, 0.2, 0.01, lam('#ff6a4d'), 0.17, 0.38, 0, pen);
+  box(0.32, 0.067, 0.012, lam('#fff4dc'), 0.17, 0.38, 0, pen);
+  scene.add(hb);
+  // grill
+  const gr = new THREE.Group(); gr.position.set(-5.2, 0, -9.6);
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), lam({ color: '#2b2b33', flatShading: true })); bowl.position.y = 0.85; bowl.castShadow = true; gr.add(bowl);
+  box(0.66, 0.03, 0.66, lam('#555'), 0, 0.86, 0, gr);
+  for (const [x, z] of [[0.2, 0.2], [-0.2, 0.2], [0, -0.25]]) box(0.04, 0.7, 0.04, lam('#3a3a40'), x, 0.35, z, gr);
+  box(0.06, 0.06, 0.06, lam('#bbbbbb'), 0, 1.18, 0, gr);
+  scene.add(gr);
+}
+const smoke = [];
+{
+  const sm = basic({ color: '#ffffff', transparent: true, opacity: 0.6 });
+  for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), sm.clone()); scene.add(b); smoke.push({ b, t: i / 5 }); }
+}
+// pixel dog
+const dog = {};
+{
+  const fur = lam({ color: '#e89a45', flatShading: true }), cream = lam('#fff1d6'), dark = lam('#2b1a2e'), pink = lam('#ff8fb6');
+  const g = new THREE.Group(); g.position.set(1.7, 0, -8.7); g.rotation.y = 2.6; g.scale.setScalar(0.85);
+  box(0.34, 0.3, 0.5, fur, 0, 0.3, 0.05, g);           // body (sitting)
+  box(0.3, 0.22, 0.12, cream, 0, 0.34, -0.22, g);      // chest
+  for (const x of [-0.1, 0.1]) { box(0.08, 0.2, 0.08, fur, x, 0.1, -0.15, g); box(0.09, 0.04, 0.1, cream, x, 0.02, -0.18, g); }
+  box(0.14, 0.12, 0.3, fur, -0.18, 0.08, 0.15, g); box(0.14, 0.12, 0.3, fur, 0.18, 0.08, 0.15, g);
+  const head = new THREE.Group(); head.position.set(0, 0.55, -0.15); g.add(head);
+  box(0.3, 0.26, 0.26, fur, 0, 0, 0, head);
+  box(0.16, 0.1, 0.12, cream, 0, -0.05, -0.17, head);
+  box(0.06, 0.05, 0.04, dark, 0, -0.01, -0.24, head);
+  box(0.05, 0.05, 0.02, dark, -0.08, 0.05, -0.135, head); box(0.05, 0.05, 0.02, dark, 0.08, 0.05, -0.135, head);
+  box(0.08, 0.1, 0.06, fur, -0.1, 0.17, 0, head); box(0.08, 0.1, 0.06, fur, 0.1, 0.17, 0, head);
+  box(0.04, 0.06, 0.02, pink, 0, -0.12, -0.2, head);
+  const tail = new THREE.Group(); tail.position.set(0, 0.35, 0.3); g.add(tail);
+  box(0.08, 0.08, 0.22, fur, 0, 0.06, 0.08, tail).rotation.x = -0.8;
+  scene.add(g); Object.assign(dog, { g, head, tail });
+}
+
+// ---------- cornhole boards ----------
+function boardTexture(main, accent, sunTop, sunBot) {
+  return pixTex(32, 64, (g) => {
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 32; x++) px(g, x, y, R() < 0.12 ? accent.shade : main);
+    g.fillStyle = '#fff4dc'; g.fillRect(0, 0, 32, 2); g.fillRect(0, 62, 32, 2); g.fillRect(0, 0, 2, 64); g.fillRect(30, 0, 2, 64);
+    const hx = 15.5, hy = 64 * (HOLE_FROM_TOP / L);
+    for (let y = 0; y < 30; y++) for (let x = 0; x < 32; x++) {
+      const d = Math.hypot(x + 0.5 - hx - 0.5, y + 0.5 - hy);
+      if (d < 11.5 && !(y > hy + 2 && (Math.floor(y - hy) % 3 === 0))) {
+        const t = clamp((y - (hy - 11)) / 22, 0, 1);
+        px(g, x, y, t < 0.5 ? sunTop : sunBot);
+      }
+    }
+    for (let y = 0; y < 64; y++) for (let x = 0; x < 32; x++) { const d = Math.hypot(x + 0.5 - hx - 0.5, y + 0.5 - hy); if (d > 4.3 && d < 5.6) px(g, x, y, '#fff4dc'); }
+    // stripes + pixel star near bottom
+    for (let i = 0; i < 3; i++) { g.fillStyle = i === 1 ? '#fff4dc' : accent.c; g.fillRect(2, 40 + i * 3, 28, 2); }
+    const star = ['..#..', '..#..', '#####', '.###.', '.#.#.'];
+    star.forEach((r, y) => [...r].forEach((ch, x) => ch === '#' && px(g, 13 + x, 52 + y, '#ffe45e')));
+  });
+}
+function makeBoard(design) {
+  const outer = new THREE.Group();
+  const deckG = new THREE.Group();
+  deckG.position.set(0, FRONT_H, 0); deckG.rotation.x = TH; outer.add(deckG);
+  const shape = new THREE.Shape();
+  shape.moveTo(-W / 2, 0); shape.lineTo(W / 2, 0); shape.lineTo(W / 2, L); shape.lineTo(-W / 2, L); shape.closePath();
+  const hole = new THREE.Path(); hole.absarc(0, L - HOLE_FROM_TOP, HOLE_R, 0, Math.PI * 2, true); shape.holes.push(hole);
+  const eg = new THREE.ExtrudeGeometry(shape, { depth: 0.02, bevelEnabled: false, curveSegments: 14 });
+  const tx = design; tx.repeat.set(1 / W, 1 / L); tx.offset.set(0.5, 0);
+  const skirtMat = lam('#d9a066');
+  const deck = new THREE.Mesh(eg, [lam({ map: tx }), skirtMat]);
+  deck.rotation.x = -Math.PI / 2; deck.position.y = -0.02; deck.castShadow = deck.receiveShadow = true;
+  deckG.add(deck);
+  const sk = 0.09;
+  box(0.025, sk, L, skirtMat, -W / 2 + 0.0125, -sk / 2 - 0.02, -L / 2, deckG);
+  box(0.025, sk, L, skirtMat, W / 2 - 0.0125, -sk / 2 - 0.02, -L / 2, deckG);
+  box(W, sk, 0.025, skirtMat, 0, -sk / 2 - 0.02, -0.0125, deckG);
+  box(W, sk, 0.025, skirtMat, 0, -sk / 2 - 0.02, -L + 0.0125, deckG);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.05, L - 0.05), basic('#1c120c'));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(0, -0.1, -L / 2); deckG.add(floor);
+  const legH = BACK_H + 0.02;
+  for (const x of [-W / 2 + 0.05, W / 2 - 0.05]) box(0.05, legH, 0.05, skirtMat, x, legH / 2 - 0.05, -L * Math.cos(TH) + 0.08, outer);
+  return { outer, deckG };
+}
+const target = makeBoard(boardTexture('#e8c28c', { c: '#1aa39a', shade: '#ddb47c' }, '#ffe45e', '#ff8a3d'));
+target.outer.position.z = BOARD_Z; scene.add(target.outer);
+const nearB = makeBoard(boardTexture('#e8423c', { c: '#1aa39a', shade: '#d63b36' }, '#ffe45e', '#ff8a3d'));
+nearB.outer.rotation.y = Math.PI; scene.add(nearB.outer);
+// chalk court: foul lines at both board fronts + 3 ft x 4 ft pitcher's boxes either side of each board
+{
+  const chalk = basic({ color: '#fff8ec', transparent: true, opacity: 0.75 });
+  const line = (x, z, w, d) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), chalk); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.006, z); scene.add(m); };
+  const BL = L * Math.cos(TH), BOX = 3 * FT;
+  for (const [zf, dir] of [[BOARD_Z, -1], [0, 1]]) {
+    line(0, zf, W + 2 * BOX, 0.035);
+    for (const s of [-1, 1]) { line(s * (W / 2 + BOX), zf + dir * BL / 2, 0.035, BL); line(s * (W / 2 + BOX / 2), zf + dir * BL, BOX, 0.035); }
+  }
+}
+scene.updateMatrixWorld(true);
+const boardInv = new THREE.Matrix4().copy(target.deckG.matrixWorld).invert();
+const boardQ = new THREE.Quaternion(); target.deckG.getWorldQuaternion(boardQ);
+const boardQi = boardQ.clone().invert();
+const HOLE_LOCAL = new THREE.Vector3(0, 0, -(L - HOLE_FROM_TOP));
+HOLE_WORLD.copy(HOLE_LOCAL).applyMatrix4(target.deckG.matrixWorld);
+const G_LOCAL = new THREE.Vector3(0, -G, 0).applyQuaternion(boardQi);
+const G_N = -G_LOCAL.y, G_T = Math.hypot(G_LOCAL.x, G_LOCAL.z);
+const toLocal = (v, out = new THREE.Vector3()) => out.copy(v).applyMatrix4(boardInv);
+const toWorld = (v, out = new THREE.Vector3()) => out.copy(v).applyMatrix4(target.deckG.matrixWorld);
+const baseYaw = (rx) => Math.atan2(HOLE_WORLD.x - rx, -(HOLE_WORLD.z - REL_Z));
+const inFootprint = (p) => Math.abs(p.x) < W / 2 + 0.02 && p.z < BOARD_Z + 0.02 && p.z > BOARD_Z - L * Math.cos(TH);
+const holeDist = (lp) => Math.hypot(lp.x - HOLE_LOCAL.x, lp.z - HOLE_LOCAL.z);
+
+// ---------- bag physics ----------
+// states: fly -> slide/board (on deck) | ground/grass (on lawn) | hole -> in | removed (dead bag taken away)
+function newBody(team, side = 'slick') {
+  return { team, side, state: 'fly', p: new THREE.Vector3(), v: new THREE.Vector3(), lp: new THREE.Vector3(), lv: new THREE.Vector3(), prev: new THREE.Vector3(), curl: 0, touched: false, dead: false, swish: false, offBoard: false, t: 0, restT: 0 };
+}
+function launch(b, rx, power, aim, drift) {
+  const speed = V_MIN + clamp(power, 0, 1) * (V_MAX - V_MIN);
+  const y = baseYaw(rx) + aim + drift * 0.04;
+  b.p.set(rx, REL_Y, REL_Z);
+  b.v.set(Math.sin(y) * Math.cos(ELEV) * speed, Math.sin(ELEV) * speed, -Math.cos(y) * Math.cos(ELEV) * speed);
+  b.curl = drift * 0.8; b.state = 'fly';
+  toLocal(b.p, b.prev);
+}
+const onDeck = (b) => b.state === 'slide' || b.state === 'board';
+function step(b, dt) {
+  b.t += dt;
+  const S = SIDES[b.side];
+  if (b.state === 'fly') {
+    b.v.y -= G * dt; b.p.addScaledVector(b.v, dt);
+    const lp = toLocal(b.p, b.lp);
+    const inX = Math.abs(lp.x) <= W / 2, inZ = lp.z <= 0 && lp.z >= -L;
+    if (inX && inZ && lp.y <= BAG_H && lp.y > -0.14 && !b.offBoard) {
+      if (b.prev.y > BAG_H - 0.005) {
+        const lv = b.lv.copy(b.v).applyQuaternion(boardQi);
+        b.touched = true;
+        if (holeDist(lp) < HOLE_R * 0.9) { b.state = 'hole'; b.swish = true; b.hy = BAG_H; return 'hole'; }
+        lv.y = 0; lv.multiplyScalar(S.keep); lp.y = BAG_H; b.state = 'slide';
+        return 'land';
+      } else if (b.prev.z > 0) { b.touched = true; b.v.z = Math.abs(b.v.z) * 0.2; b.v.x *= 0.4; b.p.z = BOARD_Z + 0.03; }
+      else { b.touched = true; b.v.x *= -0.3; }
+    }
+    if (b.p.y <= BAG_H) {
+      if (!b.touched) b.dead = true;       // hit the grass before the board: foul bag, removed
+      b.p.y = BAG_H; b.v.y = 0; b.v.x *= 0.25; b.v.z *= 0.25; b.state = 'ground'; return 'ground';
+    }
+    b.prev.copy(lp);
+  } else if (b.state === 'slide') {
+    const lp = b.lp, lv = b.lv;
+    lv.x += (G_LOCAL.x + b.curl) * dt; lv.z += G_LOCAL.z * dt;
+    const sp = Math.hypot(lv.x, lv.z), dec = S.mu * G_N * dt;
+    if (sp <= dec) { lv.x = 0; lv.z = 0; } else { lv.x -= lv.x / sp * dec; lv.z -= lv.z / sp * dec; }
+    b.curl *= Math.pow(0.2, dt);
+    lp.x += lv.x * dt; lp.z += lv.z * dt;
+    if (holeDist(lp) < HOLE_R - 0.012) { b.state = 'hole'; b.hy = BAG_H; return 'hole'; }
+    if (Math.abs(lp.x) > W / 2 + 0.01 || lp.z > 0.01 || lp.z < -L - 0.01) {
+      toWorld(lp, b.p); b.v.copy(lv).applyQuaternion(boardQ); b.state = 'fly'; b.offBoard = true; return 'off';
+    }
+    if (Math.hypot(lv.x, lv.z) < 0.02 && G_T < S.ms * G_N) { lv.set(0, 0, 0); b.state = 'board'; toWorld(lp, b.p); return 'rest'; }
+    toWorld(lp, b.p);
+  } else if (b.state === 'ground') {
+    const sp = Math.hypot(b.v.x, b.v.z), dec = MU_GROUND * G * dt;
+    if (sp <= dec) { b.v.set(0, 0, 0); b.state = 'grass'; return 'rest'; }
+    b.v.x -= b.v.x / sp * dec; b.v.z -= b.v.z / sp * dec;
+    b.p.x += b.v.x * dt; b.p.z += b.v.z * dt;
+    if (inFootprint(b.p)) { b.p.x -= b.v.x * dt; b.p.z -= b.v.z * dt; b.v.set(0, 0, 0); } // grass slide into the board: stops, still dead
+  } else if (b.state === 'hole') {
+    b.hy -= 0.7 * dt;
+    b.lp.set(HOLE_LOCAL.x + (b.lp.x - HOLE_LOCAL.x) * 0.9, b.hy, HOLE_LOCAL.z + (b.lp.z - HOLE_LOCAL.z) * 0.9);
+    toWorld(b.lp, b.p);
+    if (b.hy < -0.09) { b.state = 'in'; return 'rest'; }
+  } else if (b.state === 'grass' && b.dead) {
+    b.restT += dt; if (b.restT > 0.7) { b.state = 'removed'; return 'removed'; }
+  }
+  return null;
+}
+// bag-to-bag contact on the deck: equal-mass discs with a soft, lossy bounce (blocks, push-ins, knock-offs)
+function collide(list) {
+  for (let i = 0; i < list.length; i++) {
+    const a = list[i]; if (!onDeck(a)) continue;
+    for (let j = i + 1; j < list.length; j++) {
+      const b = list[j]; if (!onDeck(b)) continue;
+      const dx = b.lp.x - a.lp.x, dz = b.lp.z - a.lp.z, d = Math.hypot(dx, dz);
+      if (d >= 2 * BAG_R || d < 1e-6) continue;
+      const nx = dx / d, nz = dz / d, ov = 2 * BAG_R - d;
+      const am = a.state === 'slide', bm = b.state === 'slide';
+      const wa = am && !bm ? 0.8 : (!am && bm ? 0.2 : 0.5);
+      a.lp.x -= nx * ov * wa; a.lp.z -= nz * ov * wa; b.lp.x += nx * ov * (1 - wa); b.lp.z += nz * ov * (1 - wa);
+      const vr = (b.lv.x - a.lv.x) * nx + (b.lv.z - a.lv.z) * nz;
+      if (vr < 0) {
+        const jn = -(1 + BAG_E) * vr / 2;
+        a.lv.x -= jn * nx; a.lv.z -= jn * nz; b.lv.x += jn * nx; b.lv.z += jn * nz;
+      }
+      for (const c of [a, b]) if (c.state === 'board' && (Math.hypot(c.lv.x, c.lv.z) > 0.03 || ov > 0.004)) c.state = 'slide';
+    }
+  }
+}
+function simulate(rx, power, side, aim = 0, drift = 0) {
+  const b = newBody(0, side); launch(b, rx, power, aim, drift);
+  for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
+  return b.state === 'in' ? 3 : b.state === 'board' ? 1 : 0;
+}
+// power windows for the meter / CPU, per thrower box and bag side
+const WIN = {};
+for (const t of [0, 1]) for (const side of ['slick', 'sticky']) {
+  let lo = 1, hi = 0, olo = 1, ohi = 0;
+  for (let p = 0; p <= 1; p += 0.0025) { const r = simulate(RX[t], p, side); if (r === 3) { lo = Math.min(lo, p); hi = Math.max(hi, p); } if (r >= 1) { olo = Math.min(olo, p); ohi = Math.max(ohi, p); } }
+  WIN[t + side] = { lo, hi, olo, ohi, mid: hi >= lo ? (lo + hi) / 2 : (olo + ohi) / 2 };
+}
+
+// ---------- bag meshes ----------
+function bagTexture(c, dark, light, sticky) {
+  return pixTex(8, 8, (g) => {
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) px(g, x, y, sticky ? ((x * 3 + y * 5) % 7 === 0 ? dark : c) : ((x + y) % 3 === 0 ? light : c));
+    for (let i = 0; i < 8; i++) { px(g, i, 0, dark); px(g, i, 7, dark); px(g, 0, i, dark); px(g, 7, i, dark); }
+    for (let i = 1; i < 7; i += 2) { px(g, i, 1, '#fff4dc'); px(g, i, 6, '#fff4dc'); }
+  });
+}
+const bagGeo = (() => {
+  const g = new THREE.BoxGeometry(BAG, BAG_H * 2, BAG, 4, 1, 4);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i) / (BAG / 2), z = p.getZ(i) / (BAG / 2);
+    p.setY(i, p.getY(i) * (1 - 0.45 * (x * x + z * z) / 2));
+  }
+  g.computeVertexNormals(); return g;
+})();
+// box faces: +x,-x,+y(top),-y(bottom),+z,-z ; slick (duck cloth) on top, sticky (suede) underneath when "slick side down" is flipped
+function bagMats(c, dark, light) {
+  const slick = lam({ map: bagTexture(c, dark, light, false), flatShading: true });
+  const sticky = lam({ map: bagTexture(c, dark, light, true), flatShading: true });
+  return { slick, sticky };
+}
+const TEAM_MATS = [bagMats('#e8423c', '#8c1f2a', '#ff6b5e'), bagMats('#2f5fe8', '#1a2a80', '#6b93ff')];
+const bags = [];
+function makeBagMesh(team, side) {
+  const m = TEAM_MATS[team];
+  const up = side === 'slick' ? m.sticky : m.slick;   // the side you throw down is hidden; we see the other one
+  const down = side === 'slick' ? m.slick : m.sticky;
+  const mesh = new THREE.Mesh(bagGeo, [up, up, up, down, up, up]);
+  mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
+}
+const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); held.castShadow = true; scene.add(held);
+const aimDots = [];
+{
+  const dm = basic({ color: '#ffffff', transparent: true, opacity: 0.75 });
+  for (let i = 0; i < 14; i++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), dm); d.rotation.x = -Math.PI / 2; scene.add(d); aimDots.push(d); }
+}
+const confetti = [];
+{
+  const cc = ['#ffe45e', '#ff6a4d', '#7ee081', '#ff8fc0', '#9ff0e6', '#ffffff'];
+  for (let i = 0; i < 70; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), basic(pick(cc))); m.visible = false; scene.add(m); confetti.push({ m, v: new THREE.Vector3(), life: 0 }); }
+}
+function burst(at) { for (const c of confetti) { c.m.position.copy(at); c.v.set((Math.random() - 0.5) * 2.4, 1.5 + Math.random() * 2.5, (Math.random() - 0.5) * 2.4); c.life = 1 + Math.random() * 0.6; c.m.visible = true; } }
+
+// ---------- match state ----------
+const $ = (id) => document.getElementById(id);
+const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), hint: $('hint'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
+const M = {
+  vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
+  side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+};
+const thrower = (k = M.k) => (k % 2 === 0 ? M.first : 1 - M.first);
+const isHuman = (t) => t === 0 || M.vs === '2p';
+const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : 'CPU') : TEAM[t]);
+const settled = () => bags.every((b) => ['board', 'grass', 'in', 'removed'].includes(b.state) && !(b.state === 'grass' && b.dead));
+function lie() { // score as the bags lie right now (only final after all 8)
+  const pts = [0, 0], inC = [0, 0], onC = [0, 0];
+  for (const b of bags) {
+    if (b.state === 'in') { pts[b.team] += 3; inC[b.team]++; }
+    else if (b.state === 'board' && !b.dead) { pts[b.team] += 1; onC[b.team]++; }
+  }
+  return { pts, inC, onC };
+}
+function renderHud() {
+  for (const t of [0, 1]) {
+    ui.s[t].textContent = M.scores[t];
+    ui.n[t].textContent = teamName(t);
+    const thrown = bags.filter((b) => b.team === t).length;
+    ui.p[t].innerHTML = [0, 1, 2, 3].map((i) => `<i class="${i < thrown ? 'used' : ''}"></i>`).join('');
+    ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
+  }
+  ui.inn.textContent = 'INNING ' + M.inning;
+  ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+  const t = thrower();
+  if (M.phase === 'aim' || M.phase === 'cpu') {
+    ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
+    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+    ui.turn.style.opacity = 1;
+  } else ui.turn.style.opacity = 0;
+  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
+  const w = WIN[t + M.side[t]];
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+}
+function hint() {
+  ui.hint.innerHTML = M.ctrl === 'drag'
+    ? 'MOVE MOUSE TO LINE UP · PRESS, FLICK UP, RELEASE<span class="l2"><br>← → AIM · SPACE: HOLD FOR POWER · F: FLIP BAG · M: SPINNER</span>'
+    : 'SPINNER · ROLL SIDEWAYS TO LINE UP · FLICK UP TO TOSS<span class="l2"><br>' + (document.pointerLockElement ? 'ESC: RELEASE MOUSE' : 'CLICK: LOCK MOUSE') + ' · F: FLIP BAG · M: MOUSE</span>';
+  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+  wrap.classList.toggle('spin', M.ctrl === 'spin');
+}
+let msgTimer;
+function say(big, small = '', ms = 1400) {
+  ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
+  clearTimeout(msgTimer); msgTimer = setTimeout(() => ui.msg.classList.remove('on'), ms);
+}
+function setMeter(p) { ui.fill.style.height = (clamp(p, 0, 1) * 100) + '%'; }
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+
+function clearBags() { for (const b of bags) scene.remove(b.mesh); bags.length = 0; }
+function showMenu() {
+  M.phase = 'menu'; ui.title.classList.remove('gone');
+  const opt = (k, v, label) => `<button data-k="${k}" data-v="${v}" class="${String(M[k]) === String(v) ? 'on' : ''}">${label}</button>`;
+  ui.panel.innerHTML = `<div class="pt">SINGLES MATCH</div>
+    <div class="opt">${opt('vs', 'cpu', 'VS CPU')}${opt('vs', '2p', '2 PLAYERS')}</div>
+    <div class="opt">${opt('exact', false, 'TO 21+')}${opt('exact', true, 'EXACT 21 (BUST→13)')}</div>
+    <button class="go" id="go">${M.winner >= 0 ? 'REMATCH' : 'START MATCH'}</button>
+    <div class="note">4 BAGS EACH, ALTERNATING · 3 IN THE HOLE · 1 ON THE BOARD<br>CANCELLATION SCORING · BAGS COUNT AFTER ALL 8</div>`;
+  ui.panel.hidden = false;
+  ui.panel.querySelectorAll('.opt button').forEach((b) => b.onclick = (e) => { e.stopPropagation(); const k = b.dataset.k; M[k] = k === 'exact' ? b.dataset.v === 'true' : b.dataset.v; showMenu(); renderHud(); });
+  $('go').onclick = (e) => { e.stopPropagation(); startMatch(); };
+  renderHud();
+}
+function startMatch(opts = {}) {
+  if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
+  M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
+  M.first = opts.first != null ? opts.first : (Math.random() < 0.5 ? 0 : 1);   // coin toss
+  ui.panel.hidden = true; ui.title.classList.add('gone');
+  say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);
+  beginInning(900);
+}
+function beginInning(delay = 300) {
+  clearBags(); M.k = 0; M.phase = 'wait'; renderHud();
+  setTimeout(nextTurn, delay);
+}
+function nextTurn() {
+  if (M.k >= 8) { M.phase = 'settle'; renderHud(); return; }
+  const t = thrower(); M.aim = 0; setMeter(0);
+  held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick'];
+  if (isHuman(t)) M.phase = 'aim';
+  else {
+    const side = Math.random() < 0.3 ? 'sticky' : 'slick';
+    M.side[1] = side;
+    const w = WIN[1 + side];
+    M.cpu = { t: 0, side, power: w.mid + gauss() * 0.055, aim: gauss() * 0.02, drift: gauss() * 0.18 };
+    M.phase = 'cpu';
+  }
+  renderHud();
+}
+function throwBag(power, drift = 0, team = thrower()) {
+  if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
+  const side = M.side[team];
+  const b = newBody(team, side); launch(b, RX[team], power, M.aim, drift);
+  b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
+  b.spin = drift * 14 + (Math.random() - 0.5) * 2; b.tumble = 0.6 + Math.random();
+  M.before = bags.map((o) => ({ o, s: o.state }));
+  bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
+  renderHud();
+  return true;
+}
+function afterThrow() {
+  const b = M.active; M.active = null;
+  const knockedIn = M.before.filter(({ o, s }) => s !== 'in' && o.state === 'in');
+  const knockedOff = M.before.filter(({ o, s }) => s === 'board' && !onDeck(o) && o.state !== 'in');
+  if (b.state === 'in') { say(b.swish ? 'SWISH!' : 'CORNHOLE!', 'IN THE HOLE · 3'); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
+  else if (b.state === 'board') say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'WOODY', 'ON THE BOARD · 1');
+  else if (b.dead) say('GROUNDER', 'HIT THE GRASS FIRST · REMOVED', 1300);
+  else say(b.offBoard ? 'OFF THE BOARD' : 'MISS', '0', 1100);
+  if (knockedIn.length) { setTimeout(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
+  else if (knockedOff.length) setTimeout(() => say('KNOCKED OFF!', knockedOff.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG'), 900);
+  M.k++; M.phase = 'wait'; renderHud();
+  setTimeout(nextTurn, knockedIn.length || knockedOff.length ? 1500 : 750);
+}
+function scoreInning() {
+  const { pts, inC, onC } = lie();
+  const net = Math.abs(pts[0] - pts[1]);
+  const scorer = pts[0] > pts[1] ? 0 : pts[1] > pts[0] ? 1 : -1;
+  let bust = false;
+  if (scorer >= 0) {
+    M.scores[scorer] += net;
+    if (M.exact && M.scores[scorer] > 21) { M.scores[scorer] = 13; bust = true; }
+    M.first = scorer;                 // last scoring team throws first; a wash keeps the same order
+  }
+  const win = scorer >= 0 && (M.exact ? M.scores[scorer] === 21 : M.scores[scorer] >= 21) ? scorer : -1;
+  M.history.push({ inning: M.inning, pts, inC, onC, net, scorer, bust, scores: [...M.scores] });
+  M.phase = win >= 0 ? 'over' : 'summary'; M.winner = win;
+  renderHud();
+  const head = win >= 0 ? `<div class="pt">FINAL</div><div class="big ${win ? 'b' : 'r'}">${M.vs === 'cpu' ? (win === 0 ? 'YOU WIN!' : 'CPU WINS') : TEAM[win] + ' WINS!'}</div>`
+    : `<div class="pt">INNING ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
+  ui.panel.innerHTML = head + `
+    <div class="row"><div class="r">RED<b>${pts[0]}</b>${inC[0]} IN · ${onC[0]} ON</div><div>vs</div><div class="b">BLUE<b>${pts[1]}</b>${inC[1]} IN · ${onC[1]} ON</div></div>
+    <div class="pd">${scorer < 0 ? 'EQUAL INNING · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
+    MATCH: <span class="r">RED ${M.scores[0]}</span> · <span class="b">BLUE ${M.scores[1]}</span><br>
+    ${win >= 0 ? '' : `${TEAM[M.first]} THROWS FIRST NEXT`}</div>
+    <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT INNING'}</button>`;
+  ui.panel.hidden = false;
+  $('go').onclick = (e) => { e.stopPropagation(); advance(); };
+}
+function advance() {
+  if (M.phase === 'summary') { ui.panel.hidden = true; M.inning++; beginInning(); }
+  else if (M.phase === 'over') { clearBags(); showMenu(); }
+}
+
+// ---------- input ----------
+let drag = null, keyAim = 0, spaceDown = null;
+const samples = [];
+const H = () => wrap.clientHeight || 1;
+const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
+function flickFrom(list) {
+  if (list.length < 2) return null;
+  const tEnd = list[list.length - 1].t;
+  let i = list.length - 1; while (i > 0 && tEnd - list[i - 1].t < 70) i--;
+  if (i === list.length - 1) i = Math.max(0, i - 1);
+  const a = list[i], b = list[list.length - 1];
+  const dt = Math.max(16, b.t - a.t) / 1000;
+  return { up: -(b.y - a.y) / H() / dt, side: (b.x - a.x) / H() / dt };
+}
+const powerFromSpeed = (up) => clamp((up - FLICK_MIN) / (FLICK_MAX - FLICK_MIN), 0, 1);
+function release(up, side) {
+  if (up < FLICK_MIN) return false;
+  return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
+}
+wrap.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button') || !ui.panel.hidden) return;
+  if (M.ctrl === 'spin') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+  if (!humanTurn()) return;
+  if (e.pointerType !== 'mouse') M.aim = clamp((e.clientX / wrap.clientWidth - 0.5) * 2 * AIM_MAX, -AIM_MAX, AIM_MAX);
+  drag = { id: e.pointerId, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
+  wrap.classList.add('drag');
+  try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+});
+wrap.addEventListener('pointermove', (e) => {
+  if (M.ctrl === 'spin') { spinMove(e); return; }
+  if (drag && e.pointerId === drag.id) {
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
+    while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
+    const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
+  } else if (e.pointerType === 'mouse' && humanTurn() && !keyAim) {
+    M.aim = clamp((e.clientX / wrap.clientWidth - 0.5) * 2 * AIM_MAX, -AIM_MAX, AIM_MAX);
+  }
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.list.push({ t: e.timeStamp, x: e.clientX, y: e.clientY });
+  const list = drag.list.filter((s, i, a) => i === 0 || s.t !== a[i - 1].t || s.y !== a[i - 1].y);
+  const trimmed = list.length > 2 && list[list.length - 1].y === list[list.length - 2].y ? list.slice(0, -1) : list;
+  const stale = e.timeStamp - trimmed[trimmed.length - 1].t > 160;
+  const f = stale ? null : flickFrom(trimmed);
+  drag = null; wrap.classList.remove('drag');
+  if (!f || !release(f.up, f.side)) { if (M.phase === 'aim') setMeter(0); }
+}
+wrap.addEventListener('pointerup', endDrag);
+wrap.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('drag'); });
+let flick = null, lastMoveT = 0;
+function spinMove(e) {
+  const t = e.timeStamp; lastMoveT = t;
+  const dx = e.movementX || 0, dy = e.movementY || 0;
+  samples.push({ t, dx, dy });
+  while (samples.length && t - samples[0].t > 80) samples.shift();
+  let sy = 0, sx = 0; for (const s of samples) { sy += s.dy; sx += s.dx; }
+  const span = Math.max(30, t - samples[0].t) / 1000;
+  const up = -sy / H() / span;
+  if (M.phase === 'summary' || M.phase === 'over') { if (up > FLICK_MIN * 2 && M.phase === 'summary') advance(); return; }
+  if (!humanTurn()) return;
+  if (!flick) {
+    if (up > FLICK_MIN * 1.4) flick = { t0: t, peak: up, side: 0, up: 0 };
+    else M.aim = clamp(M.aim + dx * 0.0007, -AIM_MAX, AIM_MAX);
+  }
+  if (flick) {
+    flick.peak = Math.max(flick.peak, up); flick.side += dx; flick.up += -dy;
+    setMeter(powerFromSpeed(flick.peak));
+    if (up < flick.peak * 0.45 || t - flick.t0 > 220) finishFlick();
+  }
+}
+function finishFlick() {
+  const f = flick; flick = null; samples.length = 0;
+  if (f) release(f.peak, f.up > 0 ? f.side / f.up * f.peak : 0);
+}
+document.addEventListener('pointerlockchange', hint);
+function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
+function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
+ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); });
+ui.side.addEventListener('click', (e) => { e.stopPropagation(); flipSide(); });
+addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === 'arrowleft' || k === 'a') keyAim = -1;
+  else if (k === 'arrowright' || k === 'd') keyAim = 1;
+  else if (k === 'm') toggleCtrl();
+  else if (k === 'f') flipSide();
+  else if (k === ' ' || k === 'enter') {
+    e.preventDefault();
+    if (M.phase === 'summary' || M.phase === 'over') advance();
+    else if (M.phase === 'menu') startMatch();
+    else if (humanTurn()) spaceDown = performance.now();
+  }
+});
+addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if ((k === 'arrowleft' || k === 'a') && keyAim < 0) keyAim = 0;
+  if ((k === 'arrowright' || k === 'd') && keyAim > 0) keyAim = 0;
+  if (k === ' ' && spaceDown != null) { const p = spacePower(); spaceDown = null; throwBag(p, 0); }
+});
+const spacePower = () => { const t = (performance.now() - spaceDown) / 1400; return 1 - Math.abs(1 - (t % 2)); };
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let acc = 0, time = 0;
+const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
+const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+camera.userData.look = CAM_LOOK.clone();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+  if (spaceDown != null) setMeter(spacePower());
+  if (flick && performance.now() - lastMoveT > 60) finishFlick();
+  if (M.phase === 'cpu') {
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+    if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
+    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+  }
+  acc += dt;
+  while (acc >= 1 / 240) {
+    acc -= 1 / 240;
+    for (const b of bags) if (b.state !== 'in' && b.state !== 'removed' && !(b.state === 'grass' && !b.dead) && b.state !== 'board') step(b, 1 / 240);
+    collide(bags);
+  }
+  if (M.phase === 'flying' && M.active && settled()) afterThrow();
+  if (M.phase === 'settle' && settled()) scoreInning();
+  for (const b of bags) {
+    const m = b.mesh; m.position.copy(b.p);
+    if (b.state === 'fly') { m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15; }
+    else if (onDeck(b) || b.state === 'hole') { const yaw = b.yaw ?? (b.yaw = m.rotation.y); if (b.state === 'slide') b.yaw += b.spin * dt * 0.3; m.quaternion.copy(boardQ); m.rotateY(b.yaw); }
+    else if (b.state === 'ground' || b.state === 'grass') { m.rotation.x = 0; m.rotation.z = 0; }
+    m.visible = b.state !== 'in' && b.state !== 'removed';
+    if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
+  }
+  // camera stands behind whoever is throwing
+  const t = thrower(), rx = RX[t];
+  const showHeld = M.phase === 'aim' || M.phase === 'cpu';
+  const yaw = baseYaw(rx) + M.aim;
+  held.visible = showHeld;
+  if (showHeld) { held.position.set(rx + Math.sin(time * 2) * 0.004, REL_Y + Math.sin(time * 3) * 0.01, REL_Z); held.rotation.set(0.15, -yaw, 0); }
+  aimDots.forEach((d, i) => {
+    const dist = 1.6 + i * 0.5;
+    d.position.set(rx + Math.sin(yaw) * dist, 0.012, REL_Z - Math.cos(yaw) * dist);
+    d.visible = showHeld && isHuman(t);
+    d.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(time * 6 - i * 0.6));
+  });
+  const camRx = M.phase === 'menu' ? 0.3 : rx;
+  camTmp.set(camRx * 0.85 + M.aim * 2, 2.05, 2.45);
+  camera.position.lerp(camTmp, Math.min(1, dt * 3));
+  const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
+  lookTmp.copy(CAM_LOOK); lookTmp.x += M.aim * 6; if (fb) lookTmp.lerp(fb, 0.1);
+  camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
+  for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
+  for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
+  dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
+  const watch = M.active ? M.active.p : HOLE_WORLD;
+  const dl = dog.g.worldToLocal(watch.clone()); const want = clamp(Math.atan2(-dl.x, -dl.z) * 0.6, -0.7, 0.7);
+  dog.head.rotation.y += (want - dog.head.rotation.y) * Math.min(1, dt * 5);
+  dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;
+  for (const s of smoke) { s.t = (s.t + dt * 0.25) % 1; s.b.position.set(-5.2 + Math.sin(s.t * 6 + 1) * 0.15, 1.25 + s.t * 1.6, -9.6 + s.t * 0.3); s.b.material.opacity = 0.55 * (1 - s.t); s.b.scale.setScalar(0.6 + s.t * 1.4); }
+  for (const c of confetti) if (c.life > 0) { c.life -= dt; c.v.y -= 6 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += dt * 8; if (c.m.position.y < 0.02) { c.m.position.y = 0.02; c.v.set(0, 0, 0); } if (c.life <= 0) c.m.visible = false; }
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+hint(); setMeter(0);
+if (POSTER) {
+  for (const [team, lx, lz, st] of [[0, 0.12, -0.6, 'board'], [1, -0.15, -0.35, 'board'], [1, 0.16, -0.95, 'board'], [0, 0.02, -1.0, 'in']]) {
+    const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
+  }
+  M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
+  for (const el of [ui.hint, document.querySelector('.btns'), $('meter')]) el.style.display = 'none';
+} else showMenu();
+requestAnimationFrame(frame);
+
+window.__game = {
+  get state() { return { phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side })) }; },
+  win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
+  startMatch, advance, lie: () => lie(),
+  throwWith: (p, d = 0) => throwBag(p, d),
+  setAim: (a) => { M.aim = a; },
+  // test hooks: drop a resting bag on the deck (board-local metres, z negative toward the back), or preset the match score
+  _place: (team, lx, lz) => { const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = 'board'; b.touched = true; bags.push(b); renderHud(); },
+  _setScores: (a, c) => { M.scores = [a, c]; renderHud(); },
+  holeLocalZ: HOLE_LOCAL.z,
+};
+</script>
+</body>
+</html>
+
+exec
+/bin/bash -lc "sed -n '470,755p' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+const HOLE_LOCAL = new THREE.Vector3(0, 0, -(L - HOLE_FROM_TOP));
+HOLE_WORLD.copy(HOLE_LOCAL).applyMatrix4(target.deckG.matrixWorld);
+const G_LOCAL = new THREE.Vector3(0, -G, 0).applyQuaternion(boardQi);
+const G_N = -G_LOCAL.y, G_T = Math.hypot(G_LOCAL.x, G_LOCAL.z);
+const toLocal = (v, out = new THREE.Vector3()) => out.copy(v).applyMatrix4(boardInv);
+const toWorld = (v, out = new THREE.Vector3()) => out.copy(v).applyMatrix4(target.deckG.matrixWorld);
+const baseYaw = (rx) => Math.atan2(HOLE_WORLD.x - rx, -(HOLE_WORLD.z - REL_Z));
+const inFootprint = (p) => Math.abs(p.x) < W / 2 + 0.02 && p.z < BOARD_Z + 0.02 && p.z > BOARD_Z - L * Math.cos(TH);
+const holeDist = (lp) => Math.hypot(lp.x - HOLE_LOCAL.x, lp.z - HOLE_LOCAL.z);
+
+// ---------- bag physics ----------
+// states: fly -> slide/board (on deck) | ground/grass (on lawn) | hole -> in | removed (dead bag taken away)
+function newBody(team, side = 'slick') {
+  return { team, side, state: 'fly', p: new THREE.Vector3(), v: new THREE.Vector3(), lp: new THREE.Vector3(), lv: new THREE.Vector3(), prev: new THREE.Vector3(), curl: 0, touched: false, dead: false, swish: false, offBoard: false, t: 0, restT: 0 };
+}
+function launch(b, rx, power, aim, drift) {
+  const speed = V_MIN + clamp(power, 0, 1) * (V_MAX - V_MIN);
+  const y = baseYaw(rx) + aim + drift * 0.04;
+  b.p.set(rx, REL_Y, REL_Z);
+  b.v.set(Math.sin(y) * Math.cos(ELEV) * speed, Math.sin(ELEV) * speed, -Math.cos(y) * Math.cos(ELEV) * speed);
+  b.curl = drift * 0.8; b.state = 'fly';
+  toLocal(b.p, b.prev);
+}
+const onDeck = (b) => b.state === 'slide' || b.state === 'board';
+function step(b, dt) {
+  b.t += dt;
+  const S = SIDES[b.side];
+  if (b.state === 'fly') {
+    b.v.y -= G * dt; b.p.addScaledVector(b.v, dt);
+    const lp = toLocal(b.p, b.lp);
+    const inX = Math.abs(lp.x) <= W / 2, inZ = lp.z <= 0 && lp.z >= -L;
+    if (inX && inZ && lp.y <= BAG_H && lp.y > -0.14 && !b.offBoard) {
+      if (b.prev.y > BAG_H - 0.005) {
+        const lv = b.lv.copy(b.v).applyQuaternion(boardQi);
+        b.touched = true;
+        if (holeDist(lp) < HOLE_R * 0.9) { b.state = 'hole'; b.swish = true; b.hy = BAG_H; return 'hole'; }
+        lv.y = 0; lv.multiplyScalar(S.keep); lp.y = BAG_H; b.state = 'slide';
+        return 'land';
+      } else if (b.prev.z > 0) { b.touched = true; b.v.z = Math.abs(b.v.z) * 0.2; b.v.x *= 0.4; b.p.z = BOARD_Z + 0.03; }
+      else { b.touched = true; b.v.x *= -0.3; }
+    }
+    if (b.p.y <= BAG_H) {
+      if (!b.touched) b.dead = true;       // hit the grass before the board: foul bag, removed
+      b.p.y = BAG_H; b.v.y = 0; b.v.x *= 0.25; b.v.z *= 0.25; b.state = 'ground'; return 'ground';
+    }
+    b.prev.copy(lp);
+  } else if (b.state === 'slide') {
+    const lp = b.lp, lv = b.lv;
+    lv.x += (G_LOCAL.x + b.curl) * dt; lv.z += G_LOCAL.z * dt;
+    const sp = Math.hypot(lv.x, lv.z), dec = S.mu * G_N * dt;
+    if (sp <= dec) { lv.x = 0; lv.z = 0; } else { lv.x -= lv.x / sp * dec; lv.z -= lv.z / sp * dec; }
+    b.curl *= Math.pow(0.2, dt);
+    lp.x += lv.x * dt; lp.z += lv.z * dt;
+    if (holeDist(lp) < HOLE_R - 0.012) { b.state = 'hole'; b.hy = BAG_H; return 'hole'; }
+    if (Math.abs(lp.x) > W / 2 + 0.01 || lp.z > 0.01 || lp.z < -L - 0.01) {
+      toWorld(lp, b.p); b.v.copy(lv).applyQuaternion(boardQ); b.state = 'fly'; b.offBoard = true; return 'off';
+    }
+    if (Math.hypot(lv.x, lv.z) < 0.02 && G_T < S.ms * G_N) { lv.set(0, 0, 0); b.state = 'board'; toWorld(lp, b.p); return 'rest'; }
+    toWorld(lp, b.p);
+  } else if (b.state === 'ground') {
+    const sp = Math.hypot(b.v.x, b.v.z), dec = MU_GROUND * G * dt;
+    if (sp <= dec) { b.v.set(0, 0, 0); b.state = 'grass'; return 'rest'; }
+    b.v.x -= b.v.x / sp * dec; b.v.z -= b.v.z / sp * dec;
+    b.p.x += b.v.x * dt; b.p.z += b.v.z * dt;
+    if (inFootprint(b.p)) { b.p.x -= b.v.x * dt; b.p.z -= b.v.z * dt; b.v.set(0, 0, 0); } // grass slide into the board: stops, still dead
+  } else if (b.state === 'hole') {
+    b.hy -= 0.7 * dt;
+    b.lp.set(HOLE_LOCAL.x + (b.lp.x - HOLE_LOCAL.x) * 0.9, b.hy, HOLE_LOCAL.z + (b.lp.z - HOLE_LOCAL.z) * 0.9);
+    toWorld(b.lp, b.p);
+    if (b.hy < -0.09) { b.state = 'in'; return 'rest'; }
+  } else if (b.state === 'grass' && b.dead) {
+    b.restT += dt; if (b.restT > 0.7) { b.state = 'removed'; return 'removed'; }
+  }
+  return null;
+}
+// bag-to-bag contact on the deck: equal-mass discs with a soft, lossy bounce (blocks, push-ins, knock-offs)
+function collide(list) {
+  for (let i = 0; i < list.length; i++) {
+    const a = list[i]; if (!onDeck(a)) continue;
+    for (let j = i + 1; j < list.length; j++) {
+      const b = list[j]; if (!onDeck(b)) continue;
+      const dx = b.lp.x - a.lp.x, dz = b.lp.z - a.lp.z, d = Math.hypot(dx, dz);
+      if (d >= 2 * BAG_R || d < 1e-6) continue;
+      const nx = dx / d, nz = dz / d, ov = 2 * BAG_R - d;
+      const am = a.state === 'slide', bm = b.state === 'slide';
+      const wa = am && !bm ? 0.8 : (!am && bm ? 0.2 : 0.5);
+      a.lp.x -= nx * ov * wa; a.lp.z -= nz * ov * wa; b.lp.x += nx * ov * (1 - wa); b.lp.z += nz * ov * (1 - wa);
+      const vr = (b.lv.x - a.lv.x) * nx + (b.lv.z - a.lv.z) * nz;
+      if (vr < 0) {
+        const jn = -(1 + BAG_E) * vr / 2;
+        a.lv.x -= jn * nx; a.lv.z -= jn * nz; b.lv.x += jn * nx; b.lv.z += jn * nz;
+      }
+      for (const c of [a, b]) if (c.state === 'board' && (Math.hypot(c.lv.x, c.lv.z) > 0.03 || ov > 0.004)) c.state = 'slide';
+    }
+  }
+}
+function simulate(rx, power, side, aim = 0, drift = 0) {
+  const b = newBody(0, side); launch(b, rx, power, aim, drift);
+  for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
+  return b.state === 'in' ? 3 : b.state === 'board' ? 1 : 0;
+}
+// power windows for the meter / CPU, per thrower box and bag side
+const WIN = {};
+for (const t of [0, 1]) for (const side of ['slick', 'sticky']) {
+  let lo = 1, hi = 0, olo = 1, ohi = 0;
+  for (let p = 0; p <= 1; p += 0.0025) { const r = simulate(RX[t], p, side); if (r === 3) { lo = Math.min(lo, p); hi = Math.max(hi, p); } if (r >= 1) { olo = Math.min(olo, p); ohi = Math.max(ohi, p); } }
+  WIN[t + side] = { lo, hi, olo, ohi, mid: hi >= lo ? (lo + hi) / 2 : (olo + ohi) / 2 };
+}
+
+// ---------- bag meshes ----------
+function bagTexture(c, dark, light, sticky) {
+  return pixTex(8, 8, (g) => {
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) px(g, x, y, sticky ? ((x * 3 + y * 5) % 7 === 0 ? dark : c) : ((x + y) % 3 === 0 ? light : c));
+    for (let i = 0; i < 8; i++) { px(g, i, 0, dark); px(g, i, 7, dark); px(g, 0, i, dark); px(g, 7, i, dark); }
+    for (let i = 1; i < 7; i += 2) { px(g, i, 1, '#fff4dc'); px(g, i, 6, '#fff4dc'); }
+  });
+}
+const bagGeo = (() => {
+  const g = new THREE.BoxGeometry(BAG, BAG_H * 2, BAG, 4, 1, 4);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i) / (BAG / 2), z = p.getZ(i) / (BAG / 2);
+    p.setY(i, p.getY(i) * (1 - 0.45 * (x * x + z * z) / 2));
+  }
+  g.computeVertexNormals(); return g;
+})();
+// box faces: +x,-x,+y(top),-y(bottom),+z,-z ; slick (duck cloth) on top, sticky (suede) underneath when "slick side down" is flipped
+function bagMats(c, dark, light) {
+  const slick = lam({ map: bagTexture(c, dark, light, false), flatShading: true });
+  const sticky = lam({ map: bagTexture(c, dark, light, true), flatShading: true });
+  return { slick, sticky };
+}
+const TEAM_MATS = [bagMats('#e8423c', '#8c1f2a', '#ff6b5e'), bagMats('#2f5fe8', '#1a2a80', '#6b93ff')];
+const bags = [];
+function makeBagMesh(team, side) {
+  const m = TEAM_MATS[team];
+  const up = side === 'slick' ? m.sticky : m.slick;   // the side you throw down is hidden; we see the other one
+  const down = side === 'slick' ? m.slick : m.sticky;
+  const mesh = new THREE.Mesh(bagGeo, [up, up, up, down, up, up]);
+  mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
+}
+const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); held.castShadow = true; scene.add(held);
+const aimDots = [];
+{
+  const dm = basic({ color: '#ffffff', transparent: true, opacity: 0.75 });
+  for (let i = 0; i < 14; i++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), dm); d.rotation.x = -Math.PI / 2; scene.add(d); aimDots.push(d); }
+}
+const confetti = [];
+{
+  const cc = ['#ffe45e', '#ff6a4d', '#7ee081', '#ff8fc0', '#9ff0e6', '#ffffff'];
+  for (let i = 0; i < 70; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), basic(pick(cc))); m.visible = false; scene.add(m); confetti.push({ m, v: new THREE.Vector3(), life: 0 }); }
+}
+function burst(at) { for (const c of confetti) { c.m.position.copy(at); c.v.set((Math.random() - 0.5) * 2.4, 1.5 + Math.random() * 2.5, (Math.random() - 0.5) * 2.4); c.life = 1 + Math.random() * 0.6; c.m.visible = true; } }
+
+// ---------- match state ----------
+const $ = (id) => document.getElementById(id);
+const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), hint: $('hint'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
+const M = {
+  vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
+  side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+};
+const thrower = (k = M.k) => (k % 2 === 0 ? M.first : 1 - M.first);
+const isHuman = (t) => t === 0 || M.vs === '2p';
+const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : 'CPU') : TEAM[t]);
+const settled = () => bags.every((b) => ['board', 'grass', 'in', 'removed'].includes(b.state) && !(b.state === 'grass' && b.dead));
+function lie() { // score as the bags lie right now (only final after all 8)
+  const pts = [0, 0], inC = [0, 0], onC = [0, 0];
+  for (const b of bags) {
+    if (b.state === 'in') { pts[b.team] += 3; inC[b.team]++; }
+    else if (b.state === 'board' && !b.dead) { pts[b.team] += 1; onC[b.team]++; }
+  }
+  return { pts, inC, onC };
+}
+function renderHud() {
+  for (const t of [0, 1]) {
+    ui.s[t].textContent = M.scores[t];
+    ui.n[t].textContent = teamName(t);
+    const thrown = bags.filter((b) => b.team === t).length;
+    ui.p[t].innerHTML = [0, 1, 2, 3].map((i) => `<i class="${i < thrown ? 'used' : ''}"></i>`).join('');
+    ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
+  }
+  ui.inn.textContent = 'INNING ' + M.inning;
+  ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+  const t = thrower();
+  if (M.phase === 'aim' || M.phase === 'cpu') {
+    ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
+    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+    ui.turn.style.opacity = 1;
+  } else ui.turn.style.opacity = 0;
+  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
+  const w = WIN[t + M.side[t]];
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+}
+function hint() {
+  ui.hint.innerHTML = M.ctrl === 'drag'
+    ? 'MOVE MOUSE TO LINE UP · PRESS, FLICK UP, RELEASE<span class="l2"><br>← → AIM · SPACE: HOLD FOR POWER · F: FLIP BAG · M: SPINNER</span>'
+    : 'SPINNER · ROLL SIDEWAYS TO LINE UP · FLICK UP TO TOSS<span class="l2"><br>' + (document.pointerLockElement ? 'ESC: RELEASE MOUSE' : 'CLICK: LOCK MOUSE') + ' · F: FLIP BAG · M: MOUSE</span>';
+  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+  wrap.classList.toggle('spin', M.ctrl === 'spin');
+}
+let msgTimer;
+function say(big, small = '', ms = 1400) {
+  ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
+  clearTimeout(msgTimer); msgTimer = setTimeout(() => ui.msg.classList.remove('on'), ms);
+}
+function setMeter(p) { ui.fill.style.height = (clamp(p, 0, 1) * 100) + '%'; }
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+
+function clearBags() { for (const b of bags) scene.remove(b.mesh); bags.length = 0; }
+function showMenu() {
+  M.phase = 'menu'; ui.title.classList.remove('gone');
+  const opt = (k, v, label) => `<button data-k="${k}" data-v="${v}" class="${String(M[k]) === String(v) ? 'on' : ''}">${label}</button>`;
+  ui.panel.innerHTML = `<div class="pt">SINGLES MATCH</div>
+    <div class="opt">${opt('vs', 'cpu', 'VS CPU')}${opt('vs', '2p', '2 PLAYERS')}</div>
+    <div class="opt">${opt('exact', false, 'TO 21+')}${opt('exact', true, 'EXACT 21 (BUST→13)')}</div>
+    <button class="go" id="go">${M.winner >= 0 ? 'REMATCH' : 'START MATCH'}</button>
+    <div class="note">4 BAGS EACH, ALTERNATING · 3 IN THE HOLE · 1 ON THE BOARD<br>CANCELLATION SCORING · BAGS COUNT AFTER ALL 8</div>`;
+  ui.panel.hidden = false;
+  ui.panel.querySelectorAll('.opt button').forEach((b) => b.onclick = (e) => { e.stopPropagation(); const k = b.dataset.k; M[k] = k === 'exact' ? b.dataset.v === 'true' : b.dataset.v; showMenu(); renderHud(); });
+  $('go').onclick = (e) => { e.stopPropagation(); startMatch(); };
+  renderHud();
+}
+function startMatch(opts = {}) {
+  if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
+  M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
+  M.first = opts.first != null ? opts.first : (Math.random() < 0.5 ? 0 : 1);   // coin toss
+  ui.panel.hidden = true; ui.title.classList.add('gone');
+  say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);
+  beginInning(900);
+}
+function beginInning(delay = 300) {
+  clearBags(); M.k = 0; M.phase = 'wait'; renderHud();
+  setTimeout(nextTurn, delay);
+}
+function nextTurn() {
+  if (M.k >= 8) { M.phase = 'settle'; renderHud(); return; }
+  const t = thrower(); M.aim = 0; setMeter(0);
+  held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick'];
+  if (isHuman(t)) M.phase = 'aim';
+  else {
+    const side = Math.random() < 0.3 ? 'sticky' : 'slick';
+    M.side[1] = side;
+    const w = WIN[1 + side];
+    M.cpu = { t: 0, side, power: w.mid + gauss() * 0.055, aim: gauss() * 0.02, drift: gauss() * 0.18 };
+    M.phase = 'cpu';
+  }
+  renderHud();
+}
+function throwBag(power, drift = 0, team = thrower()) {
+  if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
+  const side = M.side[team];
+  const b = newBody(team, side); launch(b, RX[team], power, M.aim, drift);
+  b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
+  b.spin = drift * 14 + (Math.random() - 0.5) * 2; b.tumble = 0.6 + Math.random();
+  M.before = bags.map((o) => ({ o, s: o.state }));
+  bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
+  renderHud();
+  return true;
+}
+function afterThrow() {
+  const b = M.active; M.active = null;
+  const knockedIn = M.before.filter(({ o, s }) => s !== 'in' && o.state === 'in');
+  const knockedOff = M.before.filter(({ o, s }) => s === 'board' && !onDeck(o) && o.state !== 'in');
+  if (b.state === 'in') { say(b.swish ? 'SWISH!' : 'CORNHOLE!', 'IN THE HOLE · 3'); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
+  else if (b.state === 'board') say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'WOODY', 'ON THE BOARD · 1');
+  else if (b.dead) say('GROUNDER', 'HIT THE GRASS FIRST · REMOVED', 1300);
+  else say(b.offBoard ? 'OFF THE BOARD' : 'MISS', '0', 1100);
+  if (knockedIn.length) { setTimeout(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
+  else if (knockedOff.length) setTimeout(() => say('KNOCKED OFF!', knockedOff.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG'), 900);
+  M.k++; M.phase = 'wait'; renderHud();
+  setTimeout(nextTurn, knockedIn.length || knockedOff.length ? 1500 : 750);
+}
+function scoreInning() {
+  const { pts, inC, onC } = lie();
+  const net = Math.abs(pts[0] - pts[1]);
+  const scorer = pts[0] > pts[1] ? 0 : pts[1] > pts[0] ? 1 : -1;
+  let bust = false;
+  if (scorer >= 0) {
+    M.scores[scorer] += net;
+    if (M.exact && M.scores[scorer] > 21) { M.scores[scorer] = 13; bust = true; }
+    M.first = scorer;                 // last scoring team throws first; a wash keeps the same order
+  }
+  const win = scorer >= 0 && (M.exact ? M.scores[scorer] === 21 : M.scores[scorer] >= 21) ? scorer : -1;
+  M.history.push({ inning: M.inning, pts, inC, onC, net, scorer, bust, scores: [...M.scores] });
+
+codex
+The game already has a useful physics core and test hooks. I’ll extend those with separate position, spin, and arc controls, match-long wind, and stronger bag contacts, while preserving scoring and the Player Card metadata.
+exec
+/bin/bash -lc "cat > /tmp/edit.py <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text()
+s=s.replace('const V_MIN = 7.15, V_MAX = 10.55;', 'const V_MIN = 5.6, V_MAX = 10.1;')
+s=s.replace('FLICK_MAX = 5.5','FLICK_MAX = 7.5')
+s=s.replace('const CAM_POS = new THREE.Vector3(0.5, 2.05, 2.45);','const CAM_POS = new THREE.Vector3(0.5, 2.05, 1.4);')
+s=s.replace('/ 240));','/ 310));').replace('? 19 + (1 - w / h) * 30 : 19','? 17 + (1 - w / h) * 22 : 17')
+s=s.replace('2.05, 2.45);','2.05, 1.4);')
+s=s.replace('function launch(b, rx, power, aim, drift) {','''const wind = { x: 0, z: 0, mph: 0, angle: 0 };
+const arcs = [24, 35, 58], arcNames = ['SLIDER', 'CLASSIC', 'KOBE'];
+function launch(b, rx, power, aim, drift, arc = 1, spin = 0) {''')
+s=s.replace('const y = baseYaw(rx)', '''const elev = arcs[arc] * Math.PI / 180;
+  // Normalize range across arcs; a lob spends longer in the wind.
+  const velocity = speed * Math.sqrt(Math.sin(2 * ELEV) / Math.sin(2 * elev));
+  const y = baseYaw(rx)''')
+s=s.replace('Math.cos(ELEV) * speed','Math.cos(elev) * velocity').replace('Math.sin(ELEV) * speed','Math.sin(elev) * velocity')
+s=s.replace('b.curl = drift * 0.8;', 'b.arc = arc; b.english = spin; b.spin = spin * 3; b.curl = drift * 0.12 + spin * 0.10;')
+s=s.replace('b.v.y -= G * dt;', 'b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt; b.v.z += wind.z * dt; b.v.y -= G * dt;')
+s=s.replace('lv.y = 0; lv.multiplyScalar(S.keep);', 'lv.y = 0; lv.multiplyScalar(S.keep * (b.arc === 2 ? 0.40 : b.arc === 0 ? 1.35 : 1));')
+s=s.replace('const lp = b.lp, lv = b.lv;', 'const lp = b.lp, lv = b.lv;\\n    lp.y += (BAG_H - lp.y) * Math.min(1, dt * 12);')
+s=s.replace('if (d >= 2 * BAG_R || d < 1e-6) continue;', 'if (d >= 2 * BAG_R) continue;')
+s=s.replace('const nx = dx / d, nz = dz / d,', 'const nx = d > 1e-6 ? dx / d : 1, nz = d > 1e-6 ? dz / d : 0,')
+s=s.replace('const wa = am && "'!bm ? 0.8 : (!am && bm ? 0.2 : 0.5);'"','const wa = 0.5;')
+s=s.replace('for (const c of [a, b]) if', '''// Soft fabric can ride over a blocker after a hard contact.
+      if (Math.abs(vr) > 0.8) { const rider = am ? a : b; rider.lp.y = Math.max(rider.lp.y, BAG_H * 2.8); }
+      for (const c of [a, b]) { toWorld(c.lp, c.p); }
+      for (const c of [a, b]) if''')
+# airborne contacts with blockers, high lobs clear until descending onto them
+s=s.replace('const a = list[i]; if ("'!onDeck(a)) continue;'"', '''const a = list[i];
+    if (a.state === 'fly' && "'!a.offBoard) {
+      toLocal(a.p, a.lp);
+      for (const b of list) if (onDeck(b) && Math.hypot(a.lp.x-b.lp.x,a.lp.z-b.lp.z) < BAG_R * 1.8 && a.lp.y < b.lp.y + BAG_H * 2 && a.lp.y > b.lp.y && a.v.y < 0) {
+        a.lv.copy(a.v).applyQuaternion(boardQi); a.lv.y = 0;
+        a.lv.multiplyScalar(a.arc === 2 ? 0.12 : 0.55); a.lp.y = BAG_H * 3;
+        a.state = '"'slide'; a.touched = true; toWorld(a.lp,a.p); break;
+      }
+    }
+    if ("'!onDeck(a)) continue;'"''')
+s=s.replace(\"side: ['slick', 'slick'],\", \"position: [0, 0], spin: 0, arc: 1, side: ['slick', 'slick'],\")
+s=s.replace(\"ui.side.textContent =\", \""'$('"'wind').textContent = "'`${['"'↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} "'${wind.mph} MPH`;'"\\n  "'$('"'setup').textContent = "'`${arcNames[M.arc]} · SPIN ${M.spin < 0 ? '"'L' : M.spin > 0 ? 'R' : '0'} · STEP "'${M.position[t].toFixed(2)}`;'"\\n  ui.side.textContent =\")
+a=s.index('  ui.hint.innerHTML =');b=s.index('  ui.mode.textContent',a)
+s=s[:a]+'''  ui.hint.innerHTML = 'SWIPE / FLICK UP · TRACKPAD: TWO-FINGER SWIPE<span class=\"l2\"><br>← → STEP · A/D AIM · Q/E SPIN · W/S ARC · F SIDE · M SPINNER · HOLD SPACE: POWER</span>';
+'''+s[b:]
+s=s.replace('M.scores = [0, 0]; M.inning = 1;', '''wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
+  wind.x = Math.sin(wind.angle) * wind.mph * 0.025; wind.z = -Math.cos(wind.angle) * wind.mph * 0.025;
+  M.position = [0, 0]; M.spin = 0; M.arc = 1;
+  M.scores = [0, 0]; M.inning = 1;''')
+s=s.replace('aim: gauss() * 0.02,','aim: -wind.x * 0.08 + gauss() * 0.012,')
+s=s.replace('const w = WIN[1 + side];','M.arc = 1; M.spin = 0;\\n    const w = WIN[1 + side];')
+s=s.replace('launch(b, RX[team], power, M.aim, drift);','launch(b, RX[team] + M.position[team], power, M.aim, drift + gauss() * 0.025, M.arc, M.spin);')
+s=s.replace('b.spin = drift * 14 + (Math.random() - 0.5) * 2;', 'b.spin += drift * 2;')
+s=s.replace('const t = thrower(), rx = RX[t];','const t = thrower(), rx = RX[t] + M.position[t];')
+s=s.replace(\"if (k === 'arrowleft' || k === 'a') keyAim = -1;\\n  else if (k === 'arrowright' || k === 'd') keyAim = 1;\", \"if (k === 'a') keyAim = -1;\\n  else if (k === 'd') keyAim = 1;\\n  else if (['arrowleft','arrowright','q','e','w','s'].includes(k)) { e.preventDefault(); adjust(k); }\")
+s=s.replace(\"(k === 'arrowleft' || k === 'a')\", \"k === 'a'\").replace(\"(k === 'arrowright' || k === 'd')\", \"k === 'd'\")
+pos=s.index(\"addEventListener('keydown'\")
+s=s[:pos]+'''function adjust(k) {
+  if ("'!humanTurn()) return;
+  const t = thrower();
+  if (k.startsWith('"'arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), -0.28, 0.55);
+  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
+  if (k === 'w' || k === 's') M.arc = clamp(M.arc + (k === 'w' ? 1 : -1), 0, 2);
+  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
+  renderHud();
+}
+document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
+let wheelGesture = [], wheelTimer;
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  if ("'!humanTurn() || !ui.panel.hidden) return;
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
+  wheelGesture.push({t: performance.now(), x: e.deltaX * unit, y: e.deltaY * unit});
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => {
+    const g = wheelGesture; wheelGesture = [];
+    const up = -g.reduce((n,s) => n+s.y,0) / H() / Math.max(.08,(g.at(-1).t-g[0].t)/1000);
+    release(up, g.reduce((n,s)=>n+s.x,0) / H());
+  }, 90);
+}, {passive:false});
+addEventListener('"'blur', () => { keyAim = 0; spaceDown = null; drag = null; });
+'''+s[pos:]
+s=s.replace('<div id=\"hint\"', '<div id=\"conditions\" class=\"ol\"><div id=\"wind\"></div><div id=\"setup\"></div></div>\\n    <div id=\"touch-controls\">'+''.join(f'<button class=\"hb\" data-control=\"{k}\" aria-label=\"{label}\">{label}</button>' for k,label in [('arrowleft','STEP ←'),('arrowright','STEP →'),('a','AIM ←'),('d','AIM →'),('q','SPIN L'),('e','SPIN R'),('s','ARC −'),('w','ARC +')])+'</div>\\n    <div id=\"hint\"')
+s=s.replace('#err{', '''#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{color:#ffe45e}
+#touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
+@media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
+@media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+#err{''')
+s=s.replace('lastPower: M.lastPower,', 'aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower,')
+s=s.replace('side: b.side }))','side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() }))')
+s=s.replace('  holeLocalZ:', '''  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+  _slide: (x,z,vx,vz) => { const b=newBody(0); b.mesh=makeBagMesh(0,'slick'); b.lp.set(x,BAG_H,z); b.lv.set(vx,0,vz); b.state='slide'; b.touched=true; toWorld(b.lp,b.p); bags.push(b); },
+  holeLocalZ:''')
+p.write_text(s)
+PY
+python /tmp/edit.py
+python -m http.server 8000 >/tmp/cornhole-http.log 2>&1 &
+python -c 'import playwright; print(\"playwright ready\")'" in /workspace/cornhole
+ exited 127 in 0ms:
+/bin/bash: line 94: python: command not found
+/bin/bash: line 96: python: command not found
+
+exec
+/bin/bash -lc "python3 /tmp/edit.py
+python3 -c 'import playwright; print(\"ready\")'
+python3 -m http.server 8000" in /workspace/cornhole
+exec
+/bin/bash -lc 'python3 -m venv /tmp/cornhole-venv && /tmp/cornhole-venv/bin/pip -q install playwright && /tmp/cornhole-venv/bin/playwright install chromium' in /workspace/cornhole
+ exited 1 in 3532ms:
+WARNING: The directory '/home/box/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Failed to install browsers
+Error: ENOENT: no such file or directory, mkdir '/home/box/.cache/ms-playwright'
+
+codex
+The controls, wind, arc selection, and revised contacts are implemented. I’m moving into browser testing now, including measured landing and collision checks. Playwright needs installing in this environment first.
+exec
+/bin/bash -lc "git diff --stat && rg 'keyAim|const velocity|Math.cos\\(elev' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+ index.html | 111 +++++++++++++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 83 insertions(+), 28 deletions(-)
+  const velocity = speed * Math.sqrt(Math.sin(2 * ELEV) / Math.sin(2 * elev));
+  b.v.set(Math.sin(y) * Math.cos(elev) * velocity, Math.sin(elev) * velocity, -Math.cos(y) * Math.cos(elev) * velocity);
+let drag = null, keyAim = 0, spaceDown = null;
+  } else if (e.pointerType === 'mouse' && humanTurn() && !keyAim) {
+addEventListener('blur', () => { keyAim = 0; spaceDown = null; drag = null; });
+  if (k === 'a') keyAim = -1;
+  else if (k === 'd') keyAim = 1;
+  if (k === 'a' && keyAim < 0) keyAim = 0;
+  if (k === 'd' && keyAim > 0) keyAim = 0;
+  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/playwright install chromium' in /workspace/cornhole
+exec
+/bin/bash -lc "mkdir -p shots
+cat > /tmp/check.py <<'PY'
+import asyncio,json
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('"'!!window.__game'"')
+  print('windows',await page.evaluate('__game.win'))
+  await page.evaluate('__game.startMatch({vs:\"2p\",first:0})');await page.wait_for_timeout(1100)
+  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('w')
+  st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('s')
+  await page.mouse.move(640,600);await page.mouse.down()
+  for y in [550,490,420,340]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(25)
+  await page.mouse.up();await page.wait_for_timeout(100)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.screenshot(path='shots/desktop.png')
+  print('probes',await page.evaluate('[0,1,2].map(a=>[__game._probe(.65,a,-1),__game._probe(.65,a,1)])'))
+  await page.wait_for_function('__game.state.phase===\"aim\"')
+  await page.evaluate('__game._place(1,0,-.65);__game._slide(0,-.42,0,-2)')
+  await page.wait_for_timeout(700)
+  b=await page.evaluate('__game.state.bags');assert b[1]['lp'][2]<-.66,b
+  wind=await page.evaluate('__game.state.wind')
+  # Play out an inning with real physics and cancellation scoring.
+  while await page.evaluate('__game.state.phase')"'!='"'summary':
+   if await page.evaluate('__game.state.phase')=='aim':await page.evaluate('__game.throwWith(0)')
+   await page.wait_for_timeout(200)
+  await page.evaluate('__game.advance()');await page.wait_for_timeout(400)
+  assert await page.evaluate('__game.state.wind')==wind
+  assert await page.locator('#wind').is_visible()
+  await page.set_viewport_size({'width':480,'height':360});await page.screenshot(path='shots/card.png')
+  mobile=await browser.new_context(**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:errors.append(str(e)))
+  await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('"'!!window.__game'"')
+  await mp.evaluate('__game.startMatch({vs:\"2p\",first:0})');await mp.wait_for_timeout(1100)
+  cdp=await mobile.new_cdp_session(mp)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':620}]})
+  for y in [580,530,470,400]:
+   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':195,'y':y}]});await mp.wait_for_timeout(30)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+  assert await mp.evaluate('__game.state.bags.length')==1
+  await mp.screenshot(path='shots/mobile.png')
+  await mp.set_viewport_size({'width':844,'height':390});await mp.wait_for_timeout(200)
+  print('errors',errors);assert not errors
+  await browser.close()
+asyncio.run(main())
+PY" in /workspace/cornhole
+ succeeded in 0ms:
+ succeeded in 6764ms:
+Downloading Chrome for Testing 156.0.8078.4 (playwright chromium v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-linux64.zip
+|                                                                                |   0% of 191.1 MiB
+|■■■■■■■■                                                                        |  10% of 191.1 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 191.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 191.1 MiB
+Chrome for Testing 156.0.8078.4 (playwright chromium v1248) downloaded to /tmp/pw-browsers/chromium-1248
+Downloading FFmpeg (playwright ffmpeg v1013) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1013/ffmpeg-linux.zip
+|                                                                                |   0% of 2.2 MiB
+|■■■■■■■■                                                                        |  10% of 2.2 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.2 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.2 MiB
+FFmpeg (playwright ffmpeg v1013) downloaded to /tmp/pw-browsers/ffmpeg-1013
+Downloading Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-headless-shell-linux64.zip
+|                                                                                |   0% of 120 MiB
+|■■■■■■■■                                                                        |  10% of 120 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 120 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 120 MiB
+Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) downloaded to /tmp/pw-browsers/chromium_headless_shell-1248
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('const speed = V_MIN + clamp(power, 0, 1) * (V_MAX - V_MIN);','const pwr = clamp(power, 0, 1);\\n  const speed = pwr < 0.4 ? V_MIN + pwr * 6 : 8 + (pwr - 0.4) * 3.2;')
+s=s.replace(\"if (M.ctrl === 'spin') { if ("'!document.pointerLockElement", "if (M.ctrl === '"'spin' && e.pointerType === 'mouse') { if ("'!document.pointerLockElement")
+s=s.replace("if (M.ctrl === '"'spin') { spinMove(e); return; }\", \"if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }\")
+p.write_text(s)
+PY" in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/check.py' in /workspace/cornhole
+exec
+/bin/bash -lc 'curl -I -L --max-time 15 https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js' in /workspace/cornhole
+ succeeded in 0ms:
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0HTTP/2 200 
+access-control-allow-origin: *
+access-control-expose-headers: *
+timing-allow-origin: *
+cache-control: public, max-age=31536000, s-maxage=31536000, immutable
+cross-origin-resource-policy: cross-origin
+x-content-type-options: nosniff
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+content-type: application/javascript; charset=utf-8
+x-jsd-version: 0.170.0
+x-jsd-version-type: version
+etag: W/"a8dc0-40a05cf00d9bda9c"
+accept-ranges: bytes
+date: Tue, 03 Nov 2026 19:19:31 GMT
+age: 705248
+x-served-by: cache-fra-etou8220122-FRA, cache-pdx12323-PDX
+x-cache: HIT, HIT
+vary: Accept-Encoding
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
+content-length: 691648
+
+  0  675k    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+exec
+/bin/bash -lc "sed -i \"s/browser.new_page(viewport=/browser.new_page(ignore_https_errors=True,viewport=/;s/browser.new_context(\\*\\*/browser.new_context(ignore_https_errors=True,**/;s/lambda e:errors.append(str(e))/lambda e:(print(str(e),flush=True),errors.append(str(e)))/g\" /tmp/check.py
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python -u /tmp/check.py" in /workspace/cornhole
+ exited 1 in 28818ms:
+windows {'0slick': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0sticky': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1slick': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1sticky': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}}
+probes [[{'p': [-0.0002708680031622023, 0.016, -10.234411006051335], 'state': 'grass', 'flight': 1.0624999999999976}, {'p': [0.049385672177219044, 0.016, -10.234389449168384], 'state': 'grass', 'flight': 1.0624999999999976}], [{'p': [0.05435812169915437, 0.016, -9.822943839038054], 'state': 'grass', 'flight': 1.474999999999996}, {'p': [0.1221412467125568, 0.016, -9.822799926760025], 'state': 'grass', 'flight': 1.474999999999996}], [{'p': [0.2624465597525005, 0.13344369530830708, -8.38681253964225], 'state': 'board', 'flight': 1.691666666666662}, {'p': [0.32487506616995815, 0.016, -8.480575348773256], 'state': 'grass', 'flight': 1.704166666666662}]]
+Traceback (most recent call last):
+  File "/tmp/check.py", line 50, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/tmp/check.py", line 45, in main
+    assert await mp.evaluate('__game.state.bags.length')==1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+exec
+/bin/bash -lc 'ls -l shots' in /workspace/cornhole
+ succeeded in 0ms:
+total 144
+-rw-r--r-- 1 box box 59954 Nov  3 14:19 card.png
+-rw-r--r-- 1 box box 84723 Nov  3 14:19 desktop.png
+
+codex
+Desktop checks pass for mouse throws, position changes, spin and arc effects, bag pushes, and wind staying constant into the next inning. The 480×360 layout also renders correctly. I’m investigating a failed touch-swipe check before completing mobile and iframe testing.
+ exited 1 in 28355ms:
+windows {'0slick': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0sticky': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1slick': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1sticky': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}}
+probes [[{'p': [-0.21564695912282006, 0.016, -10.260398031075319], 'state': 'grass', 'flight': 1.0624999999999976}, {'p': [-0.165984392299013, 0.016, -10.260357518752125], 'state': 'grass', 'flight': 1.0624999999999976}], [{'p': [-0.29103340596777777, 0.016, -9.867549128321038], 'state': 'grass', 'flight': 1.4791666666666627}, {'p': [-0.2239953776364639, 0.016, -9.867245088151881], 'state': 'grass', 'flight': 1.4791666666666627}], [{'p': [-0.26314531184128487, 0.14393935242376005, -8.445145427884032], 'state': 'board', 'flight': 1.691666666666662}, {'p': [-0.1999880303116291, 0.1438907131807789, -8.444875100119532], 'state': 'board', 'flight': 1.691666666666662}]]
+Traceback (most recent call last):
+  File "/tmp/check.py", line 50, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/tmp/check.py", line 45, in main
+    assert await mp.evaluate('__game.state.bags.length')==1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+exec
+/bin/bash -lc "cp /tmp/check.py /tmp/mobiledebug.py
+python3 - <<'PY'
+p='/tmp/mobiledebug.py';s=open(p).read();a=s.index('  page=');b=s.index('  mobile=');s=s[:a]+\"  errors=[]\\n\"+s[b:];s=s.replace(\"  cdp=\", \"  await mp.evaluate('window.events=[]; for(const n of [\\\"pointerdown\\\",\\\"pointermove\\\",\\\"pointerup\\\",\\\"pointercancel\\\"]) document.addEventListener(n,e=>events.push([n,e.clientX,e.clientY,e.target.id]))');print(await mp.evaluate('__game.state'),flush=True)\\n  cdp=\");s=s.replace(\"  assert await mp.evaluate('__game.state.bags.length')==1\", \"  print(await mp.evaluate('[events,__game.state]'),flush=True)\");open(p,'w').write(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python -u /tmp/mobiledebug.py" in /workspace/cornhole
+ succeeded in 3114ms:
+{'phase': 'aim', 'vs': '2p', 'exact': False, 'inning': 1, 'scores': [0, 0], 'first': 0, 'k': 0, 'thrower': 0, 'aim': 0, 'position': [0, 0], 'spin': 0, 'arc': 1, 'wind': {'x': 0.012579247760119042, 'z': -0.19960401430279287, 'mph': 8, 'angle': 0.06293778172155101}, 'lastPower': None, 'history': [], 'winner': -1, 'bags': []}
+[[['pointerdown', 195, 620, ''], ['pointermove', 195, 580, ''], ['pointermove', 195, 530, ''], ['pointermove', 195, 470, ''], ['pointermove', 195, 400, ''], ['pointerup', 195, 400, '']], {'phase': 'aim', 'vs': '2p', 'exact': False, 'inning': 1, 'scores': [0, 0], 'first': 0, 'k': 0, 'thrower': 0, 'aim': 0, 'position': [0, 0], 'spin': 0, 'arc': 1, 'wind': {'x': 0.012579247760119042, 'z': -0.19960401430279287, 'mph': 8, 'angle': 0.06293778172155101}, 'lastPower': None, 'history': [], 'winner': -1, 'bags': []}]
+errors []
+
+exec
+/bin/bash -lc "sed -i \"s/e.target.id/e.target.tagName,e.target.id/;s/'y':620/'y':460/;s/\\[580,530,470,400\\]/[430,390,340,280]/\" /tmp/mobiledebug.py
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python -u /tmp/mobiledebug.py" in /workspace/cornhole
+ succeeded in 3142ms:
+{'phase': 'aim', 'vs': '2p', 'exact': False, 'inning': 1, 'scores': [0, 0], 'first': 0, 'k': 0, 'thrower': 0, 'aim': 0, 'position': [0, 0], 'spin': 0, 'arc': 1, 'wind': {'x': -0.008123726058950074, 'z': -0.14977985537087132, 'mph': 6, 'angle': 6.229000623153957}, 'lastPower': None, 'history': [], 'winner': -1, 'bags': []}
+[[['pointerdown', 195, 460, 'CANVAS', ''], ['pointermove', 195, 430, 'DIV', 'game'], ['pointermove', 195, 390, 'DIV', 'game'], ['pointermove', 195, 340, 'DIV', 'game'], ['pointermove', 195, 280, 'DIV', 'game'], ['pointerup', 195, 280, 'DIV', 'game']], {'phase': 'flying', 'vs': '2p', 'exact': False, 'inning': 1, 'scores': [0, 0], 'first': 0, 'k': 0, 'thrower': 0, 'aim': 0, 'position': [0, 0], 'spin': 0, 'arc': 1, 'wind': {'x': -0.008123726058950074, 'z': -0.14977985537087132, 'mph': 6, 'angle': 6.229000623153957}, 'lastPower': 0.17259369638928201, 'history': [], 'winner': -1, 'bags': [{'team': 0, 'state': 'fly', 'dead': False, 'side': 'slick', 'p': [0.6120713071127653, 1.376739627238241, -0.563001539513615], 'lp': [0.6120713071127653, 2.625113241631754, 7.317379539727794], 'velocity': [0, 0, 0]}]}]
+errors []
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='tests/playwright_check.py';s=open(p).read();lines=s.splitlines();lines[61]='  await page.evaluate(\"\"\"document.body.innerHTML=\\'<iframe sandbox=\"allow-scripts allow-same-origin\" src=\"/?card\" width=\"480\" height=\"360\"></iframe>\\'\"\"\")';open(p,'w').write('\\n'.join(lines)+'\\n')
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python -u tests/playwright_check.py" in /workspace/cornhole
+exec
+/bin/bash -lc "git diff --check && rg 'position\\[t\\] =|WIN\\[' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+  WIN[t + side + arc] = { lo, hi, olo, ohi, mid: hi >= lo ? (lo + hi) / 2 : (olo + ohi) / 2 };
+  const w = WIN[t + M.side[t] + M.arc];
+    const w = WIN[1 + side + 1];
+  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
+
+codex
+The touch check was starting over a control button; a swipe through the play area throws correctly. Arc and spin now produce measurable landing differences, and the power guide updates for each arc. I’m finishing trackpad, spinner, and sandboxed-iframe checks, then saving the evidence and committing.
+exec
+/bin/bash -lc "git diff --numstat && cat vercel.json && sed -n '29,85p' tests/playwright_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+2	0	CODEX_TASK.md
+94	38	index.html
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com" }
+      ]
+    }
+  ]
+}
+  b=await page.evaluate('__game.state.bags');assert b[1]['lp'][2]<-.66,b
+  wind=await page.evaluate('__game.state.wind')
+  # Play out an inning with real physics and cancellation scoring.
+  while await page.evaluate('__game.state.phase')!='summary':
+   if await page.evaluate('__game.state.phase')=='aim':await page.evaluate('__game.throwWith(0)')
+   await page.wait_for_timeout(200)
+  await page.evaluate('__game.advance()');await page.wait_for_timeout(400)
+  assert await page.evaluate('__game.state.wind')==wind
+  assert await page.locator('#wind').is_visible()
+  # No-button trackpad wheel throw.
+  await page.mouse.wheel(0,-250);await page.wait_for_timeout(200)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.wait_for_function('__game.state.phase==="aim"')
+  await page.keyboard.press('m')
+  await page.mouse.move(640,650)
+  for y in [590,510,410,290]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(20)
+  await page.wait_for_timeout(150)
+  assert await page.evaluate('__game.state.bags.length')==2
+  await page.set_viewport_size({'width':480,'height':360});await page.screenshot(path='shots/card.png')
+  mobile=await browser.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
+  await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('!!window.__game')
+  await mp.evaluate('__game.startMatch({vs:"2p",first:0})');await mp.wait_for_timeout(1100)
+  cdp=await mobile.new_cdp_session(mp)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':460}]})
+  for y in [430,390,340,280]:
+   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':195,'y':y}]});await mp.wait_for_timeout(30)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+  assert await mp.evaluate('__game.state.bags.length')==1
+  await mp.screenshot(path='shots/mobile.png')
+  await mp.set_viewport_size({'width':844,'height':390});await mp.wait_for_timeout(200)
+  await page.goto('http://127.0.0.1:8000')
+  await page.evaluate("""document.body.innerHTML='<iframe sandbox="allow-scripts allow-same-origin" src="/?card" width="480" height="360"></iframe>'""")
+  frame=page.frames[-1];await frame.wait_for_function('!!window.__game')
+  await frame.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+  assert await frame.evaluate('__game.throwWith(.55)')
+  print('errors',errors);assert not errors
+  await browser.close()
+asyncio.run(main())
+
+exec
+/bin/bash -lc 'git diff -- CODEX_TASK.md && tail -8 CODEX_TASK.md' in /workspace/cornhole
+ succeeded in 0ms:
+diff --git a/CODEX_TASK.md b/CODEX_TASK.md
+index b616b57..6f5e0a0 100644
+--- a/CODEX_TASK.md
++++ b/CODEX_TASK.md
+@@ -21,3 +21,5 @@ Update the on-screen hint/help text for the new controls (keep it compact; hide
+ Testing (required): verify with headless Chromium via Playwright (python playwright is available on the box; install if needed). Load the page with no console errors at 1280x800, 480x360, and a mobile viewport (e.g. iPhone 13 with touch emulation). Script: a mouse flick throw, a touch swipe throw, step left/right changing position, spin and arc changes affecting landing, wind indicator visible and constant across innings, bag-on-bag push. Save screenshots to /workspace/cornhole/shots/ (desktop.png, card.png, mobile.png). Commit your work in git in /workspace/cornhole.
+ 
+ At the end write a concise summary of what changed, controls per device, test results, and rough edges to /workspace/cornhole/codex-summary.md.
++
++9. **(Added by Ashe mid-run) Remove the Space-to-charge power throw entirely.** Throwing must ONLY be a flick gesture: mouse, touchpad, spinner/trackball, or phone swipe. No keyboard way to throw. Update hint text.
+
+Update the on-screen hint/help text for the new controls (keep it compact; hide extras on narrow screens).
+
+Testing (required): verify with headless Chromium via Playwright (python playwright is available on the box; install if needed). Load the page with no console errors at 1280x800, 480x360, and a mobile viewport (e.g. iPhone 13 with touch emulation). Script: a mouse flick throw, a touch swipe throw, step left/right changing position, spin and arc changes affecting landing, wind indicator visible and constant across innings, bag-on-bag push. Save screenshots to /workspace/cornhole/shots/ (desktop.png, card.png, mobile.png). Commit your work in git in /workspace/cornhole.
+
+At the end write a concise summary of what changed, controls per device, test results, and rough edges to /workspace/cornhole/codex-summary.md.
+
+9. **(Added by Ashe mid-run) Remove the Space-to-charge power throw entirely.** Throwing must ONLY be a flick gesture: mouse, touchpad, spinner/trackball, or phone swipe. No keyboard way to throw. Update hint text.
+
+ succeeded in 35773ms:
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc/spin landing probes [[{'p': [-0.00024935243521535886, 0.1736546461902896, -9.219709206540776], 'state': 'in', 'flight': 0.9999999999999977}, {'p': [0.0006991901044256019, 0.17371584518443942, -9.220049339040054], 'state': 'in', 'flight': 0.9999999999999977}], [{'p': [-0.032962176041354985, 0.26605690027333245, -9.123851791164682], 'state': 'board', 'flight': 1.1833333333333305}, {'p': [0.02951748666114786, 0.26588399820170416, -9.12289083396971], 'state': 'board', 'flight': 1.1833333333333305}], [{'p': [0.08607472304799985, 0.016, -7.899868727144895], 'state': 'grass', 'flight': 1.6541666666666621}, {'p': [0.14609434371432167, 0.016, -7.899821288078559], 'state': 'grass', 'flight': 1.6541666666666621}]]
+errors []
+
+codex
+All browser checks passed, including trackpad wheel throws, spinner throws without pointer lock, touch swipes, and sandboxed iframe play. I also found the new item added to `CODEX_TASK.md` during the run: I’ll remove Space charging and verify that keyboard input cannot throw.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace(' · HOLD SPACE: POWER','').replace('let drag = null, keyAim = 0, spaceDown = null;', 'let drag = null, keyAim = 0;').replace(' keyAim = 0; spaceDown = null; drag = null;', ' keyAim = 0; drag = null;').replace('    else if (humanTurn()) spaceDown = performance.now();\\n','').replace(\"  if (k === ' ' && spaceDown "'!= null) { const p = spacePower(); spaceDown = null; throwBag(p, 0); }'"\\n\",'').replace('const spacePower = () => { const t = (performance.now() - spaceDown) / 1400; return 1 - Math.abs(1 - (t % 2)); };\\n','').replace('  if (spaceDown "'!= null) setMeter(spacePower());'"\\n','').replace('power: w.mid + gauss() * 0.055','power: w.mid + wind.z * 0.04 + gauss() * 0.055');p.write_text(s)
+p=Path('tests/playwright_check.py');s=p.read_text().replace(\"  await page.keyboard.press('ArrowLeft');\", \"  await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')\\n  assert await page.evaluate('__game.state.bags.length')==0\\n  await page.keyboard.press('ArrowLeft');\");s=s.replace(\"assert abs(probes[1][0]['p'][0]-probes[1][1]['p'][0])>.005\", \"assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005\");p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python -u tests/playwright_check.py >/tmp/cornhole-test.log 2>&1" in /workspace/cornhole
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('const V_MIN = 5.6, V_MAX = 10.1;', 'const V_MIN = 5.6;').replace(\"return { team, side, state: 'fly'\", \"return { team, side, spin: 0, tumble: 1, arc: 1, state: 'fly'\").replace(\"const am = a.state === 'slide', bm = b.state === 'slide';\", \"const am = a.state === 'slide';\");p.write_text(s)
+p=Path('tests/playwright_check.py');s=p.read_text().replace(\"  mp.on('pageerror'\", \"  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)\\n  mp.on('pageerror'\");p.write_text(s)
+PY
+ git diff --check" in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'tail -2 /tmp/cornhole-test.log && git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc/spin landing probes [[{'p': [-0.0005635113059766423, 0.17370448136089855, -9.219986181046103], 'state': 'in', 'flight': 0.995833333333331}, {'p': [0.00040541602906216107, 0.17370448136089855, -9.219986181046103], 'state': 'in', 'flight': 0.995833333333331}], [{'p': [-0.0010282718407443685, 0.1737188067123385, -9.220065798655117], 'state': 'in', 'flight': 1.1791666666666638}, {'p': [0.00016761949392296512, 0.1736362533143878, -9.219606982395815], 'state': 'in', 'flight': 1.1791666666666638}], [{'p': [0.023734508410173827, 0.016, -8.176326874710888], 'state': 'grass', 'flight': 1.6541666666666621}, {'p': [0.08380981861809504, 0.016, -8.176266271866677], 'state': 'grass', 'flight': 1.6541666666666621}]]
+ M CODEX_TASK.md
+ M index.html
+?? codex-run.log
+?? shots/
+?? tests/
+
+exec
+/bin/bash -lc "ps -eo pid,etime,args | rg 'check.py|chrome-headless'" in /workspace/cornhole
+ succeeded in 0ms:
+      1       00:00 codex-linux-sandbox --sandbox-policy-cwd /workspace/cornhole --command-cwd /workspace/cornhole --permission-profile {"type":"managed","file_system":{"type":"restricted","entries":[{"path":{"type":"special","value":{"kind":"root"}},"access":"read"},{"path":{"type":"path","path":"/workspace/cornhole"},"access":"write"},{"path":{"type":"special","value":{"kind":"slash_tmp"}},"access":"write"},{"path":{"type":"special","value":{"kind":"tmpdir"}},"access":"write"},{"path":{"type":"path","path":"/workspace/cornhole/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.aws"},"access":"read","missing_path_behavior":"skip"}]},"network":"enabled"} --apply-seccomp-then-exec -- /bin/bash -c __CODEX_SNAPSHOT_OVERRIDE_SET_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" __CODEX_SNAPSHOT_OVERRIDE_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" __CODEX_SNAPSHOT_OVERRIDE_SET_1="${CODEX_PERMISSION_PROFILE+x}" __CODEX_SNAPSHOT_OVERRIDE_1="${CODEX_PERMISSION_PROFILE-}" __CODEX_SNAPSHOT_OVERRIDE_SET_2="${CODEX_PLUGIN_METRICS_OUTPUT+x}" __CODEX_SNAPSHOT_OVERRIDE_2="${CODEX_PLUGIN_METRICS_OUTPUT-}" __CODEX_SNAPSHOT_OVERRIDE_SET_3="${CODEX_SESSION_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_3="${CODEX_SESSION_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_4="${CODEX_THREAD_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_4="${CODEX_THREAD_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_5="${CODEX_TOOL_CALL_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_5="${CODEX_TOOL_CALL_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_6="${CODEX_VERSION+x}" __CODEX_SNAPSHOT_OVERRIDE_6="${CODEX_VERSION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0="${ALL_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_0="${ALL_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1="${BUNDLE_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_1="${BUNDLE_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2="${BUNDLE_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_2="${BUNDLE_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3="${BUNDLE_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_3="${BUNDLE_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4="${BUNDLE_SSL_CA_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_4="${BUNDLE_SSL_CA_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5="${CARGO_HTTP_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_5="${CARGO_HTTP_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6="${CODEX_CA_CERTIFICATE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_6="${CODEX_CA_CERTIFICATE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8="${CODEX_NETWORK_PROXY_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_8="${CODEX_NETWORK_PROXY_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9="${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_9="${CODEX_NETWORK_PROXY_ATTRIBUTION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12="${CURL_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_12="${CURL_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13="${DOCKER_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_13="${DOCKER_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14="${DOCKER_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_14="${DOCKER_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15="${ELECTRON_GET_USE_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_15="${ELECTRON_GET_USE_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16="${FTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_16="${FTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17="${GIT_SSL_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_17="${GIT_SSL_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18="${HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_18="${HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19="${HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_19="${HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20="${NODE_EXTRA_CA_CERTS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_20="${NODE_EXTRA_CA_CERTS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21="${NODE_USE_ENV_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_21="${NODE_USE_ENV_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22="${NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_22="${NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23="${NPM_CONFIG_CAFILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_23="${NPM_CONFIG_CAFILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24="${NPM_CONFIG_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_24="${NPM_CONFIG_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25="${NPM_CONFIG_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_25="${NPM_CONFIG_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26="${NPM_CONFIG_NOPROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_26="${NPM_CONFIG_NOPROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27="${NPM_CONFIG_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_27="${NPM_CONFIG_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28="${PIP_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_28="${PIP_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29="${PIP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_29="${PIP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30="${REQUESTS_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_30="${REQUESTS_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31="${SSL_CERT_FILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_31="${SSL_CERT_FILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32="${WSS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_32="${WSS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33="${WS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_33="${WS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34="${YARN_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_34="${YARN_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35="${YARN_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_35="${YARN_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36="${YARN_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_36="${YARN_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37="${all_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_37="${all_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38="${ftp_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_38="${ftp_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39="${http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_39="${http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40="${https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_40="${https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41="${no_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_41="${no_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42="${npm_config_cafile+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_42="${npm_config_cafile-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43="${npm_config_http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_43="${npm_config_http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44="${npm_config_https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_44="${npm_config_https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45="${npm_config_noproxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_45="${npm_config_noproxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46="${npm_config_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_46="${npm_config_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47="${ws_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_47="${ws_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48="${wss_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_48="${wss_proxy-}" __CODEX_SNAPSHOT_PROXY_ENV_SET="${CODEX_NETWORK_PROXY_ACTIVE+x}"  if . '/home/box/.codex/shell_snapshots/01a1a2d8-180b-7912-ac3d-2b0df2125550.1793733434391176080.sh' >/dev/null 2>&1; then :; fi  if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_0}" ]; then   if [ -z "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" ] || [ "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" != "${__CODEX_SNAPSHOT_OVERRIDE_0}" ]; then export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS="${__CODEX_SNAPSHOT_OVERRIDE_0}"; else export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi else builtin unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS 2>/dev/null || command unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_1}" ]; then   if [ -z "${CODEX_PERMISSION_PROFILE+x}" ] || [ "${CODEX_PERMISSION_PROFILE-}" != "${__CODEX_SNAPSHOT_OVERRIDE_1}" ]; then export CODEX_PERMISSION_PROFILE="${__CODEX_SNAPSHOT_OVERRIDE_1}"; else export CODEX_PERMISSION_PROFILE; fi else builtin unset CODEX_PERMISSION_PROFILE 2>/dev/null || command unset CODEX_PERMISSION_PROFILE; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_2}" ]; then   if [ -z "${CODEX_PLUGIN_METRICS_OUTPUT+x}" ] || [ "${CODEX_PLUGIN_METRICS_OUTPUT-}" != "${__CODEX_SNAPSHOT_OVERRIDE_2}" ]; then export CODEX_PLUGIN_METRICS_OUTPUT="${__CODEX_SNAPSHOT_OVERRIDE_2}"; else export CODEX_PLUGIN_METRICS_OUTPUT; fi else builtin unset CODEX_PLUGIN_METRICS_OUTPUT 2>/dev/null || command unset CODEX_PLUGIN_METRICS_OUTPUT; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_3}" ]; then   if [ -z "${CODEX_SESSION_ID+x}" ] || [ "${CODEX_SESSION_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_3}" ]; then export CODEX_SESSION_ID="${__CODEX_SNAPSHOT_OVERRIDE_3}"; else export CODEX_SESSION_ID; fi else builtin unset CODEX_SESSION_ID 2>/dev/null || command unset CODEX_SESSION_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_4}" ]; then   if [ -z "${CODEX_THREAD_ID+x}" ] || [ "${CODEX_THREAD_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_4}" ]; then export CODEX_THREAD_ID="${__CODEX_SNAPSHOT_OVERRIDE_4}"; else export CODEX_THREAD_ID; fi else builtin unset CODEX_THREAD_ID 2>/dev/null || command unset CODEX_THREAD_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_5}" ]; then   if [ -z "${CODEX_TOOL_CALL_ID+x}" ] || [ "${CODEX_TOOL_CALL_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_5}" ]; then export CODEX_TOOL_CALL_ID="${__CODEX_SNAPSHOT_OVERRIDE_5}"; else export CODEX_TOOL_CALL_ID; fi else builtin unset CODEX_TOOL_CALL_ID 2>/dev/null || command unset CODEX_TOOL_CALL_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_VERSION+x}" ] || [ "${CODEX_VERSION-}" != "${__CODEX_SNAPSHOT_OVERRIDE_6}" ]; then export CODEX_VERSION="${__CODEX_SNAPSHOT_OVERRIDE_6}"; else export CODEX_VERSION; fi else builtin unset CODEX_VERSION 2>/dev/null || command unset CODEX_VERSION; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 if [ -n "$__CODEX_SNAPSHOT_PROXY_ENV_SET" ] || [ -n "${CODEX_NETWORK_PROXY_ACTIVE+x}" ]; then if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0}" ]; then   if [ -z "${ALL_PROXY+x}" ] || [ "${ALL_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}" ]; then export ALL_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}"; else export ALL_PROXY; fi else builtin unset ALL_PROXY 2>/dev/null || command unset ALL_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1}" ]; then   if [ -z "${BUNDLE_HTTPS_PROXY+x}" ] || [ "${BUNDLE_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}" ]; then export BUNDLE_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}"; else export BUNDLE_HTTPS_PROXY; fi else builtin unset BUNDLE_HTTPS_PROXY 2>/dev/null || command unset BUNDLE_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2}" ]; then   if [ -z "${BUNDLE_HTTP_PROXY+x}" ] || [ "${BUNDLE_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}" ]; then export BUNDLE_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}"; else export BUNDLE_HTTP_PROXY; fi else builtin unset BUNDLE_HTTP_PROXY 2>/dev/null || command unset BUNDLE_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3}" ]; then   if [ -z "${BUNDLE_NO_PROXY+x}" ] || [ "${BUNDLE_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}" ]; then export BUNDLE_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}"; else export BUNDLE_NO_PROXY; fi else builtin unset BUNDLE_NO_PROXY 2>/dev/null || command unset BUNDLE_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4}" ]; then   if [ -z "${BUNDLE_SSL_CA_CERT+x}" ] || [ "${BUNDLE_SSL_CA_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}" ]; then export BUNDLE_SSL_CA_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}"; else export BUNDLE_SSL_CA_CERT; fi else builtin unset BUNDLE_SSL_CA_CERT 2>/dev/null || command unset BUNDLE_SSL_CA_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5}" ]; then   if [ -z "${CARGO_HTTP_CAINFO+x}" ] || [ "${CARGO_HTTP_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}" ]; then export CARGO_HTTP_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}"; else export CARGO_HTTP_CAINFO; fi else builtin unset CARGO_HTTP_CAINFO 2>/dev/null || command unset CARGO_HTTP_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_CA_CERTIFICATE+x}" ] || [ "${CODEX_CA_CERTIFICATE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}" ]; then export CODEX_CA_CERTIFICATE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}"; else export CODEX_CA_CERTIFICATE; fi else builtin unset CODEX_CA_CERTIFICATE 2>/dev/null || command unset CODEX_CA_CERTIFICATE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7}" ]; then   if [ -z "${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" ] || [ "${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}" ]; then export CODEX_NETWORK_ALLOW_LOCAL_BINDING="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}"; else export CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi else builtin unset CODEX_NETWORK_ALLOW_LOCAL_BINDING 2>/dev/null || command unset CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}" ]; then export CODEX_NETWORK_PROXY_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}"; else export CODEX_NETWORK_PROXY_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" ] || [ "${CODEX_NETWORK_PROXY_ATTRIBUTION-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}" ]; then export CODEX_NETWORK_PROXY_ATTRIBUTION="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}"; else export CODEX_NETWORK_PROXY_ATTRIBUTION; fi else builtin unset CODEX_NETWORK_PROXY_ATTRIBUTION 2>/dev/null || command unset CODEX_NETWORK_PROXY_ATTRIBUTION; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" ] || [ "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}" ]; then export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}"; else export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi else builtin unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS 2>/dev/null || command unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}" ]; then export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}"; else export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12}" ]; then   if [ -z "${CURL_CA_BUNDLE+x}" ] || [ "${CURL_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}" ]; then export CURL_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}"; else export CURL_CA_BUNDLE; fi else builtin unset CURL_CA_BUNDLE 2>/dev/null || command unset CURL_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13}" ]; then   if [ -z "${DOCKER_HTTPS_PROXY+x}" ] || [ "${DOCKER_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}" ]; then export DOCKER_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}"; else export DOCKER_HTTPS_PROXY; fi else builtin unset DOCKER_HTTPS_PROXY 2>/dev/null || command unset DOCKER_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14}" ]; then   if [ -z "${DOCKER_HTTP_PROXY+x}" ] || [ "${DOCKER_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}" ]; then export DOCKER_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}"; else export DOCKER_HTTP_PROXY; fi else builtin unset DOCKER_HTTP_PROXY 2>/dev/null || command unset DOCKER_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15}" ]; then   if [ -z "${ELECTRON_GET_USE_PROXY+x}" ] || [ "${ELECTRON_GET_USE_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}" ]; then export ELECTRON_GET_USE_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}"; else export ELECTRON_GET_USE_PROXY; fi else builtin unset ELECTRON_GET_USE_PROXY 2>/dev/null || command unset ELECTRON_GET_USE_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16}" ]; then   if [ -z "${FTP_PROXY+x}" ] || [ "${FTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}" ]; then export FTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}"; else export FTP_PROXY; fi else builtin unset FTP_PROXY 2>/dev/null || command unset FTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17}" ]; then   if [ -z "${GIT_SSL_CAINFO+x}" ] || [ "${GIT_SSL_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}" ]; then export GIT_SSL_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}"; else export GIT_SSL_CAINFO; fi else builtin unset GIT_SSL_CAINFO 2>/dev/null || command unset GIT_SSL_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18}" ]; then   if [ -z "${HTTPS_PROXY+x}" ] || [ "${HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}" ]; then export HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}"; else export HTTPS_PROXY; fi else builtin unset HTTPS_PROXY 2>/dev/null || command unset HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19}" ]; then   if [ -z "${HTTP_PROXY+x}" ] || [ "${HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}" ]; then export HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}"; else export HTTP_PROXY; fi else builtin unset HTTP_PROXY 2>/dev/null || command unset HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20}" ]; then   if [ -z "${NODE_EXTRA_CA_CERTS+x}" ] || [ "${NODE_EXTRA_CA_CERTS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}" ]; then export NODE_EXTRA_CA_CERTS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}"; else export NODE_EXTRA_CA_CERTS; fi else builtin unset NODE_EXTRA_CA_CERTS 2>/dev/null || command unset NODE_EXTRA_CA_CERTS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21}" ]; then   if [ -z "${NODE_USE_ENV_PROXY+x}" ] || [ "${NODE_USE_ENV_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}" ]; then export NODE_USE_ENV_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}"; else export NODE_USE_ENV_PROXY; fi else builtin unset NODE_USE_ENV_PROXY 2>/dev/null || command unset NODE_USE_ENV_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22}" ]; then   if [ -z "${NO_PROXY+x}" ] || [ "${NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}" ]; then export NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}"; else export NO_PROXY; fi else builtin unset NO_PROXY 2>/dev/null || command unset NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23}" ]; then   if [ -z "${NPM_CONFIG_CAFILE+x}" ] || [ "${NPM_CONFIG_CAFILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}" ]; then export NPM_CONFIG_CAFILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}"; else export NPM_CONFIG_CAFILE; fi else builtin unset NPM_CONFIG_CAFILE 2>/dev/null || command unset NPM_CONFIG_CAFILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24}" ]; then   if [ -z "${NPM_CONFIG_HTTPS_PROXY+x}" ] || [ "${NPM_CONFIG_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}" ]; then export NPM_CONFIG_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}"; else export NPM_CONFIG_HTTPS_PROXY; fi else builtin unset NPM_CONFIG_HTTPS_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25}" ]; then   if [ -z "${NPM_CONFIG_HTTP_PROXY+x}" ] || [ "${NPM_CONFIG_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}" ]; then export NPM_CONFIG_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}"; else export NPM_CONFIG_HTTP_PROXY; fi else builtin unset NPM_CONFIG_HTTP_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26}" ]; then   if [ -z "${NPM_CONFIG_NOPROXY+x}" ] || [ "${NPM_CONFIG_NOPROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}" ]; then export NPM_CONFIG_NOPROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}"; else export NPM_CONFIG_NOPROXY; fi else builtin unset NPM_CONFIG_NOPROXY 2>/dev/null || command unset NPM_CONFIG_NOPROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27}" ]; then   if [ -z "${NPM_CONFIG_PROXY+x}" ] || [ "${NPM_CONFIG_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}" ]; then export NPM_CONFIG_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}"; else export NPM_CONFIG_PROXY; fi else builtin unset NPM_CONFIG_PROXY 2>/dev/null || command unset NPM_CONFIG_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28}" ]; then   if [ -z "${PIP_CERT+x}" ] || [ "${PIP_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}" ]; then export PIP_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}"; else export PIP_CERT; fi else builtin unset PIP_CERT 2>/dev/null || command unset PIP_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29}" ]; then   if [ -z "${PIP_PROXY+x}" ] || [ "${PIP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}" ]; then export PIP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}"; else export PIP_PROXY; fi else builtin unset PIP_PROXY 2>/dev/null || command unset PIP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30}" ]; then   if [ -z "${REQUESTS_CA_BUNDLE+x}" ] || [ "${REQUESTS_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}" ]; then export REQUESTS_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}"; else export REQUESTS_CA_BUNDLE; fi else builtin unset REQUESTS_CA_BUNDLE 2>/dev/null || command unset REQUESTS_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31}" ]; then   if [ -z "${SSL_CERT_FILE+x}" ] || [ "${SSL_CERT_FILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}" ]; then export SSL_CERT_FILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}"; else export SSL_CERT_FILE; fi else builtin unset SSL_CERT_FILE 2>/dev/null || command unset SSL_CERT_FILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32}" ]; then   if [ -z "${WSS_PROXY+x}" ] || [ "${WSS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}" ]; then export WSS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}"; else export WSS_PROXY; fi else builtin unset WSS_PROXY 2>/dev/null || command unset WSS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33}" ]; then   if [ -z "${WS_PROXY+x}" ] || [ "${WS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}" ]; then export WS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}"; else export WS_PROXY; fi else builtin unset WS_PROXY 2>/dev/null || command unset WS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34}" ]; then   if [ -z "${YARN_HTTPS_PROXY+x}" ] || [ "${YARN_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}" ]; then export YARN_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}"; else export YARN_HTTPS_PROXY; fi else builtin unset YARN_HTTPS_PROXY 2>/dev/null || command unset YARN_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35}" ]; then   if [ -z "${YARN_HTTP_PROXY+x}" ] || [ "${YARN_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}" ]; then export YARN_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}"; else export YARN_HTTP_PROXY; fi else builtin unset YARN_HTTP_PROXY 2>/dev/null || command unset YARN_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36}" ]; then   if [ -z "${YARN_NO_PROXY+x}" ] || [ "${YARN_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}" ]; then export YARN_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}"; else export YARN_NO_PROXY; fi else builtin unset YARN_NO_PROXY 2>/dev/null || command unset YARN_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37}" ]; then   if [ -z "${all_proxy+x}" ] || [ "${all_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}" ]; then export all_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}"; else export all_proxy; fi else builtin unset all_proxy 2>/dev/null || command unset all_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38}" ]; then   if [ -z "${ftp_proxy+x}" ] || [ "${ftp_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}" ]; then export ftp_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}"; else export ftp_proxy; fi else builtin unset ftp_proxy 2>/dev/null || command unset ftp_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39}" ]; then   if [ -z "${http_proxy+x}" ] || [ "${http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}" ]; then export http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}"; else export http_proxy; fi else builtin unset http_proxy 2>/dev/null || command unset http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40}" ]; then   if [ -z "${https_proxy+x}" ] || [ "${https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}" ]; then export https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}"; else export https_proxy; fi else builtin unset https_proxy 2>/dev/null || command unset https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41}" ]; then   if [ -z "${no_proxy+x}" ] || [ "${no_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}" ]; then export no_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}"; else export no_proxy; fi else builtin unset no_proxy 2>/dev/null || command unset no_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42}" ]; then   if [ -z "${npm_config_cafile+x}" ] || [ "${npm_config_cafile-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}" ]; then export npm_config_cafile="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}"; else export npm_config_cafile; fi else builtin unset npm_config_cafile 2>/dev/null || command unset npm_config_cafile; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43}" ]; then   if [ -z "${npm_config_http_proxy+x}" ] || [ "${npm_config_http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}" ]; then export npm_config_http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}"; else export npm_config_http_proxy; fi else builtin unset npm_config_http_proxy 2>/dev/null || command unset npm_config_http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44}" ]; then   if [ -z "${npm_config_https_proxy+x}" ] || [ "${npm_config_https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}" ]; then export npm_config_https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}"; else export npm_config_https_proxy; fi else builtin unset npm_config_https_proxy 2>/dev/null || command unset npm_config_https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45}" ]; then   if [ -z "${npm_config_noproxy+x}" ] || [ "${npm_config_noproxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}" ]; then export npm_config_noproxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}"; else export npm_config_noproxy; fi else builtin unset npm_config_noproxy 2>/dev/null || command unset npm_config_noproxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46}" ]; then   if [ -z "${npm_config_proxy+x}" ] || [ "${npm_config_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}" ]; then export npm_config_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}"; else export npm_config_proxy; fi else builtin unset npm_config_proxy 2>/dev/null || command unset npm_config_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47}" ]; then   if [ -z "${ws_proxy+x}" ] || [ "${ws_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}" ]; then export ws_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}"; else export ws_proxy; fi else builtin unset ws_proxy 2>/dev/null || command unset ws_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48}" ]; then   if [ -z "${wss_proxy+x}" ] || [ "${wss_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}" ]; then export wss_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}"; else export wss_proxy; fi else builtin unset wss_proxy 2>/dev/null || command unset wss_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 fi if [ -n "${PATH:-}" ]; then export PATH='/home/box/.local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path':"$PATH"; else export PATH='/home/box/.local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path'; fi  exec '/bin/bash' -c 'ps -eo pid,etime,args | rg '"'"'check.py|chrome-headless'"'"''
+      2       00:00 /bin/bash -c ps -eo pid,etime,args | rg 'check.py|chrome-headless'
+      4       00:00 rg check.py|chrome-headless
+
+ succeeded in 36476ms:
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python -u tests/playwright_check.py >/tmp/cornhole-final-test.log 2>&1' in /workspace/cornhole
+exec
+/bin/bash -lc "cat > codex-summary.md <<'EOF'
+# Backyard Cornhole feature batch
+
+Implemented independent pitcher-box steps and aim, gentler flick power, slider/classic/Kobe arcs with matching meter guides, subtle spin/curve, match-long wind with imperfect CPU compensation, stronger equal-mass bag pushes and knock-ins/off-board slides, airborne blocker contacts and brief ride-up animation. Increased pixel resolution modestly and tightened board framing. Single HTML file, no build step; X Player Card metadata and vercel.json remain intact. Space charging is removed; keyboard input cannot throw.
+
+Controls:
+- Mouse: move sideways to aim; press, flick upward, release. M selects no-button spinner/trackball flicks; pointer lock is optional.
+- Touchpad: tap/drag flick, two-finger upward wheel swipe, or M spinner mode.
+- Phone: swipe upward through the play area; sideways swipe adds drift. Buttons handle step, aim, spin, arc, slick/sticky side, and mode. Portrait/landscape, touch-action none and viewport zoom restrictions are supported.
+- Keyboard setup: Left/Right step, A/D aim, Q/E spin (opposite key returns through neutral), W/S arc, F side, M input mode. Space/Enter only start or advance menus.
+
+Validation: headless Chromium via Python Playwright at 1280×800, 480×360, iPhone 13 touch emulation, mobile landscape, and a sandboxed 480×360 iframe. Assertions cover mouse flick, real touch swipe, wheel flick, unlocked spinner flick, position changes, arc flight time and spin landing differences, bag push, complete inning progression with unchanged wind, visible wind HUD, and no keyboard throw. Browser console/page errors: none. Screenshots: shots/desktop.png, shots/card.png, shots/mobile.png. Re-run with a local HTTP server on port 8000 and "'`python3 tests/playwright_check.py` after installing Playwright Chromium. This environment required HTTPS certificate bypass for external assets during browser tests.
+
+Rough edges: fabric contact uses soft discs and a brief height lift rather than a deformable cloth/stack solver. Power guides show calm-air predictions; wind and stepping require player adjustment. Wheel delta sensitivity varies by hardware; touchpad tests emulate wheel input rather than physical hardware. Mobile testing uses Chromium emulation, not a physical iPhone. Existing remote Three.js/font dependencies remain. No deployment performed.
+EOF
+git diff --check
+rg '"'spaceDown|spacePower|HOLD SPACE|SPACE: HOLD' index.html" in /workspace/cornhole
+ exited 1 in 0ms:
+codex
+Space charging is removed, and the final regression run is underway. The required commit is blocked because this workspace mounts `.git` read-only; Git cannot create `index.lock`. I’ll preserve the tested changes as a commit bundle, though I can’t apply that commit to the workspace’s history here.
+exec
+/bin/bash -lc 'git clone --no-hardlinks /workspace/cornhole /tmp/cornhole-commit' in /workspace/cornhole
+ succeeded in 0ms:
+Cloning into '/tmp/cornhole-commit'...
+done.
+
+exec
+/bin/bash -lc "cat >> codex-summary.md <<'EOF'
+
+Git limitation: "'`/workspace/cornhole/.git` is mounted read-only, so the required in-place commit failed creating `.git/index.lock`. An isolated clone contains the commit; `cornhole-changes.bundle` preserves it for application in a writable checkout (`git fetch /workspace/cornhole/cornhole-changes.bundle HEAD`, then `git cherry-pick FETCH_HEAD`). The original workspace files contain all changes, but its Git history could not be updated under this environment'"'s permissions.
+EOF
+ tail -1 /tmp/cornhole-final-test.log" in /workspace/cornhole
+ succeeded in 0ms:
+arc/spin landing probes [[{'p': [0.0007912540381262565, 0.17370300551085013, -9.219977978549108], 'state': 'in', 'flight': 0.995833333333331}, {'p': [-0.014472411411560422, 0.016, -10.788100974646566], 'state': 'grass', 'flight': 1.3291666666666633}], [{'p': [0.0011531343512504453, 0.17376092384171843, -9.22029987773889], 'state': 'in', 'flight': 1.1791666666666638}, {'p': [0.10573312029124234, 0.29418510508057105, -9.280183063176882], 'state': 'board', 'flight': 1.1791666666666638}], [{'p': [0.21006887950496853, 0.016, -8.174972060121709], 'state': 'grass', 'flight': 1.6541666666666621}, {'p': [0.2701381070345843, 0.016, -8.17495089231311], 'state': 'grass', 'flight': 1.6541666666666621}]]
+
+ succeeded in 36172ms:
+exec
+/bin/bash -lc "git -C /tmp/cornhole-commit log -1 --format='%h %s'
+wc -c index.html
+ git diff --check" in /workspace/cornhole
+ succeeded in 0ms:
+af8250c v2 real rules
+62222 index.html
+
+exec
+/bin/bash -lc "tail -1 /tmp/cornhole-final-test.log
+cp index.html CODEX_TASK.md codex-summary.md /tmp/cornhole-commit/
+cp -r tests shots /tmp/cornhole-commit/
+git -C /tmp/cornhole-commit add index.html CODEX_TASK.md codex-summary.md tests shots
+git -C /tmp/cornhole-commit -c user.name='Codex' -c user.email='codex@openai.com' commit -m \"Add cornhole positioning, arcs, spin, wind and gesture-only throws\"
+git -C /tmp/cornhole-commit bundle create /workspace/cornhole/cornhole-changes.bundle HEAD "'^af8250c
+git bundle verify cornhole-changes.bundle
+git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+errors []
+[master 48a757f] Add cornhole positioning, arcs, spin, wind and gesture-only throws
+ 7 files changed, 186 insertions(+), 46 deletions(-)
+ create mode 100644 codex-summary.md
+ create mode 100644 shots/card.png
+ create mode 100644 shots/desktop.png
+ create mode 100644 shots/mobile.png
+ create mode 100644 tests/playwright_check.py
+cornhole-changes.bundle is okay
+The bundle contains this ref:
+48a757fe8ae5527d3864cad3d575a19d9ed3d9d0 HEAD
+The bundle requires this ref:
+af8250c6883ab841e34bcbd3b339ce1e117cffdd 
+The bundle uses this hash algorithm: sha1
+ M CODEX_TASK.md
+ M index.html
+?? CODEX_TASK_2_CAREER.md
+?? codex-run.log
+?? codex-summary.md
+?? cornhole-changes.bundle
+?? shots/
+?? tests/
+
+codex
+Implemented all feature items, including removing Space charging. Playwright checks passed with no browser errors; screenshots and [summary](/workspace/cornhole/codex-summary.md) are saved. Nothing deployed.
+
+The in-place commit was blocked by read-only `.git`. Commit `48a757f` is preserved in [cornhole-changes.bundle](/workspace/cornhole/cornhole-changes.bundle), with application instructions in the summary.
+tokens used
+71,177
+Implemented all feature items, including removing Space charging. Playwright checks passed with no browser errors; screenshots and [summary](/workspace/cornhole/codex-summary.md) are saved. Nothing deployed.
+
+The in-place commit was blocked by read-only `.git`. Commit `48a757f` is preserved in [cornhole-changes.bundle](/workspace/cornhole/cornhole-changes.bundle), with application instructions in the summary.
