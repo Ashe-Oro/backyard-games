@@ -19,13 +19,14 @@ async def main():
    await page.set_viewport_size({'width':width,'height':height})
    await page.evaluate('__game.startMatch({practice:true,vs:"2p",first:0})')
    await page.wait_for_function('__game.state.phase==="aim"')
+   expected=None
    views=[]
    for side,x in [('left',2),('right',width-2)]:
     await page.mouse.move(x,height*.5)
     await page.wait_for_timeout(650)
     view=await page.evaluate('''()=>{const {camera,aimDots,held}=__view;return {position:camera.position.toArray(),target:camera.userData.look.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,aim:__game.state.aim,dot:aimDots[3].position.toArray(),held:held.rotation.y};}''')
     fixed={k:view[k] for k in ['position','target','quaternion','fov']}
-    assert view['position']==[.5,2.05,2.45] and view['target']==[0,.5,-8.7] and view['fov']==19,view
+    assert view['position']==[0,2.05,3.2] and view['target']==[0,.5,-8.7] and view['fov']>=19,view
     if expected is None: expected=fixed
     assert fixed==expected,(fixed,expected)
     views.append(view)
@@ -34,7 +35,7 @@ async def main():
    assert views[0]['dot']!=views[1]['dot'] and views[0]['held']!=views[1]['held'],views
   assert not errors,errors
   await browser.close()
-  print('Batch 9: fixed camera position, target, rotation and FOV across pointer extremes and resize; moving indicators and held bag PASS')
+  print('Batch 9: fixed camera position, target and rotation; responsive FOV stays fixed across pointer extremes; moving indicators and held bag PASS')
 
 if __name__=='__main__':
  asyncio.run(asyncio.wait_for(main(),timeout=150))

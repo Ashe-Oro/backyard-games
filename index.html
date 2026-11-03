@@ -96,6 +96,9 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 @media(min-width:1000px) and (min-height:600px){#panel .menu-modes .go{font-size:14px}.menu-modes small{font-size:11px}}
 @media(max-height:450px){#panel:has(.menu-modes){top:64%;padding:8px}#panel .menu-modes .go{padding:8px}}
 @media(max-width:560px){#panel .menu-modes .go{font-size:11px}.menu-modes small{max-width:100%;text-wrap:balance}}
+[hidden]{display:none!important}
+@media(pointer:coarse),(max-width:600px){#bag-menu{width:min(60vw,320px);font-size:12px;max-height:60%;padding:8px;gap:8px}#bag-menu .hb{min-height:44px;font-size:12px;padding:8px 3px}.btns .hb{flex:1}.bag-label{font-size:10px}}
+@media(max-height:450px) and (max-width:1000px){#bag-menu{width:260px;max-height:65%;padding:4px;gap:3px}#bag-menu .hb{min-height:36px;font-size:10px;padding:3px 2px}.bag-label{font-size:9px}.bag-row{gap:2px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -115,6 +118,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
+      <div class="bag-row" id="practice-box" hidden><span class="bag-label">PITCHER’S BOX</span><div class="bag-choices"><button class="hb" data-box="left">LEFT</button><button class="hb" data-box="right">RIGHT</button></div></div>
       <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
     </div>
   </div>
@@ -183,7 +187,7 @@ wrap.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog('#ffd3a8', 26, 75);
 const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
-const CAM_POS = new THREE.Vector3(0.5, 2.05, 2.45);
+const CAM_POS = new THREE.Vector3(0, 2.05, 3.2);
 const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
 camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
 camera.userData.look = CAM_LOOK.clone();
@@ -193,7 +197,8 @@ function resize() {
   const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  camera.fov = 19;
+  // A fixed, centered view keeps both hand origins in frame on portrait phones.
+  camera.fov = Math.max(19, 2 * Math.atan(Math.tan(11 * Math.PI / 180) / camera.aspect) * 180 / Math.PI);
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -683,6 +688,9 @@ const M = {
   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
   position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
 };
+let practiceBox='right';
+try{practiceBox=localStorage.getItem('backyard-cornhole-practice-box')==='left'?'left':'right';}catch{}
+const releaseX=(t)=> (M.practice && t===0 && practiceBox==='left'?RX[1]:RX[t])+M.position[t];
 const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
 const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[Math.min(career.fight,roster.length-1)].name : 'CPU') : TEAM[t]);
@@ -725,6 +733,8 @@ function renderHud() {
   $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
   $('reset-bags').hidden=!M.practice;
+  $('practice-box').hidden=!M.practice;
+  document.querySelectorAll('[data-box]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.box===practiceBox));
   ui.t[1].hidden=M.practice;
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
@@ -753,8 +763,8 @@ const roster = [
  ['Kobe Kowalski','The Sky Slinger','Popcorn Plains','9–4','Forecast: bags from above!','lobber','#f6b642',1],
  ['Sticky Vicky','The Suede Sorceress','Velcro Valley','12–3','This victory is going to stick!','sniper','#a57cf0',1],
  ['Tailgate Ted','The Parking Lot Tornado','Grillville','16–5','I put the wild in wild card!','wild','#73b5f3',2],
- ['Slidin’ Steve II','Patio Pusher: Reloaded','Beanbag Bend','21–7','Same driveway. Double trouble!','slider','#26dcbb',2],
- ['Big Bag Barb II','The Cookout Empress','Biscuit Bay','28–3','You’re the side dish today!','blocker','#ff509f',3],
+ ['Sierra Spin','The Cyclone','Corkscrew Creek','24–6','Catch my curve if you can!','spinner','#f07832',2],
+ ['Duke Dozer','The Lane Clearer','Granite Grove','31–2','Make way for the freight train!','bulldozer','#8bd64b',3],
  ['Reign Supreme','The Bag Baroness','Crown Corners','35–0','The throne has no room for two!','champion','#ffe45e',3]
 ].map((r,i)=>({name:r[0],nick:r[1],home:r[2],record:r[3],taunt:r[4],style:r[5],color:r[6],circuit:r[7],level:i}));
 const circuits=['Backyard Circuit','County Fair','Tailgate Pro','King’s Court'];
@@ -763,8 +773,18 @@ let career={fight:0,wins:0}, saveNote='';
 try { const c=JSON.parse(localStorage.getItem(SAVE_KEY)); if(c && Number.isInteger(c.fight) && c.fight>=0 && c.fight<=roster.length && Number.isInteger(c.wins) && c.wins>=c.fight) career={fight:c.fight,wins:c.wins}; } catch { saveNote='Storage unavailable: progress lasts this visit.'; }
 function saveCareer(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(career));}catch{saveNote='Storage unavailable: progress lasts this visit.';}}
 function portrait(o){
- const female=[1,3,6,7].includes(o.level), hair=['#633b29','#45283a','#c07431','#282338'][o.level%4];
- return `<svg class="portrait" viewBox="0 0 16 16" role="img" aria-label="Pixel portrait of ${o.name}" shape-rendering="crispEdges"><rect width="16" height="16" fill="#252237"/><path fill="${o.color}" d="M2 12h12v4H2z"/><path fill="${hair}" d="M4 3h8v9H4z${female?'M3 5h2v8H3zM11 5h2v8h-2z':''}"/><path fill="${['#f5be91','#b97851','#df9c70'][o.level%3]}" d="M5 5h6v6H5zM6 11h4v2H6z"/><path fill="#272034" d="M6 6h1v1H6zM9 6h1v1H9zM7 9h3v1H7z"/><path fill="${o.color}" d="M3 3h10v2H3zM5 2h6v1H5z"/>${o.level>=5?'<path fill="#ffe45e" d="M4 1h1v2H4zM7 0h2v3H7zM11 1h1v2h-1z"/>':''}</svg>`;
+ const looks=[
+ ['#f5be91','#633b29','M4 3h8v3H4z','M3 3h10v2H3zM5 2h6v1H5z'],
+ ['#b97851','#241926','M3 4h10v9h-3V5H6v8H3z','M3 4h10v1H3zM11 5h3v1h-3z'],
+ ['#df9c70','#c07431','M5 2h2v3H5zM8 1h2v4H8zM11 3h1v3h-1z','M4 5h8v1H4z'],
+ ['#805039','#151521','M3 3h9v2H3zM3 5h2v8H3zM11 4h2v10h-2z','M5 6h3v2H5zM9 6h3v2H9zM8 6h1v1H8z'],
+ ['#edb18c','#c9c5b5','M4 3h8v2H4zM3 5h2v3H3zM11 5h2v3h-2z','M5 9h6v3H5zM6 12h4v1H6z'],
+ ['#c78e65','#8d294c','M3 2h4v3H3zM4 3h8v3H4zM12 5h2v5h-2z','M4 4h8v1H4zM11 5h2v2h-2z'],
+ ['#694536','#ded39a','M4 2h8v3H4zM4 5h1v4H4zM11 5h1v4h-1z','M3 2h10v3H3zM2 5h12v1H2z'],
+ ['#f1caa5','#eee5f5','M3 4h10v10h-3V5H6v9H3z','M4 1h2v2h1V0h2v3h1V1h2v4H4z']
+ ][o.level];
+ const [skin,hair,hairPath,accessory]=looks;
+ return `<svg class="portrait" viewBox="0 0 16 16" role="img" aria-label="Pixel portrait of ${o.name}" shape-rendering="crispEdges"><rect width="16" height="16" fill="#252237"/><path fill="${o.color}" d="M2 12h12v4H2z"/><path fill="${hair}" d="${hairPath}"/><path fill="${skin}" d="M5 5h6v6H5zM6 11h4v2H6z"/><path fill="#272034" d="M6 6h1v1H6zM9 6h1v1H9zM7 9h3v1H7z"/><path fill="${o.level===4?hair:o.level===3?'#191c31':o.color}" d="${accessory}"/></svg>`;
 }
 function careerMap(){
  M.career=false; M.phase='menu'; clearBags(); ui.title.classList.add('gone');
@@ -783,38 +803,31 @@ function champion(){
 }
 function careerResult(win){
  const o=roster[career.fight]; if(win===0){career.fight++;career.wins++;saveCareer();}
- ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'REMATCH'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'TRY AGAIN'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
  $('next-fight').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=careerMap;
 }
-// Power scatter, angular scatter, range bias and occasional wide release.
 // Calibrated against independent throws with the live 240 Hz physics.
-const CPU_SCATTER = [
- {power:.06,aim:.05,bias:-.125,lapse:0},
- {power:.08,aim:.009,bias:.025,lapse:.25},
- {power:.03,aim:.001,bias:0,lapse:.4},
- {power:.003,aim:.012,bias:0,lapse:.3},
- {power:.08,aim:.006,bias:-.10,lapse:.1},
- {power:.08,aim:.006,bias:-.10,lapse:0},
- {power:.08,aim:.001,bias:.05,lapse:0},
- {power:.03,aim:.006,bias:-.10,lapse:.08}
-];
+// Per-bag accuracy budgets; selected releases are simulated, never assigned scores.
+const CPU_RATES=[[.07,.30],[.15,.35],[.25,.35],[.35,.35],[.45,.30],[.55,.30],[.67,.25],[.80,.15]];
 function planCareerShot(o){
  // Predict actual flight and board friction, then value strategic landing targets.
  const deck=bags.filter(onDeck), blockers=deck.filter(b=>b.lp.z>HOLE_LOCAL.z+.12);
- // Rookie Steve slides NORMAL throws; his rematch keeps the low PUSH style.
- let arc=o.level===0?1:o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
- if(o.level>=3 && blockers.length) arc=2;
- let side=o.style==='sniper'||o.style==='blocker'||(o.style==='slider' && o.level>0)?'sticky':'slick';
+ // Keep each rival’s preferred release and bag material.
+ let arc=o.level===0?1:o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'||o.style==='bulldozer'?0:1;
+ if(o.level>=3 && blockers.length && o.style!=='bulldozer') arc=2;
+ let side=o.style==='sniper'||o.style==='blocker'||o.style==='bulldozer'||(o.style==='slider' && o.level>0)?'sticky':'slick';
  let target=HOLE_LOCAL.clone(), goal='hole';
  const own=deck.find(b=>b.team===1 && holeDist(b.lp)<.35), enemy=deck.find(b=>b.team===0);
  if(o.level>=2 && own && o.style!=='lobber'){target.copy(own.lp);arc=0;side='slick';goal='push';}
- else if(o.level>=4 && enemy && M.scores[0]>=18){target.copy(enemy.lp);arc=0;goal='knock';}
+ else if(o.level>=4 && enemy && (M.scores[0]>=18 || o.style==='bulldozer')){target.copy(enemy.lp);arc=0;goal='knock';}
  else if(o.style==='blocker' && !blockers.length && M.scores[1]>=M.scores[0]){target.z+=.38;goal='block';}
- let best={cost:Infinity,power:.55,aim:0}, holeShots=[];
+ let best={cost:Infinity,power:.55,aim:0}, holeShots=[], pools={in:[],board:[],miss:[]};
+ const curl=o.style==='spinner'?.65:0;
  // Later opponents compensate with the full match wind; early opponents are less precise.
  const assess=(power,aim)=>{
-  const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc);
+  const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc,curl);
   for(let i=0;i<1920;i++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
+  pools[b.state==='in'?'in':b.state==='board'?'board':'miss'].push({power,aim});
   if(b.state==='in' && goal==='hole')holeShots.push({power,aim});
   let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2+cost:.5;
   if(b.state==='grass'||b.state==='removed')cost+=3;
@@ -828,12 +841,20 @@ function planCareerShot(o){
   const center=holeShots.reduce((a,b)=>({power:a.power+b.power,aim:a.aim+b.aim}),{power:0,aim:0});
   best.power=center.power/holeShots.length;best.aim=center.aim/holeShots.length;
  }
- const scatter=CPU_SCATTER[o.level], lapse=Math.random()<scatter.lapse;
- // Ted's large power scatter and occasional wild release keep his high variance.
- const power=best.power+scatter.bias+gauss()*scatter.power;
- const aim=best.aim+gauss()*scatter.aim+(lapse?(Math.random()<.5?-1:1)*(.13+Math.random()*.10):0);
- M.arc=arc;M.spin=0;M.side[1]=side;
- return {t:0,side,power:clamp(power,0,1),aim,drift:gauss()*.05,goal};
+ // Low line drives can stop below the hole-search range; include those releases.
+ if(!pools.board.length || !pools.in.length){
+  for(let power=.08;power<=.98;power+=.01)
+   for(let aim=-.12;aim<=.121;aim+=.02)assess(power,aim);
+ }
+ const [inside,on]=CPU_RATES[o.level], roll=Math.random();
+ const pool=pools[roll<inside?'in':roll<inside+on?'board':'miss'];
+ // Ted samples the entire range; other rivals prefer releases near their tactical target.
+ if(pool.length){
+  const choices=o.style==='wild'?pool:pool.slice().sort((a,b)=>Math.abs(a.power-best.power)-Math.abs(b.power-best.power)).slice(0,24);
+  best=choices[Math.floor(Math.random()*choices.length)];
+ }
+ M.arc=arc;M.spin=curl;M.side[1]=side;
+ return {t:0,side,power:best.power,aim:best.aim,drift:0,goal};
 }
 function showMenu() {
   M.phase = 'menu'; ui.title.classList.remove('gone');
@@ -892,7 +913,7 @@ function throwBag(power, drift = 0, team = thrower()) {
   if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
   const side = M.side[team];
   const actualPower=isHuman(team) ? physicalPower(power) : power;
-  const b = newBody(team, side); launch(b, RX[team] + (isHuman(team) ? 0 : M.position[team]), actualPower, M.aim, drift + gauss() * 0.025, M.arc, isHuman(team) ? 0 : M.spin);
+  const b = newBody(team, side); launch(b, releaseX(team), actualPower, M.aim, drift + (isHuman(team)?gauss() * 0.025:0), M.arc, isHuman(team) ? 0 : M.spin);
   b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
   if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
   M.before = bags.map((o) => ({ o, s: o.state }));
@@ -972,10 +993,11 @@ function pointAim(e){
  const r=wrap.getBoundingClientRect();
  aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
  if(aimRay.ray.intersectPlane(aimPlane,aimPoint)){
- const rx=RX[thrower()]+M.position[thrower()];
+ const rx=releaseX(thrower());
  M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
  }
 }
+document.querySelectorAll('[data-box]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;practiceBox=b.dataset.box;try{localStorage.setItem('backyard-cornhole-practice-box',practiceBox);}catch{}renderHud();});
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
 $('menu').onclick=()=>{if(M.active)return;showMenu();};
 $('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
@@ -1122,7 +1144,7 @@ function frame() {
     const c = M.cpu; c.t += dt;
     M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
     if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
-    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+    if (c.t > 1.3) { M.aim=c.aim; throwBag(c.power, c.drift, 1); }
   }
   acc += dt;
   while (acc >= 1 / 240) {
@@ -1141,19 +1163,21 @@ function frame() {
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
   // Held bag and indicators follow the thrower and aim; the camera stays fixed.
-  const t = thrower(), rx = RX[t] + M.position[t];
+  const t = thrower(), rx = releaseX(t);
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
   const yaw = baseYaw(rx) + M.aim;
   held.visible = showHeld;
-  if (showHeld) { held.position.set(rx + Math.sin(time * 2) * 0.004, REL_Y + Math.sin(time * 3) * 0.01, REL_Z); held.rotation.set(0.15, -yaw, 0); }
-  aimDots.forEach((d, i) => {
-    const dist = 1.6 + i * 0.5;
-    d.position.set(rx + Math.sin(yaw) * dist, 0.012, REL_Z - Math.cos(yaw) * dist);
-    d.visible = showHeld && isHuman(t);
-    d.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(time * 6 - i * 0.6));
-  });
-  // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
+  if (showHeld) { held.position.set(rx, REL_Y, REL_Z); held.rotation.set(0.15, -yaw, 0); }
+  // Calm-air preview shares the exact release origin used by throwBag.
   const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+  aimDots.forEach((d, i) => {
+    const seconds=i*.09;
+    d.position.copy(preview.p).addScaledVector(preview.v,seconds);
+    d.position.y-=.5*G*seconds*seconds;
+    d.quaternion.copy(camera.quaternion);
+    d.visible=showHeld && isHuman(t) && d.position.y>.03;
+    d.material.opacity=.5;
+  });
   trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);

@@ -54,7 +54,7 @@ async def main():
      wind.x=Math.sin(a)*mph*.025;wind.z=-Math.cos(a)*mph*.025;
      const c=planCareerShot(roster[level]);tally.kobe+=M.arc===2;
      const b=newBody(1,c.side);
-     launch(b,RX[1],c.power,c.aim,c.drift, M.arc);
+     launch(b,RX[1],c.power,c.aim,c.drift, M.arc, M.spin);
      for(let j=0;j<1920;j++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
      if(b.state==='in')tally.in++;else if(b.state==='board')tally.on++;else tally.miss++;
     }return tally;
@@ -62,7 +62,7 @@ async def main():
    results.append(result);print(json.dumps(result),flush=True)
   Path('/tmp/task11-rates.json').write_text(json.dumps(results,indent=2))
   for i,r in enumerate(results):
-   target_in=[.07,.15,.25,.33,.40,.45,.52,.60][i];target_on=[.30,.35,.35,.35,.30,.30,.30,.30][i]
+   target_in=[.07,.15,.25,.35,.45,.55,.67,.80][i];target_on=[.30,.35,.35,.35,.30,.30,.25,.15][i]
    assert abs(r['in']/r['throws']-target_in)<.075,r
    assert abs(r['on']/r['throws']-target_on)<.075,r
   assert results[0]['in']/results[0]['throws']<.10 and results[0]['kobe']==0
