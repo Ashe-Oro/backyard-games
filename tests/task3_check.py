@@ -19,7 +19,8 @@ async def main():
   await page.wait_for_timeout(1200)
   left=await page.evaluate('__game._screenPoint(-.3048,-8.8)')
   right=await page.evaluate('__game._screenPoint(.3048,-8.8)')
-  assert right['x']-left['x']>1280*.2
+  # Batch 5 restores the wider original v2 camera.
+  assert right['x']-left['x']>1280*.1
   target=await page.evaluate('__game._screenPoint(.12,-8.8)')
   await page.mouse.move(target['x'],target['y'])
   actual=await page.evaluate('__game.state.aim')
