@@ -13,7 +13,7 @@ async def main():
   await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')
   assert await page.evaluate('__game.state.bags.length')==0
   await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('h')
-  st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
+  st=await page.evaluate('__game.state');assert st['position']==[0,0] and st['spin']==0 and st['arc']==2
   await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('h');await page.keyboard.press('h')
   await page.mouse.move(640,600);await page.mouse.down()
   for y in [550,490,420,340]:
@@ -21,10 +21,9 @@ async def main():
   await page.mouse.up();await page.wait_for_timeout(100)
   assert await page.evaluate('__game.state.bags.length')==1
   await page.screenshot(path='shots/desktop.png')
-  probes=await page.evaluate('[0,1,2].map(a=>[__game._probe(.55,a,-1),__game._probe(.55,a,1)])')
-  assert probes[2][0]['flight']>probes[0][0]['flight']+.2
-  assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005
-  print('arc/spin landing probes',probes)
+  probes=await page.evaluate('[0,1,2].map(a=>__game._probe(.55,a,0))')
+  assert probes[2]['flight']>probes[0]['flight']+.2
+  print('arc landing probes',probes)
   await page.wait_for_function('__game.state.phase==="aim"')
   await page.evaluate('__game._place(1,0,-.65);__game._slide(0,-.42,0,-2)')
   await page.wait_for_timeout(700)

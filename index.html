@@ -86,8 +86,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
 #bag-menu > *{flex-shrink:0}
 .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
-#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
-@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -107,9 +107,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
-      <div class="bag-row"><span class="bag-label">SPIN</span><div class="bag-choices"><button class="hb" data-spin="-1">L</button><button class="hb" data-spin="0">0</button><button class="hb" data-spin="1">R</button></div></div>
-      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
-      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP <span id="step-value">0.00</span></span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
       <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
     </div>
   </div>
@@ -710,13 +707,11 @@ function renderHud() {
   $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
   $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
-  $('step-value').textContent=M.position[t].toFixed(2);
   $('reset-bags').hidden=!M.practice;
   ui.t[1].hidden=M.practice;
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
-  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+  $('setup').textContent = arcNames[M.arc];
   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
-  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));
   const w = meterWindow();
   ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
   ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
@@ -855,9 +850,9 @@ function throwBag(power, drift = 0, team = thrower()) {
   if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
   const side = M.side[team];
   const actualPower=isHuman(team) ? physicalPower(power) : power;
-  const b = newBody(team, side); launch(b, RX[team] + M.position[team], actualPower, M.aim, drift + gauss() * 0.025, M.arc, M.spin);
+  const b = newBody(team, side); launch(b, RX[team] + (isHuman(team) ? 0 : M.position[team]), actualPower, M.aim, drift + gauss() * 0.025, M.arc, isHuman(team) ? 0 : M.spin);
   b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
-  b.spin += drift * 2; b.tumble = 0.6 + Math.random();
+  if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
   M.before = bags.map((o) => ({ o, s: o.state }));
   bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
   renderHud();
@@ -932,15 +927,13 @@ function pointAim(e){
  M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
  }
 }
-$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
-document.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});
 $('menu').onclick=()=>{if(M.active)return;showMenu();};
 $('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
 document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
 
 // ---------- input ----------
-let drag = null, keyAim = 0;
+let drag = null;
 const samples = [];
 const H = () => wrap.clientHeight || 1;
 const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
@@ -975,7 +968,7 @@ wrap.addEventListener('pointermove', (e) => {
     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
     const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
-  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn() && !keyAim) {
+  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn()) {
     pointAim(e);
   }
 });
@@ -1024,13 +1017,9 @@ ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); })
 function adjust(k) {
   if (!humanTurn()) return;
   const t = thrower();
-  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
-  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
   if (k === 'h') {M.arc=(M.arc+1)%3;M.heights[t]=M.arc;}
-  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
   renderHud();
 }
-document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
 let wheelGesture = [], wheelTimer;
 wrap.addEventListener('wheel', e => {
   if (e.target.closest('#bag-menu')) return;
@@ -1045,13 +1034,11 @@ wrap.addEventListener('wheel', e => {
     release(up, g.reduce((n,s)=>n+s.x,0) / H());
   }, 90);
 }, {passive:false});
-addEventListener('blur', () => { keyAim = 0; drag = null; });
+addEventListener('blur', () => { drag = null; });
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
   const k = e.key.toLowerCase();
-  if (k === 'a') keyAim = -1;
-  else if (k === 'd') keyAim = 1;
-  else if (['arrowleft','arrowright','q','e','h'].includes(k)) { e.preventDefault(); adjust(k); }
+  if (k === 'h') { e.preventDefault(); adjust(k); }
   else if (k === 'm') toggleCtrl();
   else if (k === 'f') flipSide();
   else if (k === ' ' || k === 'enter') {
@@ -1060,12 +1047,6 @@ addEventListener('keydown', (e) => {
 
   }
 });
-addEventListener('keyup', (e) => {
-  const k = e.key.toLowerCase();
-  if (k === 'a' && keyAim < 0) keyAim = 0;
-  if (k === 'd' && keyAim > 0) keyAim = 0;
-});
-
 // The free end droops in calm air; stronger wind extends it and tightens the ripples.
 function animatePennant(seconds) {
   const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
@@ -1090,7 +1071,6 @@ const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
 camera.userData.look = CAM_LOOK.clone();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); time += dt;
-  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
   if (flick && performance.now() - lastMoveT > 60) finishFlick();
   if (M.phase === 'cpu') {
     const c = M.cpu; c.t += dt;

@@ -1,0 +1,7 @@
+Completed batch 7: removed extra controls and shortcuts, kept pointer aiming, and fixed human throws at center with zero spin.
+
+All six Playwright suites passed with short timeouts. `git diff --check` passed.
+
+Summary: [codex-summary-7.md](/workspace/cornhole/codex-summary-7.md)
+
+`CLAUDE_UI_REVIEW.md` and `.git` were untouched. Changes remain in the working tree.

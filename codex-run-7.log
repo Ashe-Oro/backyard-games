@@ -1,0 +1,2016 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0
+--------
+workdir: /workspace/cornhole
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: none
+reasoning summaries: none
+session id: 01a1a32a-f0d7-7d30-b67f-5baa64c889ba
+--------
+user
+Read /workspace/cornhole/CODEX_TASK_7.md and complete it. Batches 1-6 are in index.html; don't regress them. Do not edit CLAUDE_UI_REVIEW.md. Run all Playwright suites with short timeouts, write codex-summary-7.md. .git is read-only; leave changes in the working tree.
+codex
+I’ll read the task and repository guidance, make the batch 7 changes, and run all Playwright suites with short timeouts. I’ll preserve batches 1–6 and leave `CLAUDE_UI_REVIEW.md` untouched.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CODEX_TASK_7.md' -g 'package.json' -g '*playwright*' -g 'index.html' -g 'CLAUDE_UI_REVIEW.md'" in /workspace/cornhole
+ succeeded in 0ms:
+/workspace/cornhole
+index.html
+CLAUDE_UI_REVIEW.md
+CODEX_TASK_7.md
+tests/playwright_check.py
+
+exec
+/bin/bash -lc 'cat CODEX_TASK_7.md' in /workspace/cornhole
+ succeeded in 0ms:
+# Cornhole batch 7 (Ashe, Nov 3, 3:38 PM): remove complication
+- Remove the STEP ←/→, AIM ←/→ and SPIN L/R buttons and the MORE toggle entirely. Aim is by pointer only (mouse/finger), as in v2.
+- Remove step and spin as player controls (including keyboard shortcuts and HUD readouts). Throws use spin 0 and the centered stand position. CPU may keep its own internal variation.
+- The left-side bag menu keeps only: throw height PUSH / NORMAL / KOBE, and bag side SLICK / STICKY.
+- Update the Playwright tests to match (drop step/spin checks), run all suites with short timeouts, write codex-summary-7.md. .git is read-only; leave changes in the working tree.
+
+exec
+/bin/bash -lc "ls -la; find .. -name AGENTS.md -print; rg -n 'step|spin|MORE|more|aimLeft|aimRight|STEP|SPIN|AIM|keydown' index.html; ls tests" in /workspace/cornhole
+ succeeded in 0ms:
+total 1356
+drwxr-xr-x   8 box box   4096 Nov  3 15:47 .
+drwxr-xr-x. 31 box box  20480 Nov  3 15:26 ..
+dr-xr-xr-x   2 box box     40 Nov  3 15:47 .agents
+dr-xr-xr-x   2 box box     40 Nov  3 15:47 .aws
+dr-xr-xr-x   2 box box     40 Nov  3 15:47 .codex
+drwxr-xr-x   8 box box   4096 Nov  3 15:47 .git
+-rw-r--r--   1 box box    503 Nov  3 15:28 CLAUDE_REVIEW_NOTES.md
+-rw-r--r--   1 box box  16482 Nov  3 15:35 CLAUDE_UI_REVIEW.md
+-rw-r--r--   1 box box   5038 Nov  3 14:25 CODEX_TASK.md
+-rw-r--r--   1 box box   2956 Nov  3 14:45 CODEX_TASK_2_CAREER.md
+-rw-r--r--   1 box box   2769 Nov  3 15:02 CODEX_TASK_3.md
+-rw-r--r--   1 box box    641 Nov  3 15:02 CODEX_TASK_4.md
+-rw-r--r--   1 box box    482 Nov  3 15:08 CODEX_TASK_5.md
+-rw-r--r--   1 box box   1365 Nov  3 15:35 CODEX_TASK_6.md
+-rw-r--r--   1 box box    666 Nov  3 15:38 CODEX_TASK_7.md
+-rw-r--r--   1 box box   1273 Nov  3 15:35 claude-review.log
+-rw-r--r--   1 box box    324 Nov  3 14:52 codex-out-2.txt
+-rw-r--r--   1 box box    409 Nov  3 15:07 codex-out-3.txt
+-rw-r--r--   1 box box    353 Nov  3 15:10 codex-out-4.txt
+-rw-r--r--   1 box box    335 Nov  3 15:41 codex-out-6.txt
+-rw-r--r--   1 box box    412 Nov  3 14:23 codex-out.txt
+-rw-r--r--   1 box box 147394 Nov  3 14:52 codex-run-2.log
+-rw-r--r--   1 box box 159489 Nov  3 15:07 codex-run-3.log
+-rw-r--r--   1 box box 110519 Nov  3 15:10 codex-run-4.log
+-rw-r--r--   1 box box  89030 Nov  3 15:16 codex-run-5.log
+-rw-r--r--   1 box box 145667 Nov  3 15:41 codex-run-6.log
+-rw-r--r--   1 box box   1847 Nov  3 15:47 codex-run-7.log
+-rw-r--r--   1 box box 171441 Nov  3 14:23 codex-run.log
+-rw-r--r--   1 box box   3725 Nov  3 15:06 codex-summary-3.md
+-rw-r--r--   1 box box   2401 Nov  3 15:10 codex-summary-4.md
+-rw-r--r--   1 box box   2911 Nov  3 15:41 codex-summary-6.md
+-rw-r--r--   1 box box   3723 Nov  3 14:51 codex-summary-career.md
+-rw-r--r--   1 box box   2810 Nov  3 14:23 codex-summary.md
+-rw-r--r--   1 box box 233240 Nov  3 14:23 cornhole-changes.bundle
+-rw-r--r--   1 box box  77294 Nov  3 15:39 index.html
+-rw-r--r--   1 box box  27306 Nov  3 14:13 poster.png
+-rw-r--r--   1 box box  68218 Nov  3 14:16 screenshot.png
+drwxr-xr-x   2 box box   4096 Nov  3 15:38 shots
+drwxr-xr-x   2 box box   4096 Nov  3 15:39 tests
+-rw-r--r--   1 box box    239 Nov  3 13:05 vercel.json
+31:#game.spin{cursor:crosshair}
+110:      <div class="bag-row"><span class="bag-label">SPIN</span><div class="bag-choices"><button class="hb" data-spin="-1">L</button><button class="hb" data-spin="0">0</button><button class="hb" data-spin="1">R</button></div></div>
+111:      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
+112:      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP <span id="step-value">0.00</span></span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
+135:const AIM_MAX = 0.12;
+510:  return { team, side, spin: 0, tumble: 1, arc: 1, state: 'fly', p: new THREE.Vector3(), v: new THREE.Vector3(), lp: new THREE.Vector3(), lv: new THREE.Vector3(), prev: new THREE.Vector3(), curl: 0, touched: false, dead: false, swish: false, offBoard: false, t: 0, restT: 0 };
+514:function launch(b, rx, power, aim, drift, arc = 1, spin = 0) {
+523:  b.arc = arc; b.english = spin; b.spin = spin * 3; b.curl = drift * 0.12 + spin * 0.10; b.state = 'fly';
+527:function step(b, dt) {
+614:  for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
+677:  position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+713:  $('step-value').textContent=M.position[t].toFixed(2);
+717:  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+719:  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));
+725:  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+726:  wrap.classList.toggle('spin', M.ctrl === 'spin');
+774: ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'REMATCH'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+792:  for(let i=0;i<960;i++){step(b,1/120);if(['board','grass','in','removed'].includes(b.state))break;}
+798: M.arc=arc;M.spin=0;M.side[1]=side;
+825:  M.position = [0, 0]; M.spin = 0; M.arc = 1;
+846:    M.arc = 1; M.spin = 0;
+858:  const b = newBody(team, side); launch(b, RX[team] + M.position[team], actualPower, M.aim, drift + gauss() * 0.025, M.arc, M.spin);
+860:  b.spin += drift * 2; b.tumble = 0.6 + Math.random();
+932: M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+935:$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
+937:document.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});
+963:  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+971:  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
+995:function spinMove(e) {
+1007:    else M.aim = clamp(M.aim + dx * 0.0007, -AIM_MAX, AIM_MAX);
+1020:function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
+1028:  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
+1030:  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
+1049:addEventListener('keydown', (e) => {
+1093:  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+1104:    for (const b of bags) if (b.state !== 'in' && b.state !== 'removed' && !(b.state === 'grass' && !b.dead) && b.state !== 'board') step(b, 1 / 240);
+1111:    if (b.state === 'fly') { m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15; }
+1112:    else if (onDeck(b) || b.state === 'hole') { const yaw = b.yaw ?? (b.yaw = m.rotation.y); if (b.state === 'slide') b.yaw += b.spin * dt * 0.3; m.quaternion.copy(boardQ); m.rotateY(b.yaw); }
+1115:    if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
+1130:  const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+1131:  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+1135:  const stepOffset = follow ? M.position[t] : 0;
+1136:  const aimOffset = follow ? clamp(M.aim,-AIM_MAX,AIM_MAX) : 0;
+1137:  camTmp.copy(CAM_POS); camTmp.x += stepOffset * .65 + aimOffset * 1.2;
+1140:  lookTmp.copy(CAM_LOOK); lookTmp.x += stepOffset * .18 + aimOffset * 3;
+1166:  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+1179:  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+career_check.py
+playwright_check.py
+run_all.py
+task3_check.py
+task5_check.py
+task6_check.py
+wind_flag_check.py
+
+exec
+/bin/bash -lc "sed -n '90,120p' index.html; sed -n '700,730p' index.html; sed -n '925,956p' index.html; sed -n '1015,1100p' index.html; cat tests/run_all.py; rg -n 'step|spin|position|Arrow|KeyA|more|data-control|setup' tests" in /workspace/cornhole
+ succeeded in 0ms:
+@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div id="sb" class="ol">
+      <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+    </div>
+    <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+    <div id="turn" class="ol"></div>
+    <div id="msg" class="ol"></div>
+    <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+    <div id="bag-menu" role="group" aria-label="Bag options">
+      <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
+      <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
+      <div class="bag-row"><span class="bag-label">SPIN</span><div class="bag-choices"><button class="hb" data-spin="-1">L</button><button class="hb" data-spin="0">0</button><button class="hb" data-spin="1">R</button></div></div>
+      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
+      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP <span id="step-value">0.00</span></span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
+      <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+    </div>
+  </div>
+  <div id="panel" class="ol" hidden></div>
+  <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+  ui.inn.textContent = 'INNING ' + M.inning;
+  ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+  const t = thrower();
+  if (M.phase === 'aim' || M.phase === 'cpu') {
+    ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
+    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+    ui.turn.style.opacity = 1;
+  } else ui.turn.style.opacity = 0;
+  $('wind').hidden = wind.mph <= 0;
+  $('wind-speed').textContent = `${wind.mph} MPH`;
+  $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
+  $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
+  document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
+  $('step-value').textContent=M.position[t].toFixed(2);
+  $('reset-bags').hidden=!M.practice;
+  ui.t[1].hidden=M.practice;
+  if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+  document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
+  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));
+  const w = meterWindow();
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+}
+function hint() {
+  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+  wrap.classList.toggle('spin', M.ctrl === 'spin');
+}
+let msgTimer;
+function say(big, small = '', ms = 1400) {
+  ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
+const aimRay=new THREE.Raycaster(),aimPoint=new THREE.Vector3();
+const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),-.2);
+function pointAim(e){
+ const r=wrap.getBoundingClientRect();
+ aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
+ if(aimRay.ray.intersectPlane(aimPlane,aimPoint)){
+ const rx=RX[thrower()]+M.position[thrower()];
+ M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+ }
+}
+$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
+document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
+document.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});
+$('menu').onclick=()=>{if(M.active)return;showMenu();};
+$('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
+document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
+
+// ---------- input ----------
+let drag = null, keyAim = 0;
+const samples = [];
+const H = () => wrap.clientHeight || 1;
+const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
+function flickFrom(list) {
+  if (list.length < 2) return null;
+  const tEnd = list[list.length - 1].t;
+  let i = list.length - 1; while (i > 0 && tEnd - list[i - 1].t < 70) i--;
+  if (i === list.length - 1) i = Math.max(0, i - 1);
+  const a = list[i], b = list[list.length - 1];
+  const dt = Math.max(16, b.t - a.t) / 1000;
+  return { up: -(b.y - a.y) / H() / dt, side: (b.x - a.x) / H() / dt };
+}
+const powerFromSpeed = (up) => clamp((up - FLICK_MIN) / (FLICK_MAX - FLICK_MIN), 0, 1);
+function finishFlick() {
+  const f = flick; flick = null; samples.length = 0;
+  if (f) release(f.peak, f.up > 0 ? f.side / f.up * f.peak : 0);
+}
+document.addEventListener('pointerlockchange', hint);
+function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
+function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
+ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); });
+
+function adjust(k) {
+  if (!humanTurn()) return;
+  const t = thrower();
+  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
+  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
+  if (k === 'h') {M.arc=(M.arc+1)%3;M.heights[t]=M.arc;}
+  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
+  renderHud();
+}
+document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
+let wheelGesture = [], wheelTimer;
+wrap.addEventListener('wheel', e => {
+  if (e.target.closest('#bag-menu')) return;
+  e.preventDefault();
+  if (!humanTurn() || !ui.panel.hidden) return;
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
+  wheelGesture.push({t: performance.now(), x: e.deltaX * unit, y: e.deltaY * unit});
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => {
+    const g = wheelGesture; wheelGesture = [];
+    const up = -g.reduce((n,s) => n+s.y,0) / H() / Math.max(.08,(g.at(-1).t-g[0].t)/1000);
+    release(up, g.reduce((n,s)=>n+s.x,0) / H());
+  }, 90);
+}, {passive:false});
+addEventListener('blur', () => { keyAim = 0; drag = null; });
+addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === 'a') keyAim = -1;
+  else if (k === 'd') keyAim = 1;
+  else if (['arrowleft','arrowright','q','e','h'].includes(k)) { e.preventDefault(); adjust(k); }
+  else if (k === 'm') toggleCtrl();
+  else if (k === 'f') flipSide();
+  else if (k === ' ' || k === 'enter') {
+    e.preventDefault();
+    if (M.phase === 'summary' || M.phase === 'over') advance();
+
+  }
+});
+addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'a' && keyAim < 0) keyAim = 0;
+  if (k === 'd' && keyAim > 0) keyAim = 0;
+});
+
+// The free end droops in calm air; stronger wind extends it and tightens the ripples.
+function animatePennant(seconds) {
+  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
+  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
+  const pos=pennant.geometry.attributes.position;
+  for(let i=0;i<pos.count;i++) {
+    const u=(i%17)/16, row=Math.floor(i/17)/6;
+    const along=.32*u*extension+.018*u*(1-extension);
+    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u + .012*Math.sin(row*Math.PI*2)*u*(1-extension);
+    pos.setXYZ(i,dx*along-dz*ripple,-.2*row*(1-.8*u)-.30*u*(1-extension),dz*along+dx*ripple);
+  }
+  pos.needsUpdate=true;pennant.geometry.computeVertexNormals();pennant.geometry.computeBoundingSphere();
+  pennant.userData={extension,frequency,amplitude};
+}
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let acc = 0, time = 0;
+const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
+const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+camera.userData.look = CAM_LOOK.clone();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+  if (flick && performance.now() - lastMoveT > 60) finishFlick();
+  if (M.phase === 'cpu') {
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+    if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
+    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+  }
+"""Run every Playwright suite with bounded waits (serve the app on port 8000)."""
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+
+if len(sys.argv)>1 and sys.argv[1]=='--worker':
+ from playwright.async_api import BrowserContext
+ original=BrowserContext.new_page
+ async def new_page(self,*args,**kwargs):
+  page=await original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ BrowserContext.new_page=new_page
+ runpy.run_path(sys.argv[2],run_name='__main__')
+else:
+ root=Path(__file__).resolve().parent.parent
+ failed=[]
+ for suite in sorted((root/'tests').glob('*_check.py')):
+  print(f'Running {suite.name}',flush=True)
+  try:
+   result=subprocess.run([sys.executable,__file__,'--worker',str(suite)],cwd=root,timeout=150)
+   if result.returncode:failed.append(suite.name)
+  except subprocess.TimeoutExpired:
+   print(f'{suite.name}: exceeded 150-second suite limit',flush=True)
+   failed.append(suite.name)
+ print('Failed: '+', '.join(failed) if failed else 'All Playwright suites passed',flush=True)
+ sys.exit(bool(failed))
+tests/task5_check.py:28:   view=await page.evaluate('''()=>{const {camera,held,THREE}=__view;const v=held.position.clone().project(camera);return {fov:camera.fov,z:camera.position.z,held:held.visible,point:v.toArray()};}''')
+tests/playwright_check.py:15:  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('h')
+tests/playwright_check.py:16:  st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
+tests/playwright_check.py:17:  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('h');await page.keyboard.press('h')
+tests/playwright_check.py:27:  print('arc/spin landing probes',probes)
+tests/task6_check.py:22:   await page.click('#more')
+tests/task6_check.py:23:   assert await page.locator('#more').get_attribute('aria-expanded')=='true'
+tests/task6_check.py:30:   await page.click('[data-side="sticky"]');await page.click('[data-spin="0"]');await page.click('[data-height="2"]')
+tests/task6_check.py:32:   assert await page.locator('[data-spin="0"]').get_attribute('aria-pressed')=='true'
+tests/task6_check.py:34:   neutral=await page.evaluate('__view.camera.position.toArray()')
+tests/task6_check.py:39:    view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
+tests/task6_check.py:42:   await page.keyboard.press('ArrowRight');await page.wait_for_timeout(1500)
+tests/task6_check.py:43:   assert await page.evaluate('__view.camera.position.x')>.5+.12*1.2
+tests/task6_check.py:49:  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS')
+
+exec
+/bin/bash -lc "cat tests/playwright_check.py; cat tests/task6_check.py; sed -n '846,864p' index.html; sed -n '958,1017p' index.html; rg -n 'touch-controls|M.position|M.ctrl|ctrl:' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio,json
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  print('windows',await page.evaluate('__game.win'))
+  await page.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+  await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')
+  assert await page.evaluate('__game.state.bags.length')==0
+  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('h')
+  st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('h');await page.keyboard.press('h')
+  await page.mouse.move(640,600);await page.mouse.down()
+  for y in [550,490,420,340]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(25)
+  await page.mouse.up();await page.wait_for_timeout(100)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.screenshot(path='shots/desktop.png')
+  probes=await page.evaluate('[0,1,2].map(a=>[__game._probe(.55,a,-1),__game._probe(.55,a,1)])')
+  assert probes[2][0]['flight']>probes[0][0]['flight']+.2
+  assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005
+  print('arc/spin landing probes',probes)
+  await page.wait_for_function('__game.state.phase==="aim"')
+  await page.evaluate('__game._place(1,0,-.65);__game._slide(0,-.42,0,-2)')
+  await page.wait_for_timeout(700)
+  b=await page.evaluate('__game.state.bags');assert b[1]['lp'][2]<-.66,b
+  wind=await page.evaluate('__game.state.wind')
+  # Play out an inning with real physics and cancellation scoring.
+  while await page.evaluate('__game.state.phase')!='summary':
+   if await page.evaluate('__game.state.phase')=='aim':await page.evaluate('__game.throwWith(0)')
+   await page.wait_for_timeout(200)
+  await page.evaluate('__game.advance()');await page.wait_for_timeout(400)
+  assert await page.evaluate('__game.state.wind')==wind
+  assert await page.locator('#wind').is_visible()
+  # No-button trackpad wheel throw.
+  await page.mouse.wheel(0,-250);await page.wait_for_timeout(200)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.wait_for_function('__game.state.phase==="aim"')
+  await page.keyboard.press('m')
+  await page.mouse.move(640,650)
+  for y in [590,510,410,290]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(20)
+  await page.wait_for_timeout(150)
+  assert await page.evaluate('__game.state.bags.length')==2
+  await page.set_viewport_size({'width':480,'height':360});await page.screenshot(path='shots/card.png')
+  mobile=await browser.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  mp.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
+  await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('!!window.__game')
+  await mp.evaluate('__game.startMatch({vs:"2p",first:0})');await mp.wait_for_timeout(1100)
+  cdp=await mobile.new_cdp_session(mp)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':460}]})
+  before=await mp.evaluate('__game.state.aim')
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':460}]})
+  assert await mp.evaluate('__game.state.aim')>before
+  for y in [430,390,340,280]:
+   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':y}]});await mp.wait_for_timeout(30)
+  await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+  assert await mp.evaluate('__game.state.bags.length')==1
+  await mp.screenshot(path='shots/mobile.png')
+  await mp.set_viewport_size({'width':844,'height':390});await mp.wait_for_timeout(200)
+  await page.goto('http://127.0.0.1:8000')
+  await page.evaluate("""document.body.innerHTML='<iframe sandbox="allow-scripts allow-same-origin" src="/?card" width="480" height="360"></iframe>'""")
+  frame=page.frames[-1];await frame.wait_for_function('!!window.__game')
+  await frame.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+  assert await frame.evaluate('__game.throwWith(.55)')
+  print('errors',errors);assert not errors
+  await browser.close()
+asyncio.run(main())
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  page.set_default_timeout(8000)
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,CAM_LOOK,THREE}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  for width,height in [(1280,800),(480,360),(390,844),(844,390)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('!!window.__game')
+   await page.evaluate('__game.startMatch({vs:"2p",first:0})')
+   await page.wait_for_timeout(1800)
+   assert await page.locator('#n0').inner_text()=='RED'
+   assert 'RED RED' not in await page.locator('#t0').inner_text()
+   assert await page.locator('#hint').count()==0
+   await page.click('#more')
+   assert await page.locator('#more').get_attribute('aria-expanded')=='true'
+   # Every button belongs to one panel; scrolling is allowed, overlap is not.
+   assert await page.locator('#bag-menu [data-height]').count()==3
+   rects=await page.locator('#bag-menu button').evaluate_all('(bs)=>bs.filter(b=>b.getClientRects().length).map(b=>{const r=b.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};})')
+   for i,a in enumerate(rects):
+    for b in rects[i+1:]:
+     assert min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x'])<1 or min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y'])<1
+   await page.click('[data-side="sticky"]');await page.click('[data-spin="0"]');await page.click('[data-height="2"]')
+   assert await page.locator('[data-side="sticky"]').get_attribute('aria-pressed')=='true'
+   assert await page.locator('[data-spin="0"]').get_attribute('aria-pressed')=='true'
+   await page.evaluate('__game.setAim(0)');await page.wait_for_timeout(1500)
+   neutral=await page.evaluate('__view.camera.position.toArray()')
+   assert abs(neutral[0]-.5)<.001 and neutral[1:]==[2.05,2.45],neutral
+   for aim in [-.12,.12]:
+    await page.evaluate('(a)=>__game.setAim(a)',aim)
+    await page.wait_for_timeout(1800)
+    view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
+    assert (view['x']-.5)*aim>0 and view['look']*aim>0
+    assert all(abs(v[0])<1 and abs(v[1])<1 for v in view['board']),view
+   await page.keyboard.press('ArrowRight');await page.wait_for_timeout(1500)
+   assert await page.evaluate('__view.camera.position.x')>.5+.12*1.2
+   await page.screenshot(path=f'shots/task6-{width}.png')
+   await page.click('#menu');await page.click('#practice')
+   assert await page.locator('#n0').inner_text()=='RED'
+  assert not errors,errors
+  await browser.close()
+  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS')
+asyncio.run(main())
+    M.arc = 1; M.spin = 0;
+    const w = WIN[1 + side + 1];
+    M.cpu = { t: 0, side, power: w.mid + wind.z * 0.04 + gauss() * 0.055, aim: -wind.x * 0.08 + gauss() * 0.012, drift: gauss() * 0.18 };
+    if(M.career) M.cpu=planCareerShot(roster[career.fight]);
+    M.phase = 'cpu';
+  }
+  renderHud();
+}
+function throwBag(power, drift = 0, team = thrower()) {
+  if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
+  const side = M.side[team];
+  const actualPower=isHuman(team) ? physicalPower(power) : power;
+  const b = newBody(team, side); launch(b, RX[team] + M.position[team], actualPower, M.aim, drift + gauss() * 0.025, M.arc, M.spin);
+  b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
+  b.spin += drift * 2; b.tumble = 0.6 + Math.random();
+  M.before = bags.map((o) => ({ o, s: o.state }));
+  bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
+  renderHud();
+  return true;
+  if (up < FLICK_MIN) return false;
+  return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
+}
+wrap.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('#bag-menu, button') || !ui.panel.hidden) return;
+  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+  if (!humanTurn()) return;
+  pointAim(e);
+  drag = { id: e.pointerId, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
+  wrap.classList.add('drag');
+  try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+});
+wrap.addEventListener('pointermove', (e) => {
+  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
+  if (drag && e.pointerId === drag.id) {
+    pointAim(e);
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
+    while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
+    const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
+  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn() && !keyAim) {
+    pointAim(e);
+  }
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.list.push({ t: e.timeStamp, x: e.clientX, y: e.clientY });
+  const list = drag.list.filter((s, i, a) => i === 0 || s.t !== a[i - 1].t || s.y !== a[i - 1].y);
+  const trimmed = list.length > 2 && list[list.length - 1].y === list[list.length - 2].y ? list.slice(0, -1) : list;
+  const stale = e.timeStamp - trimmed[trimmed.length - 1].t > 160;
+  const f = stale ? null : flickFrom(trimmed);
+  drag = null; wrap.classList.remove('drag');
+  if (!f || !release(f.up, f.side)) { if (M.phase === 'aim') setMeter(0); }
+}
+wrap.addEventListener('pointerup', endDrag);
+wrap.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('drag'); });
+let flick = null, lastMoveT = 0;
+function spinMove(e) {
+  const t = e.timeStamp; lastMoveT = t;
+  const dx = e.movementX || 0, dy = e.movementY || 0;
+  samples.push({ t, dx, dy });
+  while (samples.length && t - samples[0].t > 80) samples.shift();
+  let sy = 0, sx = 0; for (const s of samples) { sy += s.dy; sx += s.dx; }
+  const span = Math.max(30, t - samples[0].t) / 1000;
+  const up = -sy / H() / span;
+  if (M.phase === 'summary' || M.phase === 'over') { if (up > FLICK_MIN * 2 && M.phase === 'summary') advance(); return; }
+  if (!humanTurn()) return;
+  if (!flick) {
+    if (up > FLICK_MIN * 1.4) flick = { t0: t, peak: up, side: 0, up: 0 };
+    else M.aim = clamp(M.aim + dx * 0.0007, -AIM_MAX, AIM_MAX);
+  }
+  if (flick) {
+    flick.peak = Math.max(flick.peak, up); flick.side += dx; flick.up += -dy;
+    setMeter(powerFromSpeed(flick.peak));
+    if (up < flick.peak * 0.45 || t - flick.t0 > 220) finishFlick();
+  }
+}
+function finishFlick() {
+  const f = flick; flick = null; samples.length = 0;
+  if (f) release(f.peak, f.up > 0 ? f.side / f.up * f.peak : 0);
+89:#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+90:@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+111:      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
+112:      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP <span id="step-value">0.00</span></span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
+676:  vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
+713:  $('step-value').textContent=M.position[t].toFixed(2);
+717:  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+725:  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+726:  wrap.classList.toggle('spin', M.ctrl === 'spin');
+825:  M.position = [0, 0]; M.spin = 0; M.arc = 1;
+858:  const b = newBody(team, side); launch(b, RX[team] + M.position[team], actualPower, M.aim, drift + gauss() * 0.025, M.arc, M.spin);
+931: const rx=RX[thrower()]+M.position[thrower()];
+935:$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
+963:  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
+971:  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
+1020:function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
+1027:  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
+1118:  const t = thrower(), rx = RX[t] + M.position[t];
+1135:  const stepOffset = follow ? M.position[t] : 0;
+1166:  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+
+codex
+The extra controls are wired into both the panel and keyboard handlers. I’ll remove them from both places, fix human throws at the centered position with zero spin, and update the regression tests to verify the simpler controls while retaining coverage for earlier batches.
+exec
+/bin/bash -lc "cat > /tmp/edit7.py <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text()
+s='\\n'.join(l for l in s.split('\\n') if not any(x in l for x in ['<span class=\"bag-label\">SPIN','id=\"more\"','<div id=\"touch-controls\">',\""'$('"'step-value')\", \""'$('"'more').onclick\", \"document.querySelectorAll('[data-spin]')\", \"document.querySelectorAll('[data-control]')\"]))
+s=s.replace('#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}','').replace('.bag-row,#touch-controls{gap:3px}', '.bag-row{gap:3px}')
+s=s.replace(\""'$('"'setup').textContent = "'`${arcNames[M.arc]} · SPIN ${M.spin < 0 ? '"'L' : M.spin > 0 ? 'R' : '0'} · STEP "'${M.position[t].toFixed(2)}`;", "$('"'setup').textContent = arcNames[M.arc];\")
+s=s.replace('let drag = null, keyAim = 0;', 'let drag = null;').replace(' && "'!keyAim'"','')
+s='\\n'.join(l for l in s.split('\\n') if not any(x in l for x in [\"if (k.startsWith('arrow'))\", \"if (k === 'q' || k === 'e')\", \"if (k === 'a' || k === 'd')\",'if (keyAim && humanTurn())']))
+s=s.replace(\"addEventListener('blur', () => { keyAim = 0; drag = null; });\", \"addEventListener('blur', () => { drag = null; });\")
+s=s.replace(\"  if (k === 'a') keyAim = -1;\\n  else if (k === 'd') keyAim = 1;\\n  else if (['arrowleft','arrowright','q','e','h'].includes(k))\", \"  if (k === 'h')\")
+a=s.index(\"addEventListener('keyup'\");b=s.index('// The free end',a);s=s[:a]+s[b:]
+s=s.replace('launch(b, RX[team] + M.position[team], actualPower, M.aim, drift + gauss() * 0.025, M.arc, M.spin)', 'launch(b, RX[team] + (isHuman(team) ? 0 : M.position[team]), actualPower, M.aim, drift + gauss() * 0.025, M.arc, isHuman(team) ? 0 : M.spin)')
+s=s.replace('b.spin += drift * 2;', 'if ("'!isHuman(team)) b.spin += drift * 2;'"')
+p.write_text(s)
+p=Path('tests/playwright_check.py');s=p.read_text();s=s.replace(\"assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2\", \"assert st['position']==[0,0] and st['spin']==0 and st['arc']==2\")
+s=s.replace(\"probes=await page.evaluate('[0,1,2].map(a=>[__game._probe(.55,a,-1),__game._probe(.55,a,1)])')\", \"probes=await page.evaluate('[0,1,2].map(a=>__game._probe(.55,a,0))')\").replace(\"probes[2][0]['flight']>probes[0][0]['flight']\", \"probes[2]['flight']>probes[0]['flight']\")
+s=s.replace(\"  assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005\\n\",'').replace('arc/spin landing probes','arc landing probes');p.write_text(s)
+p=Path('tests/task6_check.py');s=p.read_text();s=s.replace(\"   await page.click('#more')\\n   assert await page.locator('#more').get_attribute('aria-expanded')=='true'\", \"   assert await page.locator('#more, #touch-controls, [data-spin], [data-control], #step-value').count()==0\\n   assert await page.locator('#bag-menu .bag-row').count()==2\")
+s=s.replace(\";await page.click('[data-spin=\\\"0\\\"]')\",'').replace(\"   assert await page.locator('[data-spin=\\\"0\\\"]').get_attribute('aria-pressed')=='true'\\n\",'')
+s=s.replace(\"   await page.keyboard.press('ArrowRight');await page.wait_for_timeout(1500)\\n   assert await page.evaluate('__view.camera.position.x')>.5+.12*1.2\", \"   before=await page.evaluate('__game.state.aim')\\n   for key in ['ArrowLeft','ArrowRight','q','e','a','d']:\\n    await page.keyboard.press(key)\\n   await page.wait_for_timeout(200)\\n   state=await page.evaluate('__game.state')\\n   assert state['position']==[0,0] and state['spin']==0 and state['aim']==before\\n   assert 'SPIN' not in await page.locator('#conditions').text_content()\\n   assert 'STEP' not in await page.locator('#conditions').text_content()\")
+s=s.replace('camera aim/step following','camera aim following, removed controls/shortcuts');p.write_text(s)
+PY
+python /tmp/edit7.py
+python -m http.server 8000" in /workspace/cornhole
+ exited 127 in 0ms:
+/bin/bash: line 23: python: command not found
+/bin/bash: line 24: python: command not found
+
+exec
+/bin/bash -lc 'python3 /tmp/edit7.py
+python3 -m http.server 8000' in /workspace/cornhole
+exec
+/bin/bash -lc 'python3 tests/run_all.py' in /workspace/cornhole
+ exited 1 in 142ms:
+Running career_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 8, in <module>
+    from playwright.async_api import BrowserContext
+ModuleNotFoundError: No module named 'playwright'
+Running playwright_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 8, in <module>
+    from playwright.async_api import BrowserContext
+ModuleNotFoundError: No module named 'playwright'
+Running task3_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 8, in <module>
+    from playwright.async_api import BrowserContext
+ModuleNotFoundError: No module named 'playwright'
+Running task5_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 8, in <module>
+    from playwright.async_api import BrowserContext
+ModuleNotFoundError: No module named 'playwright'
+Running task6_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 8, in <module>
+    from playwright.async_api import BrowserContext
+ModuleNotFoundError: No module named 'playwright'
+Running wind_flag_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 8, in <module>
+    from playwright.async_api import BrowserContext
+ModuleNotFoundError: No module named 'playwright'
+Failed: career_check.py, playwright_check.py, task3_check.py, task5_check.py, task6_check.py, wind_flag_check.py
+
+exec
+/bin/bash -lc "ls /tmp; command -v uv; ls /opt; git diff --stat; sed -n '1034,1054p' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+after_strip.png
+agent-pixel-140366313837008.sqlite
+agent-pixel-140366315271216.sqlite
+agent-pixel-140366315824592.sqlite
+agent-pixel-140366316230672.sqlite
+agent-pixel-140366319209680.sqlite
+agent-store-fuse.log
+ap_bk37.py
+ap_strip.py
+ap_strip_work.sqlite
+apm
+apvenv
+apx
+b6-career-final.log
+b6-career.log
+b6-playwright.log
+b6-task3.log
+b6-task5-final.log
+b6-task5.log
+b6-task6-final.log
+b6-task6.log
+b6-wind.log
+b6-wind_flag.log
+ba.html
+box-doctor.log
+box-keyring-daemon.pid
+box-keyring-daemon.pid.lock
+box-keyring.log.lock
+build.log
+c.png
+c21.json
+c21act.json
+c21s0.py
+c27.png
+c35.png
+cand.png
+career-http.log
+career-regression.log
+career-test.log
+career_check-5.log
+career_edit.py
+career_visual.py
+ch-srv.log
+ch.json
+check.py
+chrome:2.log
+chrome:2.log.lock
+claude-1000
+claude-seat-run2.log
+cmp.png
+codex-bwrap-synthetic-mount-targets-1000
+codex-daemon-1000
+com.google.Chrome.chrome_chrome_url_fetcher_.7TKCk0
+com.google.Chrome.chrome_chrome_url_fetcher_.8Ysypi
+com.google.Chrome.chrome_chrome_url_fetcher_.BovaVw
+com.google.Chrome.chrome_chrome_url_fetcher_.HvVF8W
+com.google.Chrome.chrome_chrome_url_fetcher_.UYpgLE
+com.google.Chrome.chrome_chrome_url_fetcher_.oD4r4J
+com.google.Chrome.chrome_chrome_url_fetcher_.oPQ0Xc
+com.google.Chrome.chrome_chrome_url_fetcher_.q4EY3W
+cornhole-commit
+cornhole-final-test.log
+cornhole-http.log
+cornhole-server.log
+cornhole-test.log
+cornhole-venv
+cursor-mcp-browser-opens
+d21montage.png
+d22m.png
+d28
+d28restart.json
+d30.json
+d32.json
+d32.py
+d33.json
+d33.py
+d33s9b.png
+d35.png
+d35a.png
+d35b2.png
+d35t8.png
+d35t8a.png
+d35x3.png
+dbus:1.log
+dbus:1.log.lock
+dbus:10.log
+dbus:10.log.lock
+dbus:2.log
+dbus:2.log.lock
+dbus:3.log
+dbus:3.log.lock
+dbus:5.log
+dbus:5.log.lock
+dbus:6.log
+dbus:6.log.lock
+dbus:7.log
+dbus:7.log.lock
+dbus:8.log
+dbus:8.log.lock
+dbus:9.log
+dbus:9.log.lock
+dry_c24.txt
+dry_claude.txt
+dry_claude2.txt
+edit.py
+edit3.py
+edit6.py
+edit7.py
+egress-tunnel.log
+exec-daemon.log
+g14.py
+g24.json
+g27.json
+g43_v.jpg
+g44_v.jpg
+g45_v.jpg
+g46_v.jpg
+g47_v.jpg
+gturn.json
+h.txt
+h4.txt
+hands.png
+live.html
+live4.html
+ltip.png
+measure6.py
+metal.png
+metal_s.jpg
+mk.py
+mobiledebug.py
+model_seat_claude.lock
+model_seat_claude_dry.lock
+model_seat_openai.lock
+model_seat_openai_dry.lock
+montage.png
+n.json
+n.py
+n.txt
+n1.json
+n10.json
+n10.txt
+n11.json
+n11.txt
+n12.json
+n12.txt
+n13.json
+n13.txt
+n14.json
+n14.txt
+n15.json
+n15.txt
+n16.json
+n16.txt
+n17.json
+n17.txt
+n21.json
+n21.txt
+n21s2.json
+n21s2.txt
+n21s3.txt
+n22.json
+n22.txt
+n22s3.json
+n22s3.txt
+n22s4.txt
+n23s2.json
+n23s2.txt
+n23s3.json
+n23s3.txt
+n23s5.json
+n23s5.txt
+n23s9.json
+n23s9.txt
+n24.json
+n24.txt
+n24s3.json
+n24s3.txt
+n24s4.json
+n24s4.txt
+n25s3.json
+n25s3.txt
+n25s4.json
+n25s4.txt
+n26s8.json
+n26s8.txt
+n28.json
+n3.json
+n31.json
+n31.txt
+n32.json
+n32b.json
+n33.json
+n33.txt
+n4.json
+n4.txt
+n5.txt
+n6.json
+n6.txt
+n7.json
+n7.txt
+n8.json
+n8.txt
+n9.json
+n9.txt
+node-compile-cache
+note.json
+novnc-forks.log
+novnc-forks.log.lock
+novnc:1.log
+novnc:1.log.lock
+o
+ok
+openai_act_21_11.json
+openai_act_21_2.json
+openai_act_21_5.json
+openai_act_21_8.json
+openai_act_22_1.json
+openai_act_22_10.json
+openai_act_22_4.json
+openai_act_22_7.json
+openai_act_23_0.json
+openai_act_23_3.json
+openai_act_23_6.json
+openai_act_23_9.json
+openai_act_24_11.json
+openai_act_24_14.json
+openai_act_24_17.json
+openai_act_24_5.json
+openai_act_24_8.json
+openai_build_23_0.py
+openai_build_23_3.py
+openai_build_23_6.py
+openai_build_23_9.py
+openai_build_24_11.py
+openai_build_24_14.py
+openai_build_24_17.py
+openai_build_24_2.py
+openai_build_24_5.py
+openai_build_24_8.py
+openai_turn_23_6.json
+persist-cli-auth.log
+photos.png
+picom:1.log.lock
+picom:10.log
+picom:10.log.lock
+picom:2.log
+picom:2.log.lock
+picom:3.log
+picom:3.log.lock
+picom:5.log
+picom:5.log.lock
+picom:6.log.1
+picom:6.log.lock
+picom:7.log
+picom:7.log.lock
+picom:8.log
+picom:8.log.lock
+picom:9.log
+picom:9.log.lock
+playwright-artifacts-4Wimv6
+playwright-artifacts-G2y04t
+playwright-artifacts-JkJtsC
+playwright-artifacts-KTZtJT
+playwright-artifacts-MmTHaZ
+playwright-artifacts-Ra6UlR
+playwright-artifacts-pyjxxy
+playwright-artifacts-wlHFCy
+playwright_check-5.log
+playwright_chromiumdev_profile-71Be0c
+playwright_chromiumdev_profile-7jS1pT
+playwright_chromiumdev_profile-Hc48dd
+playwright_chromiumdev_profile-SBTeXz
+playwright_chromiumdev_profile-UrZiWb
+playwright_chromiumdev_profile-WCqGsL
+playwright_chromiumdev_profile-rzryRf
+playwright_chromiumdev_profile-ty8s8W
+post.png
+pre.png
+prev19.png
+pulseaudio:1.log.lock
+pulseaudio:10.log.lock
+pulseaudio:2.log.lock
+pulseaudio:3.log.lock
+pulseaudio:5.log.lock
+pulseaudio:6.log.lock
+pulseaudio:7.log.lock
+pulseaudio:8.log.lock
+pulseaudio:9.log.lock
+pw-browsers
+pytest-of-box
+refs.png
+ross-turn.json
+run6.py
+s13.png
+s5.py
+sand-box-browser-accept-language-9224
+sand-box-browser-coherent-fingerprint
+sand-box-browser-gpu-mode-9224
+sand-box-browser-launch-markers-9224
+sand-box-browser-no-local-dns
+sand-box-browser-running-9224
+sand-box-browser-stock-fonts
+sand-box-browser-stock-notifications
+sand-box-browser-webrtc-proxy-only
+sand-box-chrome-extra-flags
+sand-box-experiments-ready
+sand-box-ready-stage
+sand-box-store-pack
+sand-box-telemetry.log
+sand-box-timezone.log
+sand-browser-accept-language-en-us
+sand-browser-egress-timezone
+sand-chrome-disable-quic
+sand-cookie-launch-restore.log
+sand-cookie-persist.log
+sand-copy-in-status.json
+sand-copy-in.log
+sand-desktop
+sand-desktop-supervisor.log
+sand-egress-proxy
+sand-egress-tunnel-client
+sand-host.log
+sand-identity.sock
+sand-log-shipper.offsets.json
+sand-managed-converge.log
+sand-memory-watch.log
+sand-novnc-tokens.d
+sand-orbitd-supervisor.log
+sand-orbitd.log
+sand-orbitd.log.lock
+sand-playwright-mcp
+sand-playwright-output
+sand-playwright-secure-fill
+sand-session-sync.log
+sand-supervisor
+sand-supervisor-supervise.log
+sand-supervisor.log
+sand-ua-governor-accept-language-9224-1zTsxa
+sand-ua-governor.log
+sand-ua-governor.log.lock
+sand-ua-token-disabled
+sand-web-bot-auth
+sand-web-bot-auth-xhr-fetch
+sand-web-bot-auth.log.lock
+sand-window-6
+sand-window-locks.d
+sand-window-router.log
+sand-window-tokens.d
+sand-window-used.d
+shira.png
+sk.png
+sketch.py
+st32.json
+st33.json
+start-desktop.log
+start-desktop.log.lock
+t17.png
+t64.png
+task3-browsers
+task3-career.log
+task3-install.log
+task3-new-final.log
+task3-new-final2.log
+task3-new.log
+task3-regression-final.log
+task3-regression.log
+task3_check-5.log
+task5_check-5.log
+thumb.png
+tile-import-sideeffect.db
+torii-body.json
+turn.json
+turn23.json
+turn32.json
+turn35.json
+v.json
+veto.json
+veto31.json
+watch-turn.json
+wind_flag_check-5.log
+ws_block.py
+x.png
+x11vnc:1.log
+x11vnc:1.log.lock
+x11vnc:10.log
+x11vnc:10.log.lock
+x11vnc:2.log
+x11vnc:2.log.lock
+x11vnc:3.log
+x11vnc:3.log.lock
+x11vnc:5.log
+x11vnc:5.log.lock
+x11vnc:6.log
+x11vnc:6.log.lock
+x11vnc:7.log
+x11vnc:7.log.lock
+x11vnc:8.log
+x11vnc:8.log.lock
+x11vnc:9.log
+x11vnc:9.log.lock
+xdg-runtime
+xdg-runtime-6
+xdg-runtime-box
+xdg-runtime-box-6
+xfce4-panel:1.log
+xfce4-panel:1.log.lock
+xfce4-panel:1.pid
+xfce4-panel:1.pid.lock
+xfce4-panel:10.log
+xfce4-panel:10.log.lock
+xfce4-panel:10.pid
+xfce4-panel:10.pid.lock
+xfce4-panel:2.log
+xfce4-panel:2.log.lock
+xfce4-panel:2.pid
+xfce4-panel:2.pid.lock
+xfce4-panel:3.log
+xfce4-panel:3.log.lock
+xfce4-panel:3.pid
+xfce4-panel:3.pid.lock
+xfce4-panel:5.log
+xfce4-panel:5.log.lock
+xfce4-panel:5.pid
+xfce4-panel:5.pid.lock
+xfce4-panel:6.log
+xfce4-panel:6.log.lock
+xfce4-panel:6.pid
+xfce4-panel:6.pid.lock
+xfce4-panel:7.log
+xfce4-panel:7.log.lock
+xfce4-panel:7.pid
+xfce4-panel:7.pid.lock
+xfce4-panel:8.log
+xfce4-panel:8.log.lock
+xfce4-panel:8.pid
+xfce4-panel:8.pid.lock
+xfce4-panel:9.log
+xfce4-panel:9.log.lock
+xfce4-panel:9.pid
+xfce4-panel:9.pid.lock
+xfwm4:1.log
+xfwm4:1.log.lock
+xfwm4:10.log
+xfwm4:10.log.lock
+xfwm4:2.log
+xfwm4:2.log.lock
+xfwm4:3.log
+xfwm4:3.log.lock
+xfwm4:5.log
+xfwm4:5.log.lock
+xfwm4:6.log
+xfwm4:6.log.lock
+xfwm4:7.log
+xfwm4:7.log.lock
+xfwm4:8.log
+xfwm4:8.log.lock
+xfwm4:9.log
+xfwm4:9.log.lock
+xvfb:1.log.lock
+xvfb:10.log.lock
+xvfb:2.log.lock
+xvfb:3.log.lock
+xvfb:5.log.lock
+xvfb:6.log.lock
+xvfb:7.log.lock
+xvfb:8.log.lock
+xvfb:9.log.lock
+z.png
+z_1005_1007_1013_1014.png
+z_1028_1037_1044_1050.png
+z_1051_1057_1066_1068.jpg
+z_1051_1057_1066_1068.png
+z_1079_1082_1083_1098.jpg
+z_727_744_746.png
+z_781_792_794.png
+z_807_808_815.png
+z_885_879_897.png
+z_906_907_922.png
+z_929_941_942.png
+z_953_958_963_974.png
+z_983_984_988_995.png
+/usr/local/bin/uv
+google
+sand
+sand-managed
+ungoogled-chromium
+ index.html                | 38 +++++++++-----------------------------
+ tests/playwright_check.py |  9 ++++-----
+ tests/task6_check.py      | 19 ++++++++++++-------
+ 3 files changed, 25 insertions(+), 41 deletions(-)
+    release(up, g.reduce((n,s)=>n+s.x,0) / H());
+  }, 90);
+}, {passive:false});
+addEventListener('blur', () => { drag = null; });
+addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === 'h') { e.preventDefault(); adjust(k); }
+  else if (k === 'm') toggleCtrl();
+  else if (k === 'f') flipSide();
+  else if (k === ' ' || k === 'enter') {
+    e.preventDefault();
+    if (M.phase === 'summary' || M.phase === 'over') advance();
+
+  }
+});
+// The free end droops in calm air; stronger wind extends it and tightens the ripples.
+function animatePennant(seconds) {
+  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
+  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
+
+exec
+/bin/bash -lc '/tmp/cornhole-venv/bin/python tests/run_all.py > /tmp/b7-tests.log 2>&1' in /workspace/cornhole
+ exited 1 in 2347ms:
+exec
+/bin/bash -lc 'cat /tmp/b7-tests.log; git diff --check; git diff -- index.html' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 16, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/cornhole/tests/career_check.py", line 59, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/workspace/cornhole/tests/career_check.py", line 6, in main
+    b=await p.chromium.launch(args=['--no-sandbox'])
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Running playwright_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 16, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/cornhole/tests/playwright_check.py", line 73, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/workspace/cornhole/tests/playwright_check.py", line 5, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Running task3_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 16, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/cornhole/tests/task3_check.py", line 67, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/workspace/cornhole/tests/task3_check.py", line 5, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Running task5_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 16, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/cornhole/tests/task5_check.py", line 36, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/workspace/cornhole/tests/task5_check.py", line 7, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Running task6_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 16, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/cornhole/tests/task6_check.py", line 55, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/workspace/cornhole/tests/task6_check.py", line 7, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Running wind_flag_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 16, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/cornhole/tests/wind_flag_check.py", line 47, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/workspace/cornhole/tests/wind_flag_check.py", line 6, in main
+    browser=await p.chromium.launch(args=['--no-sandbox'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 4177, in launch
+    await self._impl_obj.launch(
+    ...<17 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_browser_type.py", line 101, in launch
+    await self._channel.send(
+        "launch", TimeoutSettings.launch_timeout, params
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at /home/box/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     playwright install                                     ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+Failed: career_check.py, playwright_check.py, task3_check.py, task5_check.py, task6_check.py, wind_flag_check.py
+diff --git a/index.html b/index.html
+index 046f647..52e40c8 100644
+--- a/index.html
++++ b/index.html
+@@ -86,8 +86,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+ #bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
+ #bag-menu > *{flex-shrink:0}
+ .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
+-#height-choice{display:flex}#touch-controls{display:none;gap:7px}#touch-controls.open{display:flex;flex-direction:column}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+-@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row,#touch-controls{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
++#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
++@media(max-height:450px){#bag-menu{width:150px;max-height:69%;padding:5px;gap:4px;font-size:7px}.bag-row{gap:3px}.bag-choices .hb,.btns .hb{padding:5px 3px}}
+ </style>
+ <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+ </head>
+@@ -107,9 +107,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+     <div id="bag-menu" role="group" aria-label="Bag options">
+       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
+       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
+-      <div class="bag-row"><span class="bag-label">SPIN</span><div class="bag-choices"><button class="hb" data-spin="-1">L</button><button class="hb" data-spin="0">0</button><button class="hb" data-spin="1">R</button></div></div>
+-      <button class="hb" id="more" aria-expanded="false" aria-controls="touch-controls">MORE</button>
+-      <div id="touch-controls"><div class="bag-row"><span class="bag-label">STEP <span id="step-value">0.00</span></span><div class="bag-choices"><button class="hb" data-control="arrowleft" aria-label="STEP LEFT">←</button><button class="hb" data-control="arrowright" aria-label="STEP RIGHT">→</button></div></div><div class="bag-row"><span class="bag-label">AIM</span><div class="bag-choices"><button class="hb" data-control="a" aria-label="AIM LEFT">←</button><button class="hb" data-control="d" aria-label="AIM RIGHT">→</button></div></div></div>
+       <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+     </div>
+   </div>
+@@ -710,13 +707,11 @@ function renderHud() {
+   $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
+   $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
+   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
+-  $('step-value').textContent=M.position[t].toFixed(2);
+   $('reset-bags').hidden=!M.practice;
+   ui.t[1].hidden=M.practice;
+   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+-  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
++  $('setup').textContent = arcNames[M.arc];
+   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
+-  document.querySelectorAll('[data-spin]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.spin===M.spin)));
+   const w = meterWindow();
+   ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+   ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+@@ -855,9 +850,9 @@ function throwBag(power, drift = 0, team = thrower()) {
+   if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
+   const side = M.side[team];
+   const actualPower=isHuman(team) ? physicalPower(power) : power;
+-  const b = newBody(team, side); launch(b, RX[team] + M.position[team], actualPower, M.aim, drift + gauss() * 0.025, M.arc, M.spin);
++  const b = newBody(team, side); launch(b, RX[team] + (isHuman(team) ? 0 : M.position[team]), actualPower, M.aim, drift + gauss() * 0.025, M.arc, isHuman(team) ? 0 : M.spin);
+   b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
+-  b.spin += drift * 2; b.tumble = 0.6 + Math.random();
++  if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
+   M.before = bags.map((o) => ({ o, s: o.state }));
+   bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
+   renderHud();
+@@ -932,15 +927,13 @@ function pointAim(e){
+  M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+  }
+ }
+-$('more').onclick=()=>{const open=$('touch-controls').classList.toggle('open');$('more').setAttribute('aria-expanded',String(open));};
+ document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
+-document.querySelectorAll('[data-spin]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.spin=+b.dataset.spin;renderHud();});
+ $('menu').onclick=()=>{if(M.active)return;showMenu();};
+ $('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
+ document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
+ 
+ // ---------- input ----------
+-let drag = null, keyAim = 0;
++let drag = null;
+ const samples = [];
+ const H = () => wrap.clientHeight || 1;
+ const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
+@@ -975,7 +968,7 @@ wrap.addEventListener('pointermove', (e) => {
+     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
+     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
+     const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
+-  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn() && !keyAim) {
++  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn()) {
+     pointAim(e);
+   }
+ });
+@@ -1024,13 +1017,9 @@ ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); })
+ function adjust(k) {
+   if (!humanTurn()) return;
+   const t = thrower();
+-  if (k.startsWith('arrow')) M.position[t] = clamp(M.position[t] + (k === 'arrowleft' ? -0.12 : 0.12), t === 0 ? -0.22 : -0.55, t === 0 ? 0.55 : 0.22);
+-  if (k === 'q' || k === 'e') M.spin = clamp(M.spin + (k === 'q' ? -1 : 1), -1, 1);
+   if (k === 'h') {M.arc=(M.arc+1)%3;M.heights[t]=M.arc;}
+-  if (k === 'a' || k === 'd') M.aim = clamp(M.aim + (k === 'a' ? -0.008 : 0.008), -AIM_MAX, AIM_MAX);
+   renderHud();
+ }
+-document.querySelectorAll('[data-control]').forEach(b => b.onclick = e => { e.stopPropagation(); adjust(b.dataset.control); });
+ let wheelGesture = [], wheelTimer;
+ wrap.addEventListener('wheel', e => {
+   if (e.target.closest('#bag-menu')) return;
+@@ -1045,13 +1034,11 @@ wrap.addEventListener('wheel', e => {
+     release(up, g.reduce((n,s)=>n+s.x,0) / H());
+   }, 90);
+ }, {passive:false});
+-addEventListener('blur', () => { keyAim = 0; drag = null; });
++addEventListener('blur', () => { drag = null; });
+ addEventListener('keydown', (e) => {
+   if (e.repeat) return;
+   const k = e.key.toLowerCase();
+-  if (k === 'a') keyAim = -1;
+-  else if (k === 'd') keyAim = 1;
+-  else if (['arrowleft','arrowright','q','e','h'].includes(k)) { e.preventDefault(); adjust(k); }
++  if (k === 'h') { e.preventDefault(); adjust(k); }
+   else if (k === 'm') toggleCtrl();
+   else if (k === 'f') flipSide();
+   else if (k === ' ' || k === 'enter') {
+@@ -1060,12 +1047,6 @@ addEventListener('keydown', (e) => {
+ 
+   }
+ });
+-addEventListener('keyup', (e) => {
+-  const k = e.key.toLowerCase();
+-  if (k === 'a' && keyAim < 0) keyAim = 0;
+-  if (k === 'd' && keyAim > 0) keyAim = 0;
+-});
+-
+ // The free end droops in calm air; stronger wind extends it and tightens the ripples.
+ function animatePennant(seconds) {
+   const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+@@ -1090,7 +1071,6 @@ const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
+ camera.userData.look = CAM_LOOK.clone();
+ function frame() {
+   const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+-  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+   if (flick && performance.now() - lastMoveT > 60) finishFlick();
+   if (M.phase === 'cpu') {
+     const c = M.cpu; c.t += dt;
+
+exec
+/bin/bash -lc 'cat codex-summary-6.md; ls /tmp/task3-browsers' in /workspace/cornhole
+ succeeded in 0ms:
+# Cornhole Batch 6
+
+Completed all items in CODEX_TASK_6.md.
+
+- Camera gently pans with aim and step and turns toward the aimed line using frame-rate-independent easing. Neutral aim/step restores exact v2 framing: position `(0.5, 2.05, 2.45)`, look-at `(0, 0.5, -8.7)`. FOV and depth remain unchanged. Bounded offsets keep the board visible; flight no longer pulls the camera away from this framing.
+- Removed duplicated static team-color text, fixing RED RED in Solo Practice and 2 Player (and BLUE BLUE).
+- Consolidated height, bag side, spin, and optional step/aim controls into one labeled left-side panel. MORE expands within normal layout flow. Current selections are highlighted with aria-pressed; step position is displayed. Panel scrolling accommodates short screens. Menu interaction does not aim or throw a bag.
+- Removed the bottom-center height bar and bottom hint entirely.
+- Kept flick-only throws, physics, wind widget/animated flag, three modes, per-player settings, unlimited practice, and career progression.
+- Career regression testing exposed a final-win HUD lookup past the end of the roster. Clamped the display-name lookup so the champion transition completes without a console error.
+
+## Verification
+
+All five existing Playwright suites and the new Batch 6 suite passed:
+
+| Suite | Result |
+| --- | --- |
+| playwright_check.py | PASS; no console/page errors |
+| career_check.py | PASS; win/loss, persistence, later circuits, champion, desktop/card/mobile; console errors empty |
+| task3_check.py | PASS; modes, aim, per-player options, practice, reset, sweet spots |
+| task5_check.py | PASS; v2 FOV/depth, foreground bag, menu/intro HUD hiding |
+| wind_flag_check.py | PASS; widget, eight flag directions, calm/strong wind, responsive placement |
+| task6_check.py | PASS; panel overlap, highlighted choices, names, removed hint, neutral camera, aim/step movement, board bounds |
+
+Runs used 8-second default waits, 12-second navigation limits, and 80–150-second process caps. Initial browser launches failed because the default cache path was missing; using the existing `/tmp/pw-browsers` installation resolved this. The original Batch 3 width assertion required over 128 pixels; exact requested v2 framing measures 127.6 pixels. Updated it to a narrow 127–129 pixel range. Updated old hint/side selectors for the requested UI.
+
+Added `tests/run_all.py` for reproducible bounded suite runs (start a local server on port 8000 first):
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py
+```
+
+New Batch 6 screenshots: `shots/task6-1280.png`, `shots/task6-480.png`, `shots/task6-390.png`, `shots/task6-844.png`. Existing suites also refreshed their screenshots. Visually inspected card and phone captures. `git diff --check` passed.
+
+`CLAUDE_UI_REVIEW.md` was not edited. No commits or writes to .git; all changes remain in the working tree.
+chromium-1248
+chromium_headless_shell-1248
+ffmpeg-1013
+
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py > /tmp/b7-tests.log 2>&1' in /workspace/cornhole
+exec
+/bin/bash -lc 'tail -n 6 /tmp/b7-tests.log; git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+ M index.html
+ M shots/career-intro.png
+ M tests/playwright_check.py
+ M tests/task6_check.py
+?? codex-run-7.log
+
+exec
+/bin/bash -lc "sed -n '1148,1165p' index.html; tail -n 5 /tmp/b7-tests.log" in /workspace/cornhole
+ succeeded in 0ms:
+  _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
+  _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+  get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
+  careerMap, careerIntro,
+  win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
+  startMatch, advance, lie: () => lie(),
+  throwWith: (p, d = 0) => throwBag(p, d),
+  setAim: (a) => { M.aim = a; },
+  // test hooks: drop a resting bag on the deck (board-local metres, z negative toward the back), or preset the match score
+  _place: (team, lx, lz) => { const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = 'board'; b.touched = true; bags.push(b); renderHud(); },
+  _setScores: (a, c) => { M.scores = [a, c]; renderHud(); },
+  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+  _slide: (x,z,vx,vz) => { const b=newBody(0); b.mesh=makeBagMesh(0,'slick'); b.lp.set(x,BAG_H,z); b.lv.set(vx,0,vz); b.state='slide'; b.touched=true; toWorld(b.lp,b.p); bags.push(b); },
+  holeLocalZ: HOLE_LOCAL.z,
+};
+</script>
+</body>
+</html>
+Running career_check.py
+
+codex
+The controls are removed, including keyboard aim, step, and spin. Human throws now use zero spin even on sideways flicks. The first test attempts hit missing Python/browser dependencies; I’ve found the existing environment and started all six suites with the repository’s bounded timeouts.
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/task6_check.py');s=p.read_text().replace('window.__view={camera,CAM_LOOK,THREE};','window.__view={camera,CAM_LOOK,THREE,bags,RX};')
+s=s.replace(\"   assert await page.locator('#n0').inner_text()=='RED'\\n  assert not errors\", \"   assert await page.locator('#n0').inner_text()=='RED'\\n   await page.wait_for_function('__game.state.phase===\\\"aim\\\"')\\n   launch=await page.evaluate('''()=>{__game.throwWith(.55,.8);const b=__view.bags.at(-1);return {spin:b.spin,english:b.english,x:b.p.x,center:__view.RX[0]};}''')\\n   assert launch['spin']==0 and launch['english']==0 and launch['x']==launch['center'],launch\\n  assert not errors\")
+p.write_text(s)
+PY" in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'tail -n 8 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc 'tail -n 8 /tmp/b7-tests.log; git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc "sed -n '1,90p' tests/career_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio, json
+from playwright.async_api import async_playwright
+URL='http://127.0.0.1:8000'
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox'])
+  errors=[]
+  ctx=await b.new_context(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  page=await ctx.new_page()
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto(URL);await page.wait_for_function('!!window.__game')
+  await page.click('#career');await page.click('#career-go')
+  assert 'NEXT UP: Slidin’ Steve' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-intro.png')
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  # Scripted real throws, preset near-winning scores and resting bags via existing physics hooks.
+  # Four misses per side leave a known board point; scoring still runs through the full inning.
+  async def finish(winner):
+   await page.evaluate(f'__game._setScores({20 if winner==0 else 0},{20 if winner==1 else 0});__game._place({winner},.26,-.3)')
+   while await page.evaluate('__game.state.phase') not in ['over','summary']:
+    if await page.evaluate('__game.state.phase') in ['aim','cpu']:await page.evaluate('__game.throwWith(0)')
+    await page.wait_for_timeout(80)
+   assert await page.evaluate('__game.state.winner')==winner
+  await finish(0)
+  print('Early win passed',flush=True)
+  assert await page.evaluate('__game.career.fight')==1
+  await page.reload();await page.wait_for_function('!!window.__game')
+  assert await page.evaluate('__game.career.fight')==1
+  await page.click('#career');await page.click('#career-go');assert 'Big Bag Barb' in await page.locator('#panel').inner_text()
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  print('Persistence passed',flush=True)
+  await finish(1);assert await page.evaluate('__game.career.fight')==1
+  await page.click('#next-fight');assert 'NEXT UP: Big Bag Barb' in await page.locator('#panel').inner_text()
+  # Seed unlocked saves to inspect later circuits and rematch portraits.
+  for fight in [2,4,5,6,7]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go')
+   assert await page.locator('.portrait').count()==1
+   await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+   wind=await page.evaluate('__game.state.wind');assert wind['mph']>0
+   await page.wait_for_timeout(1500);assert await page.evaluate('__game.state.wind')==wind
+  await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  await finish(0);await page.click('#next-fight');assert 'CORNHOLE KING!' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-champion.png')
+  for width,height,name in [(1280,800,'desktop'),(480,360,'card')]:
+   await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
+   await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_timeout(1100)
+   await page.screenshot(path=f'shots/career-{name}.png')
+   assert not await page.locator('#wind').is_visible()  # First circuit is calm.
+  mobile=await b.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:errors.append(str(e)))
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await mp.goto(URL);await mp.wait_for_function('!!window.__game');await mp.click('#career');await mp.click('#career-go');await mp.screenshot(path='shots/career-mobile.png');await mp.click('#fight');await mp.wait_for_timeout(1800)
+  assert await mp.evaluate('__game.state.wind.mph')==0
+  print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+  await b.close()
+asyncio.run(main())
+
+exec
+/bin/bash -lc 'tail -n 5 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc 'git diff -- tests/task6_check.py' in /workspace/cornhole
+ succeeded in 0ms:
+diff --git a/tests/task6_check.py b/tests/task6_check.py
+index 3ea9ba9..fa80752 100644
+--- a/tests/task6_check.py
++++ b/tests/task6_check.py
+@@ -9,7 +9,7 @@ async def main():
+   page.set_default_timeout(8000)
+   errors=[]
+   page.on('pageerror',lambda e:errors.append(str(e)))
+-  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,CAM_LOOK,THREE}; window.__game = {')
++  source=Path('index.html').read_text().replace('window.__game = {','window.__view={camera,CAM_LOOK,THREE,bags,RX}; window.__game = {')
+   await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+   for width,height in [(1280,800),(480,360),(390,844),(844,390)]:
+    await page.set_viewport_size({'width':width,'height':height})
+@@ -19,17 +19,16 @@ async def main():
+    assert await page.locator('#n0').inner_text()=='RED'
+    assert 'RED RED' not in await page.locator('#t0').inner_text()
+    assert await page.locator('#hint').count()==0
+-   await page.click('#more')
+-   assert await page.locator('#more').get_attribute('aria-expanded')=='true'
++   assert await page.locator('#more, #touch-controls, [data-spin], [data-control], #step-value').count()==0
++   assert await page.locator('#bag-menu .bag-row').count()==2
+    # Every button belongs to one panel; scrolling is allowed, overlap is not.
+    assert await page.locator('#bag-menu [data-height]').count()==3
+    rects=await page.locator('#bag-menu button').evaluate_all('(bs)=>bs.filter(b=>b.getClientRects().length).map(b=>{const r=b.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};})')
+    for i,a in enumerate(rects):
+     for b in rects[i+1:]:
+      assert min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x'])<1 or min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y'])<1
+-   await page.click('[data-side="sticky"]');await page.click('[data-spin="0"]');await page.click('[data-height="2"]')
++   await page.click('[data-side="sticky"]');await page.click('[data-height="2"]')
+    assert await page.locator('[data-side="sticky"]').get_attribute('aria-pressed')=='true'
+-   assert await page.locator('[data-spin="0"]').get_attribute('aria-pressed')=='true'
+    await page.evaluate('__game.setAim(0)');await page.wait_for_timeout(1500)
+    neutral=await page.evaluate('__view.camera.position.toArray()')
+    assert abs(neutral[0]-.5)<.001 and neutral[1:]==[2.05,2.45],neutral
+@@ -39,12 +38,21 @@ async def main():
+     view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
+     assert (view['x']-.5)*aim>0 and view['look']*aim>0
+     assert all(abs(v[0])<1 and abs(v[1])<1 for v in view['board']),view
+-   await page.keyboard.press('ArrowRight');await page.wait_for_timeout(1500)
+-   assert await page.evaluate('__view.camera.position.x')>.5+.12*1.2
++   before=await page.evaluate('__game.state.aim')
++   for key in ['ArrowLeft','ArrowRight','q','e','a','d']:
++    await page.keyboard.press(key)
++   await page.wait_for_timeout(200)
++   state=await page.evaluate('__game.state')
++   assert state['position']==[0,0] and state['spin']==0 and state['aim']==before
++   assert 'SPIN' not in await page.locator('#conditions').text_content()
++   assert 'STEP' not in await page.locator('#conditions').text_content()
+    await page.screenshot(path=f'shots/task6-{width}.png')
+    await page.click('#menu');await page.click('#practice')
+    assert await page.locator('#n0').inner_text()=='RED'
++   await page.wait_for_function('__game.state.phase==="aim"')
++   launch=await page.evaluate('''()=>{__game.throwWith(.55,.8);const b=__view.bags.at(-1);return {spin:b.spin,english:b.english,x:b.p.x,center:__view.RX[0]};}''')
++   assert launch['spin']==0 and launch['english']==0 and launch['x']==launch['center'],launch
+   assert not errors,errors
+   await browser.close()
+-  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim/step following and board bounds: PASS')
++  print('TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim following, removed controls/shortcuts and board bounds: PASS')
+ asyncio.run(main())
+
+exec
+/bin/bash -lc 'tail -n 8 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc 'tail -n 8 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc 'tail -n 10 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+
+codex
+The career suite passed, including win/loss handling, saved progress, later circuits, and the champion screen, with no console errors. The remaining suites are running. I also added a check that a sideways human throw launches from the center with zero spin.
+exec
+/bin/bash -lc 'tail -n 10 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+
+exec
+/bin/bash -lc 'tail -n 12 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc landing probes [{'p': [0.00045625238823470755, 0.17369626983961708, -9.21994054295523], 'state': 'in', 'flight': 0.995833333333331}, {'p': [0.0004157003864558049, 0.17364141483972628, -9.219635669182875], 'state': 'in', 'flight': 1.1791666666666638}, {'p': [0.13502680435797507, 0.016, -8.068707124798944], 'state': 'grass', 'flight': 1.6541666666666621}]
+errors []
+Running task3_check.py
+
+exec
+/bin/bash -lc 'tail -n 5 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running playwright_check.py
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc landing probes [{'p': [0.00045625238823470755, 0.17369626983961708, -9.21994054295523], 'state': 'in', 'flight': 0.995833333333331}, {'p': [0.0004157003864558049, 0.17364141483972628, -9.219635669182875], 'state': 'in', 'flight': 1.1791666666666638}, {'p': [0.13502680435797507, 0.016, -8.068707124798944], 'state': 'grass', 'flight': 1.6541666666666621}]
+errors []
+Running task3_check.py
+
+codex
+The main gameplay suite passed with no console errors. Mouse and touch aiming, flick and wheel throws, arc physics, inning scoring, and iframe play remain covered. The mode, camera/layout, and wind suites are still running.
+exec
+/bin/bash -lc 'tail -n 4 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+errors []
+Running task3_check.py
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+
+exec
+/bin/bash -lc 'tail -n 5 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running task3_check.py
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+Running task6_check.py
+
+exec
+/bin/bash -lc 'tail -n 4 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+Running task6_check.py
+
+ succeeded in 264580ms:
+codex
+The mode and camera suites passed. The refreshed phone screenshot shows the two bag-option rows and no extra controls. The updated layout suite is checking four viewport sizes; the wind suite will run last.
+exec
+/bin/bash -lc 'tail -n 5 /tmp/b7-tests.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running task6_check.py
+TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, camera aim following, removed controls/shortcuts and board bounds: PASS
+Running wind_flag_check.py
+Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS
+All Playwright suites passed
+
+exec
+/bin/bash -lc "cat > codex-summary-7.md <<'EOF'
+# Cornhole batch 7
+
+Completed CODEX_TASK_7.md.
+
+- Removed STEP and AIM arrow buttons, SPIN buttons, MORE toggle, their handlers, and unused panel styles.
+- Removed Arrow Left/Right, Q/E, and A/D control bindings. Aim comes from mouse/finger movement. Existing pointer throw modes, flicks, and wheel throws remain available.
+- Human throws launch from the centered stand position with spin/English zero, including sideways flicks. CPU internal variation remains available.
+- Removed step/spin HUD readouts. The bag options are THROW HEIGHT (PUSH / NORMAL / KOBE) and BAG SIDE DOWN (SLICK / STICKY); menu and practice reset actions remain.
+- Updated existing Playwright suites to remove obsolete control expectations and spin probes. Added assertions for absent controls/readouts, inactive removed shortcuts, and centered zero-spin human launches with sideways input.
+
+## Validation
+
+All six Playwright suites passed:
+
+- career_check.py
+- playwright_check.py
+- task3_check.py
+- task5_check.py
+- task6_check.py
+- wind_flag_check.py
+
+Coverage includes career persistence and champion progression, physics/scoring, mouse/touch aiming and throws, wheel throws, iframe play, modes, practice/reset, per-player height, camera framing/following, responsive panel layout, wind widget and animated flag. Updated layout checks run at 1280×800, 480×360, 390×844, and 844×390. Inspected the refreshed phone screenshot. Suites refreshed their screenshot artifacts.
+
+Command (with the local server running on port 8000):
+
+"'```sh
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py
+```
+
+The runner uses 8-second default waits, 12-second navigation timeouts, and a 150-second limit per suite. Initial attempts with system Python/default browser cache failed due to missing dependencies; the existing environment above resolved this. Final run: all suites passed. Full output: `/tmp/b7-tests.log`.
+
+`git diff --check` passed. `CLAUDE_UI_REVIEW.md` was not edited. No writes to `.git` and no commits; changes remain in the working tree.
+EOF
+git diff --check
+git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+ M index.html
+ M shots/card.png
+ M shots/career-card.png
+ M shots/career-champion.png
+ M shots/career-desktop.png
+ M shots/career-intro.png
+ M shots/career-mobile.png
+ M shots/desktop.png
+ M shots/mobile.png
+ M shots/task3-390.png
+ M shots/task3-480.png
+ M shots/task3-practice.png
+ M shots/task3-sweet.png
+ M shots/task5-held-1280.png
+ M shots/task5-held-390.png
+ M shots/task5-held-480.png
+ M shots/task5-intro-1280.png
+ M shots/task5-intro-390.png
+ M shots/task5-intro-480.png
+ M shots/task6-1280.png
+ M shots/task6-390.png
+ M shots/task6-480.png
+ M shots/task6-844.png
+ M shots/wind-1280.png
+ M shots/wind-390.png
+ M shots/wind-480.png
+ M tests/playwright_check.py
+ M tests/task6_check.py
+?? CODEX_TASK_8.md
+?? codex-run-7.log
+?? codex-summary-7.md
+
+codex
+Completed batch 7: removed extra controls and shortcuts, kept pointer aiming, and fixed human throws at center with zero spin.
+
+All six Playwright suites passed with short timeouts. `git diff --check` passed.
+
+Summary: [codex-summary-7.md](/workspace/cornhole/codex-summary-7.md)
+
+`CLAUDE_UI_REVIEW.md` and `.git` were untouched. Changes remain in the working tree.
+2026-11-03T20:53:37.354635Z ERROR codex_core::session: failed to record rollout items: thread 01a1a32a-f0d7-7d30-b67f-5baa64c889ba not found
+tokens used
+55,545
+Completed batch 7: removed extra controls and shortcuts, kept pointer aiming, and fixed human throws at center with zero spin.
+
+All six Playwright suites passed with short timeouts. `git diff --check` passed.
+
+Summary: [codex-summary-7.md](/workspace/cornhole/codex-summary-7.md)
+
+`CLAUDE_UI_REVIEW.md` and `.git` were untouched. Changes remain in the working tree.
