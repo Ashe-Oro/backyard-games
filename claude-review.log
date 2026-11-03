@@ -1,0 +1,8 @@
+I wrote the review to `/workspace/cornhole/CLAUDE_UI_REVIEW.md` (25 items, top 10 first), without touching `index.html`.
+
+Key things worth flagging directly:
+
+- The menu-title overlap bug from `CLAUDE_REVIEW_NOTES.md` is **already fixed** — I traced it to commit `42dd814` (15:26) which added the `#hud.menu` CSS rule + class toggle, and confirmed the working tree has no uncommitted diff from that commit. Most screenshots in `shots/` predate that fix (14:51–15:13) and show the old bug; only `live-v4.png` (15:28) reflects current production.
+- The **"RED RED" bug is still live** — root-caused to `teamName()` returning the literal string `'RED'`/`'BLUE'` on top of hardcoded markup text in non-career modes. Fix is a one-liner.
+- Found a second, undiagnosed cause of the same "text crowding the top-right corner" symptom: in Solo Practice, hiding the blue team block via the `hidden` attribute collapses `#sb`'s flex `space-between` layout, shoving the centered inning/stats text to the right edge — visible directly in `live-v4.png`.
+- A few dead-UI findings worth the owner's attention: the MOUSE/SPINNER toggle button is permanently `hidden` with no code path that ever shows it, and the `#setup` status line computes text every frame that CSS always hides.
