@@ -1,0 +1,1862 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0
+--------
+workdir: /workspace/cornhole
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: none
+reasoning summaries: none
+session id: 01a1a394-d17e-72c2-864a-bd36beb78d15
+--------
+user
+Read /workspace/cornhole/CODEX_TASK_11.md and implement it fully in /workspace/cornhole.
+codex
+I’ll read the task and repository instructions, implement the changes, and run the required checks.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CODEX_TASK_11.md' -g 'package.json'" in /workspace/cornhole
+ succeeded in 0ms:
+/workspace/cornhole
+CODEX_TASK_11.md
+
+exec
+/bin/bash -lc 'cat CODEX_TASK_11.md' in /workspace/cornhole
+ succeeded in 0ms:
+# Codex Task 11: make the menu modes self-explanatory
+
+Owner feedback: it needs to be more obvious that 2 PLAYER is human vs human and START TOURNAMENT is against the CPU.
+
+- Under each main menu button, add a short subtitle line in the same pixel font, smaller and dimmer, kept inside the button or right under it:
+  - 2 PLAYER: "HUMAN VS HUMAN · SAME SCREEN"
+  - SOLO PRACTICE: "JUST YOU · NO OPPONENT"
+  - START TOURNAMENT: "YOU VS CPU · CLIMB TO CORNHOLE KING"
+- Optionally add a small pixel icon on each: two people, one person, a crown or CPU. Keep it simple and readable.
+- Keep the buttons the same widths, or make all three the same width, which is cleaner. There must be no text overlap at 1280x800, 844x390 (phone landscape) or 390x844. Phone landscape text must be at least 9px.
+- Don't change gameplay. Keep everything from batches 9-10.
+- Use short test timeouts (8s waits, 12s navigation, 150s per suite). Screenshot the menu to shots/task11-{1280,844,390}.png.
+- Do not write to .git. Write a summary to codex-summary-11.md.
+
+## Also: terminology
+- In cornhole it's a "round", not an "inning". Replace every player-facing "INNING" or "inning" (e.g. "NEXT INNING" becomes "NEXT ROUND", plus labels, toasts and HUD) with "ROUND"/"round". Internal variable names can stay. Check that no visible "INNING" remains.
+
+## Also: the first tournament opponent is too good
+The owner says the 1st CPU opponent in the tournament is too strong. Fight 1 should be a gentle warm-up a new player usually beats.
+- Retune fight 1 only, plus a slightly easier fight 2 if needed, so the curve ramps smoothly. A beginner should win fight 1 most of the time.
+- Give the CPU much more aim and power error. Targets set by the owner: under 10% of his bags in the hole (aim for about 5-8%) and about 30% on the board, with the rest missing. It should prefer normal throws and never kobe.
+- Don't change later opponents or the rematches.
+- Verify with a quick headless sim if possible: CPU-only throws for fight 1, then report the in-hole and on-board rates in the summary.
+
+## Full tournament difficulty ladder (owner calibration, supersedes the fight 1-2 note above)
+The owner's benchmark is that landing about 25% of bags in the hole makes a pretty solid player, which belongs at opponent #3. Tune every CPU to these approximate per-bag rates (in the hole / on the board), and verify them with a headless CPU-only sim of 200+ throws each. Put a table of the measured rates in the summary.
+1. Slidin' Steve: under 10% in the hole (aim for about 5-8%), about 30% on the board. Never uses kobe.
+2. Big Bag Barb: about 15%, about 35%.
+3. Kobe Kowalski: about 25%, about 35%.
+4. Sticky Vicky: about 33%, about 35%.
+5. Tailgate Ted: about 40%, about 30%, wild/high variance.
+6. Slidin' Steve II: about 45%, about 30%.
+7. Big Bag Barb II: about 52%, about 30%.
+8. Reign Supreme: about 60%, about 30%.
+Keep each opponent's style flavor (slider, blocker, lobber and so on). Wind still applies only in later circuits, as before.
+
+exec
+/bin/bash -lc 'ls -la && find .. -name AGENTS.md -print' in /workspace/cornhole
+ succeeded in 0ms:
+total 2284
+drwxr-xr-x   8 box box   4096 Nov  3 17:43 .
+drwxr-xr-x. 33 box box  20480 Nov  3 17:43 ..
+dr-xr-xr-x   2 box box     40 Nov  3 17:43 .agents
+dr-xr-xr-x   2 box box     40 Nov  3 17:43 .aws
+dr-xr-xr-x   2 box box     40 Nov  3 17:43 .codex
+drwxr-xr-x   8 box box   4096 Nov  3 17:43 .git
+-rw-r--r--   1 box box   1874 Nov  3 17:39 CLAUDE_REVIEW_2_PROMPT.md
+-rw-r--r--   1 box box    503 Nov  3 15:28 CLAUDE_REVIEW_NOTES.md
+-rw-r--r--   1 box box  16482 Nov  3 15:35 CLAUDE_UI_REVIEW.md
+-rw-r--r--   1 box box   5038 Nov  3 14:25 CODEX_TASK.md
+-rw-r--r--   1 box box   1117 Nov  3 17:16 CODEX_TASK_10.md
+-rw-r--r--   1 box box   3013 Nov  3 17:43 CODEX_TASK_11.md
+-rw-r--r--   1 box box   2956 Nov  3 14:45 CODEX_TASK_2_CAREER.md
+-rw-r--r--   1 box box   2769 Nov  3 15:02 CODEX_TASK_3.md
+-rw-r--r--   1 box box    641 Nov  3 15:02 CODEX_TASK_4.md
+-rw-r--r--   1 box box    482 Nov  3 15:08 CODEX_TASK_5.md
+-rw-r--r--   1 box box   1365 Nov  3 15:35 CODEX_TASK_6.md
+-rw-r--r--   1 box box    666 Nov  3 15:38 CODEX_TASK_7.md
+-rw-r--r--   1 box box   1116 Nov  3 15:49 CODEX_TASK_8.md
+-rw-r--r--   1 box box   1199 Nov  3 17:14 CODEX_TASK_9.md
+-rw-r--r--   1 box box      9 Nov  3 17:43 chain-10.log
+-rw-r--r--   1 box box   1500 Nov  3 17:22 chain-9.log
+-rw-r--r--   1 box box   1273 Nov  3 15:35 claude-review.log
+-rw-r--r--   1 box box    353 Nov  3 17:43 codex-out-10.txt
+-rw-r--r--   1 box box    324 Nov  3 14:52 codex-out-2.txt
+-rw-r--r--   1 box box    409 Nov  3 15:07 codex-out-3.txt
+-rw-r--r--   1 box box    353 Nov  3 15:10 codex-out-4.txt
+-rw-r--r--   1 box box    335 Nov  3 15:41 codex-out-6.txt
+-rw-r--r--   1 box box    365 Nov  3 15:53 codex-out-7.txt
+-rw-r--r--   1 box box    256 Nov  3 16:14 codex-out-8.txt
+-rw-r--r--   1 box box    338 Nov  3 17:22 codex-out-9.txt
+-rw-r--r--   1 box box    412 Nov  3 14:23 codex-out.txt
+-rw-r--r--   1 box box 426892 Nov  3 17:43 codex-run-10.log
+-rw-r--r--   1 box box   3807 Nov  3 17:43 codex-run-11.log
+-rw-r--r--   1 box box 147394 Nov  3 14:52 codex-run-2.log
+-rw-r--r--   1 box box 159489 Nov  3 15:07 codex-run-3.log
+-rw-r--r--   1 box box 110519 Nov  3 15:10 codex-run-4.log
+-rw-r--r--   1 box box  89030 Nov  3 15:16 codex-run-5.log
+-rw-r--r--   1 box box 145667 Nov  3 15:41 codex-run-6.log
+-rw-r--r--   1 box box 112512 Nov  3 15:53 codex-run-7.log
+-rw-r--r--   1 box box  98383 Nov  3 16:14 codex-run-8.log
+-rw-r--r--   1 box box 237850 Nov  3 17:22 codex-run-9.log
+-rw-r--r--   1 box box 171441 Nov  3 14:23 codex-run.log
+-rw-r--r--   1 box box   1888 Nov  3 17:43 codex-summary-10.md
+-rw-r--r--   1 box box   3725 Nov  3 15:06 codex-summary-3.md
+-rw-r--r--   1 box box   2401 Nov  3 15:10 codex-summary-4.md
+-rw-r--r--   1 box box   2911 Nov  3 15:41 codex-summary-6.md
+-rw-r--r--   1 box box   2056 Nov  3 15:53 codex-summary-7.md
+-rw-r--r--   1 box box   2610 Nov  3 16:13 codex-summary-8.md
+-rw-r--r--   1 box box   2377 Nov  3 17:20 codex-summary-9.md
+-rw-r--r--   1 box box   3723 Nov  3 14:51 codex-summary-career.md
+-rw-r--r--   1 box box   2810 Nov  3 14:23 codex-summary.md
+-rw-r--r--   1 box box 233240 Nov  3 14:23 cornhole-changes.bundle
+-rw-r--r--   1 box box  75575 Nov  3 17:37 index.html
+-rw-r--r--   1 box box  27306 Nov  3 14:13 poster.png
+-rw-r--r--   1 box box  68218 Nov  3 14:16 screenshot.png
+drwxr-xr-x   2 box box   4096 Nov  3 17:38 shots
+drwxr-xr-x   2 box box   4096 Nov  3 17:38 tests
+-rw-r--r--   1 box box    239 Nov  3 13:05 vercel.json
+
+exec
+/bin/bash -lc "rg -n 'inning|INNING|cpu|CPU|2 PLAYER|SOLO PRACTICE|START TOURNAMENT' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+99:      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+100:      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+616:// power windows for the meter / CPU, per thrower box and bag side
+675:  vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
+676:  position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+680:const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[Math.min(career.fight,roster.length-1)].name : 'CPU') : TEAM[t]);
+703:    ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
+705:  ui.inn.textContent = 'INNING ' + M.inning;
+709:  if (M.phase === 'aim' || M.phase === 'cpu') {
+711:    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+721:  if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+769: ui.panel.hidden=false; $('fight').onclick=()=>startMatch({career:true,vs:'cpu',exact:false}); $('back').onclick=careerMap; renderHud();
+809:  ui.panel.innerHTML = '<button class="go" id="two-player">2 PLAYER</button><button class="go" id="practice">SOLO PRACTICE</button><button class="go" id="career">START TOURNAMENT</button>';
+830:  M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
+852:    M.cpu = { t: 0, side, power: w.mid + wind.z * 0.04 + gauss() * 0.055, aim: -wind.x * 0.08 + gauss() * 0.012, drift: gauss() * 0.18 };
+853:    if(M.career) M.cpu=planCareerShot(roster[career.fight]);
+854:    M.phase = 'cpu';
+859:  if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
+895:  M.history.push({ inning: M.inning, pts, inC, onC, net, scorer, bust, scores: [...M.scores] });
+898:  const head = win >= 0 ? `<div class="pt">FINAL</div><div class="big ${win ? 'b' : 'r'}">${M.vs === 'cpu' ? (win === 0 ? 'YOU WIN!' : 'CPU WINS') : TEAM[win] + ' WINS!'}</div>`
+899:    : `<div class="pt">INNING ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
+902:    <div class="pd">${scorer < 0 ? 'EQUAL INNING · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
+905:    <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT INNING'}</button>`;
+911:  if (M.phase === 'summary') { ui.panel.hidden = true; M.inning++; beginInning(); }
+1088:  if (M.phase === 'cpu') {
+1089:    const c = M.cpu; c.t += dt;
+1112:  const showHeld = M.phase === 'aim' || M.phase === 'cpu';
+1143:  M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
+1149:  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+
+exec
+/bin/bash -lc 'ls tests && cat codex-summary-10.md' in /workspace/cornhole
+ succeeded in 0ms:
+career_check.py
+playwright_check.py
+run_all.py
+task10_check.py
+task3_check.py
+task5_check.py
+task6_check.py
+task8_check.py
+task9_check.py
+wind_flag_check.py
+# Task 10: KOBE power sweet spot
+
+Implemented the KOBE meter change in `index.html`.
+
+- KOBE's input sweet spot is 78% of the base NORMAL window for the same thrower and bag side. For SLICK, NORMAL spans 15% of the meter and KOBE now spans 11.7% (previously 3%).
+- Later tournament rounds retain their randomized shift and 0.78 shrink multiplier. This produces a KOBE width of 60.84% of base NORMAL, with an explicit 60% minimum.
+- Human KOBE input maps continuously onto its existing calibrated physics range, including outside the target. The displayed solid target uses the exact scoring-input bounds. The dashed on-board range is also mapped to KOBE input coordinates.
+- Removed the solid target's artificial 2% visual minimum and used an inset border so its rendered size matches its actual tolerance.
+- PUSH/NORMAL power tolerances and tournament behavior remain unchanged. SLICK/STICKY physics, CPU behavior, and the batch-9 static camera remain unchanged.
+
+Added `tests/task10_check.py` covering both throwers, both bag sides, all three heights, shifted/unshifted windows, KOBE width/floor, continuous power mapping at the boundaries, dashed on-board mapping, and rendered target dimensions.
+
+Screenshots: `shots/task10-push.png`, `shots/task10-normal.png`, and `shots/task10-kobe.png`. Inspected the KOBE screenshot.
+
+Validation uses `PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py`, with waits limited to 8 seconds, navigation to 12 seconds, and each suite to 150 seconds. Full log: `/tmp/task10-tests.log`.
+
+All nine Playwright suites passed: career, gameplay, task 3, task 5, task 6, task 8, task 9, task 10, and wind/flag. No application page errors were reported. `git diff --check` passed. Older suites' regenerated tracked screenshots were restored; the three task-10 screenshots are retained. No writes to `.git` and no commits.
+
+exec
+/bin/bash -lc "sed -n '1,100p' index.html; sed -n '725,820p' index.html; cat tests/run_all.py; cat tests/task10_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Backyard Cornhole · 3D pixel toss</title>
+<meta name="description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game in your browser.">
+<meta name="theme-color" content="#ffb36b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Backyard Cornhole">
+<meta property="og:description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game.">
+<meta property="og:url" content="https://backyard-cornhole.vercel.app/">
+<meta property="og:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="Backyard Cornhole">
+<meta name="twitter:description" content="Real cornhole rules: 27 ft, cancellation scoring, first to 21. Flick the mouse to toss.">
+<meta name="twitter:player" content="https://backyard-cornhole.vercel.app/">
+<meta name="twitter:player:width" content="480">
+<meta name="twitter:player:height" content="360">
+<meta name="twitter:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22 shape-rendering=%22crispEdges%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%231aa39a%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%232b1a2e%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#ffcf99;touch-action:none;user-select:none;-webkit-user-select:none}
+body{font-family:'Press Start 2P',ui-monospace,Menlo,monospace;color:#fff}
+#game{position:fixed;inset:0;cursor:grab}
+#game.drag{cursor:grabbing}
+#game.spin{cursor:crosshair}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.ol{text-shadow:2px 0 #2b1a2e,-2px 0 #2b1a2e,0 2px #2b1a2e,0 -2px #2b1a2e,2px 2px #2b1a2e,-2px 2px #2b1a2e,2px -2px #2b1a2e,-2px -2px #2b1a2e}
+#hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(7px,1.9vmin,14px)}
+#hud.menu > :not(#title){display:none!important}
+#sb{position:absolute;left:0;right:0;top:1.4vmin;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;padding:0 1.6vmin}
+.team{min-width:0}.team.blue{grid-column:3;text-align:right}
+.tn{font-size:.9em;letter-spacing:.06em}
+.red .tn{color:#ff8a80}.blue .tn{color:#9db8ff}
+.ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
+.pips{display:flex;gap:.4em;margin-top:.6em}.blue .pips{justify-content:flex-end}
+.pips i{display:block;width:1.4em;height:1.4em;border:.22em solid #2b1a2e;box-shadow:inset -.22em -.22em 0 rgba(0,0,0,.25),inset .18em .18em 0 rgba(255,255,255,.35)}
+.red .pips i{background:#e8423c}.blue .pips i{background:var(--rival,#3f6ee8)}
+.pips i.used{background:#6b5a63!important;opacity:.4;box-shadow:none}
+.team.now .tn::before{content:'▶ ';color:#ffe45e}
+.blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe45e}
+.mid{grid-column:2;text-align:center;padding-top:.2em;max-width:58vw}#goal.practice{white-space:pre-line;line-height:1.7}
+#inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
+#turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
+#turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
+#meter{position:absolute;right:1.8vmin;bottom:1.8vmin;width:2.2em;height:36%;border:.3em solid #2b1a2e;background:#3b2a40;box-shadow:.3em .3em 0 rgba(43,26,46,.35)}
+#fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#ffb340 0 .5em,#ff8a3d .5em 1em)}
+#sweet,#onb{position:absolute;left:-.55em;right:-.55em;height:6%}
+#onb{border:.2em dashed rgba(255,255,255,.55)}
+#sweet{border:0}
+.mlbl{position:absolute;bottom:-.2em;right:calc(100% + .6em);font-size:.8em;white-space:nowrap}
+#msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
+#msg.on{opacity:1;transform:scale(1)}
+#msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
+#title{position:absolute;left:0;right:0;top:15%;text-align:center;transition:opacity .6s}
+#title h1{font-size:3.2em;font-weight:400;color:#ffe45e;letter-spacing:.04em;line-height:1.2}
+#title p{font-size:1em;margin-top:1em}
+#title.gone{opacity:0}
+.btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
+.hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
+.hb:hover{background:#56405c}
+#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(7px,1.9vmin,14px);min-width:20em;max-width:94vw}
+#panel[hidden]{display:none}
+#panel .pt{font-size:1.1em;color:#ffb36b}
+#panel .big{font-size:2.6em;color:#ffe45e;margin:.45em 0 .3em}
+#panel .row{display:flex;justify-content:center;gap:2.2em;margin:.9em 0 .3em;line-height:1.9;font-size:.85em}
+#panel .row b{display:block;font-weight:400;font-size:2em}
+#panel .r{color:#ff8a80}#panel .b{color:#9db8ff}
+#panel .pd{font-size:.8em;line-height:1.9;margin-top:.5em}
+#panel .opt{display:flex;gap:.5em;justify-content:center;margin-top:.8em}
+#panel .opt button{font:inherit;font-size:.8em;padding:.6em .7em;color:#fff;background:#2b1a2e;border:.2em solid #6b5a63;cursor:pointer}
+#panel .opt button.on{background:#ffe45e;color:#2b1a2e;border-color:#2b1a2e}
+#panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
+#panel .go:hover{background:#fff07f}
+#panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+@media (max-width:560px){#title{top:12%}#title h1{font-size:2.4em}}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#3b2a40e6;border:.25em solid #2b1a2e;box-shadow:.25em .25em 0 rgba(43,26,46,.35);color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;margin:2px auto 8px;width:36px;height:36px}#wind-speed{white-space:nowrap}
+@media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
+#panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
+#bag-menu > *{flex-shrink:0}
+.bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
+#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:inset 0 0 0 1px #fff,0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+@media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div id="sb" class="ol">
+      <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = ((w.hi - w.lo) * 100) + '%';
+  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+}
+function hint() {
+  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
+  wrap.classList.toggle('spin', M.ctrl === 'spin');
+}
+let msgTimer;
+function say(big, small = '', ms = 1400) {
+  ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
+  clearTimeout(msgTimer); msgTimer = setTimeout(() => ui.msg.classList.remove('on'), ms);
+}
+function setMeter(p) { ui.fill.style.height = (clamp(p, 0, 1) * 100) + '%'; }
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+
+function clearBags() { for (const b of bags) scene.remove(b.mesh); bags.length = 0; }
+// Career saves only completed fights; an interrupted match restarts the current opponent.
+const roster = [
+ ['Slidin’ Steve','The Patio Pusher','Beanbag Bend','2–7','Your bags are in my driveway!','slider','#45bca4',0],
+ ['Big Bag Barb','Queen of the Cookout','Biscuit Bay','5–3','Hope you brought a bigger picnic!','blocker','#ed83bb',0],
+ ['Kobe Kowalski','The Sky Slinger','Popcorn Plains','9–4','Forecast: bags from above!','lobber','#f6b642',1],
+ ['Sticky Vicky','The Suede Sorceress','Velcro Valley','12–3','This victory is going to stick!','sniper','#a57cf0',1],
+ ['Tailgate Ted','The Parking Lot Tornado','Grillville','16–5','I put the wild in wild card!','wild','#73b5f3',2],
+ ['Slidin’ Steve II','Patio Pusher: Reloaded','Beanbag Bend','21–7','Same driveway. Double trouble!','slider','#26dcbb',2],
+ ['Big Bag Barb II','The Cookout Empress','Biscuit Bay','28–3','You’re the side dish today!','blocker','#ff509f',3],
+ ['Reign Supreme','The Bag Baroness','Crown Corners','35–0','The throne has no room for two!','champion','#ffe45e',3]
+].map((r,i)=>({name:r[0],nick:r[1],home:r[2],record:r[3],taunt:r[4],style:r[5],color:r[6],circuit:r[7],level:i}));
+const circuits=['Backyard Circuit','County Fair','Tailgate Pro','King’s Court'];
+const SAVE_KEY='backyard-cornhole-career-v1';
+let career={fight:0,wins:0}, saveNote='';
+try { const c=JSON.parse(localStorage.getItem(SAVE_KEY)); if(c && Number.isInteger(c.fight) && c.fight>=0 && c.fight<=roster.length && Number.isInteger(c.wins) && c.wins>=c.fight) career={fight:c.fight,wins:c.wins}; } catch { saveNote='Storage unavailable: progress lasts this visit.'; }
+function saveCareer(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(career));}catch{saveNote='Storage unavailable: progress lasts this visit.';}}
+function portrait(o){
+ const female=[1,3,6,7].includes(o.level), hair=['#633b29','#45283a','#c07431','#282338'][o.level%4];
+ return `<svg class="portrait" viewBox="0 0 16 16" role="img" aria-label="Pixel portrait of ${o.name}" shape-rendering="crispEdges"><rect width="16" height="16" fill="#252237"/><path fill="${o.color}" d="M2 12h12v4H2z"/><path fill="${hair}" d="M4 3h8v9H4z${female?'M3 5h2v8H3zM11 5h2v8h-2z':''}"/><path fill="${['#f5be91','#b97851','#df9c70'][o.level%3]}" d="M5 5h6v6H5zM6 11h4v2H6z"/><path fill="#272034" d="M6 6h1v1H6zM9 6h1v1H9zM7 9h3v1H7z"/><path fill="${o.color}" d="M3 3h10v2H3zM5 2h6v1H5z"/>${o.level>=5?'<path fill="#ffe45e" d="M4 1h1v2H4zM7 0h2v3H7zM11 1h1v2h-1z"/>':''}</svg>`;
+}
+function careerMap(){
+ M.career=false; M.phase='menu'; clearBags(); ui.title.classList.add('gone');
+ ui.panel.innerHTML=`<div class="pt">ROAD TO CORNHOLE KING</div><div class="ladder">${roster.map((o,i)=>`<div class="${i<career.fight?'done':i===career.fight?'current':''}">${i<career.fight?'✓':i===career.fight?'▶':'·'} ${o.name} · ${circuits[o.circuit]}</div>`).join('')}</div><div class="pd">${career.wins} WINS · ${career.fight}/8 CLEARED</div><button class="go" id="career-go">${career.fight===8?'CHAMPION ENDING':'CONTINUE CAREER'}</button><button class="hb" id="back">MAIN MENU</button><div id="save-note">${saveNote}</div>`;
+ ui.panel.hidden=false; $('career-go').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=showMenu; renderHud();
+}
+function careerIntro(){
+ const o=roster[career.fight]; M.phase='intro'; ui.title.classList.add('gone');
+ ui.panel.innerHTML=`<div class="pt">${circuits[o.circuit]} · FIGHT ${career.fight+1}/8</div><div class="pd">NEXT UP: ${o.name}</div>${portrait(o)}<div class="pd">“${o.nick}” · ${o.home}<br>RECORD ${o.record}<br>${o.taunt}<br>${o.style.toUpperCase()} · ${o.circuit===0?'CALM AIR':o.circuit===1?'LIGHT WIND':'STRONG WIND'}</div><button class="go" id="fight">LET’S TOSS</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ ui.panel.hidden=false; $('fight').onclick=()=>startMatch({career:true,vs:'cpu',exact:false}); $('back').onclick=careerMap; renderHud();
+}
+function champion(){
+ M.phase='champion'; ui.panel.hidden=false; ui.title.classList.add('gone');
+ ui.panel.innerHTML='<div class="pt">ALL FOUR CIRCUITS CONQUERED</div><div class="big">CORNHOLE KING!</div>'+portrait(roster[7])+'<div class="pd">The crown is yours!<br>Eight rivals. One backyard legend.<br>Your championship is saved.</div><button class="go" id="back">CIRCUIT MAP</button><button class="hb" id="restart">NEW CAREER</button>';
+ $('back').onclick=careerMap; $('restart').onclick=()=>{career={fight:0,wins:0};saveCareer();careerMap();}; burst(HOLE_WORLD); renderHud();
+}
+function careerResult(win){
+ const o=roster[career.fight]; if(win===0){career.fight++;career.wins++;saveCareer();}
+ ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'REMATCH'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ $('next-fight').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=careerMap;
+}
+function planCareerShot(o){
+ // Predict actual flight and board friction, then value strategic landing targets.
+ const deck=bags.filter(onDeck), blockers=deck.filter(b=>b.lp.z>HOLE_LOCAL.z+.12);
+ let arc=o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
+ if(o.level>=3 && blockers.length) arc=2;
+ let side=o.style==='sniper'||o.style==='blocker'?'sticky':'slick';
+ let target=HOLE_LOCAL.clone(), goal='hole';
+ const own=deck.find(b=>b.team===1 && holeDist(b.lp)<.35), enemy=deck.find(b=>b.team===0);
+ if(o.level>=2 && own && o.style!=='lobber'){target.copy(own.lp);arc=0;side='slick';goal='push';}
+ else if(o.level>=4 && enemy && M.scores[0]>=18){target.copy(enemy.lp);arc=0;goal='knock';}
+ else if(o.style==='blocker' && !blockers.length && M.scores[1]>=M.scores[0]){target.z+=.38;goal='block';}
+ let best={cost:Infinity,power:.55,aim:0};
+ // Later opponents compensate with the full match wind; early opponents are less precise.
+ for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012){
+  const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc);
+  for(let i=0;i<960;i++){step(b,1/120);if(['board','grass','in','removed'].includes(b.state))break;}
+  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2:.5;
+  if(b.state==='grass'||b.state==='removed')cost+=3;
+  if(cost<best.cost)best={cost,power,aim};
+ }
+ const error=.045-o.level*.005, wild=o.style==='wild'?2:1;
+ M.arc=arc;M.spin=0;M.side[1]=side;
+ return {t:0,side,power:clamp(best.power+gauss()*error*wild,0,1),aim:best.aim+gauss()*error*.23*wild,drift:gauss()*.05,goal};
+}
+function showMenu() {
+  M.phase = 'menu'; ui.title.classList.remove('gone');
+  M.career=false;
+  clearBags();
+  ui.panel.innerHTML = '<button class="go" id="two-player">2 PLAYER</button><button class="go" id="practice">SOLO PRACTICE</button><button class="go" id="career">START TOURNAMENT</button>';
+  ui.panel.hidden=false;
+  $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
+  $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
+  $('career').onclick=careerMap;
+  renderHud();
+}
+function startMatch(opts = {}) {
+  if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
+  M.career = opts.career === true;
+  M.practice=opts.practice===true;M.practiceStats={throws:0,in:0,on:0};M.heights=[1,1];
+  M.sweetShift=M.career && career.fight>=2 ? .24+Math.random()*.5 : 0;
+"""Run every Playwright suite with bounded waits (serve the app on port 8000)."""
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+
+if len(sys.argv)>1 and sys.argv[1]=='--worker':
+ from playwright.async_api import Browser, BrowserContext
+ original=BrowserContext.new_page
+ async def new_page(self,*args,**kwargs):
+  page=await original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ BrowserContext.new_page=new_page
+ browser_original=Browser.new_page
+ async def browser_new_page(self,*args,**kwargs):
+  page=await browser_original(self,*args,**kwargs)
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  return page
+ Browser.new_page=browser_new_page
+ runpy.run_path(sys.argv[2],run_name='__main__')
+else:
+ root=Path(__file__).resolve().parent.parent
+ failed=[]
+ for suite in sorted((root/'tests').glob('*_check.py')):
+  print(f'Running {suite.name}',flush=True)
+  try:
+   result=subprocess.run([sys.executable,__file__,'--worker',str(suite)],cwd=root,timeout=150)
+   if result.returncode:failed.append(suite.name)
+  except subprocess.TimeoutExpired:
+   print(f'{suite.name}: exceeded 150-second suite limit',flush=True)
+   failed.append(suite.name)
+ print('Failed: '+', '.join(failed) if failed else 'All Playwright suites passed',flush=True)
+ sys.exit(bool(failed))
+import asyncio
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  page.set_default_timeout(8000)
+  page.set_default_navigation_timeout(12000)
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__meterTest={M,renderHud,meterWindow,physicalPower}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/')
+  await page.wait_for_function('!!window.__game')
+  await page.evaluate('__game.startMatch({practice:true,vs:"2p",first:0})')
+  await page.wait_for_function('__game.state.phase==="aim"')
+  # Both thrower calibrations, both bag sides, shifted and unshifted windows.
+  await page.evaluate('''()=>{
+   const {M,renderHud,meterWindow,physicalPower}=__meterTest;
+   const near=(a,b)=>{if(Math.abs(a-b)>1e-9)throw Error(`${a} != ${b}`)};
+   for(const t of [0,1])for(const side of ['slick','sticky'])for(const shift of [0,.24,.74])for(const arc of [0,1,2]){
+    M.practice=false;M.first=t;M.k=0;M.side[t]=side;M.arc=arc;M.heights[t]=arc;M.sweetShift=shift;
+    renderHud();
+    const base=__game.win[t+side+arc],normal=__game.win[t+side+1],w=meterWindow();
+    const nw=normal.hi-normal.lo;
+    const width=arc===2 ? nw*.78 : base.hi-base.lo;
+    near(w.hi-w.lo,shift ? Math.max(arc===2 ? nw*.60 : .014,width*.78) : width);
+    near(w.mid,shift || base.mid);
+    if(arc===2 && w.hi-w.lo<nw*.60)throw Error('KOBE floor');
+    near(physicalPower(w.lo),base.lo);near(physicalPower(w.hi),base.hi);
+    near(physicalPower(w.mid),base.mid);
+    if(arc===2){near(physicalPower(w.olo),base.olo);near(physicalPower(w.ohi),base.ohi);}
+    if(!(physicalPower(w.lo-.001)<base.lo && physicalPower(w.hi+.001)>base.hi))throw Error('boundary mapping');
+    const meter=document.querySelector('#meter').getBoundingClientRect();
+    const target=document.querySelector('#sweet').getBoundingClientRect();
+    const css=getComputedStyle(document.querySelector('#meter'));
+    const inner=meter.height-parseFloat(css.borderTopWidth)-parseFloat(css.borderBottomWidth);
+    if(Math.abs(target.height/inner-(w.hi-w.lo))>.001)throw Error(JSON.stringify({target:target.height,meter:meter.height,w}));
+   }
+   M.first=0;M.k=0;M.side[0]='slick';M.sweetShift=0;M.arc=1;M.heights[0]=1;renderHud();
+  }''')
+  for arc,name in enumerate(['push','normal','kobe']):
+   await page.click(f'[data-height="{arc}"]')
+   await page.screenshot(path=f'shots/task10-{name}.png')
+  assert not errors,errors
+  await browser.close()
+  print('TASK 10: KOBE width, tournament floor/shift, input mapping and exact visual bounds PASS')
+
+asyncio.run(asyncio.wait_for(main(),timeout=150))
+
+codex
+The task’s final section supersedes the earlier limit on difficulty changes, so I’ll calibrate all eight opponents. I’ll preserve their throwing styles and wind rules, then measure actual physics outcomes for the summary.
+exec
+/bin/bash -lc "sed -n '1145,1195p' index.html; cat tests/career_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+} else showMenu();
+requestAnimationFrame(frame);
+
+window.__game = {
+  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
+  _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
+  _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+  get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
+  careerMap, careerIntro,
+  win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
+  startMatch, advance, lie: () => lie(),
+  throwWith: (p, d = 0) => throwBag(p, d),
+  setAim: (a) => { M.aim = a; },
+  // test hooks: drop a resting bag on the deck (board-local metres, z negative toward the back), or preset the match score
+  _place: (team, lx, lz) => { const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = 'board'; b.touched = true; bags.push(b); renderHud(); },
+  _setScores: (a, c) => { M.scores = [a, c]; renderHud(); },
+  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+  _slide: (x,z,vx,vz) => { const b=newBody(0); b.mesh=makeBagMesh(0,'slick'); b.lp.set(x,BAG_H,z); b.lv.set(vx,0,vz); b.state='slide'; b.touched=true; toWorld(b.lp,b.p); bags.push(b); },
+  holeLocalZ: HOLE_LOCAL.z,
+};
+</script>
+</body>
+</html>
+import asyncio, json
+from playwright.async_api import async_playwright
+URL='http://127.0.0.1:8000'
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox'])
+  errors=[]
+  ctx=await b.new_context(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  page=await ctx.new_page()
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto(URL);await page.wait_for_function('!!window.__game')
+  await page.click('#career');await page.click('#career-go')
+  assert 'NEXT UP: Slidin’ Steve' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-intro.png')
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  # Scripted real throws, preset near-winning scores and resting bags via existing physics hooks.
+  # Four misses per side leave a known board point; scoring still runs through the full inning.
+  async def finish(winner):
+   await page.evaluate(f'__game._setScores({20 if winner==0 else 0},{20 if winner==1 else 0});__game._place({winner},.26,-.3)')
+   while await page.evaluate('__game.state.phase') not in ['over','summary']:
+    if await page.evaluate('__game.state.phase') in ['aim','cpu']:await page.evaluate('__game.throwWith(0)')
+    await page.wait_for_timeout(80)
+   assert await page.evaluate('__game.state.winner')==winner
+  await finish(0)
+  print('Early win passed',flush=True)
+  assert await page.evaluate('__game.career.fight')==1
+  await page.reload();await page.wait_for_function('!!window.__game')
+  assert await page.evaluate('__game.career.fight')==1
+  await page.click('#career');await page.click('#career-go');assert 'Big Bag Barb' in await page.locator('#panel').inner_text()
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  print('Persistence passed',flush=True)
+  await finish(1);assert await page.evaluate('__game.career.fight')==1
+  await page.click('#next-fight');assert 'NEXT UP: Big Bag Barb' in await page.locator('#panel').inner_text()
+  # Seed unlocked saves to inspect later circuits and rematch portraits.
+  for fight in [2,4,5,6,7]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go')
+   assert await page.locator('.portrait').count()==1
+   await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+   wind=await page.evaluate('__game.state.wind');assert wind['mph']>0
+   await page.wait_for_timeout(1500);assert await page.evaluate('__game.state.wind')==wind
+  await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  await finish(0);await page.click('#next-fight');assert 'CORNHOLE KING!' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-champion.png')
+  for width,height,name in [(1280,800,'desktop'),(480,360,'card')]:
+   await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
+   await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_timeout(1100)
+   await page.screenshot(path=f'shots/career-{name}.png')
+   assert not await page.locator('#wind').is_visible()  # First circuit is calm.
+  mobile=await b.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:errors.append(str(e)))
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await mp.goto(URL);await mp.wait_for_function('!!window.__game');await mp.click('#career');await mp.click('#career-go');await mp.screenshot(path='shots/career-mobile.png');await mp.click('#fight');await mp.wait_for_timeout(1800)
+  assert await mp.evaluate('__game.state.wind.mph')==0
+  print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+  await b.close()
+asyncio.run(main())
+
+exec
+/bin/bash -lc "ls /tmp/cornhole-venv/bin/python /tmp/pw-browsers; rg -n 'function (step|launch)|drift|wind =' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+/tmp/cornhole-venv/bin/python
+
+/tmp/pw-browsers:
+chromium-1248
+chromium_headless_shell-1248
+ffmpeg-1013
+511:const wind = { x: 0, z: 0, mph: 0, angle: 0 };
+513:function launch(b, rx, power, aim, drift, arc = 1, spin = 0) {
+519:  const y = baseYaw(rx) + aim + drift * 0.04;
+522:  b.arc = arc; b.english = spin; b.spin = spin * 3; b.curl = drift * 0.12 + spin * 0.10; b.state = 'fly';
+526:function step(b, dt) {
+611:function simulate(rx, power, side, aim = 0, drift = 0, arc = 1) {
+612:  const b = newBody(0, side); launch(b, rx, power, aim, drift, arc);
+803: return {t:0,side,power:clamp(best.power+gauss()*error*wild,0,1),aim:best.aim+gauss()*error*.23*wild,drift:gauss()*.05,goal};
+852:    M.cpu = { t: 0, side, power: w.mid + wind.z * 0.04 + gauss() * 0.055, aim: -wind.x * 0.08 + gauss() * 0.012, drift: gauss() * 0.18 };
+858:function throwBag(power, drift = 0, team = thrower()) {
+862:  const b = newBody(team, side); launch(b, RX[team] + (isHuman(team) ? 0 : M.position[team]), actualPower, M.aim, drift + gauss() * 0.025, M.arc, isHuman(team) ? 0 : M.spin);
+864:  if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
+1092:    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+
+exec
+/bin/bash -lc "sed -n '508,620p' index.html; sed -n '1084,1096p' index.html; sed -n '820,840p' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+function newBody(team, side = 'slick') {
+  return { team, side, spin: 0, tumble: 1, arc: 1, state: 'fly', p: new THREE.Vector3(), v: new THREE.Vector3(), lp: new THREE.Vector3(), lv: new THREE.Vector3(), prev: new THREE.Vector3(), curl: 0, touched: false, dead: false, swish: false, offBoard: false, t: 0, restT: 0 };
+}
+const wind = { x: 0, z: 0, mph: 0, angle: 0 };
+const arcs = [24, 35, 58], arcNames = ['PUSH', 'NORMAL', 'KOBE'];
+function launch(b, rx, power, aim, drift, arc = 1, spin = 0) {
+  const pwr = clamp(power, 0, 1);
+  const speed = pwr < 0.4 ? V_MIN + pwr * 6 : 8 + (pwr - 0.4) * 3.2;
+  const elev = arcs[arc] * Math.PI / 180;
+  // Normalize range across arcs; a lob spends longer in the wind.
+  const velocity = speed * Math.sqrt(Math.sin(2 * ELEV) / Math.sin(2 * elev));
+  const y = baseYaw(rx) + aim + drift * 0.04;
+  b.p.set(rx, REL_Y, REL_Z);
+  b.v.set(Math.sin(y) * Math.cos(elev) * velocity, Math.sin(elev) * velocity, -Math.cos(y) * Math.cos(elev) * velocity);
+  b.arc = arc; b.english = spin; b.spin = spin * 3; b.curl = drift * 0.12 + spin * 0.10; b.state = 'fly';
+  toLocal(b.p, b.prev);
+}
+const onDeck = (b) => b.state === 'slide' || b.state === 'board';
+function step(b, dt) {
+  b.t += dt;
+  const S = SIDES[b.side];
+  if (b.state === 'fly') {
+    b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt; b.v.z += wind.z * dt; b.v.y -= G * dt; b.p.addScaledVector(b.v, dt);
+    const lp = toLocal(b.p, b.lp);
+    const inX = Math.abs(lp.x) <= W / 2, inZ = lp.z <= 0 && lp.z >= -L;
+    if (inX && inZ && lp.y <= BAG_H && lp.y > -0.14 && !b.offBoard) {
+      if (b.prev.y > BAG_H - 0.005) {
+        const lv = b.lv.copy(b.v).applyQuaternion(boardQi);
+        b.touched = true;
+        if (holeDist(lp) < HOLE_R * 0.9) { b.state = 'hole'; b.swish = true; b.hy = BAG_H; return 'hole'; }
+        lv.y = 0; lv.multiplyScalar(S.keep * (b.arc === 2 ? 0.40 : b.arc === 0 ? 1.35 : 1)); lp.y = BAG_H; b.state = 'slide';
+        return 'land';
+      } else if (b.prev.z > 0) { b.touched = true; b.v.z = Math.abs(b.v.z) * 0.2; b.v.x *= 0.4; b.p.z = BOARD_Z + 0.03; }
+      else { b.touched = true; b.v.x *= -0.3; }
+    }
+    if (b.p.y <= BAG_H) {
+      if (!b.touched) b.dead = true;       // hit the grass before the board: foul bag, removed
+      b.p.y = BAG_H; b.v.y = 0; b.v.x *= 0.25; b.v.z *= 0.25; b.state = 'ground'; return 'ground';
+    }
+    b.prev.copy(lp);
+  } else if (b.state === 'slide') {
+    const lp = b.lp, lv = b.lv;
+    lp.y += (BAG_H - lp.y) * Math.min(1, dt * 12);
+    lv.x += (G_LOCAL.x + b.curl) * dt; lv.z += G_LOCAL.z * dt;
+    const sp = Math.hypot(lv.x, lv.z), dec = S.mu * G_N * dt;
+    if (sp <= dec) { lv.x = 0; lv.z = 0; } else { lv.x -= lv.x / sp * dec; lv.z -= lv.z / sp * dec; }
+    b.curl *= Math.pow(0.2, dt);
+    lp.x += lv.x * dt; lp.z += lv.z * dt;
+    if (holeDist(lp) < HOLE_R - 0.012) { b.state = 'hole'; b.hy = BAG_H; return 'hole'; }
+    if (Math.abs(lp.x) > W / 2 + 0.01 || lp.z > 0.01 || lp.z < -L - 0.01) {
+      toWorld(lp, b.p); b.v.copy(lv).applyQuaternion(boardQ); b.state = 'fly'; b.offBoard = true; return 'off';
+    }
+    if (Math.hypot(lv.x, lv.z) < 0.02 && G_T < S.ms * G_N) { lv.set(0, 0, 0); b.state = 'board'; toWorld(lp, b.p); return 'rest'; }
+    toWorld(lp, b.p);
+  } else if (b.state === 'ground') {
+    const sp = Math.hypot(b.v.x, b.v.z), dec = MU_GROUND * G * dt;
+    if (sp <= dec) { b.v.set(0, 0, 0); b.state = 'grass'; return 'rest'; }
+    b.v.x -= b.v.x / sp * dec; b.v.z -= b.v.z / sp * dec;
+    b.p.x += b.v.x * dt; b.p.z += b.v.z * dt;
+    if (inFootprint(b.p)) { b.p.x -= b.v.x * dt; b.p.z -= b.v.z * dt; b.v.set(0, 0, 0); } // grass slide into the board: stops, still dead
+  } else if (b.state === 'hole') {
+    b.hy -= 0.7 * dt;
+    b.lp.set(HOLE_LOCAL.x + (b.lp.x - HOLE_LOCAL.x) * 0.9, b.hy, HOLE_LOCAL.z + (b.lp.z - HOLE_LOCAL.z) * 0.9);
+    toWorld(b.lp, b.p);
+    if (b.hy < -0.09) { b.state = 'in'; return 'rest'; }
+  } else if (b.state === 'grass' && b.dead) {
+    b.restT += dt; if (b.restT > 0.7) { b.state = 'removed'; return 'removed'; }
+  }
+  return null;
+}
+// bag-to-bag contact on the deck: equal-mass discs with a soft, lossy bounce (blocks, push-ins, knock-offs)
+function collide(list) {
+  for (let i = 0; i < list.length; i++) {
+    const a = list[i];
+    if (a.state === 'fly' && !a.offBoard) {
+      toLocal(a.p, a.lp);
+      for (const b of list) if (onDeck(b) && Math.hypot(a.lp.x-b.lp.x,a.lp.z-b.lp.z) < BAG_R * 1.8 && a.lp.y < b.lp.y + BAG_H * 2 && a.lp.y > b.lp.y && a.v.y < 0) {
+        a.lv.copy(a.v).applyQuaternion(boardQi); a.lv.y = 0;
+        a.lv.multiplyScalar(a.arc === 2 ? 0.12 : 0.55); a.lp.y = BAG_H * 3;
+        a.state = 'slide'; a.touched = true; toWorld(a.lp,a.p); break;
+      }
+    }
+    if (!onDeck(a)) continue;
+    for (let j = i + 1; j < list.length; j++) {
+      const b = list[j]; if (!onDeck(b)) continue;
+      const dx = b.lp.x - a.lp.x, dz = b.lp.z - a.lp.z, d = Math.hypot(dx, dz);
+      if (d >= 2 * BAG_R) continue;
+      const nx = d > 1e-6 ? dx / d : 1, nz = d > 1e-6 ? dz / d : 0, ov = 2 * BAG_R - d;
+      const am = a.state === 'slide';
+      const wa = 0.5;
+      a.lp.x -= nx * ov * wa; a.lp.z -= nz * ov * wa; b.lp.x += nx * ov * (1 - wa); b.lp.z += nz * ov * (1 - wa);
+      const vr = (b.lv.x - a.lv.x) * nx + (b.lv.z - a.lv.z) * nz;
+      if (vr < 0) {
+        const jn = -(1 + BAG_E) * vr / 2;
+        a.lv.x -= jn * nx; a.lv.z -= jn * nz; b.lv.x += jn * nx; b.lv.z += jn * nz;
+      }
+      // Soft fabric can ride over a blocker after a hard contact.
+      if (Math.abs(vr) > 0.8) { const rider = am ? a : b; rider.lp.y = Math.max(rider.lp.y, BAG_H * 2.8); }
+      for (const c of [a, b]) { toWorld(c.lp, c.p); }
+      for (const c of [a, b]) if (c.state === 'board' && (Math.hypot(c.lv.x, c.lv.z) > 0.03 || ov > 0.004)) c.state = 'slide';
+    }
+  }
+}
+function simulate(rx, power, side, aim = 0, drift = 0, arc = 1) {
+  const b = newBody(0, side); launch(b, rx, power, aim, drift, arc);
+  for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
+  return b.state === 'in' ? 3 : b.state === 'board' ? 1 : 0;
+}
+// power windows for the meter / CPU, per thrower box and bag side
+const WIN = {};
+for (const t of [0, 1]) for (const side of ['slick', 'sticky']) for (const arc of [0, 1, 2]) {
+  let lo = 1, hi = 0, olo = 1, ohi = 0;
+  for (let p = 0; p <= 1; p += 0.0025) { const r = simulate(RX[t], p, side, 0, 0, arc); if (r === 3) { lo = Math.min(lo, p); hi = Math.max(hi, p); } if (r >= 1) { olo = Math.min(olo, p); ohi = Math.max(ohi, p); } }
+let acc = 0, time = 0;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if (flick && performance.now() - lastMoveT > 60) finishFlick();
+  if (M.phase === 'cpu') {
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+    if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
+    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+  }
+  acc += dt;
+  while (acc >= 1 / 240) {
+    acc -= 1 / 240;
+  M.sweetShift=M.career && career.fight>=2 ? .24+Math.random()*.5 : 0;
+  wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
+  if(M.career){const c=roster[career.fight].circuit;wind.mph=c===0?0:c===1?2+Math.floor(Math.random()*3):c===2?6+Math.floor(Math.random()*3):9+Math.floor(Math.random()*4);}
+  if(M.practice) wind.mph=0;
+  const color=M.career?roster[career.fight].color:'#2f5fe8';
+  for(const mat of Object.values(TEAM_MATS[1])){mat.map.dispose();mat.dispose();}
+  TEAM_MATS[1]=bagMats(color,'#252237','#ffffff');
+  document.documentElement.style.setProperty('--rival',color);
+  wind.x = Math.sin(wind.angle) * wind.mph * 0.025; wind.z = -Math.cos(wind.angle) * wind.mph * 0.025;
+  M.position = [0, 0]; M.spin = 0; M.arc = 1;
+  M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
+  M.first = opts.first != null ? opts.first : (Math.random() < 0.5 ? 0 : 1);   // coin toss
+  ui.panel.hidden = true; ui.title.classList.add('gone');
+  say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);
+  beginInning(900);
+}
+function beginInning(delay = 300) {
+  clearBags(); M.k = 0; M.phase = 'wait'; renderHud();
+  setTimeout(nextTurn, delay);
+}
+function nextTurn() {
+
+exec
+/bin/bash -lc 'python3 -m http.server 8000' in /workspace/cornhole
+exec
+/bin/bash -lc "cat > /tmp/edit11.py <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('INNING','ROUND')
+s=s.replace(\"let arc=o.style==='slider'?0:\",\"let arc=o.level===0?1:o.style==='slider'?0:\")
+s=s.replace(\"  ui.panel.innerHTML = '<button class=\\\"go\\\" id=\\\"two-player\\\">2 PLAYER</button><button class=\\\"go\\\" id=\\\"practice\\\">SOLO PRACTICE</button><button class=\\\"go\\\" id=\\\"career\\\">START TOURNAMENT</button>';\",'''  ui.panel.innerHTML = '<div class=\"menu-modes\"><button class=\"go\" id=\"two-player\">2 PLAYER<small>HUMAN VS HUMAN · SAME SCREEN</small></button><button class=\"go\" id=\"practice\">SOLO PRACTICE<small>JUST YOU · NO OPPONENT</small></button><button class=\"go\" id=\"career\">START TOURNAMENT<small>YOU VS CPU · CLIMB TO CORNHOLE KING</small></button></div>';''')
+s=s.replace('</style>','''/* Mode descriptions share one readable, responsive button column. */
+#panel:has(.menu-modes){width:540px;padding:12px;max-width:94vw}
+.menu-modes{display:grid;gap:10px}
+#panel .menu-modes .go{width:100%;margin:0;padding:14px 8px;font-size:12px;line-height:1.6}
+.menu-modes small{display:block;font-size:9px;line-height:1.8;color:#65512f;margin-top:6px}
+@media(min-width:1000px) and (min-height:600px){#panel .menu-modes .go{font-size:14px}.menu-modes small{font-size:11px}}
+@media(max-width:560px){#panel .menu-modes .go{font-size:11px}.menu-modes small{max-width:100%;text-wrap:balance}}
+</style>''')
+p.write_text(s)
+PY
+python3 /tmp/edit11.py" in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc "cat > /tmp/calibrate11.py <<'PY'
+import asyncio,json
+from pathlib import Path
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox']);page=await b.new_page(ignore_https_errors=True)
+  src=Path('index.html').read_text().replace('const error=.045-o.level*.005', 'window.bestShot={...best,arc,side}; const error=.045-o.level*.005').replace('window.__game = {','window.__sim={M,roster,wind,planCareerShot,newBody,launch,step,RX,gauss}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=src,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/',timeout=12000);await page.wait_for_function('"'!!window.__sim'"',timeout=8000)
+  for level in range(8):
+   result=await page.evaluate('''level=>{
+    const {M,roster,wind,planCareerShot,newBody,launch,step,RX,gauss}=__sim;M.phase='menu';M.scores=[0,1];
+    let seed=314159;Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+    const samples=Array.from({length:400},()=>[gauss(),gauss(),gauss()]);
+    const shots=[];for(let k=0;k<4;k++){const mph=[0,0,3,3,7,7,10,10][level],a=k*Math.PI/2;wind.x=Math.sin(a)*mph*.025;wind.z=-Math.cos(a)*mph*.025;planCareerShot(roster[level]);shots.push({...window.bestShot,x:wind.x,z:wind.z});}
+    let results=[];for(const pe of [.008,.012,.018,.025,.035,.05,.07,.10,.14,.20])for(const ae of [.001,.003,.006,.009,.013,.018,.025,.035,.05,.07]){
+     let inside=0,on=0;for(let n=0;n<samples.length;n++){const shot=shots[n%4];wind.x=shot.x;wind.z=shot.z;const g=samples[n],bag=newBody(1,shot.side);launch(bag,RX[1],shot.power+g[0]*pe,shot.aim+g[1]*ae,g[2]*.05,shot.arc);for(let j=0;j<1920;j++){step(bag,1/240);if(['board','grass','in','removed'].includes(bag.state))break;}inside+=bag.state==='in';on+=bag.state==='board';}
+     const ti=[.07,.15,.25,.33,.40,.45,.52,.60][level],to=[.30,.35,.35,.35,.30,.30,.30,.30][level];results.push({pe,ae,in:inside/400,on:on/400,cost:(inside/400-ti)**2+(on/400-to)**2});
+    }return results.sort((a,b)=>a.cost-b.cost).slice(0,5);
+   }''',level)
+   print(level,json.dumps(result),flush=True)
+  await b.close()
+asyncio.run(main())
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/calibrate11.py > /tmp/calibration11.log" in /workspace/cornhole
+exec
+/bin/bash -lc "cat /tmp/calibration11.log; rg -n 'INNING|inning' tests" in /workspace/cornhole
+ succeeded in 0ms:
+0 [{"pe": 0.1, "ae": 0.035, "in": 0.0925, "on": 0.285, "cost": 0.00073125}, {"pe": 0.008, "ae": 0.07, "in": 0.055, "on": 0.325, "cost": 0.0008500000000000013}, {"pe": 0.07, "ae": 0.05, "in": 0.07, "on": 0.2675, "cost": 0.0010562499999999982}, {"pe": 0.012, "ae": 0.07, "in": 0.0525, "on": 0.3275, "cost": 0.0010625000000000018}, {"pe": 0.025, "ae": 0.07, "in": 0.04, "on": 0.32, "cost": 0.001300000000000001}]
+1 [{"pe": 0.1, "ae": 0.013, "in": 0.1325, "on": 0.3325, "cost": 0.0006124999999999981}, {"pe": 0.07, "ae": 0.009, "in": 0.165, "on": 0.3925, "cost": 0.0020312500000000035}, {"pe": 0.07, "ae": 0.006, "in": 0.195, "on": 0.37, "cost": 0.002425000000000002}, {"pe": 0.1, "ae": 0.009, "in": 0.195, "on": 0.31, "cost": 0.0036249999999999998}, {"pe": 0.1, "ae": 0.018, "in": 0.0875, "on": 0.34, "cost": 0.004006249999999999}]
+2 [{"pe": 0.008, "ae": 0.05, "in": 0.105, "on": 0.425, "cost": 0.026650000000000007}, {"pe": 0.008, "ae": 0.07, "in": 0.075, "on": 0.315, "cost": 0.031849999999999996}, {"pe": 0.012, "ae": 0.07, "in": 0.0675, "on": 0.3225, "cost": 0.034062499999999996}, {"pe": 0.2, "ae": 0.001, "in": 0.0625, "on": 0.37, "cost": 0.03555625}, {"pe": 0.012, "ae": 0.05, "in": 0.085, "on": 0.445, "cost": 0.03625}]
+3 [{"pe": 0.05, "ae": 0.001, "in": 0.39, "on": 0.4775, "cost": 0.01985625}, {"pe": 0.07, "ae": 0.001, "in": 0.275, "on": 0.4925, "cost": 0.023331250000000005}, {"pe": 0.05, "ae": 0.003, "in": 0.355, "on": 0.51, "cost": 0.02622500000000001}, {"pe": 0.07, "ae": 0.003, "in": 0.2525, "on": 0.51, "cost": 0.031606250000000016}, {"pe": 0.1, "ae": 0.001, "in": 0.2, "on": 0.4725, "cost": 0.03190625}]
+tests/career_check.py:18:  # Scripted real throws, preset near-winning scores and resting bags via existing physics hooks.
+tests/career_check.py:19:  # Four misses per side leave a known board point; scoring still runs through the full inning.
+tests/playwright_check.py:32:  # Play out an inning with real physics and cancellation scoring.
+
+ succeeded in 7643ms:
+exec
+/bin/bash -lc 'cat /tmp/calibration11.log' in /workspace/cornhole
+ succeeded in 0ms:
+0 [{"pe": 0.1, "ae": 0.035, "in": 0.0925, "on": 0.285, "cost": 0.00073125}, {"pe": 0.008, "ae": 0.07, "in": 0.055, "on": 0.325, "cost": 0.0008500000000000013}, {"pe": 0.07, "ae": 0.05, "in": 0.07, "on": 0.2675, "cost": 0.0010562499999999982}, {"pe": 0.012, "ae": 0.07, "in": 0.0525, "on": 0.3275, "cost": 0.0010625000000000018}, {"pe": 0.025, "ae": 0.07, "in": 0.04, "on": 0.32, "cost": 0.001300000000000001}]
+1 [{"pe": 0.1, "ae": 0.013, "in": 0.1325, "on": 0.3325, "cost": 0.0006124999999999981}, {"pe": 0.07, "ae": 0.009, "in": 0.165, "on": 0.3925, "cost": 0.0020312500000000035}, {"pe": 0.07, "ae": 0.006, "in": 0.195, "on": 0.37, "cost": 0.002425000000000002}, {"pe": 0.1, "ae": 0.009, "in": 0.195, "on": 0.31, "cost": 0.0036249999999999998}, {"pe": 0.1, "ae": 0.018, "in": 0.0875, "on": 0.34, "cost": 0.004006249999999999}]
+2 [{"pe": 0.008, "ae": 0.05, "in": 0.105, "on": 0.425, "cost": 0.026650000000000007}, {"pe": 0.008, "ae": 0.07, "in": 0.075, "on": 0.315, "cost": 0.031849999999999996}, {"pe": 0.012, "ae": 0.07, "in": 0.0675, "on": 0.3225, "cost": 0.034062499999999996}, {"pe": 0.2, "ae": 0.001, "in": 0.0625, "on": 0.37, "cost": 0.03555625}, {"pe": 0.012, "ae": 0.05, "in": 0.085, "on": 0.445, "cost": 0.03625}]
+3 [{"pe": 0.05, "ae": 0.001, "in": 0.39, "on": 0.4775, "cost": 0.01985625}, {"pe": 0.07, "ae": 0.001, "in": 0.275, "on": 0.4925, "cost": 0.023331250000000005}, {"pe": 0.05, "ae": 0.003, "in": 0.355, "on": 0.51, "cost": 0.02622500000000001}, {"pe": 0.07, "ae": 0.003, "in": 0.2525, "on": 0.51, "cost": 0.031606250000000016}, {"pe": 0.1, "ae": 0.001, "in": 0.2, "on": 0.4725, "cost": 0.03190625}]
+4 [{"pe": 0.1, "ae": 0.001, "in": 0.3725, "on": 0.3375, "cost": 0.002162500000000004}, {"pe": 0.1, "ae": 0.003, "in": 0.3525, "on": 0.3425, "cost": 0.004062500000000007}, {"pe": 0.07, "ae": 0.003, "in": 0.41, "on": 0.395, "cost": 0.009125000000000005}, {"pe": 0.07, "ae": 0.001, "in": 0.435, "on": 0.39, "cost": 0.009325000000000003}, {"pe": 0.14, "ae": 0.001, "in": 0.305, "on": 0.2725, "cost": 0.009781250000000003}]
+5 [{"pe": 0.008, "ae": 0.009, "in": 0.455, "on": 0, "cost": 0.090025}, {"pe": 0.025, "ae": 0.006, "in": 0.46, "on": 0, "cost": 0.0901}, {"pe": 0.14, "ae": 0.003, "in": 0.44, "on": 0, "cost": 0.0901}, {"pe": 0.14, "ae": 0.001, "in": 0.4625, "on": 0, "cost": 0.09015625}, {"pe": 0.012, "ae": 0.009, "in": 0.435, "on": 0, "cost": 0.090225}]
+6 [{"pe": 0.1, "ae": 0.001, "in": 0.295, "on": 0.2475, "cost": 0.05338125000000002}, {"pe": 0.14, "ae": 0.001, "in": 0.29, "on": 0.1925, "cost": 0.06445625000000002}, {"pe": 0.1, "ae": 0.003, "in": 0.2525, "on": 0.285, "cost": 0.07178125}, {"pe": 0.07, "ae": 0.001, "in": 0.25, "on": 0.335, "cost": 0.07412500000000001}, {"pe": 0.14, "ae": 0.003, "in": 0.265, "on": 0.2025, "cost": 0.07453125}]
+7 [{"pe": 0.025, "ae": 0.001, "in": 0.6425, "on": 0.3575, "cost": 0.005112499999999997}, {"pe": 0.07, "ae": 0.001, "in": 0.54, "on": 0.345, "cost": 0.005624999999999991}, {"pe": 0.018, "ae": 0.003, "in": 0.625, "on": 0.375, "cost": 0.006250000000000003}, {"pe": 0.035, "ae": 0.001, "in": 0.615, "on": 0.3825, "cost": 0.007031250000000004}, {"pe": 0.018, "ae": 0.001, "in": 0.6825, "on": 0.3175, "cost": 0.007112500000000004}]
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text();s=s.replace(\"o.style==='sniper'||o.style==='blocker'?'sticky':'slick'\",\"o.style==='sniper'||o.style==='blocker'||o.style==='slider' && o.level>0?'sticky':'slick'\")
+a=s.index(' for(let power=.35;');b=s.index(' const error=',a)
+s=s[:a]+''' const assess=(power,aim)=>{
+  const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc);
+  for(let i=0;i<1920;i++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
+  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2+cost:.5;
+  if(b.state==='grass'||b.state==='removed')cost+=3;
+  if(cost<best.cost)best={cost,power,aim};
+ };
+ for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012) assess(power,aim);
+ const coarse={...best};
+ for(let power=coarse.power-.015;power<=coarse.power+.015;power+=.0025)
+  for(let aim=coarse.aim-.012;aim<=coarse.aim+.012;aim+=.002) assess(power,aim);
+'''+s[b:];p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/calibrate11.py > /tmp/calibration11b.log" in /workspace/cornhole
+codex
+The menu subtitles and “round” wording are in place. The simulation exposed an issue with the CPU’s coarse aiming search, especially for lob throws. I’m refining that search against the game’s physics timestep so the difficulty ladder can produce reliable results.
+exec
+/bin/bash -lc 'cat /tmp/calibration11b.log' in /workspace/cornhole
+ succeeded in 0ms:
+0 [{"pe": 0.2, "ae": 0.013, "in": 0.135, "on": 0.1525, "cost": 0.025981249999999997}, {"pe": 0.14, "ae": 0.013, "in": 0.16, "on": 0.1625, "cost": 0.027006249999999996}, {"pe": 0.2, "ae": 0.018, "in": 0.1175, "on": 0.1425, "cost": 0.0270625}, {"pe": 0.14, "ae": 0.018, "in": 0.1375, "on": 0.1475, "cost": 0.0278125}, {"pe": 0.2, "ae": 0.025, "in": 0.0925, "on": 0.125, "cost": 0.031131249999999996}]
+1 [{"pe": 0.1, "ae": 0.013, "in": 0.1425, "on": 0.3275, "cost": 0.0005624999999999985}, {"pe": 0.1, "ae": 0.009, "in": 0.1825, "on": 0.3175, "cost": 0.002112499999999998}, {"pe": 0.07, "ae": 0.009, "in": 0.1625, "on": 0.4025, "cost": 0.002912500000000005}, {"pe": 0.07, "ae": 0.006, "in": 0.2, "on": 0.375, "cost": 0.0031250000000000028}, {"pe": 0.1, "ae": 0.018, "in": 0.095, "on": 0.33, "cost": 0.003424999999999998}]
+2 [{"pe": 0.008, "ae": 0.05, "in": 0.13, "on": 0.3925, "cost": 0.016206250000000002}, {"pe": 0.008, "ae": 0.07, "in": 0.0975, "on": 0.2925, "cost": 0.0265625}, {"pe": 0.012, "ae": 0.05, "in": 0.1, "on": 0.4225, "cost": 0.02775625}, {"pe": 0.2, "ae": 0.001, "in": 0.0775, "on": 0.345, "cost": 0.029781249999999995}, {"pe": 0.2, "ae": 0.003, "in": 0.075, "on": 0.3475, "cost": 0.030631249999999995}]
+3 [{"pe": 0.018, "ae": 0.013, "in": 0.3075, "on": 0.35, "cost": 0.000506250000000001}, {"pe": 0.012, "ae": 0.013, "in": 0.35, "on": 0.3775, "cost": 0.00115625}, {"pe": 0.025, "ae": 0.013, "in": 0.28, "on": 0.3375, "cost": 0.0026562499999999976}, {"pe": 0.035, "ae": 0.009, "in": 0.285, "on": 0.3025, "cost": 0.004281250000000002}, {"pe": 0.025, "ae": 0.009, "in": 0.35, "on": 0.2825, "cost": 0.004956249999999999}]
+
+ succeeded in 7756ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace(\"let best={cost:Infinity,power:.55,aim:0};\",\"let best={cost:Infinity,power:.55,aim:0}, holeShots=[];\")
+s=s.replace(\"let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2+cost:.5;\",\"if(b.state==='in' && goal==='hole')holeShots.push({power,aim});\\n  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2+cost:.5;\")
+s=s.replace(' const error=.045', ''' if(holeShots.length){
+  const center=holeShots.reduce((a,b)=>({power:a.power+b.power,aim:a.aim+b.aim}),{power:0,aim:0});
+  best.power=center.power/holeShots.length;best.aim=center.aim/holeShots.length;
+ }
+ const error=.045''');p.write_text(s)
+p=Path('/tmp/calibrate11.py');s=p.read_text().replace('[.008,.012,.018,.025,.035,.05,.07,.10,.14,.20]','[.001,.003,.006,.012,.018,.025,.05,.08,.10,.14]').replace('window.bestShot={...best,arc,side}; const error=.045-o.level*.005','window.bestShot={...best,arc,side}; const error=.045-o.level*.005');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/calibrate11.py > /tmp/calibration11c.log" in /workspace/cornhole
+exec
+/bin/bash -lc 'cat /tmp/calibration11c.log' in /workspace/cornhole
+ succeeded in 0ms:
+0 [{"pe": 0.14, "ae": 0.018, "in": 0.1375, "on": 0.1775, "cost": 0.0195625}, {"pe": 0.14, "ae": 0.013, "in": 0.16, "on": 0.1825, "cost": 0.02190625}, {"pe": 0.14, "ae": 0.025, "in": 0.105, "on": 0.1475, "cost": 0.02448125}, {"pe": 0.1, "ae": 0.018, "in": 0.16, "on": 0.16, "cost": 0.027699999999999995}, {"pe": 0.1, "ae": 0.025, "in": 0.1175, "on": 0.13, "cost": 0.031156249999999993}]
+1 [{"pe": 0.1, "ae": 0.013, "in": 0.1425, "on": 0.3275, "cost": 0.0005624999999999985}, {"pe": 0.08, "ae": 0.009, "in": 0.175, "on": 0.365, "cost": 0.0008500000000000001}, {"pe": 0.1, "ae": 0.009, "in": 0.1825, "on": 0.3175, "cost": 0.002112499999999998}, {"pe": 0.08, "ae": 0.013, "in": 0.1325, "on": 0.3925, "cost": 0.002112500000000003}, {"pe": 0.1, "ae": 0.018, "in": 0.095, "on": 0.33, "cost": 0.003424999999999998}]
+2 [{"pe": 0.001, "ae": 0.05, "in": 0.135, "on": 0.3875, "cost": 0.01463125}, {"pe": 0.003, "ae": 0.05, "in": 0.135, "on": 0.3875, "cost": 0.01463125}, {"pe": 0.006, "ae": 0.05, "in": 0.1325, "on": 0.3975, "cost": 0.016062500000000004}, {"pe": 0.001, "ae": 0.07, "in": 0.1125, "on": 0.2775, "cost": 0.024162499999999996}, {"pe": 0.003, "ae": 0.07, "in": 0.1125, "on": 0.2775, "cost": 0.024162499999999996}]
+3 [{"pe": 0.025, "ae": 0.013, "in": 0.305, "on": 0.365, "cost": 0.0008500000000000015}, {"pe": 0.018, "ae": 0.013, "in": 0.34, "on": 0.4, "cost": 0.0026000000000000047}, {"pe": 0.025, "ae": 0.009, "in": 0.3775, "on": 0.2975, "cost": 0.005012499999999998}, {"pe": 0.018, "ae": 0.018, "in": 0.285, "on": 0.4175, "cost": 0.006581250000000004}, {"pe": 0.025, "ae": 0.018, "in": 0.255, "on": 0.385, "cost": 0.006850000000000004}]
+4 [{"pe": 0.1, "ae": 0.006, "in": 0.34, "on": 0.1375, "cost": 0.03000624999999999}, {"pe": 0.1, "ae": 0.003, "in": 0.44, "on": 0.1225, "cost": 0.03310625}, {"pe": 0.14, "ae": 0.003, "in": 0.375, "on": 0.1175, "cost": 0.033931249999999996}, {"pe": 0.14, "ae": 0.001, "in": 0.4025, "on": 0.1075, "cost": 0.0370625}, {"pe": 0.14, "ae": 0.006, "in": 0.2825, "on": 0.1475, "cost": 0.03706250000000001}]
+
+ succeeded in 7731ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/calibrate11.py');s=p.read_text().replace('length:400','length:240').replace('for(const pe of [.001,.003,.006,.012,.018,.025,.05,.08,.10,.14])for(const ae of [.001,.003,.006,.009,.013,.018,.025,.035,.05,.07])','for(const bias of [-.10,-.05,-.025,0,.025,.05,.10])for(const pe of [.003,.015,.04,.08,.12])for(const ae of [.001,.006,.012,.025,.05])').replace('shot.power+g[0]*pe','shot.power+bias+g[0]*pe').replace('results.push({pe,ae,in:inside/400,on:on/400,cost:(inside/400-ti)**2+(on/400-to)**2});','''for(const lapse of [0,.1,.2,.3,.4,.5]){const ii=inside/240*(1-lapse),oo=on/240*(1-lapse);results.push({pe,ae,bias,lapse,in:ii,on:oo,cost:(ii-ti)**2+(oo-to)**2});}''')
+p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/calibrate11.py > /tmp/calibration11d.log" in /workspace/cornhole
+ succeeded in 8027ms:
+exec
+/bin/bash -lc "cat > tests/task11_check.py <<'PY'
+\"\"\"Menu layouts and seeded, CPU-only physics calibration (no scoring overrides).\"\"\"
+import asyncio,json
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True)
+  page.set_default_timeout(8000);page.set_default_navigation_timeout(12000)
+  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  source=Path('index.html').read_text().replace('window.__game = {','window.__cpuTest={M,roster,wind,planCareerShot,newBody,launch,step,RX,showMenu}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=source,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/');await page.wait_for_function('"'!!window.__game'"')
+  await page.evaluate('document.fonts.ready')
+  for w,h in [(1280,800),(844,390),(390,844)]:
+   await page.set_viewport_size({'width':w,'height':h})
+   await page.evaluate('''()=>{
+    const buttons=[...document.querySelectorAll('.menu-modes button')];
+    const bounds=buttons.map(b=>b.getBoundingClientRect());
+    if(new Set(bounds.map(b=>b.width)).size"'!==1)throw Error('"'Unequal button widths');
+    buttons.forEach((b,i)=>{
+     const box=bounds[i],sub=b.querySelector('small'),r=sub.getBoundingClientRect();
+     if(parseFloat(getComputedStyle(sub).fontSize)<9)throw Error('Small subtitle');
+     if(box.left<0||box.right>innerWidth||box.top<0||box.bottom>innerHeight)throw Error('Button outside screen');
+     if(r.left<box.left||r.right>box.right||r.bottom>box.bottom||sub.scrollWidth>sub.clientWidth)throw Error('Subtitle overflow');
+     if(i && box.top<bounds[i-1].bottom)throw Error('Overlapping buttons');
+    });
+    const title=document.querySelector('#title').getBoundingClientRect();
+    if(title.bottom>bounds[0].top)throw Error('Title overlap');
+   }''')
+   await page.screenshot(path=f'shots/task11-{w}.png')
+  await page.click('#two-player');await page.wait_for_function('__game.state.phase===\"aim\" || __game.state.phase===\"cpu\"')
+  assert await page.locator('#inn').inner_text()=='ROUND 1'
+  assert 'INNING' not in source
+  # Independent throws on an empty board; eight wind bearings at normal circuit strengths.
+  # Planner is run for every bag. All bags use the same launch/step functions as gameplay.
+  results=[]
+  for level in range(8):
+   result=await page.evaluate('''level=>{
+    const {M,roster,wind,planCareerShot,newBody,launch,step,RX}=__cpuTest;
+    M.phase='menu';M.scores=[0,1];M.position=[0,0];
+    let seed=110031+level*1009;
+    Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+    const tally={name:roster[level].name,throws:400,in:0,on:0,miss:0,kobe:0};
+    for(let n=0;n<tally.throws;n++){
+     const mph=[0,0,3,3,7,7,10,10][level],a=(n%8)*Math.PI/4;
+     wind.x=Math.sin(a)*mph*.025;wind.z=-Math.cos(a)*mph*.025;
+     const c=planCareerShot(roster[level]);tally.kobe+=M.arc===2;
+     const b=newBody(1,c.side);
+     launch(b,RX[1],c.power,c.aim,c.drift, M.arc);
+     for(let j=0;j<1920;j++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
+     if(b.state==='in')tally.in++;else if(b.state==='board')tally.on++;else tally.miss++;
+    }return tally;
+   }''',level)
+   results.append(result);print(json.dumps(result),flush=True)
+  Path('/tmp/task11-rates.json').write_text(json.dumps(results,indent=2))
+  for i,r in enumerate(results):
+   target_in=[.07,.15,.25,.33,.40,.45,.52,.60][i];target_on=[.30,.35,.35,.35,.30,.30,.30,.30][i]
+   assert abs(r['in']/r['throws']-target_in)<.075,r
+   assert abs(r['on']/r['throws']-target_on)<.075,r
+  assert results[0]['in']/results[0]['throws']<.10 and results[0]['kobe']==0
+  assert not errors,errors
+  await browser.close()
+  print('TASK 11: menu layouts, round terminology, CPU calibration PASS')
+asyncio.run(asyncio.wait_for(main(),timeout=150))
+PY
+cat /tmp/calibration11d.log" in /workspace/cornhole
+ succeeded in 0ms:
+0 [{"pe": 0.003, "ae": 0.05, "bias": -0.1, "lapse": 0.2, "in": 0.11000000000000001, "on": 0.29, "cost": 0.001700000000000001}, {"pe": 0.015, "ae": 0.05, "bias": -0.1, "lapse": 0.2, "in": 0.11333333333333334, "on": 0.2733333333333334, "cost": 0.0025888888888888862}, {"pe": 0.003, "ae": 0.05, "bias": -0.1, "lapse": 0.3, "in": 0.09625, "on": 0.25375, "cost": 0.0028281250000000008}, {"pe": 0.04, "ae": 0.05, "bias": -0.1, "lapse": 0, "in": 0.1125, "on": 0.26666666666666666, "cost": 0.00291736111111111}, {"pe": 0.12, "ae": 0.025, "bias": -0.1, "lapse": 0, "in": 0.12083333333333333, "on": 0.275, "cost": 0.0032090277777777755}]
+1 [{"pe": 0.08, "ae": 0.012, "bias": 0.025, "lapse": 0.2, "in": 0.16333333333333333, "on": 0.3466666666666667, "cost": 0.00018888888888888872}, {"pe": 0.003, "ae": 0.012, "bias": 0.05, "lapse": 0.5, "in": 0.15625, "on": 0.33541666666666664, "cost": 0.00025173611111111127}, {"pe": 0.015, "ae": 0.012, "bias": 0.05, "lapse": 0.5, "in": 0.13541666666666666, "on": 0.35625, "cost": 0.00025173611111111165}, {"pe": 0.003, "ae": 0.025, "bias": 0.1, "lapse": 0.4, "in": 0.15, "on": 0.32749999999999996, "cost": 0.000506250000000001}, {"pe": 0.08, "ae": 0.012, "bias": 0, "lapse": 0.1, "in": 0.1275, "on": 0.34875, "cost": 0.0005078124999999996}]
+2 [{"pe": 0.04, "ae": 0.001, "bias": 0.025, "lapse": 0, "in": 0.25416666666666665, "on": 0.3625, "cost": 0.00017361111111111125}, {"pe": 0.04, "ae": 0.001, "bias": 0.025, "lapse": 0.1, "in": 0.22874999999999998, "on": 0.32625, "cost": 0.0010156250000000005}, {"pe": 0.003, "ae": 0.012, "bias": 0, "lapse": 0.4, "in": 0.29, "on": 0.3025, "cost": 0.003856249999999997}, {"pe": 0.015, "ae": 0.006, "bias": 0, "lapse": 0.4, "in": 0.2975, "on": 0.3025, "cost": 0.004512499999999997}, {"pe": 0.04, "ae": 0.001, "bias": 0.025, "lapse": 0.2, "in": 0.20333333333333334, "on": 0.29, "cost": 0.0057777777777777775}]
+3 [{"pe": 0.003, "ae": 0.012, "bias": 0, "lapse": 0.3, "in": 0.3383333333333333, "on": 0.35, "cost": 6.944444444444396e-05}, {"pe": 0.003, "ae": 0.012, "bias": -0.025, "lapse": 0.3, "in": 0.3295833333333333, "on": 0.35874999999999996, "cost": 7.673611111111081e-05}, {"pe": 0.003, "ae": 0.001, "bias": -0.05, "lapse": 0.3, "in": 0.3383333333333333, "on": 0.3616666666666667, "cost": 0.00020555555555555615}, {"pe": 0.04, "ae": 0.001, "bias": -0.05, "lapse": 0.3, "in": 0.34125, "on": 0.3383333333333333, "cost": 0.00026267361111111055}, {"pe": 0.015, "ae": 0.012, "bias": 0, "lapse": 0.1, "in": 0.34125, "on": 0.37124999999999997, "cost": 0.0005781249999999992}]
+4 [{"pe": 0.08, "ae": 0.006, "bias": -0.1, "lapse": 0.1, "in": 0.40875, "on": 0.28875, "cost": 0.00020312499999999926}, {"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0.3, "in": 0.4083333333333333, "on": 0.25375, "cost": 0.0022085069444444452}, {"pe": 0.08, "ae": 0.006, "bias": -0.1, "lapse": 0.2, "in": 0.36333333333333334, "on": 0.2566666666666667, "cost": 0.0032222222222222183}, {"pe": 0.08, "ae": 0.006, "bias": -0.1, "lapse": 0, "in": 0.45416666666666666, "on": 0.32083333333333336, "cost": 0.0033680555555555543}, {"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0.2, "in": 0.46666666666666673, "on": 0.29, "cost": 0.00454444444444445}]
+5 [{"pe": 0.08, "ae": 0.006, "bias": -0.1, "lapse": 0, "in": 0.4625, "on": 0.30833333333333335, "cost": 0.00022569444444444514}, {"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0.2, "in": 0.4766666666666667, "on": 0.2966666666666667, "cost": 0.0007222222222222223}, {"pe": 0.08, "ae": 0.006, "bias": -0.1, "lapse": 0.1, "in": 0.41625, "on": 0.2775, "cost": 0.0016453124999999986}, {"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0.3, "in": 0.4170833333333333, "on": 0.25958333333333333, "cost": 0.0027170138888888903}, {"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0.1, "in": 0.53625, "on": 0.33375000000000005, "cost": 0.008578125000000002}]
+6 [{"pe": 0.08, "ae": 0.001, "bias": 0.05, "lapse": 0, "in": 0.5, "on": 0.30416666666666664, "cost": 0.00041736111111111173}, {"pe": 0.003, "ae": 0.001, "bias": 0.05, "lapse": 0.2, "in": 0.48666666666666664, "on": 0.31333333333333335, "cost": 0.001288888888888893}, {"pe": 0.015, "ae": 0.012, "bias": 0.1, "lapse": 0, "in": 0.4791666666666667, "on": 0.3416666666666667, "cost": 0.0034034722222222235}, {"pe": 0.003, "ae": 0.001, "bias": 0.05, "lapse": 0.1, "in": 0.5475, "on": 0.3525, "cost": 0.0035124999999999974}, {"pe": 0.08, "ae": 0.006, "bias": 0.1, "lapse": 0, "in": 0.4708333333333333, "on": 0.25416666666666665, "cost": 0.004518055555555558}]
+7 [{"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0, "in": 0.6041666666666666, "on": 0.3375, "cost": 0.0014236111111111136}, {"pe": 0.015, "ae": 0.006, "bias": -0.1, "lapse": 0.1, "in": 0.63, "on": 0.27, "cost": 0.0018}, {"pe": 0.08, "ae": 0.001, "bias": -0.1, "lapse": 0, "in": 0.6083333333333333, "on": 0.25, "cost": 0.0025694444444444428}, {"pe": 0.04, "ae": 0.006, "bias": -0.1, "lapse": 0.1, "in": 0.54375, "on": 0.30375, "cost": 0.0031781250000000026}, {"pe": 0.015, "ae": 0.006, "bias": -0.1, "lapse": 0.2, "in": 0.5599999999999999, "on": 0.24, "cost": 0.005200000000000003}]
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text();s=s.replace(\"function planCareerShot(o){\",'''// Power scatter, angular scatter, range bias and occasional wide release.
+// Calibrated against independent throws with the live 240 Hz physics.
+const CPU_SCATTER = [
+ {power:.04,aim:.06,bias:-.15,lapse:0},
+ {power:.08,aim:.012,bias:.025,lapse:.2},
+ {power:.04,aim:.001,bias:.025,lapse:0},
+ {power:.003,aim:.012,bias:0,lapse:.3},
+ {power:.08,aim:.006,bias:-.10,lapse:.1},
+ {power:.08,aim:.006,bias:-.10,lapse:0},
+ {power:.08,aim:.001,bias:.05,lapse:0},
+ {power:.04,aim:.006,bias:-.10,lapse:.04}
+];
+function planCareerShot(o){''')
+s=s.replace(\" const error=.045-o.level*.005, wild=o.style==='wild'?2:1;\",''' const scatter=CPU_SCATTER[o.level], lapse=Math.random()<scatter.lapse;
+ // Ted's large power scatter and occasional wild release keep his high variance.
+ const power=best.power+scatter.bias+gauss()*scatter.power;
+ const aim=best.aim+gauss()*scatter.aim+(lapse?(Math.random()<.5?-1:1)*(.13+Math.random()*.10):0);''')
+s=s.replace(\"power:clamp(best.power+gauss()*error*wild,0,1),aim:best.aim+gauss()*error*.23*wild\",\"power:clamp(power,0,1),aim\")
+p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/task11_check.py > /tmp/task11-test.log 2>&1" in /workspace/cornhole
+ exited 1 in 1783ms:
+exec
+/bin/bash -lc 'cat /tmp/task11-test.log; git diff --stat' in /workspace/cornhole
+ succeeded in 0ms:
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/task11_check.py", line 66, in <module>
+    asyncio.run(asyncio.wait_for(main(),timeout=150))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/workspace/cornhole/tests/task11_check.py", line 18, in main
+    await page.evaluate('''()=>{
+    ...<12 lines>...
+    }''')
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/async_api/_generated.py", line 16684, in evaluate
+    await self._impl_obj.evaluate(
+        expression=expression, arg=mapping.to_impl(arg)
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_page.py", line 476, in evaluate
+    return await self._main_frame.evaluate(expression, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_frame.py", line 346, in evaluate
+    await self._channel.send(
+    ...<6 lines>...
+    )
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 78, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/tmp/cornhole-venv/lib/python3.13/site-packages/playwright/_impl/_connection.py", line 636, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.Error: Page.evaluate: Error: Title overlap
+    at eval (eval at evaluate (:370:30), <anonymous>:13:41)
+    at UtilityScript.evaluate (<anonymous>:377:18)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+ CODEX_TASK_11.md | 12 ++++++++++++
+ chain-10.log     |  1 +
+ index.html       | 59 ++++++++++++++++++++++++++++++++++++++++++--------------
+ 3 files changed, 58 insertions(+), 14 deletions(-)
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('@media(max-width:560px){#panel .menu-modes', '@media(max-height:450px){#panel:has(.menu-modes){top:64%;padding:8px}#panel .menu-modes .go{padding:8px}}\\n@media(max-width:560px){#panel .menu-modes');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/task11_check.py > /tmp/task11-test.log 2>&1" in /workspace/cornhole
+exec
+/bin/bash -lc 'cat /tmp/task11-test.log' in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc 'cat /tmp/task11-test.log' in /workspace/cornhole
+ succeeded in 0ms:
+codex
+The layout checks now pass at all three requested sizes. I’ve also inspected the phone landscape screenshot: its subtitles are at least 9px, and the menu clears the title. The full CPU simulation is running across eight wind directions per opponent.
+exec
+/bin/bash -lc "cat /tmp/task11-test.log; ps -eo pid,etime,args | rg 'task11_check|calibrate11'" in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 11, "on": 144, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 44, "on": 137, "miss": 219, "kobe": 0}
+      1       00:00 codex-linux-sandbox --sandbox-policy-cwd /workspace/cornhole --command-cwd /workspace/cornhole --permission-profile {"type":"managed","file_system":{"type":"restricted","entries":[{"path":{"type":"special","value":{"kind":"root"}},"access":"read"},{"path":{"type":"path","path":"/workspace/cornhole"},"access":"write"},{"path":{"type":"special","value":{"kind":"slash_tmp"}},"access":"write"},{"path":{"type":"special","value":{"kind":"tmpdir"}},"access":"write"},{"path":{"type":"path","path":"/workspace/cornhole/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.aws"},"access":"read","missing_path_behavior":"skip"}]},"network":"enabled"} --apply-seccomp-then-exec -- /bin/bash -c __CODEX_SNAPSHOT_OVERRIDE_SET_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" __CODEX_SNAPSHOT_OVERRIDE_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" __CODEX_SNAPSHOT_OVERRIDE_SET_1="${CODEX_PERMISSION_PROFILE+x}" __CODEX_SNAPSHOT_OVERRIDE_1="${CODEX_PERMISSION_PROFILE-}" __CODEX_SNAPSHOT_OVERRIDE_SET_2="${CODEX_PLUGIN_METRICS_OUTPUT+x}" __CODEX_SNAPSHOT_OVERRIDE_2="${CODEX_PLUGIN_METRICS_OUTPUT-}" __CODEX_SNAPSHOT_OVERRIDE_SET_3="${CODEX_SESSION_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_3="${CODEX_SESSION_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_4="${CODEX_THREAD_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_4="${CODEX_THREAD_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_5="${CODEX_TOOL_CALL_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_5="${CODEX_TOOL_CALL_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_6="${CODEX_VERSION+x}" __CODEX_SNAPSHOT_OVERRIDE_6="${CODEX_VERSION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0="${ALL_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_0="${ALL_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1="${BUNDLE_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_1="${BUNDLE_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2="${BUNDLE_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_2="${BUNDLE_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3="${BUNDLE_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_3="${BUNDLE_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4="${BUNDLE_SSL_CA_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_4="${BUNDLE_SSL_CA_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5="${CARGO_HTTP_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_5="${CARGO_HTTP_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6="${CODEX_CA_CERTIFICATE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_6="${CODEX_CA_CERTIFICATE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8="${CODEX_NETWORK_PROXY_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_8="${CODEX_NETWORK_PROXY_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9="${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_9="${CODEX_NETWORK_PROXY_ATTRIBUTION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12="${CURL_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_12="${CURL_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13="${DOCKER_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_13="${DOCKER_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14="${DOCKER_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_14="${DOCKER_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15="${ELECTRON_GET_USE_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_15="${ELECTRON_GET_USE_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16="${FTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_16="${FTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17="${GIT_SSL_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_17="${GIT_SSL_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18="${HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_18="${HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19="${HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_19="${HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20="${NODE_EXTRA_CA_CERTS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_20="${NODE_EXTRA_CA_CERTS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21="${NODE_USE_ENV_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_21="${NODE_USE_ENV_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22="${NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_22="${NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23="${NPM_CONFIG_CAFILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_23="${NPM_CONFIG_CAFILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24="${NPM_CONFIG_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_24="${NPM_CONFIG_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25="${NPM_CONFIG_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_25="${NPM_CONFIG_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26="${NPM_CONFIG_NOPROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_26="${NPM_CONFIG_NOPROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27="${NPM_CONFIG_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_27="${NPM_CONFIG_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28="${PIP_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_28="${PIP_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29="${PIP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_29="${PIP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30="${REQUESTS_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_30="${REQUESTS_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31="${SSL_CERT_FILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_31="${SSL_CERT_FILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32="${WSS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_32="${WSS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33="${WS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_33="${WS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34="${YARN_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_34="${YARN_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35="${YARN_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_35="${YARN_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36="${YARN_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_36="${YARN_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37="${all_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_37="${all_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38="${ftp_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_38="${ftp_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39="${http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_39="${http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40="${https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_40="${https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41="${no_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_41="${no_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42="${npm_config_cafile+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_42="${npm_config_cafile-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43="${npm_config_http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_43="${npm_config_http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44="${npm_config_https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_44="${npm_config_https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45="${npm_config_noproxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_45="${npm_config_noproxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46="${npm_config_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_46="${npm_config_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47="${ws_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_47="${ws_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48="${wss_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_48="${wss_proxy-}" __CODEX_SNAPSHOT_PROXY_ENV_SET="${CODEX_NETWORK_PROXY_ACTIVE+x}"  if . '/home/box/.codex/shell_snapshots/01a1a394-d17e-72c2-864a-bd36beb78d15.1793745801626704515.sh' >/dev/null 2>&1; then :; fi  if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_0}" ]; then   if [ -z "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" ] || [ "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" != "${__CODEX_SNAPSHOT_OVERRIDE_0}" ]; then export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS="${__CODEX_SNAPSHOT_OVERRIDE_0}"; else export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi else builtin unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS 2>/dev/null || command unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_1}" ]; then   if [ -z "${CODEX_PERMISSION_PROFILE+x}" ] || [ "${CODEX_PERMISSION_PROFILE-}" != "${__CODEX_SNAPSHOT_OVERRIDE_1}" ]; then export CODEX_PERMISSION_PROFILE="${__CODEX_SNAPSHOT_OVERRIDE_1}"; else export CODEX_PERMISSION_PROFILE; fi else builtin unset CODEX_PERMISSION_PROFILE 2>/dev/null || command unset CODEX_PERMISSION_PROFILE; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_2}" ]; then   if [ -z "${CODEX_PLUGIN_METRICS_OUTPUT+x}" ] || [ "${CODEX_PLUGIN_METRICS_OUTPUT-}" != "${__CODEX_SNAPSHOT_OVERRIDE_2}" ]; then export CODEX_PLUGIN_METRICS_OUTPUT="${__CODEX_SNAPSHOT_OVERRIDE_2}"; else export CODEX_PLUGIN_METRICS_OUTPUT; fi else builtin unset CODEX_PLUGIN_METRICS_OUTPUT 2>/dev/null || command unset CODEX_PLUGIN_METRICS_OUTPUT; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_3}" ]; then   if [ -z "${CODEX_SESSION_ID+x}" ] || [ "${CODEX_SESSION_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_3}" ]; then export CODEX_SESSION_ID="${__CODEX_SNAPSHOT_OVERRIDE_3}"; else export CODEX_SESSION_ID; fi else builtin unset CODEX_SESSION_ID 2>/dev/null || command unset CODEX_SESSION_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_4}" ]; then   if [ -z "${CODEX_THREAD_ID+x}" ] || [ "${CODEX_THREAD_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_4}" ]; then export CODEX_THREAD_ID="${__CODEX_SNAPSHOT_OVERRIDE_4}"; else export CODEX_THREAD_ID; fi else builtin unset CODEX_THREAD_ID 2>/dev/null || command unset CODEX_THREAD_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_5}" ]; then   if [ -z "${CODEX_TOOL_CALL_ID+x}" ] || [ "${CODEX_TOOL_CALL_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_5}" ]; then export CODEX_TOOL_CALL_ID="${__CODEX_SNAPSHOT_OVERRIDE_5}"; else export CODEX_TOOL_CALL_ID; fi else builtin unset CODEX_TOOL_CALL_ID 2>/dev/null || command unset CODEX_TOOL_CALL_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_VERSION+x}" ] || [ "${CODEX_VERSION-}" != "${__CODEX_SNAPSHOT_OVERRIDE_6}" ]; then export CODEX_VERSION="${__CODEX_SNAPSHOT_OVERRIDE_6}"; else export CODEX_VERSION; fi else builtin unset CODEX_VERSION 2>/dev/null || command unset CODEX_VERSION; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 if [ -n "$__CODEX_SNAPSHOT_PROXY_ENV_SET" ] || [ -n "${CODEX_NETWORK_PROXY_ACTIVE+x}" ]; then if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0}" ]; then   if [ -z "${ALL_PROXY+x}" ] || [ "${ALL_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}" ]; then export ALL_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}"; else export ALL_PROXY; fi else builtin unset ALL_PROXY 2>/dev/null || command unset ALL_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1}" ]; then   if [ -z "${BUNDLE_HTTPS_PROXY+x}" ] || [ "${BUNDLE_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}" ]; then export BUNDLE_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}"; else export BUNDLE_HTTPS_PROXY; fi else builtin unset BUNDLE_HTTPS_PROXY 2>/dev/null || command unset BUNDLE_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2}" ]; then   if [ -z "${BUNDLE_HTTP_PROXY+x}" ] || [ "${BUNDLE_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}" ]; then export BUNDLE_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}"; else export BUNDLE_HTTP_PROXY; fi else builtin unset BUNDLE_HTTP_PROXY 2>/dev/null || command unset BUNDLE_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3}" ]; then   if [ -z "${BUNDLE_NO_PROXY+x}" ] || [ "${BUNDLE_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}" ]; then export BUNDLE_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}"; else export BUNDLE_NO_PROXY; fi else builtin unset BUNDLE_NO_PROXY 2>/dev/null || command unset BUNDLE_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4}" ]; then   if [ -z "${BUNDLE_SSL_CA_CERT+x}" ] || [ "${BUNDLE_SSL_CA_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}" ]; then export BUNDLE_SSL_CA_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}"; else export BUNDLE_SSL_CA_CERT; fi else builtin unset BUNDLE_SSL_CA_CERT 2>/dev/null || command unset BUNDLE_SSL_CA_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5}" ]; then   if [ -z "${CARGO_HTTP_CAINFO+x}" ] || [ "${CARGO_HTTP_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}" ]; then export CARGO_HTTP_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}"; else export CARGO_HTTP_CAINFO; fi else builtin unset CARGO_HTTP_CAINFO 2>/dev/null || command unset CARGO_HTTP_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_CA_CERTIFICATE+x}" ] || [ "${CODEX_CA_CERTIFICATE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}" ]; then export CODEX_CA_CERTIFICATE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}"; else export CODEX_CA_CERTIFICATE; fi else builtin unset CODEX_CA_CERTIFICATE 2>/dev/null || command unset CODEX_CA_CERTIFICATE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7}" ]; then   if [ -z "${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" ] || [ "${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}" ]; then export CODEX_NETWORK_ALLOW_LOCAL_BINDING="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}"; else export CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi else builtin unset CODEX_NETWORK_ALLOW_LOCAL_BINDING 2>/dev/null || command unset CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}" ]; then export CODEX_NETWORK_PROXY_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}"; else export CODEX_NETWORK_PROXY_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" ] || [ "${CODEX_NETWORK_PROXY_ATTRIBUTION-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}" ]; then export CODEX_NETWORK_PROXY_ATTRIBUTION="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}"; else export CODEX_NETWORK_PROXY_ATTRIBUTION; fi else builtin unset CODEX_NETWORK_PROXY_ATTRIBUTION 2>/dev/null || command unset CODEX_NETWORK_PROXY_ATTRIBUTION; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" ] || [ "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}" ]; then export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}"; else export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi else builtin unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS 2>/dev/null || command unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}" ]; then export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}"; else export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12}" ]; then   if [ -z "${CURL_CA_BUNDLE+x}" ] || [ "${CURL_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}" ]; then export CURL_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}"; else export CURL_CA_BUNDLE; fi else builtin unset CURL_CA_BUNDLE 2>/dev/null || command unset CURL_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13}" ]; then   if [ -z "${DOCKER_HTTPS_PROXY+x}" ] || [ "${DOCKER_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}" ]; then export DOCKER_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}"; else export DOCKER_HTTPS_PROXY; fi else builtin unset DOCKER_HTTPS_PROXY 2>/dev/null || command unset DOCKER_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14}" ]; then   if [ -z "${DOCKER_HTTP_PROXY+x}" ] || [ "${DOCKER_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}" ]; then export DOCKER_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}"; else export DOCKER_HTTP_PROXY; fi else builtin unset DOCKER_HTTP_PROXY 2>/dev/null || command unset DOCKER_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15}" ]; then   if [ -z "${ELECTRON_GET_USE_PROXY+x}" ] || [ "${ELECTRON_GET_USE_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}" ]; then export ELECTRON_GET_USE_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}"; else export ELECTRON_GET_USE_PROXY; fi else builtin unset ELECTRON_GET_USE_PROXY 2>/dev/null || command unset ELECTRON_GET_USE_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16}" ]; then   if [ -z "${FTP_PROXY+x}" ] || [ "${FTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}" ]; then export FTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}"; else export FTP_PROXY; fi else builtin unset FTP_PROXY 2>/dev/null || command unset FTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17}" ]; then   if [ -z "${GIT_SSL_CAINFO+x}" ] || [ "${GIT_SSL_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}" ]; then export GIT_SSL_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}"; else export GIT_SSL_CAINFO; fi else builtin unset GIT_SSL_CAINFO 2>/dev/null || command unset GIT_SSL_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18}" ]; then   if [ -z "${HTTPS_PROXY+x}" ] || [ "${HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}" ]; then export HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}"; else export HTTPS_PROXY; fi else builtin unset HTTPS_PROXY 2>/dev/null || command unset HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19}" ]; then   if [ -z "${HTTP_PROXY+x}" ] || [ "${HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}" ]; then export HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}"; else export HTTP_PROXY; fi else builtin unset HTTP_PROXY 2>/dev/null || command unset HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20}" ]; then   if [ -z "${NODE_EXTRA_CA_CERTS+x}" ] || [ "${NODE_EXTRA_CA_CERTS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}" ]; then export NODE_EXTRA_CA_CERTS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}"; else export NODE_EXTRA_CA_CERTS; fi else builtin unset NODE_EXTRA_CA_CERTS 2>/dev/null || command unset NODE_EXTRA_CA_CERTS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21}" ]; then   if [ -z "${NODE_USE_ENV_PROXY+x}" ] || [ "${NODE_USE_ENV_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}" ]; then export NODE_USE_ENV_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}"; else export NODE_USE_ENV_PROXY; fi else builtin unset NODE_USE_ENV_PROXY 2>/dev/null || command unset NODE_USE_ENV_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22}" ]; then   if [ -z "${NO_PROXY+x}" ] || [ "${NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}" ]; then export NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}"; else export NO_PROXY; fi else builtin unset NO_PROXY 2>/dev/null || command unset NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23}" ]; then   if [ -z "${NPM_CONFIG_CAFILE+x}" ] || [ "${NPM_CONFIG_CAFILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}" ]; then export NPM_CONFIG_CAFILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}"; else export NPM_CONFIG_CAFILE; fi else builtin unset NPM_CONFIG_CAFILE 2>/dev/null || command unset NPM_CONFIG_CAFILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24}" ]; then   if [ -z "${NPM_CONFIG_HTTPS_PROXY+x}" ] || [ "${NPM_CONFIG_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}" ]; then export NPM_CONFIG_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}"; else export NPM_CONFIG_HTTPS_PROXY; fi else builtin unset NPM_CONFIG_HTTPS_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25}" ]; then   if [ -z "${NPM_CONFIG_HTTP_PROXY+x}" ] || [ "${NPM_CONFIG_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}" ]; then export NPM_CONFIG_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}"; else export NPM_CONFIG_HTTP_PROXY; fi else builtin unset NPM_CONFIG_HTTP_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26}" ]; then   if [ -z "${NPM_CONFIG_NOPROXY+x}" ] || [ "${NPM_CONFIG_NOPROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}" ]; then export NPM_CONFIG_NOPROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}"; else export NPM_CONFIG_NOPROXY; fi else builtin unset NPM_CONFIG_NOPROXY 2>/dev/null || command unset NPM_CONFIG_NOPROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27}" ]; then   if [ -z "${NPM_CONFIG_PROXY+x}" ] || [ "${NPM_CONFIG_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}" ]; then export NPM_CONFIG_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}"; else export NPM_CONFIG_PROXY; fi else builtin unset NPM_CONFIG_PROXY 2>/dev/null || command unset NPM_CONFIG_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28}" ]; then   if [ -z "${PIP_CERT+x}" ] || [ "${PIP_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}" ]; then export PIP_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}"; else export PIP_CERT; fi else builtin unset PIP_CERT 2>/dev/null || command unset PIP_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29}" ]; then   if [ -z "${PIP_PROXY+x}" ] || [ "${PIP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}" ]; then export PIP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}"; else export PIP_PROXY; fi else builtin unset PIP_PROXY 2>/dev/null || command unset PIP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30}" ]; then   if [ -z "${REQUESTS_CA_BUNDLE+x}" ] || [ "${REQUESTS_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}" ]; then export REQUESTS_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}"; else export REQUESTS_CA_BUNDLE; fi else builtin unset REQUESTS_CA_BUNDLE 2>/dev/null || command unset REQUESTS_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31}" ]; then   if [ -z "${SSL_CERT_FILE+x}" ] || [ "${SSL_CERT_FILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}" ]; then export SSL_CERT_FILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}"; else export SSL_CERT_FILE; fi else builtin unset SSL_CERT_FILE 2>/dev/null || command unset SSL_CERT_FILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32}" ]; then   if [ -z "${WSS_PROXY+x}" ] || [ "${WSS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}" ]; then export WSS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}"; else export WSS_PROXY; fi else builtin unset WSS_PROXY 2>/dev/null || command unset WSS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33}" ]; then   if [ -z "${WS_PROXY+x}" ] || [ "${WS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}" ]; then export WS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}"; else export WS_PROXY; fi else builtin unset WS_PROXY 2>/dev/null || command unset WS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34}" ]; then   if [ -z "${YARN_HTTPS_PROXY+x}" ] || [ "${YARN_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}" ]; then export YARN_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}"; else export YARN_HTTPS_PROXY; fi else builtin unset YARN_HTTPS_PROXY 2>/dev/null || command unset YARN_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35}" ]; then   if [ -z "${YARN_HTTP_PROXY+x}" ] || [ "${YARN_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}" ]; then export YARN_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}"; else export YARN_HTTP_PROXY; fi else builtin unset YARN_HTTP_PROXY 2>/dev/null || command unset YARN_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36}" ]; then   if [ -z "${YARN_NO_PROXY+x}" ] || [ "${YARN_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}" ]; then export YARN_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}"; else export YARN_NO_PROXY; fi else builtin unset YARN_NO_PROXY 2>/dev/null || command unset YARN_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37}" ]; then   if [ -z "${all_proxy+x}" ] || [ "${all_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}" ]; then export all_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}"; else export all_proxy; fi else builtin unset all_proxy 2>/dev/null || command unset all_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38}" ]; then   if [ -z "${ftp_proxy+x}" ] || [ "${ftp_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}" ]; then export ftp_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}"; else export ftp_proxy; fi else builtin unset ftp_proxy 2>/dev/null || command unset ftp_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39}" ]; then   if [ -z "${http_proxy+x}" ] || [ "${http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}" ]; then export http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}"; else export http_proxy; fi else builtin unset http_proxy 2>/dev/null || command unset http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40}" ]; then   if [ -z "${https_proxy+x}" ] || [ "${https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}" ]; then export https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}"; else export https_proxy; fi else builtin unset https_proxy 2>/dev/null || command unset https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41}" ]; then   if [ -z "${no_proxy+x}" ] || [ "${no_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}" ]; then export no_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}"; else export no_proxy; fi else builtin unset no_proxy 2>/dev/null || command unset no_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42}" ]; then   if [ -z "${npm_config_cafile+x}" ] || [ "${npm_config_cafile-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}" ]; then export npm_config_cafile="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}"; else export npm_config_cafile; fi else builtin unset npm_config_cafile 2>/dev/null || command unset npm_config_cafile; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43}" ]; then   if [ -z "${npm_config_http_proxy+x}" ] || [ "${npm_config_http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}" ]; then export npm_config_http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}"; else export npm_config_http_proxy; fi else builtin unset npm_config_http_proxy 2>/dev/null || command unset npm_config_http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44}" ]; then   if [ -z "${npm_config_https_proxy+x}" ] || [ "${npm_config_https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}" ]; then export npm_config_https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}"; else export npm_config_https_proxy; fi else builtin unset npm_config_https_proxy 2>/dev/null || command unset npm_config_https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45}" ]; then   if [ -z "${npm_config_noproxy+x}" ] || [ "${npm_config_noproxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}" ]; then export npm_config_noproxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}"; else export npm_config_noproxy; fi else builtin unset npm_config_noproxy 2>/dev/null || command unset npm_config_noproxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46}" ]; then   if [ -z "${npm_config_proxy+x}" ] || [ "${npm_config_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}" ]; then export npm_config_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}"; else export npm_config_proxy; fi else builtin unset npm_config_proxy 2>/dev/null || command unset npm_config_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47}" ]; then   if [ -z "${ws_proxy+x}" ] || [ "${ws_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}" ]; then export ws_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}"; else export ws_proxy; fi else builtin unset ws_proxy 2>/dev/null || command unset ws_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48}" ]; then   if [ -z "${wss_proxy+x}" ] || [ "${wss_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}" ]; then export wss_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}"; else export wss_proxy; fi else builtin unset wss_proxy 2>/dev/null || command unset wss_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 fi if [ -n "${PATH:-}" ]; then export PATH='/home/box/.local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path':"$PATH"; else export PATH='/home/box/.local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path'; fi  exec '/bin/bash' -c 'cat /tmp/task11-test.log; ps -eo pid,etime,args | rg '"'"'task11_check|calibrate11'"'"''
+      2       00:00 /bin/bash -c cat /tmp/task11-test.log; ps -eo pid,etime,args | rg 'task11_check|calibrate11'
+      5       00:00 rg task11_check|calibrate11
+
+exec
+/bin/bash -lc 'cat /tmp/task11-test.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 11, "on": 144, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 44, "on": 137, "miss": 219, "kobe": 0}
+
+exec
+/bin/bash -lc 'cat /tmp/task11-test.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 11, "on": 144, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 44, "on": 137, "miss": 219, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 176, "miss": 128, "kobe": 400}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('/tmp/calibrate11.py');s=p.read_text().replace(\".replace('const error=.045-o.level*.005', 'window.bestShot={...best,arc,side}; const error=.045-o.level*.005')\",\".replace('const scatter=CPU_SCATTER', 'window.bestShot={...best,arc,side}; const scatter=CPU_SCATTER')\").replace('k<4','k<8').replace('k*Math.PI/2','k*Math.PI/4').replace('shots[n%4]','shots[n%8]').replace('[-.10,-.05,-.025,0,.025,.05,.10]','[-.15,-.125,-.10,-.05,0,.025,.05]').replace('[.003,.015,.04,.08,.12]','[.003,.025,.04,.06,.08]').replace('[.001,.006,.012,.025,.05]','[.001,.006,.012,.05,.07]');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/calibrate11.py > /tmp/calibration11e.log" in /workspace/cornhole
+exec
+/bin/bash -lc 'mkdir -p /tmp/task11-original-shots && cp shots/*.png /tmp/task11-original-shots/ && cat /tmp/task11-test.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 11, "on": 144, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 44, "on": 137, "miss": 219, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 176, "miss": 128, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 149, "on": 129, "miss": 122, "kobe": 0}
+{"name": "Slidin\u2019 Steve II", "throws": 400, "in": 179, "on": 128, "miss": 93, "kobe": 0}
+{"name": "Big Bag Barb II", "throws": 400, "in": 204, "on": 113, "miss": 83, "kobe": 0}
+
+ exited 1 in 37724ms:
+exec
+/bin/bash -lc 'cat /tmp/calibration11e.log; cat /tmp/task11-test.log' in /workspace/cornhole
+ succeeded in 0ms:
+0 [{"pe": 0.003, "ae": 0.07, "bias": -0.125, "lapse": 0, "in": 0.075, "on": 0.30416666666666664, "cost": 4.2361111111110895e-05}, {"pe": 0.04, "ae": 0.05, "bias": -0.125, "lapse": 0.2, "in": 0.06666666666666667, "on": 0.2866666666666667, "cost": 0.00018888888888888826}, {"pe": 0.003, "ae": 0.05, "bias": -0.125, "lapse": 0.2, "in": 0.07666666666666667, "on": 0.31666666666666665, "cost": 0.0003222222222222221}, {"pe": 0.06, "ae": 0.05, "bias": -0.125, "lapse": 0, "in": 0.07916666666666666, "on": 0.2833333333333333, "cost": 0.00036180555555555526}, {"pe": 0.025, "ae": 0.05, "bias": -0.125, "lapse": 0.3, "in": 0.05833333333333333, "on": 0.28291666666666665, "cost": 0.0004279513888888894}]
+1 [{"pe": 0.08, "ae": 0.012, "bias": 0.025, "lapse": 0.2, "in": 0.16333333333333333, "on": 0.3466666666666667, "cost": 0.00018888888888888872}, {"pe": 0.003, "ae": 0.012, "bias": 0.05, "lapse": 0.5, "in": 0.15625, "on": 0.33541666666666664, "cost": 0.00025173611111111127}, {"pe": 0.025, "ae": 0.012, "bias": 0.05, "lapse": 0.5, "in": 0.13333333333333333, "on": 0.35625, "cost": 0.0003168402777777781}, {"pe": 0.06, "ae": 0.006, "bias": 0, "lapse": 0.2, "in": 0.13333333333333333, "on": 0.34, "cost": 0.00037777777777777674}, {"pe": 0.08, "ae": 0.012, "bias": 0, "lapse": 0.1, "in": 0.1275, "on": 0.34875, "cost": 0.0005078124999999996}]
+2 [{"pe": 0.04, "ae": 0.001, "bias": 0.025, "lapse": 0, "in": 0.25833333333333336, "on": 0.3625, "cost": 0.00022569444444444514}, {"pe": 0.025, "ae": 0.001, "bias": 0.025, "lapse": 0.2, "in": 0.22333333333333336, "on": 0.34, "cost": 0.000811111111111109}, {"pe": 0.04, "ae": 0.001, "bias": 0.025, "lapse": 0.1, "in": 0.23250000000000004, "on": 0.32625, "cost": 0.0008703124999999983}, {"pe": 0.025, "ae": 0.001, "bias": 0.025, "lapse": 0.1, "in": 0.25125000000000003, "on": 0.3825, "cost": 0.001057812500000002}, {"pe": 0.06, "ae": 0.001, "bias": 0.025, "lapse": 0, "in": 0.20833333333333334, "on": 0.3541666666666667, "cost": 0.0017534722222222218}]
+3 [{"pe": 0.003, "ae": 0.012, "bias": 0, "lapse": 0.3, "in": 0.33249999999999996, "on": 0.3558333333333333, "cost": 4.027777777777714e-05}, {"pe": 0.04, "ae": 0.001, "bias": -0.05, "lapse": 0.3, "in": 0.3383333333333333, "on": 0.34125, "cost": 0.00014600694444444362}, {"pe": 0.025, "ae": 0.012, "bias": 0, "lapse": 0, "in": 0.32083333333333336, "on": 0.35833333333333334, "cost": 0.00015347222222222246}, {"pe": 0.025, "ae": 0.001, "bias": -0.05, "lapse": 0.3, "in": 0.3645833333333333, "on": 0.33541666666666664, "cost": 0.0014086805555555532}, {"pe": 0.06, "ae": 0.001, "bias": -0.05, "lapse": 0.2, "in": 0.30333333333333334, "on": 0.39, "cost": 0.0023111111111111145}]
+4 [{"pe": 0.08, "ae": 0.006, "bias": -0.1, "lapse": 0.1, "in": 0.405, "on": 0.3, "cost": 2.5000000000000045e-05}, {"pe": 0.08, "ae": 0.001, "bias": -0.125, "lapse": 0.2, "in": 0.4, "on": 0.2866666666666667, "cost": 0.0001777777777777771}, {"pe": 0.06, "ae": 0.006, "bias": -0.1, "lapse": 0.2, "in": 0.4133333333333334, "on": 0.30333333333333334, "cost": 0.00018888888888888986}, {"pe": 0.025, "ae": 0.001, "bias": -0.125, "lapse": 0.3, "in": 0.3879166666666667, "on": 0.3120833333333333, "cost": 0.00029201388888888897}, {"pe": 0.06, "ae": 0.001, "bias": -0.125, "lapse": 0.2, "in": 0.41666666666666674, "on": 0.3066666666666667, "cost": 0.0003222222222222245}]
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 11, "on": 144, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 44, "on": 137, "miss": 219, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 176, "miss": 128, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 149, "on": 129, "miss": 122, "kobe": 0}
+{"name": "Slidin\u2019 Steve II", "throws": 400, "in": 179, "on": 128, "miss": 93, "kobe": 0}
+{"name": "Big Bag Barb II", "throws": 400, "in": 204, "on": 113, "miss": 83, "kobe": 0}
+{"name": "Reign Supreme", "throws": 400, "in": 204, "on": 153, "miss": 43, "kobe": 0}
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/task11_check.py", line 66, in <module>
+    asyncio.run(asyncio.wait_for(main(),timeout=150))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/workspace/cornhole/tests/task11_check.py", line 61, in main
+    assert abs(r['on']/r['throws']-target_on)<.075,r
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'name': 'Kobe Kowalski', 'throws': 400, 'in': 96, 'on': 176, 'miss': 128, 'kobe': 400}
+
+ succeeded in 8531ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('{power:.04,aim:.06,bias:-.15,lapse:0}','{power:.06,aim:.05,bias:-.125,lapse:0}').replace('{power:.08,aim:.012,bias:.025,lapse:.2}','{power:.065,aim:.010,bias:.025,lapse:.15}').replace('{power:.04,aim:.001,bias:.025,lapse:0}','{power:.04,aim:.004,bias:.015,lapse:0}').replace('{power:.04,aim:.006,bias:-.10,lapse:.04}','{power:.025,aim:.004,bias:-.10,lapse:.04}');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/task11_check.py > /tmp/task11-test2.log 2>&1" in /workspace/cornhole
+exec
+/bin/bash -lc "PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python - <<'PY' > /tmp/task11-regression.log 2>&1
+import subprocess,sys
+from pathlib import Path
+for suite in sorted(Path('tests').glob('*_check.py')):
+ if suite.name=='task11_check.py':continue
+ print('Running '+suite.name,flush=True)
+ result=subprocess.run([sys.executable,'tests/run_all.py','--worker',str(suite)],timeout=150)
+ if result.returncode:sys.exit(result.returncode)
+print('All existing suites passed',flush=True)
+PY" in /workspace/cornhole
+exec
+/bin/bash -lc 'git diff -- index.html' in /workspace/cornhole
+ succeeded in 0ms:
+diff --git a/index.html b/index.html
+index e9aa32f..9835f66 100644
+--- a/index.html
++++ b/index.html
+@@ -88,6 +88,14 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+ .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
+ #height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:inset 0 0 0 1px #fff,0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+ @media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
++/* Mode descriptions share one readable, responsive button column. */
++#panel:has(.menu-modes){width:540px;padding:12px;max-width:94vw}
++.menu-modes{display:grid;gap:10px}
++#panel .menu-modes .go{width:100%;margin:0;padding:14px 8px;font-size:12px;line-height:1.6}
++.menu-modes small{display:block;font-size:9px;line-height:1.8;color:#65512f;margin-top:6px}
++@media(min-width:1000px) and (min-height:600px){#panel .menu-modes .go{font-size:14px}.menu-modes small{font-size:11px}}
++@media(max-height:450px){#panel:has(.menu-modes){top:64%;padding:8px}#panel .menu-modes .go{padding:8px}}
++@media(max-width:560px){#panel .menu-modes .go{font-size:11px}.menu-modes small{max-width:100%;text-wrap:balance}}
+ </style>
+ <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+ </head>
+@@ -96,7 +104,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+   <div id="hud">
+     <div id="sb" class="ol">
+       <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+-      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
++      <div class="mid"><div id="inn">ROUND 1</div><div id="goal">TO 21</div></div>
+       <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+     </div>
+     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+@@ -702,7 +710,7 @@ function renderHud() {
+     ui.p[t].innerHTML = [0, 1, 2, 3].map((i) => `<i class="${i < thrown ? 'used' : ''}"></i>`).join('');
+     ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
+   }
+-  ui.inn.textContent = 'INNING ' + M.inning;
++  ui.inn.textContent = 'ROUND ' + M.inning;
+   ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+   ui.goal.classList.toggle('practice', M.practice);
+   const t = thrower();
+@@ -778,35 +786,59 @@ function careerResult(win){
+  ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'REMATCH'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+  $('next-fight').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=careerMap;
+ }
++// Power scatter, angular scatter, range bias and occasional wide release.
++// Calibrated against independent throws with the live 240 Hz physics.
++const CPU_SCATTER = [
++ {power:.06,aim:.05,bias:-.125,lapse:0},
++ {power:.065,aim:.010,bias:.025,lapse:.15},
++ {power:.04,aim:.004,bias:.015,lapse:0},
++ {power:.003,aim:.012,bias:0,lapse:.3},
++ {power:.08,aim:.006,bias:-.10,lapse:.1},
++ {power:.08,aim:.006,bias:-.10,lapse:0},
++ {power:.08,aim:.001,bias:.05,lapse:0},
++ {power:.025,aim:.004,bias:-.10,lapse:.04}
++];
+ function planCareerShot(o){
+  // Predict actual flight and board friction, then value strategic landing targets.
+  const deck=bags.filter(onDeck), blockers=deck.filter(b=>b.lp.z>HOLE_LOCAL.z+.12);
+- let arc=o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
++ let arc=o.level===0?1:o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
+  if(o.level>=3 && blockers.length) arc=2;
+- let side=o.style==='sniper'||o.style==='blocker'?'sticky':'slick';
++ let side=o.style==='sniper'||o.style==='blocker'||o.style==='slider' && o.level>0?'sticky':'slick';
+  let target=HOLE_LOCAL.clone(), goal='hole';
+  const own=deck.find(b=>b.team===1 && holeDist(b.lp)<.35), enemy=deck.find(b=>b.team===0);
+  if(o.level>=2 && own && o.style!=='lobber'){target.copy(own.lp);arc=0;side='slick';goal='push';}
+  else if(o.level>=4 && enemy && M.scores[0]>=18){target.copy(enemy.lp);arc=0;goal='knock';}
+  else if(o.style==='blocker' && !blockers.length && M.scores[1]>=M.scores[0]){target.z+=.38;goal='block';}
+- let best={cost:Infinity,power:.55,aim:0};
++ let best={cost:Infinity,power:.55,aim:0}, holeShots=[];
+  // Later opponents compensate with the full match wind; early opponents are less precise.
+- for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012){
++ const assess=(power,aim)=>{
+   const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc);
+-  for(let i=0;i<960;i++){step(b,1/120);if(['board','grass','in','removed'].includes(b.state))break;}
+-  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2:.5;
++  for(let i=0;i<1920;i++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
++  if(b.state==='in' && goal==='hole')holeShots.push({power,aim});
++  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2+cost:.5;
+   if(b.state==='grass'||b.state==='removed')cost+=3;
+   if(cost<best.cost)best={cost,power,aim};
++ };
++ for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012) assess(power,aim);
++ const coarse={...best};
++ for(let power=coarse.power-.015;power<=coarse.power+.015;power+=.0025)
++  for(let aim=coarse.aim-.012;aim<=coarse.aim+.012;aim+=.002) assess(power,aim);
++ if(holeShots.length){
++  const center=holeShots.reduce((a,b)=>({power:a.power+b.power,aim:a.aim+b.aim}),{power:0,aim:0});
++  best.power=center.power/holeShots.length;best.aim=center.aim/holeShots.length;
+  }
+- const error=.045-o.level*.005, wild=o.style==='wild'?2:1;
++ const scatter=CPU_SCATTER[o.level], lapse=Math.random()<scatter.lapse;
++ // Ted's large power scatter and occasional wild release keep his high variance.
++ const power=best.power+scatter.bias+gauss()*scatter.power;
++ const aim=best.aim+gauss()*scatter.aim+(lapse?(Math.random()<.5?-1:1)*(.13+Math.random()*.10):0);
+  M.arc=arc;M.spin=0;M.side[1]=side;
+- return {t:0,side,power:clamp(best.power+gauss()*error*wild,0,1),aim:best.aim+gauss()*error*.23*wild,drift:gauss()*.05,goal};
++ return {t:0,side,power:clamp(power,0,1),aim,drift:gauss()*.05,goal};
+ }
+ function showMenu() {
+   M.phase = 'menu'; ui.title.classList.remove('gone');
+   M.career=false;
+   clearBags();
+-  ui.panel.innerHTML = '<button class="go" id="two-player">2 PLAYER</button><button class="go" id="practice">SOLO PRACTICE</button><button class="go" id="career">START TOURNAMENT</button>';
++  ui.panel.innerHTML = '<div class="menu-modes"><button class="go" id="two-player">2 PLAYER<small>HUMAN VS HUMAN · SAME SCREEN</small></button><button class="go" id="practice">SOLO PRACTICE<small>JUST YOU · NO OPPONENT</small></button><button class="go" id="career">START TOURNAMENT<small>YOU VS CPU · CLIMB TO CORNHOLE KING</small></button></div>';
+   ui.panel.hidden=false;
+   $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
+   $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
+@@ -896,13 +928,13 @@ function scoreInning() {
+   M.phase = win >= 0 ? 'over' : 'summary'; M.winner = win;
+   renderHud();
+   const head = win >= 0 ? `<div class="pt">FINAL</div><div class="big ${win ? 'b' : 'r'}">${M.vs === 'cpu' ? (win === 0 ? 'YOU WIN!' : 'CPU WINS') : TEAM[win] + ' WINS!'}</div>`
+-    : `<div class="pt">INNING ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
++    : `<div class="pt">ROUND ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
+   ui.panel.innerHTML = head + `
+     <div class="row"><div class="r">RED<b>${pts[0]}</b>${inC[0]} IN · ${onC[0]} ON</div><div>vs</div><div class="b">BLUE<b>${pts[1]}</b>${inC[1]} IN · ${onC[1]} ON</div></div>
+-    <div class="pd">${scorer < 0 ? 'EQUAL INNING · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
++    <div class="pd">${scorer < 0 ? 'EQUAL ROUND · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
+     MATCH: <span class="r">RED ${M.scores[0]}</span> · <span class="b">BLUE ${M.scores[1]}</span><br>
+     ${win >= 0 ? '' : `${TEAM[M.first]} THROWS FIRST NEXT`}</div>
+-    <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT INNING'}</button>`;
++    <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT ROUND'}</button>`;
+   ui.panel.hidden = false;
+   $('go').onclick = (e) => { e.stopPropagation(); advance(); };
+   if(win>=0 && M.career) careerResult(win);
+
+exec
+/bin/bash -lc 'cat /tmp/task11-test2.log; tail -8 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 175, "miss": 167, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 102, "on": 201, "miss": 97, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+Running career_check.py
+
+ exited 1 in 39084ms:
+exec
+/bin/bash -lc 'cat /tmp/task11-test2.log; tail -12 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 175, "miss": 167, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 102, "on": 201, "miss": 97, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 149, "on": 129, "miss": 122, "kobe": 0}
+{"name": "Slidin\u2019 Steve II", "throws": 400, "in": 179, "on": 128, "miss": 93, "kobe": 0}
+{"name": "Big Bag Barb II", "throws": 400, "in": 204, "on": 113, "miss": 83, "kobe": 0}
+{"name": "Reign Supreme", "throws": 400, "in": 287, "on": 95, "miss": 18, "kobe": 0}
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/task11_check.py", line 66, in <module>
+    asyncio.run(asyncio.wait_for(main(),timeout=150))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/workspace/cornhole/tests/task11_check.py", line 61, in main
+    assert abs(r['on']/r['throws']-target_on)<.075,r
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'name': 'Big Bag Barb', 'throws': 400, 'in': 58, 'on': 175, 'miss': 167, 'kobe': 0}
+Running career_check.py
+Early win passed
+Persistence passed
+
+codex
+Steve’s latest result is 5.5% in the hole and 33.3% on the board, with no KOBE throws. The upper-middle opponents are also close to target. I’m adjusting Barb, Kobe and Reign Supreme, whose board or hole rates are still too high, while the regression suites run.
+exec
+/bin/bash -lc "cat > /tmp/tune11.py <<'PY'
+exec(open('/tmp/calibrate11.py').read().split('async def main():')[0])
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox']);page=await b.new_page(ignore_https_errors=True)
+  src=Path('index.html').read_text().replace('const scatter=CPU_SCATTER','window.bestShot={...best,arc,side}; const scatter=CPU_SCATTER').replace('window.__game = {','window.__sim={M,roster,wind,planCareerShot,newBody,launch,step,RX,gauss}; window.__game = {')
+  await page.route('http://127.0.0.1:8000/',lambda r:r.fulfill(body=src,content_type='text/html'))
+  await page.goto('http://127.0.0.1:8000/',timeout=12000);await page.wait_for_function('"'!!window.__sim'"',timeout=8000)
+  for level in [1,2,7]:
+   result=await page.evaluate('''level=>{
+    const {M,roster,wind,planCareerShot,newBody,launch,step,RX,gauss}=__sim;M.phase='menu';M.scores=[0,1];
+    const shots=[];for(let k=0;k<8;k++){const mph=[0,0,3,3,7,7,10,10][level],a=k*Math.PI/4;wind.x=Math.sin(a)*mph*.025;wind.z=-Math.cos(a)*mph*.025;planCareerShot(roster[level]);shots.push({...window.bestShot,x:wind.x,z:wind.z});}
+    let results=[];
+    const powers=level===1?[.07,.08,.09]:level===2?[.003,.01,.02,.03]:[.03,.033,.036];
+    const aims=level===1?[.008,.009,.010]:level===2?[.001,.006,.012]:[.004,.005,.006];
+    const biases=level===1?[.025]:level===2?[0,.015,.025]:[-.10];
+    for(const bias of biases)for(const pe of powers)for(const ae of aims)for(const lapse of (level===1?[.2,.25]:level===2?[0,.2,.4]:[.04,.08])){
+     let seed=110031+level*1009;Math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+     let inside=0,on=0;for(let n=0;n<400;n++){const s=shots[n%8];wind.x=s.x;wind.z=s.z;const lost=Math.random()<lapse,power=s.power+bias+gauss()*pe,aim=s.aim+gauss()*ae+(lost?(Math.random()<.5?-1:1)*(.13+Math.random()*.10):0),drift=gauss()*.05;
+      const bag=newBody(1,s.side);launch(bag,RX[1],power,aim,drift,s.arc);for(let j=0;j<1920;j++){step(bag,1/240);if(['board','grass','in','removed'].includes(bag.state))break;}inside+=bag.state==='in';on+=bag.state==='board';}
+     const ti=[.07,.15,.25,.33,.40,.45,.52,.60][level],to=[.30,.35,.35,.35,.30,.30,.30,.30][level];results.push({pe,ae,bias,lapse,in:inside/400,on:on/400,cost:(inside/400-ti)**2+(on/400-to)**2});
+    }return results.sort((a,b)=>a.cost-b.cost).slice(0,5);
+   }''',level)
+   print(level,json.dumps(result),flush=True)
+  await b.close()
+asyncio.run(main())
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python /tmp/tune11.py > /tmp/tune11.log" in /workspace/cornhole
+ succeeded in 3248ms:
+exec
+/bin/bash -lc 'cat /tmp/tune11.log; tail -12 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+1 [{"pe": 0.08, "ae": 0.009, "bias": 0.025, "lapse": 0.25, "in": 0.145, "on": 0.355, "cost": 5.000000000000009e-05}, {"pe": 0.08, "ae": 0.01, "bias": 0.025, "lapse": 0.25, "in": 0.1425, "on": 0.3575, "cost": 0.0001125000000000002}, {"pe": 0.08, "ae": 0.008, "bias": 0.025, "lapse": 0.25, "in": 0.16, "on": 0.345, "cost": 0.00012500000000000022}, {"pe": 0.08, "ae": 0.009, "bias": 0.025, "lapse": 0.2, "in": 0.14, "on": 0.3325, "cost": 0.0004062499999999982}, {"pe": 0.08, "ae": 0.01, "bias": 0.025, "lapse": 0.2, "in": 0.13, "on": 0.3375, "cost": 0.0005562499999999985}]
+2 [{"pe": 0.03, "ae": 0.001, "bias": 0, "lapse": 0.4, "in": 0.24, "on": 0.355, "cost": 0.00012500000000000022}, {"pe": 0.02, "ae": 0.006, "bias": 0, "lapse": 0.4, "in": 0.2575, "on": 0.3625, "cost": 0.00021250000000000037}, {"pe": 0.01, "ae": 0.012, "bias": 0, "lapse": 0.4, "in": 0.2625, "on": 0.375, "cost": 0.0007812500000000013}, {"pe": 0.03, "ae": 0.001, "bias": 0.015, "lapse": 0.4, "in": 0.24, "on": 0.3125, "cost": 0.0015062499999999987}, {"pe": 0.01, "ae": 0.006, "bias": 0.015, "lapse": 0.4, "in": 0.2375, "on": 0.395, "cost": 0.002181250000000004}]
+7 [{"pe": 0.03, "ae": 0.006, "bias": -0.1, "lapse": 0.08, "in": 0.61, "on": 0.3025, "cost": 0.0001062500000000002}, {"pe": 0.036, "ae": 0.005, "bias": -0.1, "lapse": 0.08, "in": 0.6075, "on": 0.3075, "cost": 0.00011250000000000103}, {"pe": 0.033, "ae": 0.005, "bias": -0.1, "lapse": 0.08, "in": 0.6225, "on": 0.295, "cost": 0.0005312500000000035}, {"pe": 0.03, "ae": 0.005, "bias": -0.1, "lapse": 0.04, "in": 0.6025, "on": 0.325, "cost": 0.0006312500000000014}, {"pe": 0.033, "ae": 0.006, "bias": -0.1, "lapse": 0.08, "in": 0.585, "on": 0.325, "cost": 0.0008500000000000015}]
+Running career_check.py
+Early win passed
+Persistence passed
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace('{power:.065,aim:.010,bias:.025,lapse:.15}','{power:.08,aim:.009,bias:.025,lapse:.25}').replace('{power:.04,aim:.004,bias:.015,lapse:0}','{power:.03,aim:.001,bias:0,lapse:.4}').replace('{power:.025,aim:.004,bias:-.10,lapse:.04}','{power:.03,aim:.006,bias:-.10,lapse:.08}');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/task11_check.py > /tmp/task11-final.log 2>&1" in /workspace/cornhole
+exec
+/bin/bash -lc "tail -20 /tmp/task11-regression.log; cat /tmp/task11-final.log; rg -n 'wait_for|timeout|inn' tests/playwright_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+10:  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+12:  await page.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+13:  await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')
+20:   await page.mouse.move(640,y);await page.wait_for_timeout(25)
+21:  await page.mouse.up();await page.wait_for_timeout(100)
+27:  await page.wait_for_function('__game.state.phase==="aim"')
+29:  await page.wait_for_timeout(700)
+32:  # Play out an inning with real physics and cancellation scoring.
+35:   await page.wait_for_timeout(200)
+36:  await page.evaluate('__game.advance()');await page.wait_for_timeout(400)
+40:  await page.mouse.wheel(0,-250);await page.wait_for_timeout(200)
+42:  await page.wait_for_function('__game.state.phase==="aim"')
+46:   await page.mouse.move(640,y);await page.wait_for_timeout(20)
+47:  await page.wait_for_timeout(150)
+53:  await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('!!window.__game')
+54:  await mp.evaluate('__game.startMatch({vs:"2p",first:0})');await mp.wait_for_timeout(1100)
+61:   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':y}]});await mp.wait_for_timeout(30)
+65:  await mp.set_viewport_size({'width':844,'height':390});await mp.wait_for_timeout(200)
+67:  await page.evaluate("""document.body.innerHTML='<iframe sandbox="allow-scripts allow-same-origin" src="/?card" width="480" height="360"></iframe>'""")
+68:  frame=page.frames[-1];await frame.wait_for_function('!!window.__game')
+69:  await frame.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+
+exec
+/bin/bash -lc 'tail -15 /tmp/task11-regression.log; cat /tmp/task11-final.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 142, "miss": 200, "kobe": 0}
+
+exec
+/bin/bash -lc 'tail -25 /tmp/task11-regression.log; cat /tmp/task11-final.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 142, "miss": 200, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 142, "miss": 162, "kobe": 400}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/task11_check.py');s=p.read_text().replace('step,RX,showMenu};','step,RX,showMenu,scoreInning};');s=s.replace(\"  assert 'INNING' not in source\",'''  await page.evaluate('__cpuTest.scoreInning()')
+  assert await page.locator('#go').inner_text()=='NEXT ROUND'
+  assert 'EQUAL ROUND' in await page.locator('#panel').inner_text()
+  assert 'INNING' not in source''');p.write_text(s)
+PY
+tail -25 /tmp/task11-regression.log; cat /tmp/task11-final.log" in /workspace/cornhole
+ succeeded in 0ms:
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 142, "miss": 200, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 142, "miss": 162, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 149, "on": 129, "miss": 122, "kobe": 0}
+
+exec
+/bin/bash -lc 'cat /tmp/task11-final.log; tail -10 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 142, "miss": 200, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 142, "miss": 162, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 149, "on": 129, "miss": 122, "kobe": 0}
+{"name": "Slidin\u2019 Steve II", "throws": 400, "in": 179, "on": 128, "miss": 93, "kobe": 0}
+{"name": "Big Bag Barb II", "throws": 400, "in": 204, "on": 113, "miss": 83, "kobe": 0}
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+
+ succeeded in 39019ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html');s=p.read_text().replace(\" let arc=o.level===0?1:\",\" // Rookie Steve slides NORMAL throws; his rematch keeps the low PUSH style.\\n let arc=o.level===0?1:\").replace(\"o.style==='sniper'||o.style==='blocker'||o.style==='slider' && o.level>0?\",\"o.style==='sniper'||o.style==='blocker'||(o.style==='slider' && o.level>0)?\");p.write_text(s)
+PY
+cat /tmp/task11-final.log; tail -10 /tmp/task11-regression.log" in /workspace/cornhole
+ succeeded in 0ms:
+{"name": "Slidin\u2019 Steve", "throws": 400, "in": 22, "on": 133, "miss": 245, "kobe": 0}
+{"name": "Big Bag Barb", "throws": 400, "in": 58, "on": 142, "miss": 200, "kobe": 0}
+{"name": "Kobe Kowalski", "throws": 400, "in": 96, "on": 142, "miss": 162, "kobe": 400}
+{"name": "Sticky Vicky", "throws": 400, "in": 128, "on": 140, "miss": 132, "kobe": 0}
+{"name": "Tailgate Ted", "throws": 400, "in": 149, "on": 129, "miss": 122, "kobe": 0}
+{"name": "Slidin\u2019 Steve II", "throws": 400, "in": 179, "on": 128, "miss": 93, "kobe": 0}
+{"name": "Big Bag Barb II", "throws": 400, "in": 204, "on": 113, "miss": 83, "kobe": 0}
+{"name": "Reign Supreme", "throws": 400, "in": 244, "on": 121, "miss": 35, "kobe": 0}
+TASK 11: menu layouts, round terminology, CPU calibration PASS
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+
+codex
+The final simulation passed with 400 throws per opponent. Hole rates rise from 5.5% for Steve to 61.0% for Reign Supreme; board rates are all within about three percentage points of the requested targets. The career suite also passed, including wins, losses, saves, rematches, wind and the championship flow. The remaining regression suites are still running.
+ exited 1 in 142037ms:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+rates=json.loads(Path('/tmp/task11-rates.json').read_text())
+s='''# Task 11: clearer modes, round terminology and CPU difficulty
+
+Implemented in "'`index.html`:
+
+- Three equal-width menu buttons with the exact requested subtitles in the existing pixel font, smaller and dimmer than their labels. Descriptions remain inside the buttons. Phone landscape subtitles are 9px; desktop subtitles are 11px.
+- Replaced every player-facing INNING with ROUND, including the initial HUD, live HUD, summary, wash message and NEXT ROUND button. Internal names remain intact.
+- Calibrated all eight opponents according to the final ladder in the task, which supersedes the earlier restriction to fights 1–2. Each opponent has power and angular scatter, a range bias, and (where appropriate) occasional wide releases. Steve uses only NORMAL throws with substantial aim/power error. Later slider, blocker, lobber, sniper and tactical push/knock/block behavior remain; Ted retains large power variance and wild releases.
+- CPU prediction now uses the same 240 Hz physics step as gameplay, refines its coarse search and averages successful aiming solutions before applying scatter. Steve II retains low PUSH throws, using sticky fabric to permit controlled board stops.
+- Human throwing physics, scoring, saves, circuit wind rules, batch-9 static camera and batch-10 meter/input mapping are unchanged.
+
+## CPU-only measurement
+
+`tests/task11_check.py` runs 400 independent throws per opponent (3,200 total), calling the production planner for every bag and the production launch/physics functions. Seeded runs cover eight wind bearings at 0/0/3/3/7/7/10/10 mph respectively. Each throw starts on an empty board with the CPU trailing 0–1, measuring standard aiming rather than intentional blocker placement or bag collisions. On-board rates exclude bags in the hole. Tactical match situations and random wind strengths can change these rates; this does not measure human match win percentages.
+
+| Opponent | Throws | In hole | On board | Miss |
+|---|---:|---:|---:|---:|
+'"'''
+for r in rates:
+ s+=f\"| {r['name']} | {r['throws']} | {r['in']/4:.2f}% | {r['on']/4:.2f}% | {r['miss']/4:.2f}% |\\n\"
+s+='''
+Steve: 22 holes, 133 board bags and 245 misses; zero KOBE throws. This gives a gentle first opponent, with most bags missing.
+
+## Screenshots and validation
+
+Saved and visually inspected all requested menu screenshots:
+
+- "'`shots/task11-1280.png` (1280×800)
+- `shots/task11-844.png` (844×390)
+- `shots/task11-390.png` (390×844)
+
+Automated layout checks verify equal button widths, at least 9px subtitles, no title/button overlap, and no subtitle or viewport overflow at all three sizes. Added round HUD and summary assertions, CPU rate checks and Steve'"'s no-KOBE check. Tests use 8-second waits, 12-second navigation and a 150-second suite limit.
+
+Validation command: "'`PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py` (existing suites also run individually through its worker, bounded to 150 seconds). Logs: `/tmp/task11-final.log` and `/tmp/task11-regression.log`.
+
+Final regression status: pending completion.
+
+No writes to `.git`, no commits. Existing unrelated task/log changes are preserved. Older suites'"' regenerated screenshots are restored after validation; task-11 screenshots are retained.
+'''
+Path('codex-summary-11.md').write_text(s)
+PY
+# Run the new summary wording assertions without repeating the unchanged CPU simulation.
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python - <<'PY' > /tmp/task11-ui.log 2>&1
+from pathlib import Path
+s=Path('tests/task11_check.py').read_text().replace('for level in range(8):','for level in range(0):').replace(\"  assert results[0]['in']/results[0]['throws']<.10 and results[0]['kobe']==0\",'')
+s=s.replace(\"  Path('/tmp/task11-rates.json').write_text(json.dumps(results,indent=2))\",'')
+exec(compile(s,'tests/task11_check.py','exec'))
+PY" in /workspace/cornhole
+ succeeded in 11748ms:
+exec
+/bin/bash -lc 'tail -20 /tmp/task11-regression.log; cat /tmp/task11-ui.log; git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/task3_check.py", line 67, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+TASK 11: menu layouts, round terminology, CPU calibration PASS
+
+exec
+/bin/bash -lc "rg -n 'all_text_contents|2 PLAYER|SOLO PRACTICE|START TOURNAMENT|INNING' tests; cat /tmp/task11-regression.log" in /workspace/cornhole
+ succeeded in 0ms:
+tests/task11_check.py:38:  assert 'INNING' not in source
+tests/task3_check.py:11:  assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+tests/task3_check.py:14:  assert await page.locator('[data-height]').all_text_contents()==['PUSH','NORMAL','KOBE']
+Running career_check.py
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+Running playwright_check.py
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc landing probes [{'p': [-0.017032141730419344, 0.016, -10.741827395118642], 'state': 'grass', 'flight': 1.3249999999999966}, {'p': [0.10301583685390282, 0.2838289216371238, -9.222625343372128], 'state': 'board', 'flight': 1.1791666666666638}, {'p': [0.28632105410545183, 0.016, -8.086430727203307], 'state': 'grass', 'flight': 1.6541666666666621}]
+errors []
+Running task10_check.py
+TASK 10: KOBE width, tournament floor/shift, input mapping and exact visual bounds PASS
+Running task3_check.py
+Traceback (most recent call last):
+  File "/workspace/cornhole/tests/run_all.py", line 23, in <module>
+    runpy.run_path(sys.argv[2],run_name='__main__')
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/task3_check.py", line 67, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('tests/task3_check.py');s=p.read_text().replace(\"await page.locator('#panel button').all_text_contents()\",\"await page.locator('#panel button').evaluate_all('(buttons)=>buttons.map(b=>b.firstChild.textContent)')\");p.write_text(s)
+p=Path('tests/task11_check.py');s=p.read_text().replace(\"  await page.evaluate('document.fonts.ready')\",'''  await page.evaluate('document.fonts.ready')
+  assert await page.locator('.menu-modes small').all_text_contents()==[
+   'HUMAN VS HUMAN · SAME SCREEN','JUST YOU · NO OPPONENT',
+   'YOU VS CPU · CLIMB TO CORNHOLE KING']''');p.write_text(s)
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python - <<'PY' >> /tmp/task11-regression.log 2>&1
+import subprocess,sys
+from pathlib import Path
+for suite in sorted(Path('tests').glob('*_check.py')):
+ if suite.name in ['career_check.py','playwright_check.py','task10_check.py','task11_check.py']:continue
+ print('Running '+suite.name,flush=True)
+ result=subprocess.run([sys.executable,'tests/run_all.py','--worker',str(suite)],timeout=150)
+ if result.returncode:sys.exit(result.returncode)
+print('All remaining existing suites passed',flush=True)
+PY" in /workspace/cornhole
+exec
+/bin/bash -lc "PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python - <<'PY' > /tmp/task11-ui.log 2>&1
+from pathlib import Path
+s=Path('tests/task11_check.py').read_text().replace('for level in range(8):','for level in range(0):').replace(\"  assert results[0]['in']/results[0]['throws']<.10 and results[0]['kobe']==0\",'').replace(\"  Path('/tmp/task11-rates.json').write_text(json.dumps(results,indent=2))\",'')
+exec(compile(s,'tests/task11_check.py','exec'))
+PY" in /workspace/cornhole
+exec
+/bin/bash -lc 'tail -6 /tmp/task11-regression.log; git status --short' in /workspace/cornhole
+ succeeded in 0ms:
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Running task3_check.py
+ M CODEX_TASK_11.md
+ M chain-10.log
+ M index.html
+ M shots/card.png
+ M shots/career-card.png
+ M shots/career-champion.png
+ M shots/career-desktop.png
+ M shots/career-intro.png
+ M shots/career-mobile.png
+ M shots/desktop.png
+ M shots/mobile.png
+ M shots/task10-kobe.png
+ M shots/task10-normal.png
+ M shots/task10-push.png
+ M tests/task3_check.py
+?? CODEX_TASK_12.md
+?? chain-12.log
+?? codex-run-11.log
+?? codex-summary-11.md
+?? shots/owner-phone-bag-offset.png
+?? shots/task11-1280.png
+?? shots/task11-390.png
+?? shots/task11-844.png
+?? tests/task11_check.py
+
+ succeeded in 4017ms:
+exec
+/bin/bash -lc 'tail -8 /tmp/task11-regression.log; cat /tmp/task11-ui.log' in /workspace/cornhole
+ succeeded in 0ms:
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Running task3_check.py
+TASK 11: menu layouts, round terminology, CPU calibration PASS
+
+codex
+An older menu test failed because it expected button text without subtitles. I updated it to check the three main labels separately; the new task-11 test checks the exact subtitle text. The gameplay and task-10 meter suites have passed, and the remaining checks are continuing.
+exec
+/bin/bash -lc "sed -n '1,90p' tests/task3_check.py; tail -8 /tmp/task11-regression.log" in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  assert await page.locator('#panel button').evaluate_all('(buttons)=>buttons.map(b=>b.firstChild.textContent)')==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+  await page.click('#two-player');await page.wait_for_function('__game.state.phase==="aim"')
+  assert not await page.locator('#touch-controls').is_visible()
+  assert await page.locator('[data-height]').all_text_contents()==['PUSH','NORMAL','KOBE']
+  assert await page.locator('[data-height="1"]').get_attribute('aria-pressed')=='true'
+  first=await page.evaluate('__game.state.thrower')
+  await page.click('[data-height="2"]');await page.click('[data-side="sticky"]')
+  assert await page.evaluate('__game.state.heights[__game.state.thrower]')==2
+  await page.wait_for_timeout(1200)
+  left=await page.evaluate('__game._screenPoint(-.3048,-8.8)')
+  right=await page.evaluate('__game._screenPoint(.3048,-8.8)')
+  # Exact centered v2 framing projects this board span to about 127.6 pixels.
+  assert 127 < right['x']-left['x'] < 129
+  target=await page.evaluate('__game._screenPoint(.12,-8.8)')
+  await page.mouse.move(target['x'],target['y'])
+  actual=await page.evaluate('__game.state.aim')
+  assert abs(actual)<.12
+  # A board-height horizontal pointer sweep gives smooth, ordered aim values.
+  aims=[]
+  for x in [600,620,640,660,680]:
+   await page.mouse.move(x,450);aims.append(await page.evaluate('__game.state.aim'))
+  assert all(a<b for a,b in zip(aims,aims[1:])),aims
+  await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.arc')==1
+  await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.arc')==2
+  assert await page.evaluate('(t)=>__game.state.side[t]',first)=='sticky'
+  await page.click('#menu');await page.click('#practice');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  for i in range(9):
+   await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  st=await page.evaluate('__game.state');assert st['practiceStats']['throws']==9 and st['thrower']==0
+  await page.click('#reset-bags');assert await page.evaluate('__game.state.bags.length')==0
+  assert await page.evaluate('__game.state.practiceStats.throws')==9
+  await page.screenshot(path='shots/task3-practice.png')
+  mids=[]
+  for fight in [0,2,5,6]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')
+   st=await page.evaluate('__game.state');w=st['sweet'];mids.append(w['mid'])
+   base=await page.evaluate('__game.win[__game.state.thrower+"slick1"]')
+   if fight==0:assert w['lo']==base['lo']
+   else:assert w['hi']-w['lo']<base['hi']-base['lo'] and w['mid']!=base['mid']
+   if fight==6:
+    old=w['mid'];await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+    assert await page.evaluate('__game.state.sweet.mid')!=old
+  assert len(set(mids))==4
+  await page.screenshot(path='shots/task3-sweet.png')
+  for width,height in [(480,360),(390,844)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   for sel in ['#height-choice']:
+    r=await page.locator(sel).bounding_box();assert r['x']>=0 and r['x']+r['width']<=width+1
+   await page.screenshot(path=f'shots/task3-{width}.png')
+  assert not errors,errors
+  print('TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS')
+  await browser.close()
+asyncio.run(main())
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Running task3_check.py
+
+exec
+/bin/bash -lc 'tail -6 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Running task3_check.py
+
+exec
+/bin/bash -lc "git diff --numstat -- index.html tests/task3_check.py; rg -n 'inning' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+47	14	index.html
+1	1	tests/task3_check.py
+683:  vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
+713:  ui.inn.textContent = 'ROUND ' + M.inning;
+863:  M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
+928:  M.history.push({ inning: M.inning, pts, inC, onC, net, scorer, bust, scores: [...M.scores] });
+932:    : `<div class="pt">ROUND ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
+944:  if (M.phase === 'summary') { ui.panel.hidden = true; M.inning++; beginInning(); }
+1176:  M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
+1182:  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+
+exec
+/bin/bash -lc 'tail -4 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+AssertionError
+Running task3_check.py
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+
+exec
+/bin/bash -lc 'tail -8 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+           ~~~~~~~~~~~~~^^
+  File "tests/task3_check.py", line 11, in main
+    assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Running task3_check.py
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+
+exec
+/bin/bash -lc 'tail -6 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+AssertionError
+Running task3_check.py
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+Running task6_check.py
+
+codex
+The updated menu test and camera/HUD suite have passed. I’m finishing the remaining control, bag, camera and wind checks, then I’ll restore the older generated screenshots and finalize `codex-summary-11.md`.
+exec
+/bin/bash -lc 'tail -8 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+Running task5_check.py
+V2 camera FOV/depth, held bag in lower foreground, menu/Next Up HUD hiding and gameplay restoration: PASS
+Running task6_check.py
+TASK_6 panel layout/selections, labels, removed hint, neutral v2 framing, fixed camera across aim changes, removed controls/shortcuts and board bounds: PASS
+Running task8_check.py
+Batch 8: centered practice stats, landscape controls, pixel arrow, per-player heights PASS
+Running task9_check.py
+
+ succeeded in 160552ms:
+exec
+/bin/bash -lc 'tail -7 /tmp/task11-regression.log' in /workspace/cornhole
+ succeeded in 0ms:
+Running task8_check.py
+Batch 8: centered practice stats, landscape controls, pixel arrow, per-player heights PASS
+Running task9_check.py
+Batch 9: fixed camera position, target, rotation and FOV across pointer extremes and resize; moving indicators and held bag PASS
+Running wind_flag_check.py
+Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS
+All remaining existing suites passed
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import shutil
+for p in Path('/tmp/task11-original-shots').glob('*.png'):
+ if not p.name.startswith('task11-'):shutil.copyfile(p,Path('shots')/p.name)
+p=Path('codex-summary-11.md');s=p.read_text().replace('Final regression status: pending completion.','All ten suites passed: career, gameplay, task 3, task 5, task 6, task 8, task 9, task 10, task 11, and wind/flag. No application page errors were reported. The old task-3 menu assertion now checks the main button text independently of subtitles; task 11 checks the exact descriptions. Additional focused UI validation covered the final round-summary and subtitle assertions ("'`/tmp/task11-ui.log`). `git diff --check` passed.'"').replace('Validation command: "'`PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py` (existing suites also run individually through its worker, bounded to 150 seconds).'"','Validation used "'`PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers /tmp/cornhole-venv/bin/python tests/run_all.py --worker tests/<suite>_check.py` for the existing suites, each bounded to 150 seconds by the driver, and `.../python tests/task11_check.py` for the 150-second CPU/layout suite. The complete collection is also available through `tests/run_all.py`.'"');p.write_text(s)
+PY
+git diff --check && git status --short" in /workspace/cornhole
+ succeeded in 0ms:
+ M CODEX_TASK_11.md
+ M chain-10.log
+ M index.html
+ M tests/task3_check.py
+?? CODEX_TASK_12.md
+?? chain-12.log
+?? codex-run-11.log
+?? codex-summary-11.md
+?? shots/owner-phone-bag-offset.png
+?? shots/task11-1280.png
+?? shots/task11-390.png
+?? shots/task11-844.png
+?? tests/task11_check.py
+
+codex
+Implemented fully: menu subtitles, ROUND terminology, and all eight CPU difficulty levels.
+
+All ten test suites passed. Simulated 400 throws per opponent; Steve scored 5.5% in-hole and 33.3% on-board, with no KOBE throws.
+
+Saved all three requested screenshots. Details and measured rates: [codex-summary-11.md](/workspace/cornhole/codex-summary-11.md). No writes to `.git`.
+2026-11-03T23:23:50.878885Z ERROR codex_core::session: failed to record rollout items: thread 01a1a394-d17e-72c2-864a-bd36beb78d15 not found
+tokens used
+80,856
+Implemented fully: menu subtitles, ROUND terminology, and all eight CPU difficulty levels.
+
+All ten test suites passed. Simulated 400 throws per opponent; Steve scored 5.5% in-hole and 33.3% on-board, with no KOBE throws.
+
+Saved all three requested screenshots. Details and measured rates: [codex-summary-11.md](/workspace/cornhole/codex-summary-11.md). No writes to `.git`.

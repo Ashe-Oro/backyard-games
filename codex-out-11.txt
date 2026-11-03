@@ -1,0 +1,5 @@
+Implemented fully: menu subtitles, ROUND terminology, and all eight CPU difficulty levels.
+
+All ten test suites passed. Simulated 400 throws per opponent; Steve scored 5.5% in-hole and 33.3% on-board, with no KOBE throws.
+
+Saved all three requested screenshots. Details and measured rates: [codex-summary-11.md](/workspace/cornhole/codex-summary-11.md). No writes to `.git`.

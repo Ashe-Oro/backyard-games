@@ -21,3 +21,15 @@ The owner says the 1st CPU opponent in the tournament is too strong. Fight 1 sho
 - Give the CPU much more aim and power error. Targets set by the owner: under 10% of his bags in the hole (aim for about 5-8%) and about 30% on the board, with the rest missing. It should prefer normal throws and never kobe.
 - Don't change later opponents or the rematches.
 - Verify with a quick headless sim if possible: CPU-only throws for fight 1, then report the in-hole and on-board rates in the summary.
+
+## Full tournament difficulty ladder (owner calibration, supersedes the fight 1-2 note above)
+The owner's benchmark is that landing about 25% of bags in the hole makes a pretty solid player, which belongs at opponent #3. Tune every CPU to these approximate per-bag rates (in the hole / on the board), and verify them with a headless CPU-only sim of 200+ throws each. Put a table of the measured rates in the summary.
+1. Slidin' Steve: under 10% in the hole (aim for about 5-8%), about 30% on the board. Never uses kobe.
+2. Big Bag Barb: about 15%, about 35%.
+3. Kobe Kowalski: about 25%, about 35%.
+4. Sticky Vicky: about 35%, about 35%.
+5. Tailgate Ted: about 45%, about 30%, wild/high variance.
+6. Slidin' Steve II: about 55%, about 30%.
+7. Big Bag Barb II: about 67%, about 25%.
+8. Reign Supreme: about 80%, about 15% (the owner set this one explicitly).
+Keep each opponent's style flavor (slider, blocker, lobber and so on). Wind still applies only in later circuits, as before.

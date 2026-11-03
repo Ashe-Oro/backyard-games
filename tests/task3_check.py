@@ -8,7 +8,7 @@ async def main():
   page.on('pageerror',lambda e:errors.append(str(e)))
   page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
   await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
-  assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+  assert await page.locator('#panel button').evaluate_all('(buttons)=>buttons.map(b=>b.firstChild.textContent)')==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
   await page.click('#two-player');await page.wait_for_function('__game.state.phase==="aim"')
   assert not await page.locator('#touch-controls').is_visible()
   assert await page.locator('[data-height]').all_text_contents()==['PUSH','NORMAL','KOBE']

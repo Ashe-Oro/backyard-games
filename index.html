@@ -88,6 +88,14 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
 #height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:inset 0 0 0 1px #fff,0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
 @media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
+/* Mode descriptions share one readable, responsive button column. */
+#panel:has(.menu-modes){width:540px;padding:12px;max-width:94vw}
+.menu-modes{display:grid;gap:10px}
+#panel .menu-modes .go{width:100%;margin:0;padding:14px 8px;font-size:12px;line-height:1.6}
+.menu-modes small{display:block;font-size:9px;line-height:1.8;color:#65512f;margin-top:6px}
+@media(min-width:1000px) and (min-height:600px){#panel .menu-modes .go{font-size:14px}.menu-modes small{font-size:11px}}
+@media(max-height:450px){#panel:has(.menu-modes){top:64%;padding:8px}#panel .menu-modes .go{padding:8px}}
+@media(max-width:560px){#panel .menu-modes .go{font-size:11px}.menu-modes small{max-width:100%;text-wrap:balance}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -96,7 +104,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
   <div id="hud">
     <div id="sb" class="ol">
       <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
-      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+      <div class="mid"><div id="inn">ROUND 1</div><div id="goal">TO 21</div></div>
       <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
     </div>
     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
@@ -702,7 +710,7 @@ function renderHud() {
     ui.p[t].innerHTML = [0, 1, 2, 3].map((i) => `<i class="${i < thrown ? 'used' : ''}"></i>`).join('');
     ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
   }
-  ui.inn.textContent = 'INNING ' + M.inning;
+  ui.inn.textContent = 'ROUND ' + M.inning;
   ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
   ui.goal.classList.toggle('practice', M.practice);
   const t = thrower();
@@ -778,35 +786,60 @@ function careerResult(win){
  ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'REMATCH'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
  $('next-fight').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=careerMap;
 }
+// Power scatter, angular scatter, range bias and occasional wide release.
+// Calibrated against independent throws with the live 240 Hz physics.
+const CPU_SCATTER = [
+ {power:.06,aim:.05,bias:-.125,lapse:0},
+ {power:.08,aim:.009,bias:.025,lapse:.25},
+ {power:.03,aim:.001,bias:0,lapse:.4},
+ {power:.003,aim:.012,bias:0,lapse:.3},
+ {power:.08,aim:.006,bias:-.10,lapse:.1},
+ {power:.08,aim:.006,bias:-.10,lapse:0},
+ {power:.08,aim:.001,bias:.05,lapse:0},
+ {power:.03,aim:.006,bias:-.10,lapse:.08}
+];
 function planCareerShot(o){
  // Predict actual flight and board friction, then value strategic landing targets.
  const deck=bags.filter(onDeck), blockers=deck.filter(b=>b.lp.z>HOLE_LOCAL.z+.12);
- let arc=o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
+ // Rookie Steve slides NORMAL throws; his rematch keeps the low PUSH style.
+ let arc=o.level===0?1:o.style==='slider'?0:o.style==='lobber'?2:o.style==='blocker'?0:1;
  if(o.level>=3 && blockers.length) arc=2;
- let side=o.style==='sniper'||o.style==='blocker'?'sticky':'slick';
+ let side=o.style==='sniper'||o.style==='blocker'||(o.style==='slider' && o.level>0)?'sticky':'slick';
  let target=HOLE_LOCAL.clone(), goal='hole';
  const own=deck.find(b=>b.team===1 && holeDist(b.lp)<.35), enemy=deck.find(b=>b.team===0);
  if(o.level>=2 && own && o.style!=='lobber'){target.copy(own.lp);arc=0;side='slick';goal='push';}
  else if(o.level>=4 && enemy && M.scores[0]>=18){target.copy(enemy.lp);arc=0;goal='knock';}
  else if(o.style==='blocker' && !blockers.length && M.scores[1]>=M.scores[0]){target.z+=.38;goal='block';}
- let best={cost:Infinity,power:.55,aim:0};
+ let best={cost:Infinity,power:.55,aim:0}, holeShots=[];
  // Later opponents compensate with the full match wind; early opponents are less precise.
- for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012){
+ const assess=(power,aim)=>{
   const b=newBody(1,side);launch(b,RX[1],power,aim,0,arc);
-  for(let i=0;i<960;i++){step(b,1/120);if(['board','grass','in','removed'].includes(b.state))break;}
-  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2:.5;
+  for(let i=0;i<1920;i++){step(b,1/240);if(['board','grass','in','removed'].includes(b.state))break;}
+  if(b.state==='in' && goal==='hole')holeShots.push({power,aim});
+  let cost=b.lp.distanceTo(target); if(b.state==='in')cost=goal==='hole'?-2+cost:.5;
   if(b.state==='grass'||b.state==='removed')cost+=3;
   if(cost<best.cost)best={cost,power,aim};
+ };
+ for(let power=.35;power<=.85;power+=.0125) for(let aim=-.06;aim<=.061;aim+=.012) assess(power,aim);
+ const coarse={...best};
+ for(let power=coarse.power-.015;power<=coarse.power+.015;power+=.0025)
+  for(let aim=coarse.aim-.012;aim<=coarse.aim+.012;aim+=.002) assess(power,aim);
+ if(holeShots.length){
+  const center=holeShots.reduce((a,b)=>({power:a.power+b.power,aim:a.aim+b.aim}),{power:0,aim:0});
+  best.power=center.power/holeShots.length;best.aim=center.aim/holeShots.length;
  }
- const error=.045-o.level*.005, wild=o.style==='wild'?2:1;
+ const scatter=CPU_SCATTER[o.level], lapse=Math.random()<scatter.lapse;
+ // Ted's large power scatter and occasional wild release keep his high variance.
+ const power=best.power+scatter.bias+gauss()*scatter.power;
+ const aim=best.aim+gauss()*scatter.aim+(lapse?(Math.random()<.5?-1:1)*(.13+Math.random()*.10):0);
  M.arc=arc;M.spin=0;M.side[1]=side;
- return {t:0,side,power:clamp(best.power+gauss()*error*wild,0,1),aim:best.aim+gauss()*error*.23*wild,drift:gauss()*.05,goal};
+ return {t:0,side,power:clamp(power,0,1),aim,drift:gauss()*.05,goal};
 }
 function showMenu() {
   M.phase = 'menu'; ui.title.classList.remove('gone');
   M.career=false;
   clearBags();
-  ui.panel.innerHTML = '<button class="go" id="two-player">2 PLAYER</button><button class="go" id="practice">SOLO PRACTICE</button><button class="go" id="career">START TOURNAMENT</button>';
+  ui.panel.innerHTML = '<div class="menu-modes"><button class="go" id="two-player">2 PLAYER<small>HUMAN VS HUMAN · SAME SCREEN</small></button><button class="go" id="practice">SOLO PRACTICE<small>JUST YOU · NO OPPONENT</small></button><button class="go" id="career">START TOURNAMENT<small>YOU VS CPU · CLIMB TO CORNHOLE KING</small></button></div>';
   ui.panel.hidden=false;
   $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
   $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
@@ -896,13 +929,13 @@ function scoreInning() {
   M.phase = win >= 0 ? 'over' : 'summary'; M.winner = win;
   renderHud();
   const head = win >= 0 ? `<div class="pt">FINAL</div><div class="big ${win ? 'b' : 'r'}">${M.vs === 'cpu' ? (win === 0 ? 'YOU WIN!' : 'CPU WINS') : TEAM[win] + ' WINS!'}</div>`
-    : `<div class="pt">INNING ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
+    : `<div class="pt">ROUND ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
   ui.panel.innerHTML = head + `
     <div class="row"><div class="r">RED<b>${pts[0]}</b>${inC[0]} IN · ${onC[0]} ON</div><div>vs</div><div class="b">BLUE<b>${pts[1]}</b>${inC[1]} IN · ${onC[1]} ON</div></div>
-    <div class="pd">${scorer < 0 ? 'EQUAL INNING · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
+    <div class="pd">${scorer < 0 ? 'EQUAL ROUND · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
     MATCH: <span class="r">RED ${M.scores[0]}</span> · <span class="b">BLUE ${M.scores[1]}</span><br>
     ${win >= 0 ? '' : `${TEAM[M.first]} THROWS FIRST NEXT`}</div>
-    <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT INNING'}</button>`;
+    <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT ROUND'}</button>`;
   ui.panel.hidden = false;
   $('go').onclick = (e) => { e.stopPropagation(); advance(); };
   if(win>=0 && M.career) careerResult(win);
