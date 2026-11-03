@@ -13,3 +13,9 @@ Goal: a Mike Tyson's Punch-Out!!-style ladder. The player works through a lineup
 - Test headless (Playwright): career start, beat/lose a fight via scripted throws, progress persists on reload, wind absent in early fights and present late, no console errors at desktop/480x360/mobile. Commit in git; summary to /workspace/cornhole/codex-summary-career.md.
 
 - **(Added by Ashe) Between-fight intro pop-up:** before each career match show a "NEXT UP: <Name>" card with a small pixel-art portrait of that opponent (mix of men and women), their fun made-up name, nickname/hometown, record, and taunt. Fun, punny original names (e.g. "Big Bag Barb", "Slidin' Steve", "Kobe Kowalski", "Sticky Vicky"). Show again between every fight, including rematches (stronger-version portrait variant).
+
+## Also include in this run (leftovers from batch 1)
+- **Arc trajectory preview:** a dotted/pixel arc line in the 3D scene showing the planned flight for the current arc setting (slider/classic/Kobe), aim, step and spin (calm-air, no wind), so arc is clearly discoverable. Keep W/S + on-screen ARC buttons; do NOT move two-finger wheel away from throwing.
+- **Board framing:** board is still small on screen. Frame the camera so the target board is noticeably larger and the clear focal point (roughly 2x current on-screen size) while the bag flight still reads.
+- **Terminology:** never use "Woody" anywhere; bags on the board = "On the Board".
+- Note: /workspace/cornhole/.git may be read-only for you; if commit fails just leave changes in the working tree (no bundle needed).
