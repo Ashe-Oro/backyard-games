@@ -1,0 +1,5 @@
+Completed batch 4: right-side wind arrow and MPH widget, hidden when calm, plus a flag that follows wind direction and flutters faster and stiffer at higher speeds.
+
+All four Playwright suites and `git diff --check` passed. Summary: [codex-summary-4.md](/workspace/cornhole/codex-summary-4.md).
+
+Changes remain in the working tree; `.git` was only read.

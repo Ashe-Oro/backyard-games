@@ -1,0 +1,928 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0
+--------
+workdir: /workspace/cornhole
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: none
+reasoning summaries: none
+session id: 01a1a306-5dc8-7963-a44b-edb2c1b709a1
+--------
+user
+Read /workspace/cornhole/CODEX_TASK_4.md and complete it. Batches 1-3 are already in index.html (see codex-summary-3.md); don't regress them. Run all Playwright suites, write codex-summary-4.md. .git is read-only; leave changes in the working tree.
+codex
+I’ll read the task and prior summary, update the working tree, then run all Playwright suites and write `codex-summary-4.md`.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CODEX_TASK_4.md' -g 'codex-summary-3.md' -g 'package.json' -g '*playwright*'" in /workspace/cornhole
+ succeeded in 0ms:
+/workspace/cornhole
+CODEX_TASK_4.md
+codex-summary-3.md
+tests/playwright_check.py
+
+exec
+/bin/bash -lc 'cat CODEX_TASK_4.md codex-summary-3.md' in /workspace/cornhole
+ succeeded in 0ms:
+# Cornhole batch 4 (after batch 3)
+## Wind display + flag (Ashe, Nov 3, 3:02 PM)
+- When there is wind (any mode with wind > 0), show a clear wind widget on the RIGHT side of the screen: an arrow pointing the way the wind blows, plus the speed in mph. Remove the wind readout from the top-center line. Hide the widget when calm.
+- The pennant flag on the pole by the hay bales (left side of the yard) must stream in the actual wind direction and flutter faster/stiffer with higher mph. When calm, it hangs limp.
+- Re-run Playwright tests, add a wind-flag check, write codex-summary-4.md. .git is read-only; leave changes in the working tree.
+# Cornhole batch 3
+
+Implemented TASK_3 in `index.html`, with its controls and modes taking precedence over earlier specs. Changes remain in the working tree; nothing committed or deployed.
+
+- Compared the v2 source at `af8250c`. The aiming view now uses a tighter 7.5° desktop field of view, adapts for portrait screens, and keeps its aim framing steady. The board occupies over 20% of desktop viewport width. Flight framing still widens for high bags.
+- Direct pointer aim casts the pointer onto a plane at board height and derives the throw direction from that point. Mouse movement and captured finger drags both update aim continuously. Finger movement sideways before an upward flick is covered by the mobile test. Optional step and keyboard aim remain available.
+- Large PUSH / NORMAL / KOBE buttons replace ARC +/- and W/S. NORMAL is the default, the current choice is highlighted, H cycles choices, and the dotted trajectory responds immediately. Each human player keeps their own height and bag-side choice.
+- STEP / AIM / SPIN buttons are hidden behind MORE. The bottom hint reads exactly “Flick up to throw · Point to aim · Pick PUSH / NORMAL / KOBE”. Mouse/touch press, flick up, release is the primary throw. Wheel and M spinner remain unadvertised fallbacks.
+- The title menu has exactly three choices: 2 PLAYER, SOLO PRACTICE, START TOURNAMENT. Local play alternates Red and Blue humans. Practice has no opponent, zero wind, unlimited throws, RESET BAGS, cumulative hole/board outcomes and hit rate. Reset clears the physical bags while retaining the session tally. MENU returns to the three choices between throws.
+- START TOURNAMENT retains the saved career ladder, Next Up portraits, CPU styles, rematches, circuit wind, retries, and champion ending.
+- Early career and local play retain their original power windows. Starting in County Fair, the white sweet window changes position each match and shrinks by 22%. King's Court changes it each throw. Input power maps through that shifted window into the original physical power range, so the window affects actual throwing difficulty. The board-range marker and live flick preview use the same mapping. The trajectory remains a calm-air reference; wind and collisions can change the result.
+
+## Verification
+
+Python Playwright with headless Chromium, local HTTP server on port 8000:
+
+- `tests/playwright_check.py`: PASS. Updated H cycling, desktop flick, no keyboard throw, step/spin, trajectories, collision pushes, fixed match wind, wheel fallback, spinner, touch sideways aim plus flick, mobile orientations, and sandboxed 480×360 iframe. No console/page errors.
+- `tests/career_check.py`: PASS. Career start, scripted physics win/loss, retry, reload persistence, later circuit winds/rematches, champion, desktop/card/mobile. No console/page errors.
+- `tests/task3_check.py`: PASS. Exact three menu modes, toggle labels/default/highlight, hidden advanced controls, direct aim sweep, large board framing, separate player choices, nine practice throws without an inning limit, practice reset/tally retention, early/late/rematch power-window differences, King's Court per-throw shifts, responsive HUD bounds.
+- `git diff --check`: PASS.
+
+Refreshed existing screenshots and added `shots/task3-*.png`. Inspected desktop practice and 480×360 career framing.
+
+The available Python environment is `/tmp/cornhole-venv`; Chromium was missing initially and was installed under `/tmp/task3-browsers`. Reproduce with `PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers /tmp/cornhole-venv/bin/python tests/task3_check.py` (and the other two scripts) while serving this directory on port 8000.
+
+Unrelated task/log/bundle files were left alone. `.git` was only read.
+
+exec
+/bin/bash -lc "ls -la; rg -n 'wind|flag|pennant' index.html; cat tests/task3_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+total 960
+drwxr-xr-x   8 box box   4096 Nov  3 15:07 .
+drwxr-xr-x. 30 box box  20480 Nov  3 14:45 ..
+dr-xr-xr-x   2 box box     40 Nov  3 15:07 .agents
+dr-xr-xr-x   2 box box     40 Nov  3 15:07 .aws
+dr-xr-xr-x   2 box box     40 Nov  3 15:07 .codex
+drwxr-xr-x   8 box box   4096 Nov  3 15:07 .git
+-rw-r--r--   1 box box   5038 Nov  3 14:25 CODEX_TASK.md
+-rw-r--r--   1 box box   2956 Nov  3 14:45 CODEX_TASK_2_CAREER.md
+-rw-r--r--   1 box box   2769 Nov  3 15:02 CODEX_TASK_3.md
+-rw-r--r--   1 box box    641 Nov  3 15:02 CODEX_TASK_4.md
+-rw-r--r--   1 box box    324 Nov  3 14:52 codex-out-2.txt
+-rw-r--r--   1 box box    409 Nov  3 15:07 codex-out-3.txt
+-rw-r--r--   1 box box    412 Nov  3 14:23 codex-out.txt
+-rw-r--r--   1 box box 147394 Nov  3 14:52 codex-run-2.log
+-rw-r--r--   1 box box 159489 Nov  3 15:07 codex-run-3.log
+-rw-r--r--   1 box box   5449 Nov  3 15:07 codex-run-4.log
+-rw-r--r--   1 box box 171441 Nov  3 14:23 codex-run.log
+-rw-r--r--   1 box box   3725 Nov  3 15:06 codex-summary-3.md
+-rw-r--r--   1 box box   3723 Nov  3 14:51 codex-summary-career.md
+-rw-r--r--   1 box box   2810 Nov  3 14:23 codex-summary.md
+-rw-r--r--   1 box box 233240 Nov  3 14:23 cornhole-changes.bundle
+-rw-r--r--   1 box box  73755 Nov  3 15:05 index.html
+-rw-r--r--   1 box box  27306 Nov  3 14:13 poster.png
+-rw-r--r--   1 box box  68218 Nov  3 14:16 screenshot.png
+drwxr-xr-x   2 box box   4096 Nov  3 15:07 shots
+drwxr-xr-x   2 box box   4096 Nov  3 15:04 tests
+-rw-r--r--   1 box box    239 Nov  3 13:05 vercel.json
+82:#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{color:#ffe45e}
+104:    <div id="conditions" class="ol"><div id="wind"></div><div id="setup"></div></div>
+380:  const flag = box(0.32, 0.2, 0.01, lam('#ff6a4d'), 0.17, 0.38, 0, pen);
+494:const wind = { x: 0, z: 0, mph: 0, angle: 0 };
+500:  // Normalize range across arcs; a lob spends longer in the wind.
+513:    b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt; b.v.z += wind.z * dt; b.v.y -= G * dt; b.p.addScaledVector(b.v, dt);
+599:// power windows for the meter / CPU, per thrower box and bag side
+689:  $('wind').textContent = wind.mph===0 ? 'CALM AIR · 0 MPH' : `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
+767: // Later opponents compensate with the full match wind; early opponents are less precise.
+795:  wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
+796:  if(M.career){const c=roster[career.fight].circuit;wind.mph=c===0?0:c===1?2+Math.floor(Math.random()*3):c===2?6+Math.floor(Math.random()*3):9+Math.floor(Math.random()*4);}
+797:  if(M.practice) wind.mph=0;
+802:  wind.x = Math.sin(wind.angle) * wind.mph * 0.025; wind.z = -Math.cos(wind.angle) * wind.mph * 0.025;
+826:    M.cpu = { t: 0, side, power: w.mid + wind.z * 0.04 + gauss() * 0.055, aim: -wind.x * 0.08 + gauss() * 0.012, drift: gauss() * 0.18 };
+1088:  // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
+1121:window.__game = {
+1122:  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+import asyncio
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  assert await page.locator('#panel button').all_text_contents()==['2 PLAYER','SOLO PRACTICE','START TOURNAMENT']
+  await page.click('#two-player');await page.wait_for_function('__game.state.phase==="aim"')
+  assert not await page.locator('#touch-controls').is_visible()
+  assert await page.locator('[data-height]').all_text_contents()==['PUSH','NORMAL','KOBE']
+  assert await page.locator('[data-height="1"]').get_attribute('aria-pressed')=='true'
+  first=await page.evaluate('__game.state.thrower')
+  await page.click('[data-height="2"]');await page.click('#side')
+  assert await page.evaluate('__game.state.heights[__game.state.thrower]')==2
+  await page.wait_for_timeout(1200)
+  left=await page.evaluate('__game._screenPoint(-.3048,-8.8)')
+  right=await page.evaluate('__game._screenPoint(.3048,-8.8)')
+  assert right['x']-left['x']>1280*.2
+  target=await page.evaluate('__game._screenPoint(.12,-8.8)')
+  await page.mouse.move(target['x'],target['y'])
+  actual=await page.evaluate('__game.state.aim')
+  assert abs(actual)<.12
+  # A board-height horizontal pointer sweep gives smooth, ordered aim values.
+  aims=[]
+  for x in [600,620,640,660,680]:
+   await page.mouse.move(x,450);aims.append(await page.evaluate('__game.state.aim'))
+  assert all(a<b for a,b in zip(aims,aims[1:])),aims
+  await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.arc')==1
+  await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.arc')==2
+  assert await page.evaluate('(t)=>__game.state.side[t]',first)=='sticky'
+  await page.click('#menu');await page.click('#practice');await page.wait_for_function('__game.state.phase==="aim"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  for i in range(9):
+   await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+  st=await page.evaluate('__game.state');assert st['practiceStats']['throws']==9 and st['thrower']==0
+  await page.click('#reset-bags');assert await page.evaluate('__game.state.bags.length')==0
+  assert await page.evaluate('__game.state.practiceStats.throws')==9
+  await page.screenshot(path='shots/task3-practice.png')
+  mids=[]
+  for fight in [0,2,5,6]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')
+   st=await page.evaluate('__game.state');w=st['sweet'];mids.append(w['mid'])
+   base=await page.evaluate('__game.win[__game.state.thrower+"slick1"]')
+   if fight==0:assert w['lo']==base['lo']
+   else:assert w['hi']-w['lo']<base['hi']-base['lo'] and w['mid']!=base['mid']
+   if fight==6:
+    old=w['mid'];await page.evaluate('__game.throwWith(0)');await page.wait_for_function('__game.state.phase==="aim"')
+    assert await page.evaluate('__game.state.sweet.mid')!=old
+  assert len(set(mids))==4
+  await page.screenshot(path='shots/task3-sweet.png')
+  for width,height in [(480,360),(390,844)]:
+   await page.set_viewport_size({'width':width,'height':height})
+   for sel in ['#height-choice','#hint']:
+    r=await page.locator(sel).bounding_box();assert r['x']>=0 and r['x']+r['width']<=width+1
+   await page.screenshot(path=f'shots/task3-{width}.png')
+  assert not errors,errors
+  print('TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS')
+  await browser.close()
+asyncio.run(main())
+
+exec
+/bin/bash -lc "sed -n '340,395p' index.html; sed -n '660,700p' index.html; sed -n '1030,1155p' index.html; ls /tmp/cornhole-venv/bin/python /tmp/task3-browsers; find .. -name AGENTS.md -print; ls tests" in /workspace/cornhole
+ succeeded in 0ms:
+  const bulbCols = ['#fff3b0', '#ffcf5e', '#ff9f6b', '#ff8fc0', '#9ff0e6'];
+  const glowTex = pixTex(8, 8, (g) => { for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { const d = Math.hypot(x - 3.5, y - 3.5); if (d < 4) px(g, x, y, `rgba(255,220,140,${(1 - d / 4) * 0.9})`); } });
+  const spans = [[0, 1], [2, 3], [0, 3], [1, 2], [0, 2], [1, 3]];
+  for (const [a, b] of spans) {
+    const A = new THREE.Vector3(poles[a][0], PH - 0.05, poles[a][1]), B = new THREE.Vector3(poles[b][0], PH - 0.05, poles[b][1]);
+    const pts = []; const N = 24; const sag = A.distanceTo(B) * 0.07;
+    for (let i = 0; i <= N; i++) { const t = i / N; const p = A.clone().lerp(B, t); p.y -= sag * 4 * t * (1 - t); pts.push(p); }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
+    for (let i = 1; i < N; i += 2) {
+      const col = bulbCols[(i + a) % bulbCols.length];
+      const bm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08), basic(col));
+      bm.position.copy(pts[i]); bm.position.y -= 0.07; scene.add(bm);
+      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+      gl.scale.set(0.3, 0.3, 1); gl.position.copy(bm.position); scene.add(gl);
+      bulbs.push({ gl, ph: R() * 6.28 });
+    }
+  }
+}
+
+// ---------- props ----------
+{
+  // cooler + cups
+  const cg = new THREE.Group(); cg.position.set(2.5, 0, -7.0); cg.rotation.y = -0.4;
+  box(0.7, 0.42, 0.42, lam('#2f86e0'), 0, 0.21, 0, cg);
+  box(0.74, 0.08, 0.46, lam('#f4f4f4'), 0, 0.46, 0, cg);
+  box(0.3, 0.04, 0.06, lam('#f4f4f4'), 0, 0.52, 0, cg);
+  box(0.72, 0.05, 0.43, lam('#1f5fae'), 0, 0.06, 0, cg);
+  const cupG = new THREE.CylinderGeometry(0.045, 0.034, 0.11, 6);
+  for (const [x, z] of [[-0.2, 0.08], [0.22, -0.05]]) {
+    const c = new THREE.Mesh(cupG, lam({ color: '#e8423c', flatShading: true })); c.position.set(x, 0.555, z); c.castShadow = true; cg.add(c);
+    box(0.09, 0.02, 0.09, lam('#ffffff'), x, 0.6, z, cg);
+  }
+  scene.add(cg);
+  // hay bales
+  const hay = pixTex(16, 8, (g) => { for (let y = 0; y < 8; y++) for (let x = 0; x < 16; x++) px(g, x, y, pick(['#f2cf6b', '#e8c05a', '#f7da7e', '#d9ad48'])); for (let x = 0; x < 16; x++) { px(g, x, 2, '#b98a34'); px(g, x, 5, '#b98a34'); } });
+  const hm = lam({ map: hay });
+  const hb = new THREE.Group(); hb.position.set(-2.7, 0, -9.6); hb.rotation.y = 0.35; hb.scale.setScalar(0.8);
+  box(1.0, 0.45, 0.5, hm, 0, 0.225, 0, hb); box(1.0, 0.45, 0.5, hm, 0.15, 0.225, -0.55, hb); box(1.0, 0.45, 0.5, hm, 0.05, 0.675, -0.3, hb);
+  const pen = new THREE.Group(); pen.position.set(0.1, 0.9, -0.3); hb.add(pen);
+  box(0.03, 0.5, 0.03, lam('#7a4b2a'), 0, 0.25, 0, pen);
+  const flag = box(0.32, 0.2, 0.01, lam('#ff6a4d'), 0.17, 0.38, 0, pen);
+  box(0.32, 0.067, 0.012, lam('#fff4dc'), 0.17, 0.38, 0, pen);
+  scene.add(hb);
+  // grill
+  const gr = new THREE.Group(); gr.position.set(-5.2, 0, -9.6);
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), lam({ color: '#2b2b33', flatShading: true })); bowl.position.y = 0.85; bowl.castShadow = true; gr.add(bowl);
+  box(0.66, 0.03, 0.66, lam('#555'), 0, 0.86, 0, gr);
+  for (const [x, z] of [[0.2, 0.2], [-0.2, 0.2], [0, -0.25]]) box(0.04, 0.7, 0.04, lam('#3a3a40'), x, 0.35, z, gr);
+  box(0.06, 0.06, 0.06, lam('#bbbbbb'), 0, 1.18, 0, gr);
+  scene.add(gr);
+}
+const smoke = [];
+{
+  const sm = basic({ color: '#ffffff', transparent: true, opacity: 0.6 });
+  for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), sm.clone()); scene.add(b); smoke.push({ b, t: i / 5 }); }
+}
+};
+const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
+const isHuman = (t) => t === 0 || M.vs === '2p';
+const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[career.fight].name : 'CPU') : TEAM[t]);
+const settled = () => bags.every((b) => ['board', 'grass', 'in', 'removed'].includes(b.state) && !(b.state === 'grass' && b.dead));
+function lie() { // score as the bags lie right now (only final after all 8)
+  const pts = [0, 0], inC = [0, 0], onC = [0, 0];
+  for (const b of bags) {
+    if (b.state === 'in') { pts[b.team] += 3; inC[b.team]++; }
+    else if (b.state === 'board' && !b.dead) { pts[b.team] += 1; onC[b.team]++; }
+  }
+  return { pts, inC, onC };
+}
+function renderHud() {
+  for (const t of [0, 1]) {
+    ui.s[t].textContent = M.scores[t];
+    ui.n[t].textContent = teamName(t);
+    const thrown = bags.filter((b) => b.team === t).length;
+    ui.p[t].innerHTML = [0, 1, 2, 3].map((i) => `<i class="${i < thrown ? 'used' : ''}"></i>`).join('');
+    ui.t[t].classList.toggle('now', (M.phase === 'aim' || M.phase === 'cpu') && thrower() === t);
+  }
+  ui.inn.textContent = 'INNING ' + M.inning;
+  ui.goal.textContent = M.exact ? 'EXACTLY 21' : 'FIRST TO 21';
+  const t = thrower();
+  if (M.phase === 'aim' || M.phase === 'cpu') {
+    ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
+    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+    ui.turn.style.opacity = 1;
+  } else ui.turn.style.opacity = 0;
+  $('wind').textContent = wind.mph===0 ? 'CALM AIR · 0 MPH' : `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
+  document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
+  $('reset-bags').hidden=!M.practice;
+  ui.t[1].hidden=M.practice;
+  if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} On the Board · ${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
+  $('setup').textContent = `${arcNames[M.arc]} · SPIN ${M.spin < 0 ? 'L' : M.spin > 0 ? 'R' : '0'} · STEP ${M.position[t].toFixed(2)}`;
+  ui.side.textContent = (M.side[t] === 'slick' ? 'SLICK' : 'STICKY') + ' SIDE DOWN';
+  ui.side.style.visibility = isHuman(t) ? 'visible' : 'hidden';
+  const w = meterWindow();
+  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = Math.max(2, (w.hi - w.lo) * 100) + '%';
+  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+}
+  else if (k === 'm') toggleCtrl();
+  else if (k === 'f') flipSide();
+  else if (k === ' ' || k === 'enter') {
+    e.preventDefault();
+    if (M.phase === 'summary' || M.phase === 'over') advance();
+
+  }
+});
+addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'a' && keyAim < 0) keyAim = 0;
+  if (k === 'd' && keyAim > 0) keyAim = 0;
+});
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let acc = 0, time = 0;
+const lookTmp = new THREE.Vector3(), camTmp = new THREE.Vector3();
+const CAM_LOOK = new THREE.Vector3(0, 0.25, -8.7);
+camera.userData.look = CAM_LOOK.clone();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  if (keyAim && humanTurn()) M.aim = clamp(M.aim + keyAim * dt * 0.12, -AIM_MAX, AIM_MAX);
+  if (flick && performance.now() - lastMoveT > 60) finishFlick();
+  if (M.phase === 'cpu') {
+    const c = M.cpu; c.t += dt;
+    M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
+    if (c.t > 0.7) setMeter(Math.min(c.power, (c.t - 0.7) / 0.5 * c.power));
+    if (c.t > 1.3) throwBag(c.power, c.drift, 1);
+  }
+  acc += dt;
+  while (acc >= 1 / 240) {
+    acc -= 1 / 240;
+    for (const b of bags) if (b.state !== 'in' && b.state !== 'removed' && !(b.state === 'grass' && !b.dead) && b.state !== 'board') step(b, 1 / 240);
+    collide(bags);
+  }
+  if (M.phase === 'flying' && M.active && settled()) afterThrow();
+  if (M.phase === 'settle' && settled()) scoreInning();
+  for (const b of bags) {
+    const m = b.mesh; m.position.copy(b.p);
+    if (b.state === 'fly') { m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15; }
+    else if (onDeck(b) || b.state === 'hole') { const yaw = b.yaw ?? (b.yaw = m.rotation.y); if (b.state === 'slide') b.yaw += b.spin * dt * 0.3; m.quaternion.copy(boardQ); m.rotateY(b.yaw); }
+    else if (b.state === 'ground' || b.state === 'grass') { m.rotation.x = 0; m.rotation.z = 0; }
+    m.visible = b.state !== 'in' && b.state !== 'removed';
+    if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
+  }
+  // camera stands behind whoever is throwing
+  const t = thrower(), rx = RX[t] + M.position[t];
+  const showHeld = M.phase === 'aim' || M.phase === 'cpu';
+  const yaw = baseYaw(rx) + M.aim;
+  held.visible = showHeld;
+  if (showHeld) { held.position.set(rx + Math.sin(time * 2) * 0.004, REL_Y + Math.sin(time * 3) * 0.01, REL_Z); held.rotation.set(0.15, -yaw, 0); }
+  aimDots.forEach((d, i) => {
+    const dist = 1.6 + i * 0.5;
+    d.position.set(rx + Math.sin(yaw) * dist, 0.012, REL_Z - Math.cos(yaw) * dist);
+    d.visible = showHeld && isHuman(t);
+    d.material.opacity = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(time * 6 - i * 0.6));
+  });
+  // Calm-air ballistic preview: reference power is the hole window until a flick supplies power.
+  const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+  const camRx = M.phase === 'menu' ? 0.3 : rx;
+  camTmp.set(camRx * 0.35, 2.05, 1.4);
+  camera.position.lerp(camTmp, Math.min(1, dt * 3));
+  const fb = M.active && M.active.state === 'fly' ? M.active.p : null;
+  const flightFov=camera.userData.aimFov+(fb?Math.min(22,Math.max(0,fb.y-.3)*7):0);
+  camera.fov+=(flightFov-camera.fov)*Math.min(1,dt*5);camera.updateProjectionMatrix();
+  lookTmp.copy(CAM_LOOK);  if (fb) lookTmp.lerp(fb, 0.18);
+  camera.userData.look.lerp(lookTmp, Math.min(1, dt * 3)); camera.lookAt(camera.userData.look);
+  for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
+  for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
+  dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
+  const watch = M.active ? M.active.p : HOLE_WORLD;
+  const dl = dog.g.worldToLocal(watch.clone()); const want = clamp(Math.atan2(-dl.x, -dl.z) * 0.6, -0.7, 0.7);
+  dog.head.rotation.y += (want - dog.head.rotation.y) * Math.min(1, dt * 5);
+  dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;
+  for (const s of smoke) { s.t = (s.t + dt * 0.25) % 1; s.b.position.set(-5.2 + Math.sin(s.t * 6 + 1) * 0.15, 1.25 + s.t * 1.6, -9.6 + s.t * 0.3); s.b.material.opacity = 0.55 * (1 - s.t); s.b.scale.setScalar(0.6 + s.t * 1.4); }
+  for (const c of confetti) if (c.life > 0) { c.life -= dt; c.v.y -= 6 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += dt * 8; if (c.m.position.y < 0.02) { c.m.position.y = 0.02; c.v.set(0, 0, 0); } if (c.life <= 0) c.m.visible = false; }
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+hint(); setMeter(0);
+if (POSTER) {
+  for (const [team, lx, lz, st] of [[0, 0.12, -0.6, 'board'], [1, -0.15, -0.35, 'board'], [1, 0.16, -0.95, 'board'], [0, 0.02, -1.0, 'in']]) {
+    const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
+  }
+  M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
+  for (const el of [ui.hint, document.querySelector('.btns'), $('meter')]) el.style.display = 'none';
+} else showMenu();
+requestAnimationFrame(frame);
+
+window.__game = {
+  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+  get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
+  careerMap, careerIntro,
+  win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
+  startMatch, advance, lie: () => lie(),
+  throwWith: (p, d = 0) => throwBag(p, d),
+  setAim: (a) => { M.aim = a; },
+  // test hooks: drop a resting bag on the deck (board-local metres, z negative toward the back), or preset the match score
+  _place: (team, lx, lz) => { const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = 'board'; b.touched = true; bags.push(b); renderHud(); },
+  _setScores: (a, c) => { M.scores = [a, c]; renderHud(); },
+  _probe: (power, arc, spin) => { const b = newBody(0); launch(b,RX[0],power,0,0,arc,spin); let flight=0; for(let i=0;i<1920;i++){step(b,1/240); if(b.state==='fly') flight+=1/240; if(['board','grass','in','removed'].includes(b.state))break;} return {p:b.p.toArray(),state:b.state,flight}; },
+  _slide: (x,z,vx,vz) => { const b=newBody(0); b.mesh=makeBagMesh(0,'slick'); b.lp.set(x,BAG_H,z); b.lv.set(vx,0,vz); b.state='slide'; b.touched=true; toWorld(b.lp,b.p); bags.push(b); },
+  holeLocalZ: HOLE_LOCAL.z,
+};
+</script>
+</body>
+</html>
+/tmp/cornhole-venv/bin/python
+
+/tmp/task3-browsers:
+chromium-1248
+chromium_headless_shell-1248
+ffmpeg-1013
+career_check.py
+playwright_check.py
+task3_check.py
+
+codex
+The wind vector already drives bag physics, but the flag is static. I’ll use that same vector for a right-side wind widget and the animated pennant, with a limp shape in calm air. I’ll add checks for direction, flutter, visibility, and mobile placement.
+exec
+/bin/bash -lc "sed -n '75,110p' index.html; sed -n '1,35p' tests/playwright_check.py; rg -n 'wind|conditions' tests" in /workspace/cornhole
+ succeeded in 0ms:
+#panel .opt{display:flex;gap:.5em;justify-content:center;margin-top:.8em}
+#panel .opt button{font:inherit;font-size:.8em;padding:.6em .7em;color:#fff;background:#2b1a2e;border:.2em solid #6b5a63;cursor:pointer}
+#panel .opt button.on{background:#ffe45e;color:#2b1a2e;border-color:#2b1a2e}
+#panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
+#panel .go:hover{background:#fff07f}
+#panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+@media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{color:#ffe45e}
+#touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
+@media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
+@media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
+#panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+#touch-controls{display:none;bottom:24%}#touch-controls.open{display:grid}#height-choice{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto;white-space:nowrap}#height-choice button{font-size:clamp(9px,2vmin,16px);min-height:40px}#height-choice button[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}#hint{padding:0 4px;font-size:clamp(5px,1.25vmin,10px);white-space:nowrap}.btns{bottom:15%}#setup{display:none}#sweet{box-shadow:0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div id="sb" class="ol">
+      <div class="team red" id="t0"><div class="tn">RED <span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
+      <div class="mid"><div id="inn">INNING 1</div><div id="goal">TO 21</div></div>
+      <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span> BLUE</div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
+    </div>
+    <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+    <div id="turn" class="ol"></div>
+    <div id="msg" class="ol"></div>
+    <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <div id="conditions" class="ol"><div id="wind"></div><div id="setup"></div></div>
+    <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
+    <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
+    <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+  </div>
+  <div id="panel" class="ol" hidden></div>
+  <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
+import asyncio,json
+from playwright.async_api import async_playwright
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+  print('windows',await page.evaluate('__game.win'))
+  await page.evaluate('__game.startMatch({vs:"2p",first:0})');await page.wait_for_timeout(1100)
+  await page.keyboard.down('Space');await page.wait_for_timeout(300);await page.keyboard.up('Space');await page.keyboard.press('Enter')
+  assert await page.evaluate('__game.state.bags.length')==0
+  await page.keyboard.press('ArrowLeft');await page.keyboard.press('q');await page.keyboard.press('h')
+  st=await page.evaluate('__game.state');assert st['position'][0]<0 and st['spin']==-1 and st['arc']==2
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('e');await page.keyboard.press('h');await page.keyboard.press('h')
+  await page.mouse.move(640,600);await page.mouse.down()
+  for y in [550,490,420,340]:
+   await page.mouse.move(640,y);await page.wait_for_timeout(25)
+  await page.mouse.up();await page.wait_for_timeout(100)
+  assert await page.evaluate('__game.state.bags.length')==1
+  await page.screenshot(path='shots/desktop.png')
+  probes=await page.evaluate('[0,1,2].map(a=>[__game._probe(.55,a,-1),__game._probe(.55,a,1)])')
+  assert probes[2][0]['flight']>probes[0][0]['flight']+.2
+  assert max(abs(a['p'][0]-b['p'][0]) for a,b in probes)>.005
+  print('arc/spin landing probes',probes)
+  await page.wait_for_function('__game.state.phase==="aim"')
+  await page.evaluate('__game._place(1,0,-.65);__game._slide(0,-.42,0,-2)')
+  await page.wait_for_timeout(700)
+  b=await page.evaluate('__game.state.bags');assert b[1]['lp'][2]<-.66,b
+  wind=await page.evaluate('__game.state.wind')
+  # Play out an inning with real physics and cancellation scoring.
+  while await page.evaluate('__game.state.phase')!='summary':
+   if await page.evaluate('__game.state.phase')=='aim':await page.evaluate('__game.throwWith(0)')
+tests/career_check.py:12:  await page.goto(URL);await page.wait_for_function('!!window.__game')
+tests/career_check.py:17:  assert await page.evaluate('__game.state.wind.mph')==0
+tests/career_check.py:29:  await page.reload();await page.wait_for_function('!!window.__game')
+tests/career_check.py:39:   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go')
+tests/career_check.py:42:   wind=await page.evaluate('__game.state.wind');assert wind['mph']>0
+tests/career_check.py:43:   await page.wait_for_timeout(1500);assert await page.evaluate('__game.state.wind')==wind
+tests/career_check.py:44:  await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+tests/career_check.py:48:   await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
+tests/career_check.py:51:   assert await page.locator('#wind').is_visible()
+tests/career_check.py:55:  await mp.goto(URL);await mp.wait_for_function('!!window.__game');await mp.click('#career');await mp.click('#career-go');await mp.screenshot(path='shots/career-mobile.png');await mp.click('#fight');await mp.wait_for_timeout(1800)
+tests/career_check.py:56:  assert await mp.evaluate('__game.state.wind.mph')==0
+tests/career_check.py:57:  print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+tests/playwright_check.py:10:  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+tests/playwright_check.py:11:  print('windows',await page.evaluate('__game.win'))
+tests/playwright_check.py:32:  wind=await page.evaluate('__game.state.wind')
+tests/playwright_check.py:38:  assert await page.evaluate('__game.state.wind')==wind
+tests/playwright_check.py:39:  assert await page.locator('#wind').is_visible()
+tests/playwright_check.py:54:  await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('!!window.__game')
+tests/playwright_check.py:69:  frame=page.frames[-1];await frame.wait_for_function('!!window.__game')
+tests/task3_check.py:10:  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('!!window.__game')
+tests/task3_check.py:38:  assert await page.evaluate('__game.state.wind.mph')==0
+tests/task3_check.py:48:   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim"')
+
+exec
+/bin/bash -lc 'curl -I -s http://127.0.0.1:8000 | head -1' in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc "sed -n '46,54p' tests/career_check.py; sed -n '1,25p' index.html" in /workspace/cornhole
+ succeeded in 0ms:
+  await page.screenshot(path='shots/career-champion.png')
+  for width,height,name in [(1280,800,'desktop'),(480,360,'card')]:
+   await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
+   await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_timeout(1100)
+   await page.screenshot(path=f'shots/career-{name}.png')
+   assert await page.locator('#wind').is_visible()
+  mobile=await b.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:errors.append(str(e)))
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Backyard Cornhole · 3D pixel toss</title>
+<meta name="description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game in your browser.">
+<meta name="theme-color" content="#ffb36b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Backyard Cornhole">
+<meta property="og:description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game.">
+<meta property="og:url" content="https://backyard-cornhole.vercel.app/">
+<meta property="og:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="Backyard Cornhole">
+<meta name="twitter:description" content="Real cornhole rules: 27 ft, cancellation scoring, first to 21. Flick the mouse to toss.">
+<meta name="twitter:player" content="https://backyard-cornhole.vercel.app/">
+<meta name="twitter:player:width" content="480">
+<meta name="twitter:player:height" content="360">
+<meta name="twitter:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22 shape-rendering=%22crispEdges%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%231aa39a%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%232b1a2e%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+
+exec
+/bin/bash -lc 'python -m http.server 8000' in /workspace/cornhole
+ exited 127 in 0ms:
+/bin/bash: line 1: python: command not found
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='index.html'
+s=open(p).read().replace('#wind{color:#ffe45e}', '#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}')
+s=s.replace('<div id=\"conditions\" class=\"ol\"><div id=\"wind\"></div><div id=\"setup\"></div></div>', '<div id=\"wind\" class=\"ol\" hidden role=\"status\"><span>WIND</span><span id=\"wind-arrow\" aria-hidden=\"true\">↑</span><span id=\"wind-speed\"></span></div><div id=\"conditions\" class=\"ol\"><div id=\"setup\"></div></div>')
+s=s.replace('// ---------- props ----------','// ---------- props ----------\\nlet pennant;')
+s=s.replace(\"  const flag = box(0.32, 0.2, 0.01, lam('#ff6a4d'), 0.17, 0.38, 0, pen);\\n  box(0.32, 0.067, 0.012, lam('#fff4dc'), 0.17, 0.38, 0, pen);\",'')
+s=s.replace('  scene.add(hb);', '''  scene.add(hb);
+  // World-space cloth keeps the hay bales' rotation out of the wind direction.
+  hb.updateMatrixWorld(true);
+  const geometry = new THREE.PlaneGeometry(.32, .2, 16, 6);
+  const colors = [];
+  for(let i=0;i<geometry.attributes.position.count;i++) {
+    const c=new THREE.Color(Math.abs(geometry.attributes.position.getY(i))<.04?'#fff4dc':'#ff6a4d');
+    colors.push(c.r,c.g,c.b);
+  }
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  pennant=new THREE.Mesh(geometry,lam({vertexColors:true,side:THREE.DoubleSide}));
+  pennant.position.copy(pen.localToWorld(new THREE.Vector3(.015,.48,0)));
+  scene.add(pennant);''')
+s=s.replace(\"  "'$('"'wind').textContent = wind.mph===0 ? 'CALM AIR · 0 MPH' : "'`${['"'↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} "'${wind.mph} MPH`;", """  $('"'wind').hidden = wind.mph <= 0;
+  "'$('"'wind-speed').textContent = "'`${wind.mph} MPH`;
+  $('"'wind-arrow').style.transform = "'`rotate(${wind.angle}rad)`;
+  $('"'wind').setAttribute('aria-label', "'`Wind blowing ${['"'away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at "'${wind.mph} miles per hour`);""")
+s=s.replace('"'// ---------- loop ----------', '''// The free end droops in calm air; stronger wind extends it and tightens the ripples.
+function animatePennant(seconds) {
+  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
+  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
+  const pos=pennant.geometry.attributes.position;
+  for(let i=0;i<pos.count;i++) {
+    const u=(i%17)/16, row=Math.floor(i/17)/6;
+    const along=.32*u*extension;
+    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u;
+    pos.setXYZ(i,dx*along-dz*ripple,-.2*row*(1-.8*u)-.30*u*(1-extension),dz*along+dx*ripple);
+  }
+  pos.needsUpdate=true;pennant.geometry.computeVertexNormals();pennant.geometry.computeBoundingSphere();
+  pennant.userData={extension,frequency,amplitude};
+}
+
+// ---------- loop ----------''')
+s=s.replace('  renderer.render(scene, camera);','  animatePennant(time);\\n  renderer.render(scene, camera);')
+s=s.replace('  _screenPoint:', '''  _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
+  _flag:(seconds)=>{if(seconds"'!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
+  _screenPoint:'"''')
+open(p,'w').write(s)
+p='tests/career_check.py';s=open(p).read().replace(\"assert await page.locator('#wind').is_visible()\", \"assert not await page.locator('#wind').is_visible()  # First circuit is calm.\");open(p,'w').write(s)
+PY
+python3 -m http.server 8000" in /workspace/cornhole
+exec
+/bin/bash -lc "cat > tests/wind_flag_check.py <<'PY'
+import asyncio, math
+from playwright.async_api import async_playwright
+
+async def main():
+ async with async_playwright() as p:
+  browser=await p.chromium.launch(args=['--no-sandbox'])
+  page=await browser.new_page(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  errors=[]
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto('http://127.0.0.1:8000');await page.wait_for_function('"'!!window.__game'"')
+  await page.click('#two-player')
+  for angle in [i*math.pi/4 for i in range(8)]:
+   await page.evaluate('(a)=>__game._setWind(8,a)',angle)
+   assert await page.locator('#wind').is_visible()
+   assert await page.locator('#wind-speed').inner_text()=='8 MPH'
+   assert await page.locator('#conditions #wind').count()==0
+   rotation=await page.locator('#wind-arrow').evaluate('(e)=>e.style.transform')
+   assert abs(float(rotation[7:-4])-angle)<.0001,rotation
+   flag=await page.evaluate('__game._flag(0)');v=flag['vertices']
+   # Tip's horizontal displacement is aligned with the actual physics vector.
+   x,z=v[48],v[50];dx,dz=math.sin(angle),-math.cos(angle)
+   assert x*dx+z*dz>.2
+   assert abs(x*dz-z*dx)<.04
+  await page.evaluate('__game._setWind(2,Math.PI/2)')
+  low=await page.evaluate('__game._flag(0)')
+  low_later=await page.evaluate('__game._flag(.1)')
+  assert low['vertices']"'!=low_later['"'vertices']
+  await page.evaluate('__game._setWind(12,Math.PI/2)')
+  high=await page.evaluate('__game._flag(0)')
+  assert high['extension']>low['extension'] and high['frequency']>low['frequency'] and high['amplitude']<low['amplitude']
+  for w,h in [(1280,800),(390,844),(480,360)]:
+   await page.set_viewport_size({'width':w,'height':h})
+   r=await page.locator('#wind').bounding_box()
+   assert r['x']>w/2 and r['x']+r['width']<=w and r['y']>=0 and r['y']+r['height']<h
+   await page.screenshot(path=f'shots/wind-{w}.png')
+  await page.evaluate('__game._setWind(0,0)')
+  assert not await page.locator('#wind').is_visible()
+  calm=await page.evaluate('__game._flag(0)');later=await page.evaluate('__game._flag(1)')
+  assert calm['vertices']==later['vertices']
+  assert abs(calm['vertices'][48])<.001 and abs(calm['vertices'][50])<.001 and calm['vertices'][49]<-.29
+  await page.click('#menu');await page.click('#practice')
+  assert not await page.locator('#wind').is_visible()
+  assert not errors,errors
+  print('Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS')
+  await browser.close()
+asyncio.run(main())
+PY
+PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers /tmp/cornhole-venv/bin/python tests/wind_flag_check.py" in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers /tmp/cornhole-venv/bin/python tests/playwright_check.py' in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers /tmp/cornhole-venv/bin/python tests/career_check.py' in /workspace/cornhole
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers /tmp/cornhole-venv/bin/python tests/task3_check.py' in /workspace/cornhole
+ succeeded in 5665ms:
+Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS
+
+exec
+/bin/bash -lc 'git diff --check; git diff --stat' in /workspace/cornhole
+ succeeded in 0ms:
+ index.html             |  44 +++++++++++++++++++++++++++++++++++++++-----
+ shots/career-intro.png | Bin 66853 -> 65225 bytes
+ shots/desktop.png      | Bin 68557 -> 69581 bytes
+ tests/career_check.py  |   2 +-
+ 4 files changed, 40 insertions(+), 6 deletions(-)
+
+exec
+/bin/bash -lc 'git status --short; git diff -- index.html' in /workspace/cornhole
+ succeeded in 0ms:
+ M index.html
+ M shots/career-intro.png
+ M shots/desktop.png
+ M tests/career_check.py
+?? CODEX_TASK_5.md
+?? codex-run-4.log
+?? shots/wind-1280.png
+?? shots/wind-390.png
+?? shots/wind-480.png
+?? tests/wind_flag_check.py
+diff --git a/index.html b/index.html
+index c6b6e37..cb1044d 100644
+--- a/index.html
++++ b/index.html
+@@ -79,7 +79,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+ #panel .go:hover{background:#fff07f}
+ #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+ @media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
+-#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{color:#ffe45e}
++#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}
+ #touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
+ @media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
+ @media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
+@@ -101,7 +101,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
+     <div id="turn" class="ol"></div>
+     <div id="msg" class="ol"></div>
+     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+-    <div id="conditions" class="ol"><div id="wind"></div><div id="setup"></div></div>
++    <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+     <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
+     <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
+     <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+@@ -357,6 +357,7 @@ const bulbs = [];
+ }
+ 
+ // ---------- props ----------
++let pennant;
+ {
+   // cooler + cups
+   const cg = new THREE.Group(); cg.position.set(2.5, 0, -7.0); cg.rotation.y = -0.4;
+@@ -377,9 +378,20 @@ const bulbs = [];
+   box(1.0, 0.45, 0.5, hm, 0, 0.225, 0, hb); box(1.0, 0.45, 0.5, hm, 0.15, 0.225, -0.55, hb); box(1.0, 0.45, 0.5, hm, 0.05, 0.675, -0.3, hb);
+   const pen = new THREE.Group(); pen.position.set(0.1, 0.9, -0.3); hb.add(pen);
+   box(0.03, 0.5, 0.03, lam('#7a4b2a'), 0, 0.25, 0, pen);
+-  const flag = box(0.32, 0.2, 0.01, lam('#ff6a4d'), 0.17, 0.38, 0, pen);
+-  box(0.32, 0.067, 0.012, lam('#fff4dc'), 0.17, 0.38, 0, pen);
++
+   scene.add(hb);
++  // World-space cloth keeps the hay bales' rotation out of the wind direction.
++  hb.updateMatrixWorld(true);
++  const geometry = new THREE.PlaneGeometry(.32, .2, 16, 6);
++  const colors = [];
++  for(let i=0;i<geometry.attributes.position.count;i++) {
++    const c=new THREE.Color(Math.abs(geometry.attributes.position.getY(i))<.04?'#fff4dc':'#ff6a4d');
++    colors.push(c.r,c.g,c.b);
++  }
++  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
++  pennant=new THREE.Mesh(geometry,lam({vertexColors:true,side:THREE.DoubleSide}));
++  pennant.position.copy(pen.localToWorld(new THREE.Vector3(.015,.48,0)));
++  scene.add(pennant);
+   // grill
+   const gr = new THREE.Group(); gr.position.set(-5.2, 0, -9.6);
+   const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), lam({ color: '#2b2b33', flatShading: true })); bowl.position.y = 0.85; bowl.castShadow = true; gr.add(bowl);
+@@ -686,7 +698,10 @@ function renderHud() {
+     ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+     ui.turn.style.opacity = 1;
+   } else ui.turn.style.opacity = 0;
+-  $('wind').textContent = wind.mph===0 ? 'CALM AIR · 0 MPH' : `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
++  $('wind').hidden = wind.mph <= 0;
++  $('wind-speed').textContent = `${wind.mph} MPH`;
++  $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
++  $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
+   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
+   $('reset-bags').hidden=!M.practice;
+   ui.t[1].hidden=M.practice;
+@@ -1041,6 +1056,22 @@ addEventListener('keyup', (e) => {
+   if (k === 'd' && keyAim > 0) keyAim = 0;
+ });
+ 
++// The free end droops in calm air; stronger wind extends it and tightens the ripples.
++function animatePennant(seconds) {
++  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
++  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
++  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
++  const pos=pennant.geometry.attributes.position;
++  for(let i=0;i<pos.count;i++) {
++    const u=(i%17)/16, row=Math.floor(i/17)/6;
++    const along=.32*u*extension;
++    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u;
++    pos.setXYZ(i,dx*along-dz*ripple,-.2*row*(1-.8*u)-.30*u*(1-extension),dz*along+dx*ripple);
++  }
++  pos.needsUpdate=true;pennant.geometry.computeVertexNormals();pennant.geometry.computeBoundingSphere();
++  pennant.userData={extension,frequency,amplitude};
++}
++
+ // ---------- loop ----------
+ const clock = new THREE.Clock();
+ let acc = 0, time = 0;
+@@ -1105,6 +1136,7 @@ function frame() {
+   dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;
+   for (const s of smoke) { s.t = (s.t + dt * 0.25) % 1; s.b.position.set(-5.2 + Math.sin(s.t * 6 + 1) * 0.15, 1.25 + s.t * 1.6, -9.6 + s.t * 0.3); s.b.material.opacity = 0.55 * (1 - s.t); s.b.scale.setScalar(0.6 + s.t * 1.4); }
+   for (const c of confetti) if (c.life > 0) { c.life -= dt; c.v.y -= 6 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += dt * 8; if (c.m.position.y < 0.02) { c.m.position.y = 0.02; c.v.set(0, 0, 0); } if (c.life <= 0) c.m.visible = false; }
++  animatePennant(time);
+   renderer.render(scene, camera);
+   requestAnimationFrame(frame);
+ }
+@@ -1120,6 +1152,8 @@ requestAnimationFrame(frame);
+ 
+ window.__game = {
+   get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
++  _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
++  _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
+   _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
+   get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
+   careerMap, careerIntro,
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='index.html';s=open(p).read().replace(\"    const along=.32*u*extension;\", \"    const along=.32*u*extension+.018*u*(1-extension);\") .replace(\"    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u;\", \"    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u + .012*Math.sin(row*Math.PI*2)*u*(1-extension);\");open(p,'w').write(s)
+p='tests/wind_flag_check.py';s=open(p).read().replace(\"abs(calm['vertices'][48])<.001\", \"abs(calm['vertices'][48])<.02\");open(p,'w').write(s)
+PY" in /workspace/cornhole
+ succeeded in 0ms:
+codex
+The new wind checks passed, and the widget fits desktop, portrait mobile, and 480×360 views. The three existing suites are still running. I also updated the career test’s old “wind always visible” assertion to expect it hidden in the calm first circuit.
+exec
+/bin/bash -lc 'PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers /tmp/cornhole-venv/bin/python tests/wind_flag_check.py' in /workspace/cornhole
+ succeeded in 7144ms:
+Wind widget direction/speed, eight flag directions, stronger flutter/stiffness, calm droop, practice, responsive placement: PASS
+
+exec
+/bin/bash -lc "ps -eo pid,etime,args | rg 'check.py|chromium'" in /workspace/cornhole
+ succeeded in 0ms:
+      1       00:00 codex-linux-sandbox --sandbox-policy-cwd /workspace/cornhole --command-cwd /workspace/cornhole --permission-profile {"type":"managed","file_system":{"type":"restricted","entries":[{"path":{"type":"special","value":{"kind":"root"}},"access":"read"},{"path":{"type":"path","path":"/workspace/cornhole"},"access":"write"},{"path":{"type":"special","value":{"kind":"slash_tmp"}},"access":"write"},{"path":{"type":"special","value":{"kind":"tmpdir"}},"access":"write"},{"path":{"type":"path","path":"/workspace/cornhole/.git"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.agents"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.codex"},"access":"read","missing_path_behavior":"skip"},{"path":{"type":"path","path":"/workspace/cornhole/.aws"},"access":"read","missing_path_behavior":"skip"}]},"network":"enabled"} --apply-seccomp-then-exec -- /bin/bash -c __CODEX_SNAPSHOT_OVERRIDE_SET_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" __CODEX_SNAPSHOT_OVERRIDE_0="${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" __CODEX_SNAPSHOT_OVERRIDE_SET_1="${CODEX_PERMISSION_PROFILE+x}" __CODEX_SNAPSHOT_OVERRIDE_1="${CODEX_PERMISSION_PROFILE-}" __CODEX_SNAPSHOT_OVERRIDE_SET_2="${CODEX_PLUGIN_METRICS_OUTPUT+x}" __CODEX_SNAPSHOT_OVERRIDE_2="${CODEX_PLUGIN_METRICS_OUTPUT-}" __CODEX_SNAPSHOT_OVERRIDE_SET_3="${CODEX_SESSION_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_3="${CODEX_SESSION_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_4="${CODEX_THREAD_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_4="${CODEX_THREAD_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_5="${CODEX_TOOL_CALL_ID+x}" __CODEX_SNAPSHOT_OVERRIDE_5="${CODEX_TOOL_CALL_ID-}" __CODEX_SNAPSHOT_OVERRIDE_SET_6="${CODEX_VERSION+x}" __CODEX_SNAPSHOT_OVERRIDE_6="${CODEX_VERSION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0="${ALL_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_0="${ALL_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1="${BUNDLE_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_1="${BUNDLE_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2="${BUNDLE_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_2="${BUNDLE_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3="${BUNDLE_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_3="${BUNDLE_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4="${BUNDLE_SSL_CA_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_4="${BUNDLE_SSL_CA_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5="${CARGO_HTTP_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_5="${CARGO_HTTP_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6="${CODEX_CA_CERTIFICATE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_6="${CODEX_CA_CERTIFICATE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_7="${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8="${CODEX_NETWORK_PROXY_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_8="${CODEX_NETWORK_PROXY_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9="${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_9="${CODEX_NETWORK_PROXY_ATTRIBUTION-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_10="${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_11="${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12="${CURL_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_12="${CURL_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13="${DOCKER_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_13="${DOCKER_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14="${DOCKER_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_14="${DOCKER_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15="${ELECTRON_GET_USE_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_15="${ELECTRON_GET_USE_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16="${FTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_16="${FTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17="${GIT_SSL_CAINFO+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_17="${GIT_SSL_CAINFO-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18="${HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_18="${HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19="${HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_19="${HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20="${NODE_EXTRA_CA_CERTS+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_20="${NODE_EXTRA_CA_CERTS-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21="${NODE_USE_ENV_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_21="${NODE_USE_ENV_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22="${NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_22="${NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23="${NPM_CONFIG_CAFILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_23="${NPM_CONFIG_CAFILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24="${NPM_CONFIG_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_24="${NPM_CONFIG_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25="${NPM_CONFIG_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_25="${NPM_CONFIG_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26="${NPM_CONFIG_NOPROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_26="${NPM_CONFIG_NOPROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27="${NPM_CONFIG_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_27="${NPM_CONFIG_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28="${PIP_CERT+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_28="${PIP_CERT-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29="${PIP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_29="${PIP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30="${REQUESTS_CA_BUNDLE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_30="${REQUESTS_CA_BUNDLE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31="${SSL_CERT_FILE+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_31="${SSL_CERT_FILE-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32="${WSS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_32="${WSS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33="${WS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_33="${WS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34="${YARN_HTTPS_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_34="${YARN_HTTPS_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35="${YARN_HTTP_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_35="${YARN_HTTP_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36="${YARN_NO_PROXY+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_36="${YARN_NO_PROXY-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37="${all_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_37="${all_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38="${ftp_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_38="${ftp_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39="${http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_39="${http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40="${https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_40="${https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41="${no_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_41="${no_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42="${npm_config_cafile+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_42="${npm_config_cafile-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43="${npm_config_http_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_43="${npm_config_http_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44="${npm_config_https_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_44="${npm_config_https_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45="${npm_config_noproxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_45="${npm_config_noproxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46="${npm_config_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_46="${npm_config_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47="${ws_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_47="${ws_proxy-}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48="${wss_proxy+x}" __CODEX_SNAPSHOT_PROXY_OVERRIDE_48="${wss_proxy-}" __CODEX_SNAPSHOT_PROXY_ENV_SET="${CODEX_NETWORK_PROXY_ACTIVE+x}"  if . '/home/box/.codex/shell_snapshots/01a1a306-5dc8-7963-a44b-edb2c1b709a1.1793736465885059894.sh' >/dev/null 2>&1; then :; fi  if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_0}" ]; then   if [ -z "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS+x}" ] || [ "${CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS-}" != "${__CODEX_SNAPSHOT_OVERRIDE_0}" ]; then export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS="${__CODEX_SNAPSHOT_OVERRIDE_0}"; else export CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi else builtin unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS 2>/dev/null || command unset CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_0 __CODEX_SNAPSHOT_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_1}" ]; then   if [ -z "${CODEX_PERMISSION_PROFILE+x}" ] || [ "${CODEX_PERMISSION_PROFILE-}" != "${__CODEX_SNAPSHOT_OVERRIDE_1}" ]; then export CODEX_PERMISSION_PROFILE="${__CODEX_SNAPSHOT_OVERRIDE_1}"; else export CODEX_PERMISSION_PROFILE; fi else builtin unset CODEX_PERMISSION_PROFILE 2>/dev/null || command unset CODEX_PERMISSION_PROFILE; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_1 __CODEX_SNAPSHOT_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_2}" ]; then   if [ -z "${CODEX_PLUGIN_METRICS_OUTPUT+x}" ] || [ "${CODEX_PLUGIN_METRICS_OUTPUT-}" != "${__CODEX_SNAPSHOT_OVERRIDE_2}" ]; then export CODEX_PLUGIN_METRICS_OUTPUT="${__CODEX_SNAPSHOT_OVERRIDE_2}"; else export CODEX_PLUGIN_METRICS_OUTPUT; fi else builtin unset CODEX_PLUGIN_METRICS_OUTPUT 2>/dev/null || command unset CODEX_PLUGIN_METRICS_OUTPUT; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_2 __CODEX_SNAPSHOT_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_3}" ]; then   if [ -z "${CODEX_SESSION_ID+x}" ] || [ "${CODEX_SESSION_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_3}" ]; then export CODEX_SESSION_ID="${__CODEX_SNAPSHOT_OVERRIDE_3}"; else export CODEX_SESSION_ID; fi else builtin unset CODEX_SESSION_ID 2>/dev/null || command unset CODEX_SESSION_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_3 __CODEX_SNAPSHOT_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_4}" ]; then   if [ -z "${CODEX_THREAD_ID+x}" ] || [ "${CODEX_THREAD_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_4}" ]; then export CODEX_THREAD_ID="${__CODEX_SNAPSHOT_OVERRIDE_4}"; else export CODEX_THREAD_ID; fi else builtin unset CODEX_THREAD_ID 2>/dev/null || command unset CODEX_THREAD_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_4 __CODEX_SNAPSHOT_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_5}" ]; then   if [ -z "${CODEX_TOOL_CALL_ID+x}" ] || [ "${CODEX_TOOL_CALL_ID-}" != "${__CODEX_SNAPSHOT_OVERRIDE_5}" ]; then export CODEX_TOOL_CALL_ID="${__CODEX_SNAPSHOT_OVERRIDE_5}"; else export CODEX_TOOL_CALL_ID; fi else builtin unset CODEX_TOOL_CALL_ID 2>/dev/null || command unset CODEX_TOOL_CALL_ID; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_5 __CODEX_SNAPSHOT_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_VERSION+x}" ] || [ "${CODEX_VERSION-}" != "${__CODEX_SNAPSHOT_OVERRIDE_6}" ]; then export CODEX_VERSION="${__CODEX_SNAPSHOT_OVERRIDE_6}"; else export CODEX_VERSION; fi else builtin unset CODEX_VERSION 2>/dev/null || command unset CODEX_VERSION; fi builtin unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_OVERRIDE_SET_6 __CODEX_SNAPSHOT_OVERRIDE_6 if [ -n "$__CODEX_SNAPSHOT_PROXY_ENV_SET" ] || [ -n "${CODEX_NETWORK_PROXY_ACTIVE+x}" ]; then if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0}" ]; then   if [ -z "${ALL_PROXY+x}" ] || [ "${ALL_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}" ]; then export ALL_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_0}"; else export ALL_PROXY; fi else builtin unset ALL_PROXY 2>/dev/null || command unset ALL_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_0 __CODEX_SNAPSHOT_PROXY_OVERRIDE_0 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1}" ]; then   if [ -z "${BUNDLE_HTTPS_PROXY+x}" ] || [ "${BUNDLE_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}" ]; then export BUNDLE_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_1}"; else export BUNDLE_HTTPS_PROXY; fi else builtin unset BUNDLE_HTTPS_PROXY 2>/dev/null || command unset BUNDLE_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_1 __CODEX_SNAPSHOT_PROXY_OVERRIDE_1 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2}" ]; then   if [ -z "${BUNDLE_HTTP_PROXY+x}" ] || [ "${BUNDLE_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}" ]; then export BUNDLE_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_2}"; else export BUNDLE_HTTP_PROXY; fi else builtin unset BUNDLE_HTTP_PROXY 2>/dev/null || command unset BUNDLE_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_2 __CODEX_SNAPSHOT_PROXY_OVERRIDE_2 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3}" ]; then   if [ -z "${BUNDLE_NO_PROXY+x}" ] || [ "${BUNDLE_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}" ]; then export BUNDLE_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_3}"; else export BUNDLE_NO_PROXY; fi else builtin unset BUNDLE_NO_PROXY 2>/dev/null || command unset BUNDLE_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_3 __CODEX_SNAPSHOT_PROXY_OVERRIDE_3 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4}" ]; then   if [ -z "${BUNDLE_SSL_CA_CERT+x}" ] || [ "${BUNDLE_SSL_CA_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}" ]; then export BUNDLE_SSL_CA_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_4}"; else export BUNDLE_SSL_CA_CERT; fi else builtin unset BUNDLE_SSL_CA_CERT 2>/dev/null || command unset BUNDLE_SSL_CA_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_4 __CODEX_SNAPSHOT_PROXY_OVERRIDE_4 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5}" ]; then   if [ -z "${CARGO_HTTP_CAINFO+x}" ] || [ "${CARGO_HTTP_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}" ]; then export CARGO_HTTP_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_5}"; else export CARGO_HTTP_CAINFO; fi else builtin unset CARGO_HTTP_CAINFO 2>/dev/null || command unset CARGO_HTTP_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_5 __CODEX_SNAPSHOT_PROXY_OVERRIDE_5 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6}" ]; then   if [ -z "${CODEX_CA_CERTIFICATE+x}" ] || [ "${CODEX_CA_CERTIFICATE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}" ]; then export CODEX_CA_CERTIFICATE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_6}"; else export CODEX_CA_CERTIFICATE; fi else builtin unset CODEX_CA_CERTIFICATE 2>/dev/null || command unset CODEX_CA_CERTIFICATE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_6 __CODEX_SNAPSHOT_PROXY_OVERRIDE_6 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7}" ]; then   if [ -z "${CODEX_NETWORK_ALLOW_LOCAL_BINDING+x}" ] || [ "${CODEX_NETWORK_ALLOW_LOCAL_BINDING-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}" ]; then export CODEX_NETWORK_ALLOW_LOCAL_BINDING="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_7}"; else export CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi else builtin unset CODEX_NETWORK_ALLOW_LOCAL_BINDING 2>/dev/null || command unset CODEX_NETWORK_ALLOW_LOCAL_BINDING; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_7 __CODEX_SNAPSHOT_PROXY_OVERRIDE_7 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}" ]; then export CODEX_NETWORK_PROXY_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_8}"; else export CODEX_NETWORK_PROXY_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_8 __CODEX_SNAPSHOT_PROXY_OVERRIDE_8 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_ATTRIBUTION+x}" ] || [ "${CODEX_NETWORK_PROXY_ATTRIBUTION-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}" ]; then export CODEX_NETWORK_PROXY_ATTRIBUTION="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_9}"; else export CODEX_NETWORK_PROXY_ATTRIBUTION; fi else builtin unset CODEX_NETWORK_PROXY_ATTRIBUTION 2>/dev/null || command unset CODEX_NETWORK_PROXY_ATTRIBUTION; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_9 __CODEX_SNAPSHOT_PROXY_OVERRIDE_9 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS+x}" ] || [ "${CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}" ]; then export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_10}"; else export CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi else builtin unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS 2>/dev/null || command unset CODEX_NETWORK_PROXY_BROKERED_CREDENTIALS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_10 __CODEX_SNAPSHOT_PROXY_OVERRIDE_10 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11}" ]; then   if [ -z "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE+x}" ] || [ "${CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}" ]; then export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_11}"; else export CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi else builtin unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE 2>/dev/null || command unset CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_11 __CODEX_SNAPSHOT_PROXY_OVERRIDE_11 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12}" ]; then   if [ -z "${CURL_CA_BUNDLE+x}" ] || [ "${CURL_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}" ]; then export CURL_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_12}"; else export CURL_CA_BUNDLE; fi else builtin unset CURL_CA_BUNDLE 2>/dev/null || command unset CURL_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_12 __CODEX_SNAPSHOT_PROXY_OVERRIDE_12 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13}" ]; then   if [ -z "${DOCKER_HTTPS_PROXY+x}" ] || [ "${DOCKER_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}" ]; then export DOCKER_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_13}"; else export DOCKER_HTTPS_PROXY; fi else builtin unset DOCKER_HTTPS_PROXY 2>/dev/null || command unset DOCKER_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_13 __CODEX_SNAPSHOT_PROXY_OVERRIDE_13 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14}" ]; then   if [ -z "${DOCKER_HTTP_PROXY+x}" ] || [ "${DOCKER_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}" ]; then export DOCKER_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_14}"; else export DOCKER_HTTP_PROXY; fi else builtin unset DOCKER_HTTP_PROXY 2>/dev/null || command unset DOCKER_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_14 __CODEX_SNAPSHOT_PROXY_OVERRIDE_14 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15}" ]; then   if [ -z "${ELECTRON_GET_USE_PROXY+x}" ] || [ "${ELECTRON_GET_USE_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}" ]; then export ELECTRON_GET_USE_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_15}"; else export ELECTRON_GET_USE_PROXY; fi else builtin unset ELECTRON_GET_USE_PROXY 2>/dev/null || command unset ELECTRON_GET_USE_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_15 __CODEX_SNAPSHOT_PROXY_OVERRIDE_15 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16}" ]; then   if [ -z "${FTP_PROXY+x}" ] || [ "${FTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}" ]; then export FTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_16}"; else export FTP_PROXY; fi else builtin unset FTP_PROXY 2>/dev/null || command unset FTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_16 __CODEX_SNAPSHOT_PROXY_OVERRIDE_16 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17}" ]; then   if [ -z "${GIT_SSL_CAINFO+x}" ] || [ "${GIT_SSL_CAINFO-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}" ]; then export GIT_SSL_CAINFO="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_17}"; else export GIT_SSL_CAINFO; fi else builtin unset GIT_SSL_CAINFO 2>/dev/null || command unset GIT_SSL_CAINFO; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_17 __CODEX_SNAPSHOT_PROXY_OVERRIDE_17 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18}" ]; then   if [ -z "${HTTPS_PROXY+x}" ] || [ "${HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}" ]; then export HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_18}"; else export HTTPS_PROXY; fi else builtin unset HTTPS_PROXY 2>/dev/null || command unset HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_18 __CODEX_SNAPSHOT_PROXY_OVERRIDE_18 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19}" ]; then   if [ -z "${HTTP_PROXY+x}" ] || [ "${HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}" ]; then export HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_19}"; else export HTTP_PROXY; fi else builtin unset HTTP_PROXY 2>/dev/null || command unset HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_19 __CODEX_SNAPSHOT_PROXY_OVERRIDE_19 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20}" ]; then   if [ -z "${NODE_EXTRA_CA_CERTS+x}" ] || [ "${NODE_EXTRA_CA_CERTS-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}" ]; then export NODE_EXTRA_CA_CERTS="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_20}"; else export NODE_EXTRA_CA_CERTS; fi else builtin unset NODE_EXTRA_CA_CERTS 2>/dev/null || command unset NODE_EXTRA_CA_CERTS; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_20 __CODEX_SNAPSHOT_PROXY_OVERRIDE_20 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21}" ]; then   if [ -z "${NODE_USE_ENV_PROXY+x}" ] || [ "${NODE_USE_ENV_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}" ]; then export NODE_USE_ENV_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_21}"; else export NODE_USE_ENV_PROXY; fi else builtin unset NODE_USE_ENV_PROXY 2>/dev/null || command unset NODE_USE_ENV_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_21 __CODEX_SNAPSHOT_PROXY_OVERRIDE_21 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22}" ]; then   if [ -z "${NO_PROXY+x}" ] || [ "${NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}" ]; then export NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_22}"; else export NO_PROXY; fi else builtin unset NO_PROXY 2>/dev/null || command unset NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_22 __CODEX_SNAPSHOT_PROXY_OVERRIDE_22 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23}" ]; then   if [ -z "${NPM_CONFIG_CAFILE+x}" ] || [ "${NPM_CONFIG_CAFILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}" ]; then export NPM_CONFIG_CAFILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_23}"; else export NPM_CONFIG_CAFILE; fi else builtin unset NPM_CONFIG_CAFILE 2>/dev/null || command unset NPM_CONFIG_CAFILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_23 __CODEX_SNAPSHOT_PROXY_OVERRIDE_23 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24}" ]; then   if [ -z "${NPM_CONFIG_HTTPS_PROXY+x}" ] || [ "${NPM_CONFIG_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}" ]; then export NPM_CONFIG_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_24}"; else export NPM_CONFIG_HTTPS_PROXY; fi else builtin unset NPM_CONFIG_HTTPS_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_24 __CODEX_SNAPSHOT_PROXY_OVERRIDE_24 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25}" ]; then   if [ -z "${NPM_CONFIG_HTTP_PROXY+x}" ] || [ "${NPM_CONFIG_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}" ]; then export NPM_CONFIG_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_25}"; else export NPM_CONFIG_HTTP_PROXY; fi else builtin unset NPM_CONFIG_HTTP_PROXY 2>/dev/null || command unset NPM_CONFIG_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_25 __CODEX_SNAPSHOT_PROXY_OVERRIDE_25 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26}" ]; then   if [ -z "${NPM_CONFIG_NOPROXY+x}" ] || [ "${NPM_CONFIG_NOPROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}" ]; then export NPM_CONFIG_NOPROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_26}"; else export NPM_CONFIG_NOPROXY; fi else builtin unset NPM_CONFIG_NOPROXY 2>/dev/null || command unset NPM_CONFIG_NOPROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_26 __CODEX_SNAPSHOT_PROXY_OVERRIDE_26 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27}" ]; then   if [ -z "${NPM_CONFIG_PROXY+x}" ] || [ "${NPM_CONFIG_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}" ]; then export NPM_CONFIG_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_27}"; else export NPM_CONFIG_PROXY; fi else builtin unset NPM_CONFIG_PROXY 2>/dev/null || command unset NPM_CONFIG_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_27 __CODEX_SNAPSHOT_PROXY_OVERRIDE_27 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28}" ]; then   if [ -z "${PIP_CERT+x}" ] || [ "${PIP_CERT-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}" ]; then export PIP_CERT="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_28}"; else export PIP_CERT; fi else builtin unset PIP_CERT 2>/dev/null || command unset PIP_CERT; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_28 __CODEX_SNAPSHOT_PROXY_OVERRIDE_28 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29}" ]; then   if [ -z "${PIP_PROXY+x}" ] || [ "${PIP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}" ]; then export PIP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_29}"; else export PIP_PROXY; fi else builtin unset PIP_PROXY 2>/dev/null || command unset PIP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_29 __CODEX_SNAPSHOT_PROXY_OVERRIDE_29 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30}" ]; then   if [ -z "${REQUESTS_CA_BUNDLE+x}" ] || [ "${REQUESTS_CA_BUNDLE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}" ]; then export REQUESTS_CA_BUNDLE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_30}"; else export REQUESTS_CA_BUNDLE; fi else builtin unset REQUESTS_CA_BUNDLE 2>/dev/null || command unset REQUESTS_CA_BUNDLE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_30 __CODEX_SNAPSHOT_PROXY_OVERRIDE_30 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31}" ]; then   if [ -z "${SSL_CERT_FILE+x}" ] || [ "${SSL_CERT_FILE-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}" ]; then export SSL_CERT_FILE="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_31}"; else export SSL_CERT_FILE; fi else builtin unset SSL_CERT_FILE 2>/dev/null || command unset SSL_CERT_FILE; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_31 __CODEX_SNAPSHOT_PROXY_OVERRIDE_31 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32}" ]; then   if [ -z "${WSS_PROXY+x}" ] || [ "${WSS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}" ]; then export WSS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_32}"; else export WSS_PROXY; fi else builtin unset WSS_PROXY 2>/dev/null || command unset WSS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_32 __CODEX_SNAPSHOT_PROXY_OVERRIDE_32 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33}" ]; then   if [ -z "${WS_PROXY+x}" ] || [ "${WS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}" ]; then export WS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_33}"; else export WS_PROXY; fi else builtin unset WS_PROXY 2>/dev/null || command unset WS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_33 __CODEX_SNAPSHOT_PROXY_OVERRIDE_33 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34}" ]; then   if [ -z "${YARN_HTTPS_PROXY+x}" ] || [ "${YARN_HTTPS_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}" ]; then export YARN_HTTPS_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_34}"; else export YARN_HTTPS_PROXY; fi else builtin unset YARN_HTTPS_PROXY 2>/dev/null || command unset YARN_HTTPS_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_34 __CODEX_SNAPSHOT_PROXY_OVERRIDE_34 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35}" ]; then   if [ -z "${YARN_HTTP_PROXY+x}" ] || [ "${YARN_HTTP_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}" ]; then export YARN_HTTP_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_35}"; else export YARN_HTTP_PROXY; fi else builtin unset YARN_HTTP_PROXY 2>/dev/null || command unset YARN_HTTP_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_35 __CODEX_SNAPSHOT_PROXY_OVERRIDE_35 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36}" ]; then   if [ -z "${YARN_NO_PROXY+x}" ] || [ "${YARN_NO_PROXY-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}" ]; then export YARN_NO_PROXY="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_36}"; else export YARN_NO_PROXY; fi else builtin unset YARN_NO_PROXY 2>/dev/null || command unset YARN_NO_PROXY; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_36 __CODEX_SNAPSHOT_PROXY_OVERRIDE_36 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37}" ]; then   if [ -z "${all_proxy+x}" ] || [ "${all_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}" ]; then export all_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_37}"; else export all_proxy; fi else builtin unset all_proxy 2>/dev/null || command unset all_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_37 __CODEX_SNAPSHOT_PROXY_OVERRIDE_37 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38}" ]; then   if [ -z "${ftp_proxy+x}" ] || [ "${ftp_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}" ]; then export ftp_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_38}"; else export ftp_proxy; fi else builtin unset ftp_proxy 2>/dev/null || command unset ftp_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_38 __CODEX_SNAPSHOT_PROXY_OVERRIDE_38 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39}" ]; then   if [ -z "${http_proxy+x}" ] || [ "${http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}" ]; then export http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_39}"; else export http_proxy; fi else builtin unset http_proxy 2>/dev/null || command unset http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_39 __CODEX_SNAPSHOT_PROXY_OVERRIDE_39 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40}" ]; then   if [ -z "${https_proxy+x}" ] || [ "${https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}" ]; then export https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_40}"; else export https_proxy; fi else builtin unset https_proxy 2>/dev/null || command unset https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_40 __CODEX_SNAPSHOT_PROXY_OVERRIDE_40 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41}" ]; then   if [ -z "${no_proxy+x}" ] || [ "${no_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}" ]; then export no_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_41}"; else export no_proxy; fi else builtin unset no_proxy 2>/dev/null || command unset no_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_41 __CODEX_SNAPSHOT_PROXY_OVERRIDE_41 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42}" ]; then   if [ -z "${npm_config_cafile+x}" ] || [ "${npm_config_cafile-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}" ]; then export npm_config_cafile="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_42}"; else export npm_config_cafile; fi else builtin unset npm_config_cafile 2>/dev/null || command unset npm_config_cafile; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_42 __CODEX_SNAPSHOT_PROXY_OVERRIDE_42 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43}" ]; then   if [ -z "${npm_config_http_proxy+x}" ] || [ "${npm_config_http_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}" ]; then export npm_config_http_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_43}"; else export npm_config_http_proxy; fi else builtin unset npm_config_http_proxy 2>/dev/null || command unset npm_config_http_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_43 __CODEX_SNAPSHOT_PROXY_OVERRIDE_43 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44}" ]; then   if [ -z "${npm_config_https_proxy+x}" ] || [ "${npm_config_https_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}" ]; then export npm_config_https_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_44}"; else export npm_config_https_proxy; fi else builtin unset npm_config_https_proxy 2>/dev/null || command unset npm_config_https_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_44 __CODEX_SNAPSHOT_PROXY_OVERRIDE_44 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45}" ]; then   if [ -z "${npm_config_noproxy+x}" ] || [ "${npm_config_noproxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}" ]; then export npm_config_noproxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_45}"; else export npm_config_noproxy; fi else builtin unset npm_config_noproxy 2>/dev/null || command unset npm_config_noproxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_45 __CODEX_SNAPSHOT_PROXY_OVERRIDE_45 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46}" ]; then   if [ -z "${npm_config_proxy+x}" ] || [ "${npm_config_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}" ]; then export npm_config_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_46}"; else export npm_config_proxy; fi else builtin unset npm_config_proxy 2>/dev/null || command unset npm_config_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_46 __CODEX_SNAPSHOT_PROXY_OVERRIDE_46 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47}" ]; then   if [ -z "${ws_proxy+x}" ] || [ "${ws_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}" ]; then export ws_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_47}"; else export ws_proxy; fi else builtin unset ws_proxy 2>/dev/null || command unset ws_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_47 __CODEX_SNAPSHOT_PROXY_OVERRIDE_47 if [ -n "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48}" ]; then   if [ -z "${wss_proxy+x}" ] || [ "${wss_proxy-}" != "${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}" ]; then export wss_proxy="${__CODEX_SNAPSHOT_PROXY_OVERRIDE_48}"; else export wss_proxy; fi else builtin unset wss_proxy 2>/dev/null || command unset wss_proxy; fi builtin unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 2>/dev/null || command unset __CODEX_SNAPSHOT_PROXY_OVERRIDE_SET_48 __CODEX_SNAPSHOT_PROXY_OVERRIDE_48 fi if [ -n "${PATH:-}" ]; then export PATH='/home/box/.local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path':"$PATH"; else export PATH='/home/box/.local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path'; fi  exec '/bin/bash' -c 'ps -eo pid,etime,args | rg '"'"'check.py|chromium'"'"''
+      2       00:00 /bin/bash -c ps -eo pid,etime,args | rg 'check.py|chromium'
+      4       00:00 rg check.py|chromium
+
+ succeeded in 40401ms:
+windows {'0slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '0slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '0slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '0sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '0sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '0sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}, '1slick0': {'lo': 0.36500000000000027, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.4712499999999995}, '1slick1': {'lo': 0.5324999999999996, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.607499999999998}, '1slick2': {'lo': 0.7699999999999946, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8249999999999934, 'mid': 0.7849999999999943}, '1sticky0': {'lo': 0.4250000000000003, 'hi': 0.5774999999999987, 'olo': 0.36500000000000027, 'ohi': 0.5774999999999987, 'mid': 0.5012499999999995}, '1sticky1': {'lo': 0.6199999999999978, 'hi': 0.6824999999999964, 'olo': 0.45250000000000035, 'ohi': 0.6824999999999964, 'mid': 0.6512499999999971}, '1sticky2': {'lo': 0.7774999999999944, 'hi': 0.7999999999999939, 'olo': 0.5949999999999983, 'ohi': 0.8299999999999933, 'mid': 0.7887499999999942}}
+arc/spin landing probes [[{'p': [-0.2780331209876951, 0.016, -10.700785707853932], 'state': 'grass', 'flight': 1.3249999999999966}, {'p': [-0.001035993750807052, 0.17374736068007543, -9.220224496237416], 'state': 'in', 'flight': 0.995833333333331}], [{'p': [-0.17929985385874825, 0.2738173551311618, -9.16698293969093], 'state': 'board', 'flight': 1.1833333333333305}, {'p': [-0.11629390776890713, 0.2735678299777552, -9.165596125818576], 'state': 'board', 'flight': 1.1833333333333305}], [{'p': [-0.1499498494126058, 0.016, -7.962955832975397], 'state': 'grass', 'flight': 1.6541666666666621}, {'p': [-0.08990528309286007, 0.016, -7.962865610391293], 'state': 'grass', 'flight': 1.6541666666666621}]]
+errors []
+
+exec
+/bin/bash -lc 'git diff --check; ls -l shots/wind*' in /workspace/cornhole
+ succeeded in 0ms:
+-rw-r--r-- 1 box box 48520 Nov  3 15:09 shots/wind-1280.png
+-rw-r--r-- 1 box box 36889 Nov  3 15:09 shots/wind-390.png
+-rw-r--r-- 1 box box 32897 Nov  3 15:09 shots/wind-480.png
+
+exec
+/bin/bash -lc "sed -n '1,65p' tests/career_check.py" in /workspace/cornhole
+ succeeded in 0ms:
+import asyncio, json
+from playwright.async_api import async_playwright
+URL='http://127.0.0.1:8000'
+async def main():
+ async with async_playwright() as p:
+  b=await p.chromium.launch(args=['--no-sandbox'])
+  errors=[]
+  ctx=await b.new_context(ignore_https_errors=True,viewport={'width':1280,'height':800})
+  page=await ctx.new_page()
+  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await page.goto(URL);await page.wait_for_function('!!window.__game')
+  await page.click('#career');await page.click('#career-go')
+  assert 'NEXT UP: Slidin’ Steve' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-intro.png')
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  assert await page.evaluate('__game.state.wind.mph')==0
+  # Scripted real throws, preset near-winning scores and resting bags via existing physics hooks.
+  # Four misses per side leave a known board point; scoring still runs through the full inning.
+  async def finish(winner):
+   await page.evaluate(f'__game._setScores({20 if winner==0 else 0},{20 if winner==1 else 0});__game._place({winner},.26,-.3)')
+   while await page.evaluate('__game.state.phase') not in ['over','summary']:
+    if await page.evaluate('__game.state.phase') in ['aim','cpu']:await page.evaluate('__game.throwWith(0)')
+    await page.wait_for_timeout(80)
+   assert await page.evaluate('__game.state.winner')==winner
+  await finish(0)
+  print('Early win passed',flush=True)
+  assert await page.evaluate('__game.career.fight')==1
+  await page.reload();await page.wait_for_function('!!window.__game')
+  assert await page.evaluate('__game.career.fight')==1
+  await page.click('#career');await page.click('#career-go');assert 'Big Bag Barb' in await page.locator('#panel').inner_text()
+  await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  print('Persistence passed',flush=True)
+  await finish(1);assert await page.evaluate('__game.career.fight')==1
+  await page.click('#next-fight');assert 'NEXT UP: Big Bag Barb' in await page.locator('#panel').inner_text()
+  # Seed unlocked saves to inspect later circuits and rematch portraits.
+  for fight in [2,4,5,6,7]:
+   await page.evaluate('(n)=>localStorage.setItem("backyard-cornhole-career-v1",JSON.stringify({fight:n,wins:n}))',fight)
+   await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go')
+   assert await page.locator('.portrait').count()==1
+   await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+   wind=await page.evaluate('__game.state.wind');assert wind['mph']>0
+   await page.wait_for_timeout(1500);assert await page.evaluate('__game.state.wind')==wind
+  await page.reload();await page.wait_for_function('!!window.__game');await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_function('__game.state.phase==="aim" || __game.state.phase==="cpu"')
+  await finish(0);await page.click('#next-fight');assert 'CORNHOLE KING!' in await page.locator('#panel').inner_text()
+  await page.screenshot(path='shots/career-champion.png')
+  for width,height,name in [(1280,800,'desktop'),(480,360,'card')]:
+   await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
+   await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_timeout(1100)
+   await page.screenshot(path=f'shots/career-{name}.png')
+   assert not await page.locator('#wind').is_visible()  # First circuit is calm.
+  mobile=await b.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
+  mp.on('pageerror',lambda e:errors.append(str(e)))
+  mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+  await mp.goto(URL);await mp.wait_for_function('!!window.__game');await mp.click('#career');await mp.click('#career-go');await mp.screenshot(path='shots/career-mobile.png');await mp.click('#fight');await mp.wait_for_timeout(1800)
+  assert await mp.evaluate('__game.state.wind.mph')==0
+  print('Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS');print('Console errors:',errors);assert not errors
+  await b.close()
+asyncio.run(main())
+
+ succeeded in 62771ms:
+TASK_3 modes, controls, aim, per-player height, unlimited practice, reset, moving sweet spots, responsive HUD: PASS
+
+codex
+The gameplay suite and batch 3 regression suite passed. The wind suite also passes after adding folds so the calm flag hangs visibly. The career suite is still running its match, save, and tournament-ending checks.
+exec
+/bin/bash -lc 'git diff --check' in /workspace/cornhole
+ succeeded in 0ms:
+exec
+/bin/bash -lc "cat > codex-summary-4.md <<'EOF'
+# Cornhole batch 4
+
+Implemented "'`CODEX_TASK_4.md` in `index.html`. Changes remain in the working tree; `.git` was only read. Batches 1–3 controls, camera framing, physics, modes, career progression, and power windows are preserved.
+
+- Moved wind out of the top-center conditions line into a bordered, high-contrast widget on the right. Its continuous arrow points where the wind blows and its speed reads in MPH. Calm air hides the entire widget, including in practice and the first career circuit. Added an accessible direction/speed label.
+- Replaced the static striped flag beside the hay bales with a subdivided, double-sided pennant. Its world-space animation follows the same wind direction used by bag physics, independent of the hay bales'"' rotation. Higher MPH extends the cloth farther, increases flutter frequency, and reduces ripple amplitude for a stiffer flag. Calm cloth droops with small static folds.
+- Added deterministic wind/flag hooks alongside the existing test hooks and "'`tests/wind_flag_check.py`. Updated the career suite'"'s old always-visible wind assertion to expect a hidden widget during its calm first-circuit checks.
+
+## Verification
+
+Served the working tree on port 8000 using Python's HTTP server. Ran Python Playwright with headless Chromium, "'`/tmp/cornhole-venv`, and `PLAYWRIGHT_BROWSERS_PATH=/tmp/task3-browsers`.
+
+- `tests/playwright_check.py`: PASS; existing desktop/touch controls, trajectories, collisions, scoring, wind persistence, mobile orientations, and sandboxed iframe checks. No browser errors.
+- `tests/task3_check.py`: PASS; modes, direct aim, framing, per-player choices, unlimited practice/reset tally, moving sweet spots, and responsive HUD.
+- `tests/wind_flag_check.py`: PASS; all eight wind directions, MPH and arrow rotation, flag geometry alignment, animated flutter, stronger-wind extension/frequency/stiffness, calm droop and no flutter, practice hiding, and widget bounds at 1280×800, 390×844, and 480×360. No browser errors.
+- `tests/career_check.py`: pending final completion.
+- `git diff --check`: PASS.
+
+Refreshed suite screenshots and added `shots/wind-1280.png`, `shots/wind-390.png`, and `shots/wind-480.png`. Visually inspected the compact 480×360 wind widget placement. Unrelated task and log files were left alone.
+EOF' in /workspace/cornhole
+ succeeded in 0ms:
+ succeeded in 98230ms:
+Early win passed
+Persistence passed
+Career start, scripted win/loss, persistence, rematches, circuit wind, champion, desktop/card/mobile: PASS
+Console errors: []
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+p='codex-summary-4.md';s=open(p).read().replace('"'`tests/career_check.py`: pending final completion.'"', '"'`tests/career_check.py`: PASS; career win/loss, retry, save persistence, later circuit winds, rematches, champion ending, desktop/card/mobile. No browser errors.'"');open(p,'w').write(s)
+PY
+git diff --check" in /workspace/cornhole
+ succeeded in 0ms:
+codex
+Completed batch 4: right-side wind arrow and MPH widget, hidden when calm, plus a flag that follows wind direction and flutters faster and stiffer at higher speeds.
+
+All four Playwright suites and `git diff --check` passed. Summary: [codex-summary-4.md](/workspace/cornhole/codex-summary-4.md).
+
+Changes remain in the working tree; `.git` was only read.
+2026-11-03T20:10:29.417842Z ERROR codex_core::session: failed to record rollout items: thread 01a1a306-5dc8-7963-a44b-edb2c1b709a1 not found
+tokens used
+63,451
+Completed batch 4: right-side wind arrow and MPH widget, hidden when calm, plus a flag that follows wind direction and flutters faster and stiffer at higher speeds.
+
+All four Playwright suites and `git diff --check` passed. Summary: [codex-summary-4.md](/workspace/cornhole/codex-summary-4.md).
+
+Changes remain in the working tree; `.git` was only read.

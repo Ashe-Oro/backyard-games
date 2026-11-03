@@ -79,7 +79,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #panel .go:hover{background:#fff07f}
 #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
 @media (max-width:560px){#hint .l2{display:none}#hint{padding:0 4em 0 9em}#title{top:12%}#title h1{font-size:2.4em}}
-#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{color:#ffe45e}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#2b1a2ee6;border:2px solid #ffe45e;color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;font:36px/1 sans-serif;margin:2px auto 8px;width:36px}#wind-speed{white-space:nowrap}
 #touch-controls{position:absolute;bottom:8%;left:1%;display:grid;grid-template-columns:repeat(4,auto);gap:4px;pointer-events:auto}#touch-controls button{font-size:7px;min-height:32px}#hint{bottom:1%;} .btns{bottom:21%}
 @media(min-width:800px) and (pointer:fine){#touch-controls{bottom:8%;}#hint{padding:0 5em 0 20em}}
 @media(max-height:450px){#turn{top:24%}#touch-controls{bottom:9%;grid-template-columns:repeat(4,auto)}#touch-controls button{min-height:26px;padding:5px;font-size:6px}.btns{bottom:30%}#hint{font-size:6px;padding:0 25px}#hint .l2{display:none}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
@@ -101,7 +101,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
-    <div id="conditions" class="ol"><div id="wind"></div><div id="setup"></div></div>
+    <div id="wind" class="ol" hidden role="status"><span>WIND</span><span id="wind-arrow" aria-hidden="true">↑</span><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
     <div id="touch-controls"><button class="hb" data-control="arrowleft" aria-label="STEP ←">STEP ←</button><button class="hb" data-control="arrowright" aria-label="STEP →">STEP →</button><button class="hb" data-control="a" aria-label="AIM ←">AIM ←</button><button class="hb" data-control="d" aria-label="AIM →">AIM →</button><button class="hb" data-control="q" aria-label="SPIN L">SPIN L</button><button class="hb" data-control="e" aria-label="SPIN R">SPIN R</button></div>
     <div id="height-choice"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div><div id="hint" class="ol"></div>
     <div class="btns"><button class="hb" id="side" title="Which side of the bag lands down (F)">SLICK SIDE</button><button class="hb" id="more">MORE</button><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
@@ -357,6 +357,7 @@ const bulbs = [];
 }
 
 // ---------- props ----------
+let pennant;
 {
   // cooler + cups
   const cg = new THREE.Group(); cg.position.set(2.5, 0, -7.0); cg.rotation.y = -0.4;
@@ -377,9 +378,20 @@ const bulbs = [];
   box(1.0, 0.45, 0.5, hm, 0, 0.225, 0, hb); box(1.0, 0.45, 0.5, hm, 0.15, 0.225, -0.55, hb); box(1.0, 0.45, 0.5, hm, 0.05, 0.675, -0.3, hb);
   const pen = new THREE.Group(); pen.position.set(0.1, 0.9, -0.3); hb.add(pen);
   box(0.03, 0.5, 0.03, lam('#7a4b2a'), 0, 0.25, 0, pen);
-  const flag = box(0.32, 0.2, 0.01, lam('#ff6a4d'), 0.17, 0.38, 0, pen);
-  box(0.32, 0.067, 0.012, lam('#fff4dc'), 0.17, 0.38, 0, pen);
+
   scene.add(hb);
+  // World-space cloth keeps the hay bales' rotation out of the wind direction.
+  hb.updateMatrixWorld(true);
+  const geometry = new THREE.PlaneGeometry(.32, .2, 16, 6);
+  const colors = [];
+  for(let i=0;i<geometry.attributes.position.count;i++) {
+    const c=new THREE.Color(Math.abs(geometry.attributes.position.getY(i))<.04?'#fff4dc':'#ff6a4d');
+    colors.push(c.r,c.g,c.b);
+  }
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  pennant=new THREE.Mesh(geometry,lam({vertexColors:true,side:THREE.DoubleSide}));
+  pennant.position.copy(pen.localToWorld(new THREE.Vector3(.015,.48,0)));
+  scene.add(pennant);
   // grill
   const gr = new THREE.Group(); gr.position.set(-5.2, 0, -9.6);
   const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), lam({ color: '#2b2b33', flatShading: true })); bowl.position.y = 0.85; bowl.castShadow = true; gr.add(bowl);
@@ -686,7 +698,10 @@ function renderHud() {
     ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
     ui.turn.style.opacity = 1;
   } else ui.turn.style.opacity = 0;
-  $('wind').textContent = wind.mph===0 ? 'CALM AIR · 0 MPH' : `${['↑','↗','→','↘','↓','↙','←','↖'][Math.round(wind.angle / (Math.PI / 4)) % 8]} ${wind.mph} MPH`;
+  $('wind').hidden = wind.mph <= 0;
+  $('wind-speed').textContent = `${wind.mph} MPH`;
+  $('wind-arrow').style.transform = `rotate(${wind.angle}rad)`;
+  $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
   $('reset-bags').hidden=!M.practice;
   ui.t[1].hidden=M.practice;
@@ -1041,6 +1056,22 @@ addEventListener('keyup', (e) => {
   if (k === 'd' && keyAim > 0) keyAim = 0;
 });
 
+// The free end droops in calm air; stronger wind extends it and tightens the ripples.
+function animatePennant(seconds) {
+  const strength=Math.min(1,wind.mph/12), extension=wind.mph>0?.45+.55*strength:0;
+  const dx=wind.mph>0?Math.sin(wind.angle):1, dz=wind.mph>0?-Math.cos(wind.angle):0;
+  const frequency=2+wind.mph*1.1, amplitude=wind.mph>0?.035*(1-.65*strength):0;
+  const pos=pennant.geometry.attributes.position;
+  for(let i=0;i<pos.count;i++) {
+    const u=(i%17)/16, row=Math.floor(i/17)/6;
+    const along=.32*u*extension+.018*u*(1-extension);
+    const ripple=Math.sin(seconds*frequency-u*11)*amplitude*u + .012*Math.sin(row*Math.PI*2)*u*(1-extension);
+    pos.setXYZ(i,dx*along-dz*ripple,-.2*row*(1-.8*u)-.30*u*(1-extension),dz*along+dx*ripple);
+  }
+  pos.needsUpdate=true;pennant.geometry.computeVertexNormals();pennant.geometry.computeBoundingSphere();
+  pennant.userData={extension,frequency,amplitude};
+}
+
 // ---------- loop ----------
 const clock = new THREE.Clock();
 let acc = 0, time = 0;
@@ -1105,6 +1136,7 @@ function frame() {
   dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;
   for (const s of smoke) { s.t = (s.t + dt * 0.25) % 1; s.b.position.set(-5.2 + Math.sin(s.t * 6 + 1) * 0.15, 1.25 + s.t * 1.6, -9.6 + s.t * 0.3); s.b.material.opacity = 0.55 * (1 - s.t); s.b.scale.setScalar(0.6 + s.t * 1.4); }
   for (const c of confetti) if (c.life > 0) { c.life -= dt; c.v.y -= 6 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += dt * 8; if (c.m.position.y < 0.02) { c.m.position.y = 0.02; c.v.set(0, 0, 0); } if (c.life <= 0) c.m.visible = false; }
+  animatePennant(time);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
@@ -1120,6 +1152,8 @@ requestAnimationFrame(frame);
 
 window.__game = {
   get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
+  _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
   _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
   get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
   careerMap, careerIntro,

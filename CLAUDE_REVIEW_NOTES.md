@@ -1,0 +1,2 @@
+# Claude UI polish review (after Codex batches 4-5 deploy)
+Must check: HUD text overlapping the title screen. The wind readout ("0 MPH") and the "CLASSIC · SPIN 0 · STEP 0.00" status line draw on top of the BACKYARD CORNHOLE title on the menu (see Ashe's screenshot, Nov 3, 3:10 PM). Gameplay HUD should be hidden on menus/cards, and no HUD text should overlap at any viewport (desktop, the 480x360 X card, phone).

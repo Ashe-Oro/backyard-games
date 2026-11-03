@@ -48,7 +48,7 @@ async def main():
    await page.set_viewport_size({'width':width,'height':height});await page.evaluate('localStorage.removeItem("backyard-cornhole-career-v1")');await page.reload();await page.wait_for_function('!!window.__game')
    await page.click('#career');await page.click('#career-go');await page.click('#fight');await page.wait_for_timeout(1100)
    await page.screenshot(path=f'shots/career-{name}.png')
-   assert await page.locator('#wind').is_visible()
+   assert not await page.locator('#wind').is_visible()  # First circuit is calm.
   mobile=await b.new_context(ignore_https_errors=True,**p.devices['iPhone 13']);mp=await mobile.new_page()
   mp.on('pageerror',lambda e:errors.append(str(e)))
   mp.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
