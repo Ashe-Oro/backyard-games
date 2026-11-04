@@ -15,16 +15,16 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   await page.locator('[data-mode=practice]').click();
   await page.waitForFunction(()=>__pong.state.held.visible&&__pong.state.phase==='aim');
   assert.deepEqual(await page.evaluate(()=>__pong.state.remaining),[10,10]);
-  const probes=await page.evaluate(()=>__pong.state.cups.filter(c=>c.team===1).map(c=>({id:c.id,result:__pong._probe(__pong._powerFor(c.id),Math.tan(Math.atan2(c.x,Math.abs(c.z-.55))/.65))})));
+  const probes=await page.evaluate(()=>__pong.state.cups.filter(c=>c.team===1).map(c=>({id:c.id,result:__pong._probe(__pong._powerFor(c.id),__pong._slopeFor(c.id))})));
   for(const probe of probes){assert.equal(probe.result.state,'sink');assert.equal(probe.result.cup,probe.id,'Each cup must be individually reachable');}
   const contacts=await page.evaluate(()=>{
    let rim=false,table=false;
-   for(let p=.18;p<.8;p+=.025)for(let slope=-.25;slope<=.25;slope+=.04){const b=__pong._probe(p,slope);rim ||= b.rimHits>0;table ||= b.deadReason==='table';if(rim&&table)return {rim,table};}
+   for(let p=.18;p<.8;p+=.025)for(let slope=-.25;slope<=.25;slope+=.04){const b=__pong._probe(p,slope);rim ||= b.rimHits>0;table ||= b.deadReason==='second-bounce';if(rim&&table)return {rim,table};}
    return {rim,table};
   });assert(contacts.rim&&contacts.table,'Physics must support rim contact and dead table contact');
   const dead=await page.evaluate(()=>__pong._probe(.18,0));
-  assert.equal(dead.state,'done');assert.equal(dead.deadReason,'table');assert.equal(dead.cup,null);
-  assert.deepEqual(dead.v,[0,0,0]);assert.equal(dead.bounces,0,'Table contact cannot rebound or score');
+  assert.equal(dead.state,'done');assert.equal(dead.deadReason,'second-bounce');assert.equal(dead.cup,null);
+  assert.deepEqual(dead.v,[0,0,0]);assert.equal(dead.bounces,1,'The first table contact rebounds; the second ends the shot');
   for(const [width,height]of [[1440,900],[1280,800],[390,844],[456,872],[844,390]]){
    await page.setViewportSize({width,height});await page.waitForTimeout(120);
    const view=await page.evaluate(()=>{
@@ -45,7 +45,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   assert.equal(await page.evaluate(()=>__pong._dropAt(10)),false,'A removed cup must not score twice');
   await page.locator('#refill').click();
   assert.equal(await page.evaluate(()=>__pong.state.hits[0]),1);assert.equal(await page.evaluate(()=>__pong.state.remaining[1]),10);
-  await page.evaluate(()=>__pong.throwWith(.2,0));await page.locator('#pause-button').click();
+  await page.evaluate(()=>__pong.throwWith(.02,0));await page.locator('#pause-button').click();
   const frozen=await page.evaluate(()=>__pong.state.ball);
   await page.waitForTimeout(500);assert.deepEqual(await page.evaluate(()=>__pong.state.ball),frozen,'Pause must freeze ball physics');
   assert.equal(await page.evaluate(()=>__pong.throwWith(.5)),false);

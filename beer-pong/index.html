@@ -25,7 +25,7 @@
     <div id="practice-stats" hidden><strong id="practice-hits">0 / 0</strong><span>CUPS / THROWS</span></div>
     <div id="message" role="status" aria-live="polite"></div>
     <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div>
-    <div id="shot-style" role="group" aria-label="Shot style"><button class="pixel-button" data-shot-style="arc" aria-pressed="true">ARC</button><button class="pixel-button" data-shot-style="bounce" aria-pressed="false">BOUNCE</button></div>
+    <div id="shot-style" role="group" aria-label="Shot style"><button class="pixel-button" data-shot-style="arc" aria-pressed="true" title="High arc; its first table bounce still counts">ARC</button><button class="pixel-button" data-shot-style="bounce" aria-pressed="false" title="Lower toss for planned bounce shots">BOUNCE</button></div>
     <div id="rack-actions"><button id="rerack-button" class="pixel-button" disabled>RE-RACK</button><button id="refill" class="pixel-button" hidden>REFILL CUPS</button></div>
     <span id="control-hint">DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW</span>
     <span id="shot-count">THROW 1</span>
@@ -47,7 +47,7 @@
     <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
     <p>Grab the ball and drag sideways to position it.<br>Pull downward to set power. Pull diagonally to aim in the opposite direction.<br>Release to throw. Return to the starting point to cancel.</p>
     <p>The arrow shows your throw direction.<br>After each throw, feedback tells you if your power was too weak, too strong, or in range.</p>
-    <p>Sink a cup to remove it. One throw per turn.<br>Arc shots: table contact ends the throw.<br>Bounce shots: one table bounce, worth two cups if made.<br>The CPU can swat after the bounce. Practice has no swatting.<br>Two-player mode keeps arc shots for now.<br>Clear the opposing rack to win.</p>
+    <p>Sink a cup to remove it. One throw per turn.<br>Practice / vs CPU: every human throw may bounce once.<br>A made table bounce is worth two cups. A second bounce ends the shot.<br>The CPU can swat after the bounce. Practice has no swatting.<br>Two-player mode keeps arc shots for now.<br>Clear the opposing rack to win.</p>
     <p>One re-rack per player: before your throw, with 6, 4, 3 or 2 target cups left. Choose a formation and confirm. The button disappears after use.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
   </dialog>

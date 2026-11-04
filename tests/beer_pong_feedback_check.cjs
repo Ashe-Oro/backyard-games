@@ -9,7 +9,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
  }
  // Every precisely aimed cup reports good distance, including off-center targets.
  for(let id=10;id<20;id++){
-  await page.evaluate(id=>{__pong.startMatch('practice');const cup=__pong.state.cups[id];__pong.throwWith(__pong._powerFor(id),Math.tan(Math.atan2(cup.x,Math.abs(cup.z-.55))/.65))},id);
+  await page.evaluate(id=>{__pong.startMatch('practice');const cup=__pong.state.cups[id];__pong.throwWith(__pong._powerFor(id),__pong._slopeFor(cup.id))},id);
   assert.equal(await page.locator('#feedback-power').textContent(),'POWER IN RANGE');
  }
  for(const [slope,label]of [[-.3,'LEFT'],[.3,'RIGHT']]){await page.evaluate(slope=>{__pong.startMatch('practice');__pong.throwWith(.45,slope)},slope);assert((await page.locator('#feedback-direction').textContent()).includes(label));}

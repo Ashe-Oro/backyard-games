@@ -5,9 +5,9 @@ import {createGlove} from './glove.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const G=9.8, BALL_R=.02, TABLE_Y=.76, TABLE_W=1.16, TABLE_L=2.8, TABLE_Z=-1.2;
+const G=9.8, BALL_R=.02, TABLE_Y=.76, TABLE_W=1.16, TABLE_L=3.5, TABLE_Z=-1.2;
 const CUP_R=.078, CUP_H=.17, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP_R-BALL_R-.006;
-const RELEASE_Y=1.09, RELEASE_Z=[.55,-2.95], ANGLE=52*Math.PI/180;
+const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], ANGLE=52*Math.PI/180;
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
 const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
@@ -19,7 +19,7 @@ try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-perf
 renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;
 wrap.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(40,1,.05,80);
-const defender=new SwatDefender('regular',()=>Math.random()),glove=createGlove();scene.add(glove);
+const defender=new SwatDefender('regular',()=>Math.random(),{homeZ:TABLE_Z-TABLE_L*.16,nearZ:TABLE_Z+.05,farZ:TABLE_Z-TABLE_L/2+.12}),glove=createGlove();scene.add(glove);
 scene.add(new THREE.HemisphereLight('#fff0cc','#315c43',2));
 const sun=new THREE.DirectionalLight('#ffd3a5',2.1);sun.position.set(-4,7,3);sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.5,far:20});
@@ -60,8 +60,8 @@ const tableMap=texture(128,256,(g,w,h)=>{
 });
 const tableSide=mat('#b3a06d'),tableTop=new THREE.MeshLambertMaterial({map:tableMap});
 box(TABLE_W,.075,TABLE_L,[tableSide,tableSide,tableTop,tableSide,tableSide,tableSide],0,TABLE_Y-.0375,TABLE_Z);
-for(const x of [-.43,.43])for(const z of [-2.22,-.18])box(.055,TABLE_Y-.08,.055,mat('#24413f'),x,(TABLE_Y-.08)/2,z);
-box(.9,.045,.055,woodDark,0,.25,-2.22);box(.9,.045,.055,woodDark,0,.25,-.18);
+for(const x of [-.43,.43])for(const z of [TABLE_Z-TABLE_L/2+.38,TABLE_Z+TABLE_L/2-.38])box(.055,TABLE_Y-.08,.055,mat('#24413f'),x,(TABLE_Y-.08)/2,z);
+box(.9,.045,.055,woodDark,0,.25,TABLE_Z-TABLE_L/2+.38);box(.9,.045,.055,woodDark,0,.25,TABLE_Z+TABLE_L/2-.38);
 // Nearby party props establish scale without crowding the cup rack.
 box(.55,.38,.38,mat('#356f8a'),1.6,.19,-1.5);box(.59,.07,.42,mat('#e4d9b4'),1.6,.415,-1.5);
 for(let i=0;i<3;i++)box(.45,.22,.33,mat('#b19a54'),-1.7,.11+i*.22,-2.5);
@@ -72,7 +72,7 @@ const rimGeo=new THREE.TorusGeometry(CUP_R-.002,.006,4,16);
 const rimMat=mat('#fff1cf'),innerMat=new THREE.MeshLambertMaterial({color:'#eee1c2',side:THREE.BackSide});
 const cups=[];
 for(let team=0;team<2;team++)for(let row=0;row<4;row++)for(let col=0;col<=row;col++){
- const x=(col-row/2)*.18,farZ=-1.75-row*.17,z=team===1?farZ:2*TABLE_Z-farZ;
+ const x=(col-row/2)*.18,farZ=TABLE_Z-TABLE_L/2+.34+(3-row)*.17,z=team===1?farZ:2*TABLE_Z-farZ;
  const group=new THREE.Group();group.position.set(x,TABLE_Y,z);scene.add(group);
  const outer=new THREE.Mesh(cupOuter,mat(COLORS[team]));outer.position.y=CUP_H/2;outer.castShadow=outer.receiveShadow=true;group.add(outer);
  const inner=new THREE.Mesh(cupInner,innerMat);inner.position.y=CUP_H/2+.004;group.add(inner);
@@ -92,7 +92,7 @@ function powerForPoint(x,z,team=state.turn){const d=Math.hypot(x-releaseX(team),
  const speed=Math.sqrt(G*d*d/(2*Math.cos(ANGLE)**2*(d*Math.tan(ANGLE)-dy)));return clamp((speed-3.2)/3.4,0,1);}
 function newBall(team,power,slope=0,style=team===0&&state.mode!=='two'?state.shotStyle:'arc'){
  const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),angle=style==='bounce'?36*Math.PI/180:ANGLE,speed=(style==='bounce'?2.8:3.2)+clamp(power,0,1)*3.4;
- return {team,power,slope,style,bounceAllowed:style==='bounce'&&team===0&&state.mode!=='two',state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(angle)*speed*screenRight,Math.sin(angle)*speed,Math.cos(yaw)*Math.cos(angle)*speed*direction),age:0,sinkAge:0,swatAge:0,hitCup:null,bounces:0,justBounced:false,deadReason:null,rimHits:0};
+ return {team,power,slope,style,bounceAllowed:team===0&&state.mode!=='two',bounceBonusEligible:false,state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(angle)*speed*screenRight,Math.sin(angle)*speed,Math.cos(yaw)*Math.cos(angle)*speed*direction),age:0,sinkAge:0,swatAge:0,hitCup:null,bounces:0,justBounced:false,deadReason:null,rimHits:0};
 }
 function stepBall(b,dt){
  if(b.state!=='fly')return;b.age+=dt;b.prev.copy(b.p);b.v.y-=G*dt;b.p.addScaledVector(b.v,dt);
@@ -117,7 +117,7 @@ function stepBall(b,dt){
  }
  const onTable=Math.abs(b.p.x)<TABLE_W/2+BALL_R&&Math.abs(b.p.z-TABLE_Z)<TABLE_L/2+BALL_R;
  if(onTable&&b.p.y<=TABLE_Y+BALL_R&&b.prev.y>=TABLE_Y+BALL_R){
-  b.p.y=TABLE_Y+BALL_R;if(b.bounceAllowed&&b.bounces===0&&b.rimHits===0){b.bounces=1;b.justBounced=true;b.v.y=Math.abs(b.v.y)*.72;b.v.x*=.86;b.v.z*=.86;return;}
+  b.p.y=TABLE_Y+BALL_R;if(b.bounceAllowed&&b.bounces===0){b.bounceBonusEligible=b.rimHits===0;b.bounces=1;b.justBounced=true;b.v.y=Math.abs(b.v.y)*.72;b.v.x*=.86;b.v.z*=.86;return;}
   b.v.set(0,0,0);b.deadReason=b.bounces?'second-bounce':'table';b.state='done';return;}
  if(b.p.y<=BALL_R){b.p.y=BALL_R;b.v.set(0,0,0);b.deadReason='ground';b.state='done';return;}
  if(b.age>5||Math.abs(b.p.x)>7||b.p.z>8||b.p.z<-10)b.state='done';
@@ -125,7 +125,7 @@ function stepBall(b,dt){
 function setCamera(){
  const w=wrap.clientWidth,h=wrap.clientHeight,portrait=clamp((1.05-w/h)/.55,0,1);
  viewTeam=state.mode==='two'?state.turn:0;
- camera.position.set(0,2,viewTeam===0?2.2:2*TABLE_Z-2.2);camera.lookAt(0,.75+.15*portrait,TABLE_Z);
+ camera.position.set(0,2.2,viewTeam===0?2.65:2*TABLE_Z-2.65);camera.lookAt(0,.75+.15*portrait,TABLE_Z);
  camera.aspect=w/h;camera.fov=38+12*portrait;camera.updateProjectionMatrix();camera.updateMatrixWorld();
 }
 function resize(){if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
@@ -134,7 +134,7 @@ function setPower(power){state.power=clamp(power,0,1);}
 function showShotFeedback(b){
  const direction=b.team===0?-1:1,rack=cups.filter(c=>c.team===1-b.team&&c.alive);
  const time=(b.v.y+Math.sqrt(b.v.y*b.v.y+2*G*(RELEASE_Y-RIM_Y-BALL_R)))/G;let depth=Math.abs(b.v.z)*time;
- if(b.style==='bounce'){const probe=newBall(b.team,b.power,b.slope,'bounce');for(let i=0;i<600&&probe.state==='fly'&&!probe.bounces;i++)stepBall(probe,1/240);if(probe.bounces){const d=probe.v.y*probe.v.y-2*G*(RIM_Y-TABLE_Y);depth=d<0?0:Math.abs(probe.p.z-RELEASE_Z[b.team])+Math.abs(probe.v.z)*(probe.v.y+Math.sqrt(d))/G;}}
+ if(b.bounceAllowed){const probe=newBall(b.team,b.power,b.slope,b.style);for(let i=0;i<600&&probe.state==='fly'&&!probe.bounces;i++)stepBall(probe,1/240);if(probe.bounces){const d=probe.v.y*probe.v.y-2*G*(RIM_Y-TABLE_Y);depth=d<0?0:Math.abs(probe.p.z-RELEASE_Z[b.team])+Math.abs(probe.v.z)*(probe.v.y+Math.sqrt(d))/G;}}
  const distances=rack.map(c=>(c.z-RELEASE_Z[b.team])*direction);
  const zone=depth<Math.min(...distances)-CUP_R?'weak':depth>Math.max(...distances)+CUP_R?'strong':'range';
  const horizontal=b.v.x*(b.team===0?1:-1),aim=Math.abs(horizontal)<.045?'↑ STRAIGHT':horizontal<0?'↖ LEFT':'↗ RIGHT';
@@ -151,7 +151,7 @@ function updateHud(){
  $('red-label').textContent=state.mode==='cpu'?'YOUR CUPS':'RED CUPS';$('blue-label').textContent=state.mode==='cpu'?'CPU CUPS':'BLUE CUPS';
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
- $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
+ $('control-hint').hidden=state.phase!=='aim'||!$('shot-feedback').hidden;$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
  $('shot-style').hidden=state.mode==='two'||state.turn!==0||!['aim','flight','wait'].includes(state.phase);
  document.querySelectorAll('[data-shot-style]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.shotStyle===state.shotStyle));b.disabled=!humanReady()||!!drag;});
  const canOffer=layoutsFor(remaining(1-state.turn)).length>0;
@@ -187,7 +187,7 @@ function cpuShot(){
 function finishShot(scoredCup=null){
  const team=state.turn;
  if(scoredCup){
-  const bounce=ball?.bounceAllowed&&ball.bounces===1&&scoredCup.team!==team;scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;let bonus=null;
+  const bounce=ball?.bounceBonusEligible&&ball.bounces===1&&scoredCup.team!==team;scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;let bonus=null;
   if(bounce){const candidates=cups.filter(c=>c.team===scoredCup.team&&c.alive);candidates.sort((a,b)=>Math.hypot(a.x-releaseX(team),a.z-RELEASE_Z[team])-Math.hypot(b.x-releaseX(team),b.z-RELEASE_Z[team]));bonus=candidates[0];if(bonus){bonus.alive=false;bonus.group.visible=false;state.hits[team]++;celebrate(bonus);}}
   message(scoredCup.team===team?'OWN CUP!':bounce?(bonus?'BOUNCE · 2 CUPS!':'BOUNCE · LAST CUP!'):'CUP!',scoredCup.team===team?'That one came back to bite.':`${remaining(scoredCup.team)} cups left.`,1.2);
  }
@@ -267,7 +267,7 @@ wrap.addEventListener('pointerdown',event=>{
  if(event.button!==0||event.target.closest('button,a,input,label,dialog,#menu')||!humanReady()||drag)return;
  const point={x:event.clientX,y:event.clientY},p=ballScreen();
  if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
- $('shot-feedback').hidden=true;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
+ $('shot-feedback').hidden=true;$('control-hint').hidden=false;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
  wrap.classList.add('drag');$('rerack-button').disabled=true;try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{
@@ -324,8 +324,10 @@ requestAnimationFrame(frame);
 window.__pong={
  get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces,style:ball.style,deadReason:ball.deadReason}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
  startMatch,throwWith:launchShot,refill:refillCups,
+ court:{length:TABLE_L,center:TABLE_Z,width:TABLE_W,releaseZ:[...RELEASE_Z]},
  get defense(){return {...defender.snapshot(),visible:glove.visible};},
  _screen:(x,y,z)=>{const p=new THREE.Vector3(x,y,z).project(camera);return {x:(p.x+1)*wrap.clientWidth/2,y:(1-p.y)*wrap.clientHeight/2};},
+ _slopeFor:(id)=>{const c=cups[id],yaw=Math.atan2((c.x-releaseX(state.turn))*(state.turn===0?1:-1),Math.abs(c.z-RELEASE_Z[state.turn]));return Math.tan(yaw/.65);},
  _powerFor:(id)=>{const c=cups[id];return powerForPoint(c.x,c.z);},
  _probe:(power,slope=0,team=0,style)=>{const b=newBall(team,power,slope,style);const start=b.p.clone(),velocity=b.v.clone();for(let i=0;i<1440&&b.state==='fly';i++)stepBall(b,1/240);return {state:b.state,cup:b.hitCup?.id??null,p:b.p.toArray(),v:b.v.toArray(),rimHits:b.rimHits,bounces:b.bounces,deadReason:b.deadReason,start:start.toArray(),velocity:velocity.toArray()};},
  _dropAt:(id)=>{if(!humanReady())return false;const c=cups[id];if(!c.alive||!c.enabled)return false;ball=newBall(state.turn,.4);ball.p.set(c.x,RIM_Y+.25,c.z);ball.v.set(0,-.8,0);state.shots[state.turn]++;state.phase='flight';flying.visible=true;flying.scale.setScalar(1);flying.position.copy(ball.p);updateHud();return true;}
