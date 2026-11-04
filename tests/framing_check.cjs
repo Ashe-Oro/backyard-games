@@ -9,6 +9,7 @@ const path = require('node:path');
   try {
     const page = await browser.newPage();
     const errors = [];
+    await page.addInitScript(()=>{try{localStorage.setItem('backyard-cornhole-help-seen','1');}catch{}});
     page.on('pageerror', error => errors.push(error.message));
     const source = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     // Inspect geometry without adding production-only test interfaces.
