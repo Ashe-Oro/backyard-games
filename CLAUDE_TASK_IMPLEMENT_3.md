@@ -17,3 +17,6 @@ Process:
 - Run the existing tests in tests/ (with a 150s cap per suite) and keep them passing. Update a test only when it asserts something these changes intentionally alter.
 - Commit your work with git in /workspace/cornhole (the repo already exists). Use clear commit messages: one or a few commits, e.g. "Claude: phone UI polish (review 3)".
 - Write /workspace/cornhole/claude-impl3-summary.md: what you changed for each recommendation, the held-bag fix, test results, and the screenshot paths. Stop the server when done.
+
+
+IMPORTANT: You are running non-interactively. Never background a command or schedule a wakeup or resume, because the session ends and your work is lost. Run every test and server step in the foreground with a timeout (start the http server with `&` only inside the same Bash command that runs the tests, then kill it). Make the index.html edits FIRST, then verify.
