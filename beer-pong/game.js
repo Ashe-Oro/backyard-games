@@ -11,7 +11,7 @@ const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], A
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
 const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
-let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer;
+let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,humanSwing=null,humanPointer=null;
 const wrap=$('game'), scene=new THREE.Scene();
 scene.background=new THREE.Color('#edc5a0');scene.fog=new THREE.Fog('#c9d6ac',12,35);
 let renderer;
@@ -20,6 +20,7 @@ renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.typ
 wrap.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(40,1,.05,80);
 const defender=new SwatDefender('regular',()=>Math.random(),{homeZ:TABLE_Z-TABLE_L*.16,nearZ:TABLE_Z+.05,farZ:TABLE_Z-TABLE_L/2+.12}),glove=createGlove();scene.add(glove);
+const playerGlove=createGlove();scene.add(playerGlove);
 scene.add(new THREE.HemisphereLight('#fff0cc','#315c43',2));
 const sun=new THREE.DirectionalLight('#ffd3a5',2.1);sun.position.set(-4,7,3);sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.5,far:20});
@@ -92,7 +93,7 @@ function powerForPoint(x,z,team=state.turn){const d=Math.hypot(x-releaseX(team),
  const speed=Math.sqrt(G*d*d/(2*Math.cos(ANGLE)**2*(d*Math.tan(ANGLE)-dy)));return clamp((speed-3.2)/3.4,0,1);}
 function newBall(team,power,slope=0,style=team===0&&state.mode!=='two'?state.shotStyle:'arc'){
  const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),angle=style==='bounce'?36*Math.PI/180:ANGLE,speed=(style==='bounce'?2.8:3.2)+clamp(power,0,1)*3.4;
- return {team,power,slope,style,bounceAllowed:team===0&&state.mode!=='two',bounceBonusEligible:false,state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(angle)*speed*screenRight,Math.sin(angle)*speed,Math.cos(yaw)*Math.cos(angle)*speed*direction),age:0,sinkAge:0,swatAge:0,hitCup:null,bounces:0,justBounced:false,deadReason:null,rimHits:0};
+ return {team,power,slope,style,bounceAllowed:state.mode==='cpu'||state.mode==='practice'&&team===0,bounceBonusEligible:false,state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(angle)*speed*screenRight,Math.sin(angle)*speed,Math.cos(yaw)*Math.cos(angle)*speed*direction),age:0,sinkAge:0,swatAge:0,hitCup:null,bounces:0,justBounced:false,deadReason:null,rimHits:0};
 }
 function stepBall(b,dt){
  if(b.state!=='fly')return;b.age+=dt;b.prev.copy(b.p);b.v.y-=G*dt;b.p.addScaledVector(b.v,dt);
@@ -128,7 +129,7 @@ function setCamera(){
  camera.position.set(0,2.2,viewTeam===0?2.65:2*TABLE_Z-2.65);camera.lookAt(0,.75+.15*portrait,TABLE_Z);
  camera.aspect=w/h;camera.fov=38+12*portrait;camera.updateProjectionMatrix();camera.updateMatrixWorld();
 }
-function resize(){if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
+function resize(){humanPointer=null;if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
 addEventListener('resize',resize);resize();
 function setPower(power){state.power=clamp(power,0,1);}
 function showShotFeedback(b){
@@ -161,27 +162,42 @@ function updateHud(){
  if(state.phase==='handoff'||state.mode==='cpu'&&state.turn===1)$('shot-feedback').hidden=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){defender.reset();glove.visible=false;$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function showMenu(){resetHumanDefense();defender.reset();glove.visible=false;$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
 function startMatch(mode='practice',opponent='regular'){
- if(!['practice','cpu','two'].includes(mode))return;$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+ if(!['practice','cpu','two'].includes(mode))return;resetHumanDefense();$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
- ball=null;flying.visible=false;defender.reset();glove.visible=false;messageTime=0;$('message').classList.remove('show');setCamera();setPower(0);
+ resetHumanDefense();ball=null;flying.visible=false;defender.reset();glove.visible=false;messageTime=0;$('message').classList.remove('show');setCamera();setPower(0);
  if(state.mode==='two'){
   state.phase='handoff';$('handoff-title').textContent=`${LABELS[state.turn]}’S SHOT`;$('handoff-copy').textContent=`Aim at the ${state.turn===0?'blue':'red'} cups.`;$('handoff').showModal();
  }else if(state.mode==='cpu'&&state.turn===1){state.phase='cpu';state.cpuTime=0;}
  else state.phase='aim';updateHud();
 }
-function launchShot(power,slope=0){
+function launchShot(power,slope=0,style){
  if(state.paused||!['aim','cpu'].includes(state.phase)||document.querySelector('dialog[open]'))return false;
- defender.reset();glove.visible=false;ball=newBall(state.turn,power,slope);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
+ resetHumanDefense();defender.reset();glove.visible=false;ball=newBall(state.turn,power,slope,style);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
+}
+// Search the same table/cup physics used by real throws, including the first rebound.
+function bouncePlan(x,z,team){
+ const yaw=Math.atan2((x-releaseX(team))*(team===0?1:-1),Math.abs(z-RELEASE_Z[team])),slope=Math.tan(yaw/.65);let best=null;
+ for(let power=.1;power<=.8;power+=.0025){
+  const probe=newBall(team,power,slope,'bounce');
+  for(let i=0;i<720&&probe.state==='fly';i++){
+   stepBall(probe,1/240);
+   if(probe.bounces!==1||probe.rimHits||probe.v.y>=0||probe.prev.y<RIM_Y+BALL_R||probe.p.y>RIM_Y+BALL_R)continue;
+   const f=(probe.prev.y-RIM_Y-BALL_R)/(probe.prev.y-probe.p.y),px=THREE.MathUtils.lerp(probe.prev.x,probe.p.x,f),pz=THREE.MathUtils.lerp(probe.prev.z,probe.p.z,f),cost=Math.hypot(px-x,pz-z);
+   if(!best||cost<best.cost)best={power,slope,cost};break;
+  }
+ }
+ return best;
 }
 function cpuShot(){
  if(!state.reracksUsed[1]){const option=layoutsFor(remaining(0))[0];if(option)applyRerack(1,option.id);}
  const rack=cups.filter(c=>c.team===0&&c.alive),cup=rack[Math.floor(Math.random()*rack.length)];
  if(!cup)return;const shooting=OPPONENTS[state.opponent].shoot,precise=Math.random()<shooting.precise,jitter=precise?.025:shooting.jitter,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
  const d=Math.abs(z-RELEASE_Z[1]),yaw=Math.atan2(-(x-releaseX(1)),d),slope=Math.tan(yaw/.65);
+ if(Math.random()<shooting.bounce){const plan=bouncePlan(x,z,1);if(plan){launchShot(plan.power,plan.slope,'bounce');return;}}
  launchShot(powerForPoint(x,z,1),slope);
 }
 function finishShot(scoredCup=null){
@@ -191,7 +207,7 @@ function finishShot(scoredCup=null){
   if(bounce){const candidates=cups.filter(c=>c.team===scoredCup.team&&c.alive);candidates.sort((a,b)=>Math.hypot(a.x-releaseX(team),a.z-RELEASE_Z[team])-Math.hypot(b.x-releaseX(team),b.z-RELEASE_Z[team]));bonus=candidates[0];if(bonus){bonus.alive=false;bonus.group.visible=false;state.hits[team]++;celebrate(bonus);}}
   message(scoredCup.team===team?'OWN CUP!':bounce?(bonus?'BOUNCE · 2 CUPS!':'BOUNCE · LAST CUP!'):'CUP!',scoredCup.team===team?'Wrong rack.':`${remaining(scoredCup.team)} cups left.`,1.2);
  }
- else if(ball?.deadReason==='swat')message('SWATTED!',`${OPPONENTS[state.opponent].name} blocked your bounce.`,1.2);
+ else if(ball?.deadReason==='swat')message(team===1?'YOU SWATTED!':'SWATTED!',team===0?`${OPPONENTS[state.opponent].name} blocked your bounce.`:'',1.2);
  else if(ball?.deadReason==='second-bounce')message('DEAD BALL','Second bounce.',.95);
  else if(ball?.deadReason==='table')message('DEAD BALL','Touched the table.',.95);
  else message('NO CUP',ball?.rimHits?'Off the rim.':'',.95);
@@ -226,7 +242,7 @@ function openRerack(){
 function cancelRerack(){$('rerack-dialog').close();selectedLayout=null;updateHud();$('rerack-button').focus();}
 $('rerack-button').onclick=openRerack;$('rerack-cancel').onclick=cancelRerack;$('rerack-dialog').oncancel=e=>{e.preventDefault();cancelRerack();};
 $('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','',1.2);};
-function pauseGame(){if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
+function pauseGame(){humanPointer=null;if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
 document.querySelectorAll('[data-shot-style]').forEach(button=>button.onclick=()=>{if(!humanReady()||drag||state.mode==='two')return;state.shotStyle=button.dataset.shotStyle;setPower(0);$('shot-feedback').hidden=true;updateHud();});
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
@@ -259,11 +275,50 @@ function ballScreen(x=releaseX(state.turn)){
  const p=new THREE.Vector3(x,RELEASE_Y,RELEASE_Z[state.turn]).project(camera),rect=wrap.getBoundingClientRect();
  return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
 }
+function resetHumanDefense(){humanSwing=null;humanPointer=null;playerGlove.visible=false;$('swat-target').hidden=true;$('defense-hint').hidden=true;}
+function humanDefenseTurn(){return state.mode==='cpu'&&state.turn===1&&state.phase==='flight'&&!state.paused&&!document.querySelector('dialog[open]');}
+function canHumanSwat(){
+ if(!humanDefenseTurn()||ball?.state!=='fly'||ball.bounces!==1||!ball.bounceAllowed||ball.p.z<TABLE_Z-.05)return false;
+ // A ball already inside a cup cannot be pulled back out by a late tap.
+ return !cups.some(c=>c.alive&&c.enabled&&ball.p.y<RIM_Y+BALL_R&&Math.hypot(ball.p.x-c.x,ball.p.z-c.z)<CUP_R);
+}
+function incomingScreen(){const p=ball.p.clone().project(camera),r=wrap.getBoundingClientRect();return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
+function humanHitRadius(){return wrap.clientWidth<=600?44:38;}
+function swatBall(b,side){b.state='swatted';b.deadReason='swat';b.swatAge=0;b.v.set(-side*4.5,1.6,b.team===0?-.2:.2);}
+function attemptHumanSwat(point){
+ if(!canHumanSwat()||humanSwing&&humanSwing.age<.25)return false;
+ const center=incomingScreen(),r=wrap.getBoundingClientRect();
+ const hit=Math.hypot(point.x-center.x,point.y-center.y)<=humanHitRadius(),side=point.x<r.left+r.width/2?-1:1;
+ // Unproject the actual tap at ball depth, so misses animate where the player aimed.
+ const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((point.x-r.left)/r.width*2-1,1-(point.y-r.top)/r.height*2),camera);
+ const impact=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,0,1),-ball.p.z),new THREE.Vector3());
+ if(!impact)return false;
+ humanSwing={age:0,impact,side,hit};
+ if(hit){swatBall(ball,side);message('YOU SWATTED!','',.9);}
+ return hit;
+}
+function swipeHumanSwat(from,to){
+ if(!canHumanSwat())return false;
+ const p=incomingScreen(),dx=to.x-from.x,dy=to.y-from.y,f=clamp(((p.x-from.x)*dx+(p.y-from.y)*dy)/(dx*dx+dy*dy||1),0,1),near={x:from.x+dx*f,y:from.y+dy*f};
+ return Math.hypot(near.x-p.x,near.y-p.y)<=humanHitRadius()&&attemptHumanSwat(near);
+}
+function humanDefenseUi(){
+ const defending=humanDefenseTurn()&&ball?.state==='fly',legal=canHumanSwat();
+ $('defense-hint').hidden=!defending;$('defense-hint').textContent=legal?'TAP / CLICK THE BALL':ball?.bounces===0?'WAIT FOR THE BOUNCE':'WATCH THE BALL';
+ const target=$('swat-target');target.hidden=!legal;
+ if(legal){const p=incomingScreen(),r=wrap.getBoundingClientRect();target.style.left=`${p.x-r.left}px`;target.style.top=`${p.y-r.top}px`;target.disabled=!!humanSwing&&humanSwing.age<.25;}
+ playerGlove.visible=!!humanSwing&&humanSwing.age<.28;
+ if(playerGlove.visible){const {age,impact,side}=humanSwing,f=clamp(age/.28,0,1);playerGlove.position.copy(impact).add(new THREE.Vector3(side*(.12-f*.55),f*.12,0));playerGlove.rotation.set(-.15,side===1?0:Math.PI,side*(f-.5)*.35);}
+}
+$('swat-target').onclick=event=>{if(event.detail===0&&canHumanSwat())attemptHumanSwat(incomingScreen());};
 function moveBallTo(clientX){
  const a=ballScreen(-.28),b=ballScreen(.28),worldX=clamp(-.28+(clientX-a.x)/(b.x-a.x)*.56,-.28,.28);
  state.positions[state.turn]=worldX*(state.turn===0?1:-1);held.position.set(worldX,RELEASE_Y,RELEASE_Z[state.turn]);updateHud();setPower(0);
 }
 wrap.addEventListener('pointerdown',event=>{
+ if(event.button===0&&humanDefenseTurn()&&!event.target.closest('a,input,label,dialog,#menu')&&(!event.target.closest('button')||event.target.closest('#swat-target'))){
+  const point={x:event.clientX,y:event.clientY};humanPointer={id:event.pointerId,last:point,swung:swipeHumanSwat(point,point)};event.preventDefault();return;
+ }
  if(event.button!==0||event.target.closest('button,a,input,label,dialog,#menu')||!humanReady()||drag)return;
  const point={x:event.clientX,y:event.clientY},p=ballScreen();
  if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
@@ -271,6 +326,7 @@ wrap.addEventListener('pointerdown',event=>{
  wrap.classList.add('drag');$('rerack-button').disabled=true;try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{
+ if(humanPointer?.id===event.pointerId&&humanDefenseTurn()&&event.buttons){const point={x:event.clientX,y:event.clientY};if(!humanPointer.swung)humanPointer.swung=swipeHumanSwat(humanPointer.last,point);humanPointer.last=point;return;}
  if(!drag||event.pointerId!==drag.id)return;
  const point={x:event.clientX,y:event.clientY},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;
  if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8){if(dy>0&&dy>=Math.abs(dx)*.55)drag.mode='pull';else if(Math.abs(dx)>Math.abs(dy))drag.mode='position';}
@@ -281,18 +337,20 @@ wrap.addEventListener('pointermove',event=>{
  if(drag.mode==='pull')updatePull(point);
 });
 wrap.addEventListener('pointerup',event=>{
+ if(humanPointer?.id===event.pointerId){if(!humanPointer.swung)attemptHumanSwat({x:event.clientX,y:event.clientY});humanPointer=null;}
  if(!drag||event.pointerId!==drag.id)return;
  const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null;
  drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';
  if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope))){cancelPull();updateHud();}
 });
-wrap.addEventListener('pointercancel',()=>{cancelPull();updateHud();});
-addEventListener('blur',()=>{cancelPull();updateHud();});
-addEventListener('keydown',event=>{if(document.querySelector('dialog[open]'))return;if(event.key==='Escape'){event.preventDefault();pauseGame();}});
+wrap.addEventListener('pointercancel',()=>{humanPointer=null;cancelPull();updateHud();});
+addEventListener('blur',()=>{humanPointer=null;cancelPull();updateHud();});
+addEventListener('keydown',event=>{if(document.querySelector('dialog[open]'))return;if(event.code==='Space'&&humanDefenseTurn()&&!event.target.closest('button:not(#swat-target),a')){event.preventDefault();if(!event.repeat&&canHumanSwat())attemptHumanSwat(incomingScreen());}if(event.key==='Escape'){event.preventDefault();pauseGame();}});
 const clock=new THREE.Clock();
 function frame(){
  const dt=Math.min(clock.getDelta(),.05);
  if(!state.paused){
+  if(humanSwing)humanSwing.age+=dt;
   if(messageTime>0){messageTime-=dt;if(messageTime<=0)$('message').classList.remove('show');}
   if(state.phase==='cpu'){state.cpuTime+=dt;if(state.cpuTime>1.1)cpuShot();}
   if(state.phase==='wait'){state.delay-=dt;if(state.delay<=0){if(state.mode!=='practice')state.turn=1-state.turn;beginTurn();}}
@@ -300,7 +358,7 @@ function frame(){
   while(accumulator>=1/240){
    accumulator-=1/240;if(ball&&ball.state==='fly')stepBall(ball,1/240);
    if(state.mode==='cpu'){if(ball?.justBounced){ball.justBounced=false;defender.notice(ball);}
-    if(defender.update(1/240,ball)&&ball?.state==='fly'){ball.state='swatted';ball.deadReason='swat';ball.swatAge=0;ball.v.set(-defender.side*4.5,1.6,-.2);message('SWATTED!','',.9);}
+    if(defender.update(1/240,ball)&&ball?.state==='fly'){swatBall(ball,defender.side);message('SWATTED!','',.9);}
    }
   }
   if(ball){
@@ -316,6 +374,7 @@ function frame(){
  held.visible=['aim','cpu'].includes(state.phase);if(held.visible)held.position.set(releaseX(state.turn),RELEASE_Y,RELEASE_Z[state.turn]);
  const defense=defender.snapshot();glove.visible=state.mode==='cpu'&&['windup','swing','recover'].includes(defense.phase);
  if(glove.visible){glove.position.set(defense.position.x,defense.position.y,defense.position.z);glove.rotation.set(-.15,0,defense.phase==='windup'?-.2:defense.phase==='recover'?.18:0);}
+ humanDefenseUi();
  renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 showMenu();
@@ -326,6 +385,7 @@ window.__pong={
  startMatch,throwWith:launchShot,refill:refillCups,
  court:{length:TABLE_L,center:TABLE_Z,width:TABLE_W,releaseZ:[...RELEASE_Z]},
  get defense(){return {...defender.snapshot(),visible:glove.visible};},
+ get humanDefense(){return {active:canHumanSwat(),swing:humanSwing?{age:humanSwing.age,hit:humanSwing.hit,impact:humanSwing.impact.toArray()}:null,visible:playerGlove.visible};},
  _screen:(x,y,z)=>{const p=new THREE.Vector3(x,y,z).project(camera);return {x:(p.x+1)*wrap.clientWidth/2,y:(1-p.y)*wrap.clientHeight/2};},
  _slopeFor:(id)=>{const c=cups[id],yaw=Math.atan2((c.x-releaseX(state.turn))*(state.turn===0?1:-1),Math.abs(c.z-RELEASE_Z[state.turn]));return Math.tan(yaw/.65);},
  _powerFor:(id)=>{const c=cups[id];return powerForPoint(c.x,c.z);},

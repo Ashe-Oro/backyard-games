@@ -27,6 +27,8 @@
     <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div>
     <div id="shot-style" role="group" aria-label="Shot style"><button class="pixel-button" data-shot-style="arc" aria-pressed="true" title="High arc · one bounce allowed">ARC</button><button class="pixel-button" data-shot-style="bounce" aria-pressed="false" title="Low bounce trajectory">BOUNCE</button></div>
     <div id="rack-actions"><button id="rerack-button" class="pixel-button" disabled>RE-RACK</button><button id="refill" class="pixel-button" hidden>REFILL CUPS</button></div>
+    <button id="swat-target" aria-label="Swat bouncing ball" title="Tap, click or press Space to swat" hidden></button>
+    <span id="defense-hint" hidden></span>
     <span id="control-hint">DRAG TO MOVE · PULL TO THROW</span>
     <span id="shot-count">THROW 1</span>
     <svg id="swipe-feedback" aria-hidden="true"><defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9L3 5Z" fill="#ffe16b" stroke="#172c32"/></marker></defs><line id="pull-tether" stroke="#fff1cf" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" r="10" fill="#ffe16b" stroke="#172c32" stroke-width="3"/><line id="swipe-shadow" stroke="#172c32" stroke-width="8"/><line id="swipe-line" stroke="#ffe16b" stroke-width="4" marker-end="url(#swipe-tip)"/></svg>
@@ -37,7 +39,7 @@
     <h1 id="game-title">BACKYARD<br><span>BEER PONG</span></h1>
     <div class="mode-buttons">
       <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws.</small><span aria-hidden="true">01</span></button>
-      <button data-mode="cpu"><strong>VS CPU</strong><small>Bounce shots can be swatted.</small><span aria-hidden="true">02</span></button>
+      <button data-mode="cpu"><strong>VS CPU</strong><small>Bounce. Swat. Clear the cups.</small><span aria-hidden="true">02</span></button>
       <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small><span aria-hidden="true">03</span></button>
     </div>
     <p class="menu-note">Mouse or touch · Pull down, release</p>
@@ -45,7 +47,7 @@
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
     <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
     <p>Drag the ball sideways to line up.<br>Pull down for power; diagonally to aim the opposite way.<br>Release to throw. Return to start to cancel.</p>
-    <p>Clear their cups to win. One throw per turn.<br>Practice / vs CPU: one bounce allowed. Sink a bounce for two cups; the CPU can swat it.<br>Practice: no swats. Two-player: table contact ends the shot.</p>
+    <p>Clear their cups to win. One throw per turn.<br>Practice / vs CPU: one bounce allowed. Sink a bounce for two cups.<br>Vs CPU: tap or click a bounced ball on your half to swat. Space also swats.<br>Practice: no defense. Two-player: table contact ends the shot.</p>
     <p>One re-rack per player, before throwing with 6, 4, 3 or 2 cups left.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
   </dialog>
