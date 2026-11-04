@@ -99,6 +99,18 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 [hidden]{display:none!important}
 @media(pointer:coarse),(max-width:600px){#bag-menu{width:min(60vw,320px);font-size:12px;max-height:60%;padding:8px;gap:8px}#bag-menu .hb{min-height:44px;font-size:12px;padding:8px 3px}.btns .hb{flex:1}.bag-label{font-size:10px}}
 @media(max-height:450px) and (max-width:1000px){#bag-menu{width:260px;max-height:65%;padding:4px;gap:3px}#bag-menu .hb{min-height:36px;font-size:10px;padding:3px 2px}.bag-label{font-size:9px}.bag-row{gap:2px}}
+
+#bag-drawer{position:absolute;left:1.6vmin;bottom:1.8vmin;pointer-events:none;transition:transform 150ms ease-out}
+#bag-drawer #bag-menu{position:relative;left:0;bottom:0;max-height:70vh}
+#bag-drawer.collapsed{transform:translateX(calc(-100% - 1.6vmin))}
+#bag-drawer.collapsed #bag-menu{visibility:hidden;pointer-events:none;transition:visibility 0s 150ms}
+#bag-handle{position:absolute;left:100%;bottom:0;min-width:32px;min-height:32px;padding:8px 5px;pointer-events:auto;touch-action:manipulation;cursor:pointer;font:inherit;font-size:8px;line-height:1.8;color:#ffe45e;background:#3b2a40ed;border:2px solid #2b1a2e;border-left:0;box-shadow:2px 2px 0 #2b1a2e}
+#bag-handle:focus-visible{outline:2px solid #ffe45e;outline-offset:2px}
+#bag-picks{display:none;white-space:nowrap;font-size:7px}
+.collapsed #bag-picks{display:block}
+@media(pointer:coarse),(max-width:600px){#bag-handle{min-width:44px;min-height:44px}#bag-drawer #bag-menu{max-height:60vh}}
+@media(max-height:450px){#bag-drawer #bag-menu{max-height:65vh}}
+@media(prefers-reduced-motion:reduce){#bag-drawer{transition:none}#bag-drawer.collapsed #bag-menu{transition:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -115,11 +127,14 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+    <div id="bag-drawer">
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
       <div class="bag-row" id="practice-box" hidden><span class="bag-label">PITCHER’S BOX</span><div class="bag-choices"><button class="hb" data-box="left">LEFT</button><button class="hb" data-box="right">RIGHT</button></div></div>
       <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+    </div>
+    <button id="bag-handle" aria-controls="bag-menu" aria-expanded="true" aria-label="Collapse bag options"><span id="bag-chevron" aria-hidden="true">◀</span><span id="bag-picks"></span></button>
     </div>
   </div>
   <div id="panel" class="ol" hidden></div>
@@ -748,9 +763,26 @@ function lie() { // score as the bags lie right now (only final after all 8)
 const windArrow = $('wind-arrow').getContext('2d');
 windArrow.fillStyle = '#ffe45e';
 for (const [y,x,w] of [[1,5,2],[2,4,4],[3,3,6],[4,2,8],[5,1,10],[6,5,2],[7,5,2],[8,5,2],[9,5,2],[10,5,2]]) windArrow.fillRect(x,y,w,1);
+const BAG_MENU_KEY='backyard-cornhole-bag-menu-collapsed';
+let bagMenuCollapsed=false;
+try{bagMenuCollapsed=localStorage.getItem(BAG_MENU_KEY)==='true';}catch{}
+function updateBagDrawer(){
+  $('bag-drawer').classList.toggle('collapsed',bagMenuCollapsed);
+  $('bag-menu').inert=bagMenuCollapsed;
+  $('bag-handle').setAttribute('aria-expanded',String(!bagMenuCollapsed));
+  $('bag-handle').setAttribute('aria-label',`${bagMenuCollapsed?'Expand':'Collapse'} bag options`);
+  $('bag-chevron').textContent=bagMenuCollapsed?'▶':'◀';
+  $('bag-picks').textContent=`${['PUSH','NORMAL','KOBE'][M.arc]} · ${M.side[thrower()].toUpperCase()}`;
+}
+$('bag-handle').onclick=()=>{
+  bagMenuCollapsed=!bagMenuCollapsed;
+  try{localStorage.setItem(BAG_MENU_KEY,String(bagMenuCollapsed));}catch{}
+  updateBagDrawer();
+};
 function renderHud() {
   // Keep human height in sync even during the incoming thrower's wait phase.
   if (isHuman(thrower())) M.arc = M.heights[thrower()];
+  updateBagDrawer();
   $('hud').classList.toggle('menu', ['menu', 'intro', 'champion'].includes(M.phase));
   for (const t of [0, 1]) {
     ui.s[t].textContent = M.scores[t];
@@ -1065,7 +1097,7 @@ function release(up, side) {
   return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
 }
 wrap.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('#bag-menu, button') || !ui.panel.hidden) return;
+  if (e.target.closest('#bag-drawer, button') || !ui.panel.hidden) return;
   if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
   if (!humanTurn()) return;
   drag = { id: e.pointerId, aim: M.aim, pointerAim: pointerAim(e), x: e.clientX, y: e.clientY, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
@@ -1083,7 +1115,7 @@ wrap.addEventListener('pointermove', (e) => {
     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
     const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
-  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-menu') && humanTurn()) {
+  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-drawer') && humanTurn()) {
     pointAim(e);
   }
 });
@@ -1137,7 +1169,7 @@ function adjust(k) {
 }
 let wheelGesture = [], wheelTimer;
 wrap.addEventListener('wheel', e => {
-  if (e.target.closest('#bag-menu')) return;
+  if (e.target.closest('#bag-drawer')) return;
   e.preventDefault();
   if (!humanTurn() || !ui.panel.hidden) return;
   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
@@ -1247,7 +1279,7 @@ if (POSTER) {
     const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
   }
   M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
-  for (const el of [$('bag-menu'), $('meter')]) el.style.display = 'none';
+  for (const el of [$('bag-drawer'), $('meter')]) el.style.display = 'none';
 } else showMenu();
 requestAnimationFrame(frame);
 

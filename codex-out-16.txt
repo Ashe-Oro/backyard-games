@@ -1,0 +1,5 @@
+Implemented the collapsible bag menu with a 150ms slide, current-picks tab, accessible touch targets, and localStorage persistence.
+
+Task 14, 15, and 16 checks pass. All four requested screenshots are saved. No writes to `.git`.
+
+Details: [codex-summary-16.md](/workspace/cornhole/codex-summary-16.md).
