@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Backyard Beer Pong · Tailgate Games</title>
-  <meta name="description" content="Line up a cup and flick. Play backyard beer pong solo, against the CPU, or with a friend on the same screen.">
+  <meta name="description" content="Line up a cup, pull back and release. Play backyard beer pong solo, against the CPU, or with a friend on the same screen.">
   <meta name="theme-color" content="#163f3c">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23e85b47' d='M4 5h16l-3 17H7z'/%3E%3Cellipse fill='%23fff3ce' cx='12' cy='5' rx='8' ry='3'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,8 +28,9 @@
       <div id="meter-fill"></div><div id="meter-target"><span>TARGET</span></div><div id="meter-marker"></div><span class="meter-caption">POWER</span>
     </div>
     <button id="refill" class="pixel-button" hidden>REFILL CUPS</button>
+    <span id="control-hint">DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW</span>
     <span id="shot-count">THROW 1</span>
-    <svg id="swipe-feedback" aria-hidden="true"><defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9L3 5Z" fill="#ffe16b" stroke="#172c32"/></marker></defs><line id="swipe-shadow" stroke="#172c32" stroke-width="8"/><line id="swipe-line" stroke="#ffe16b" stroke-width="4" marker-end="url(#swipe-tip)"/></svg>
+    <svg id="swipe-feedback" aria-hidden="true"><defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9L3 5Z" fill="#ffe16b" stroke="#172c32"/></marker></defs><line id="pull-tether" stroke="#fff1cf" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" r="10" fill="#ffe16b" stroke="#172c32" stroke-width="3"/><line id="swipe-shadow" stroke="#172c32" stroke-width="8"/><line id="swipe-line" stroke="#ffe16b" stroke-width="4" marker-end="url(#swipe-tip)"/></svg>
   </div>
   <section id="menu" class="menu-card" aria-labelledby="game-title">
     <a class="series-link" href="/">TAILGATE GAMES / CORNHOLE ↗</a>
@@ -41,12 +42,12 @@
       <button data-mode="cpu"><strong>VS CPU</strong><small>Clear their cups before they clear yours.</small><span aria-hidden="true">02</span></button>
       <button data-mode="two"><strong>2 PLAYER</strong><small>Pass the device. Take your shot.</small><span aria-hidden="true">03</span></button>
     </div>
-    <p class="menu-note">Mouse or touch · Flick upward to throw</p>
+    <p class="menu-note">Mouse or touch · Pull down and release to throw</p>
   </section>
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
-    <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Flick. Sink. Repeat.</h2>
-    <p>Grab the ball and drag sideways to position it.<br>Release to keep it there, or flick upward to throw.<br>Faster flicks add power; a sideways swipe steers it.</p>
-    <p>The green meter band is the range for the rack.<br>The arrow after release shows your actual swipe.</p>
+    <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
+    <p>Grab the ball and drag sideways to position it.<br>Pull downward to set power. Pull diagonally to aim in the opposite direction.<br>Release to throw. Return to the starting point to cancel.</p>
+    <p>The green meter band is the range for the rack.<br>The arrow shows your throw direction before you release.</p>
     <p>Sink a cup to remove it. One throw per turn.<br>Table contact ends the throw—no bounce shots.<br>Clear the opposing rack to win.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
   </dialog>

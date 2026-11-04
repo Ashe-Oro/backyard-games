@@ -20,20 +20,20 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   for(let i=1;i<=10;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:p.x+(12-p.x)*i/10,y:p.y}]});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   assert.equal(await page.evaluate(()=>__pong.state.positions[0]),-.28);assert.equal(await page.evaluate(()=>__pong.state.shots[0]),0);
-  // A new upward flick from the positioned ball launches at its visible origin.
+  // A new downward pull from the positioned ball launches at its visible origin.
   await page.setViewportSize({width:1280,height:800});const start=await point();
-  await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(start.x,start.y-30);await page.waitForTimeout(20);await page.mouse.move(start.x,start.y-120);await page.mouse.up();
+  await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(start.x,start.y+30);await page.waitForTimeout(20);await page.mouse.move(start.x,start.y+100);await page.mouse.up();
   let s=await page.evaluate(()=>__pong.state);assert.equal(s.shots[0],1);assert.equal(s.ball.p[0],-.28);
   await page.waitForFunction(()=>__pong.state.phase==='aim');await page.locator('#refill').click();assert.equal(await page.evaluate(()=>__pong.state.positions[0]),-.28);
-  // Changing a lateral grab into an upward flick also throws without sideways velocity.
+  // Changing a lateral grab into an downward pull also throws without sideways velocity.
   await page.evaluate(()=>__pong.startMatch('practice'));const q=await point();await page.mouse.move(q.x,q.y);await page.mouse.down();await page.mouse.move(q.x+50,q.y,{steps:5});
-  const held=await page.evaluate(()=>__pong.state.held.p);await page.mouse.move(q.x+50,q.y-25);await page.waitForTimeout(20);await page.mouse.move(q.x+50,q.y-120);await page.mouse.up();
-  s=await page.evaluate(()=>__pong.state);assert.equal(s.shots[0],1);assert.equal(s.ball.p[0],held[0]);assert.equal(s.ball.v[0],0);
+  const held=await page.evaluate(()=>__pong.state.held.p);await page.mouse.move(q.x+50,q.y+25);await page.waitForTimeout(20);await page.mouse.move(q.x+50,q.y+100);await page.mouse.up();
+  s=await page.evaluate(()=>__pong.state);assert.equal(s.shots[0],1);assert.equal(s.ball.p[0],held[0]);assert(Math.abs(s.ball.v[0])<1e-8);
   // Blue-player dragging stays screen-relative and each player retains a position.
   await page.evaluate(()=>__pong.startMatch('two'));await page.locator('#ready').click();await moveMouse(-1);
   await page.evaluate(()=>__pong._dropAt(10));await page.waitForFunction(()=>__pong.state.phase==='handoff');await page.locator('#ready').click();await moveMouse(1);
   s=await page.evaluate(()=>__pong.state);assert.equal(s.positions[1],.28);assert.equal(s.held.p[0],-.28);assert((await point()).x>640);
   await page.evaluate(()=>__pong._dropAt(0));await page.waitForFunction(()=>__pong.state.phase==='handoff');await page.locator('#ready').click();assert.equal(await page.evaluate(()=>__pong.state.positions[0]),-.28);
-  assert.deepEqual(errors,[]);console.log('Direct ball grab: desktop/mobile bounds, touch, no accidental throws, upward flicks, moved origins and mirrored player persistence passed.');
+  assert.deepEqual(errors,[]);console.log('Direct ball grab: desktop/mobile bounds, touch, no accidental throws, downward pulls, moved origins and mirrored player persistence passed.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

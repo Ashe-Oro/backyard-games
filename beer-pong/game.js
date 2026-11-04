@@ -123,7 +123,7 @@ function setCamera(){
  camera.position.set(0,2,viewTeam===0?2.2:2*TABLE_Z-2.2);camera.lookAt(0,.75+.15*portrait,TABLE_Z);
  camera.aspect=w/h;camera.fov=38+12*portrait;camera.updateProjectionMatrix();camera.updateMatrixWorld();meterDirty=true;
 }
-function resize(){const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
+function resize(){if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
 addEventListener('resize',resize);resize();
 function positionMeter(){
  const meter=$('meter'),right=viewTeam===0?1:-1,w=wrap.clientWidth,h=wrap.clientHeight;
@@ -144,15 +144,15 @@ function updateHud(){
  $('red-label').textContent=state.mode==='cpu'?'YOUR CUPS':'RED CUPS';$('blue-label').textContent=state.mode==='cpu'?'CPU CUPS':'BLUE CUPS';
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
- $('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
+ $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
  $('refill').hidden=state.mode!=='practice';$('refill').disabled=state.phase!=='aim'||state.paused;
  $('meter').hidden=state.mode==='cpu'&&state.turn===1||state.phase==='over'||state.phase==='handoff';
  const w=targetWindow();$('meter-target').style.bottom=`${w.lo*100}%`;$('meter-target').style.height=`${(w.hi-w.lo)*100}%`;meterDirty=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){closeDialogs();clearTimeout(wheelTimer);wheel=[];state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function showMenu(){closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
 function startMatch(mode='practice'){
- if(!['practice','cpu','two'].includes(mode))return;closeDialogs();clearTimeout(wheelTimer);wheel=[];state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+ if(!['practice','cpu','two'].includes(mode))return;closeDialogs();state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
@@ -176,7 +176,7 @@ function finishShot(scoredCup=null){
  const team=state.turn;
  if(scoredCup){scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;message(scoredCup.team===team?'OWN CUP!':'CUP!',scoredCup.team===team?'That one came back to bite.':`${remaining(scoredCup.team)} cups left.`,1.2);}
  else if(ball?.deadReason==='table')message('DEAD BALL','Touched the table.',.95);
- else message('NO CUP',ball?.rimHits?'Off the cup. Try a different angle.':'Adjust your power or swipe angle.',.95);
+ else message('NO CUP',ball?.rimHits?'Off the cup. Try a different angle.':'Adjust your pull distance or angle.',.95);
  ball=null;flying.visible=false;
  if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws. Refill and keep your practice going.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
  else if(state.mode!=='practice'&&(remaining(0)===0||remaining(1)===0)){
@@ -185,7 +185,7 @@ function finishShot(scoredCup=null){
  updateHud();
 }
 function refillCups(){if(state.mode!=='practice'||!['aim','over'].includes(state.phase)||state.paused)return;closeDialogs();ball=null;flying.visible=false;resetCups();state.phase='aim';setPower(0);updateHud();message('FRESH RACK','Practice stats kept.',.9);}
-function pauseGame(){if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;state.paused=true;drag=null;wheel=[];clearTimeout(wheelTimer);wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
+function pauseGame(){if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
 $('pause-button').onclick=pauseGame;$('resume').onclick=resumeGame;$('pause').oncancel=event=>{event.preventDefault();resumeGame();};
@@ -194,9 +194,25 @@ $('ready').onclick=()=>{$('handoff').close();state.phase='aim';updateHud();};$('
 $('refill').onclick=refillCups;$('play-again').onclick=()=>state.mode==='practice'?refillCups():startMatch(state.mode);
 $('result').oncancel=event=>event.preventDefault();$('help-done').onclick=()=>$('help').close();
 function humanReady(){return state.phase==='aim'&&!state.paused&&!document.querySelector('dialog[open]');}
-function flickFrom(points){if(points.length<2)return null;const end=points.at(-1);let i=points.length-2;while(i>0&&end.t-points[i-1].t<75)i--;const start=points[i],dt=Math.max(.016,(end.t-start.t)/1000),up=(start.y-end.y)/wrap.clientHeight/dt;return {up,slope:(end.x-start.x)/Math.max(1,start.y-end.y),from:start,to:end};}
-function powerFromFlick(up){return clamp((up-.35)/5.6,0,1);}
-function showSwipe(flick){const rect=wrap.getBoundingClientRect(),svg=$('swipe-feedback');svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);for(const id of ['swipe-shadow','swipe-line'])for(const [key,value]of Object.entries({x1:flick.from.x-rect.left,y1:flick.from.y-rect.top,x2:flick.to.x-rect.left,y2:flick.to.y-rect.top}))$(id).setAttribute(key,value);clearTimeout(swipeTimer);svg.classList.add('show');swipeTimer=setTimeout(()=>svg.classList.remove('show'),900);}
+function showAim(from,to,pulling=false){
+ const rect=wrap.getBoundingClientRect(),svg=$('swipe-feedback');clearTimeout(swipeTimer);svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
+ for(const id of ['swipe-shadow','swipe-line'])for(const [key,value]of Object.entries({x1:from.x-rect.left,y1:from.y-rect.top,x2:to.x-rect.left,y2:to.y-rect.top}))$(id).setAttribute(key,value);
+ svg.classList.add('show');svg.classList.toggle('pulling',pulling);
+ if(!pulling)swipeTimer=setTimeout(()=>svg.classList.remove('show'),900);
+}
+function pullAt(point){
+ const dx=point.x-drag.anchor.x,dy=Math.max(0,point.y-drag.anchor.y),rect=wrap.getBoundingClientRect();
+ const maxPull=Math.max(36,Math.min(150,Math.min(rect.width,rect.height)*.22,rect.bottom-drag.anchor.y-24));
+ return {power:clamp((dy-10)/(maxPull-10),0,1),slope:-dx/Math.max(24,dy),dy,dx};
+}
+function updatePull(point){
+ const pull=pullAt(point),origin=ballScreen(),yaw=clamp(Math.atan(pull.slope)*.65,-.35,.35),length=45+pull.power*100;
+ setPower(pull.power);showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);
+ const rect=wrap.getBoundingClientRect();$('pull-grip').setAttribute('cx',point.x-rect.left);$('pull-grip').setAttribute('cy',point.y-rect.top);
+ for(const [key,value]of Object.entries({x1:origin.x-rect.left,y1:origin.y-rect.top,x2:point.x-rect.left,y2:point.y-rect.top}))$('pull-tether').setAttribute(key,value);
+ $('control-hint').textContent=pull.power>0?`${Math.round(pull.power*100)}% POWER · RELEASE TO THROW`:'RETURN TO BALL TO CANCEL';return pull;
+}
+function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show','pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';if(humanReady())setPower(0);}
 function ballScreen(x=releaseX(state.turn)){
  const p=new THREE.Vector3(x,RELEASE_Y,RELEASE_Z[state.turn]).project(camera),rect=wrap.getBoundingClientRect();
  return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
@@ -206,34 +222,33 @@ function moveBallTo(clientX){
  state.positions[state.turn]=worldX*(state.turn===0?1:-1);held.position.set(worldX,RELEASE_Y,RELEASE_Z[state.turn]);updateHud();setPower(0);
 }
 wrap.addEventListener('pointerdown',event=>{
- if(event.target.closest('button,a,input,label,dialog,#menu')||!humanReady())return;
- const point={x:event.clientX,y:event.clientY,t:event.timeStamp},p=ballScreen();
- const grabbed=Math.hypot(point.x-p.x,point.y-p.y)<=Math.max(30,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+14);
- $('swipe-feedback').classList.remove('show');drag={id:event.pointerId,points:[point],mode:grabbed?'pending':'throw',anchor:point,offset:point.x-p.x};
+ if(event.button!==0||event.target.closest('button,a,input,label,dialog,#menu')||!humanReady()||drag)return;
+ const point={x:event.clientX,y:event.clientY},p=ballScreen();
+ if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
+ $('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
  wrap.classList.add('drag');try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{
  if(!drag||event.pointerId!==drag.id)return;
- const point={x:event.clientX,y:event.clientY,t:event.timeStamp},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;let turnedUp=false;
- if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8)drag.mode=Math.abs(dx)>Math.abs(dy)?'position':'throw';
+ const point={x:event.clientX,y:event.clientY},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;
+ if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8){if(dy>0&&dy>=Math.abs(dx)*.55)drag.mode='pull';else if(Math.abs(dx)>Math.abs(dy))drag.mode='position';}
  if(drag.mode==='position'){
-  if(dy<-14&&-dy>Math.abs(dx)*1.3){drag.mode='throw';drag.points=[{...drag.anchor,x:point.x}];turnedUp=true;}
+  if(dy>12&&dy>Math.abs(dx)*1.3){drag.mode='pull';drag.anchor={...drag.anchor,x:point.x};}
   else{moveBallTo(point.x-drag.offset);if(Math.abs(dx)>Math.abs(dy))drag.anchor=point;return;}
  }
- const samples=turnedUp?[]:event.getCoalescedEvents?.()||[];for(const sample of samples.length?samples:[event])drag.points.push({x:sample.clientX,y:sample.clientY,t:sample.timeStamp});
- while(drag.points.length>2&&event.timeStamp-drag.points[0].t>300)drag.points.shift();const flick=flickFrom(drag.points);if(drag.mode==='throw'&&flick)setPower(powerFromFlick(flick.up));
+ if(drag.mode==='pull')updatePull(point);
 });
 wrap.addEventListener('pointerup',event=>{
- if(!drag||event.pointerId!==drag.id)return;const points=drag.points,last=points.at(-1);if(last.x!==event.clientX||last.y!==event.clientY)points.push({x:event.clientX,y:event.clientY,t:event.timeStamp});
- const stale=event.timeStamp-points.at(-1).t>160,flick=stale||drag.mode!=='throw'?null:flickFrom(points);drag=null;wrap.classList.remove('drag');
- if(flick&&flick.up>=.35&&humanReady()&&launchShot(powerFromFlick(flick.up),flick.slope))showSwipe(flick);else if(humanReady())setPower(0);
+ if(!drag||event.pointerId!==drag.id)return;
+ const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null,origin=ballScreen();
+ drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';
+ if(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope)){
+  const yaw=clamp(Math.atan(pull.slope)*.65,-.35,.35);showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
+ }else cancelPull();
 });
-wrap.addEventListener('pointercancel',()=>{drag=null;wrap.classList.remove('drag');if(humanReady())setPower(0);});
-addEventListener('blur',()=>{drag=null;wrap.classList.remove('drag');});
+wrap.addEventListener('pointercancel',cancelPull);
+addEventListener('blur',cancelPull);
 addEventListener('keydown',event=>{if(document.querySelector('dialog[open]'))return;if(event.key==='Escape'){event.preventDefault();pauseGame();}});
-let wheel=[],wheelTimer;
-wrap.addEventListener('wheel',event=>{if(event.target.closest('button,a,input,label,dialog,#menu')||!humanReady())return;event.preventDefault();const unit=event.deltaMode===1?16:event.deltaMode===2?wrap.clientHeight:1;wheel.push({x:event.deltaX*unit,y:event.deltaY*unit,t:performance.now()});clearTimeout(wheelTimer);wheelTimer=setTimeout(()=>{const points=wheel;wheel=[];if(!humanReady()||!points.length)return;const dy=-points.reduce((n,p)=>n+p.y,0),dx=points.reduce((n,p)=>n+p.x,0),dt=Math.max(.08,(points.at(-1).t-points[0].t)/1000),up=dy/wrap.clientHeight/dt;if(up>=.35)launchShot(powerFromFlick(up),dx/Math.max(1,dy));},90);},{passive:false});
-
 const clock=new THREE.Clock();
 function frame(){
  const dt=Math.min(clock.getDelta(),.05);
