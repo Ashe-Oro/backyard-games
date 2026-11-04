@@ -4,7 +4,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>localStorage.setItem('tailgate-beer-pong-help-seen','1'));await page.goto(BASE+'/beer-pong/');await page.waitForFunction(()=>!!window.__pong);await page.locator('[data-mode=practice]').click();assert.equal(await page.locator('[role=meter],#meter').count(),0);
  for(const [power,label,tip] of [[.05,'TOO WEAK','Pull farther'],[.95,'TOO STRONG','shorter pull']]){
-  await page.evaluate(power=>{__pong.startMatch('practice');__pong.throwWith(power,0)},power);assert.equal(await page.locator('#feedback-power').textContent(),label);assert((await page.locator('#feedback-tip').textContent()).includes(tip));assert((await page.locator('#feedback-direction').textContent()).includes('STRAIGHT'));
+  await page.evaluate(power=>{__pong.startMatch('practice');__pong.throwWith(power,0)},power);assert.equal(await page.locator('#feedback-power').textContent(),label);assert.equal(await page.evaluate(()=>__pong.state.ball.style),power<.45?'bounce':'arc');assert((await page.locator('#feedback-direction').textContent()).includes(power<.45?'BOUNCE':'ARC'));assert((await page.locator('#feedback-tip').textContent()).includes(tip));assert((await page.locator('#feedback-direction').textContent()).includes('STRAIGHT'));
   await page.waitForFunction(()=>__pong.state.phase==='aim');assert.equal(await page.locator('#feedback-power').textContent(),label,'Feedback remains available for the next attempt');
  }
  // Every precisely aimed cup reports good distance, including off-center targets.
