@@ -99,11 +99,12 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
 #panel .go:hover{background:#fff07f}
 #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
+#panel .game-link{display:block;margin-top:16px;font-size:9px;color:#baff99;line-height:1.8;text-decoration:none}#panel .game-link:hover{color:#ffe45e}
 @media (max-width:560px){#title{top:12%}#title h1{font-size:2.4em}}
 #conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#3b2a40e6;border:.25em solid #2b1a2e;box-shadow:.25em .25em 0 rgba(43,26,46,.35);color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;margin:2px auto 8px;width:36px;height:36px}#wind-speed{white-space:nowrap}
 @media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
 #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
-#panel{max-height:90vh;overflow:auto} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+#panel{max-height:90vh;overflow:auto;touch-action:pan-y} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
 #bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
 #bag-menu > *{flex-shrink:0}
 .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
@@ -991,6 +992,7 @@ function showMenu() {
   $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
   $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
   $('career').onclick=careerMap;
+  ui.panel.insertAdjacentHTML('beforeend','<a class="game-link" href="/beer-pong/">PLAY BEER PONG →</a>');
   renderHud();
 }
 function startMatch(opts = {}) {
@@ -1241,7 +1243,7 @@ function adjust(k) {
 }
 let wheelGesture = [], wheelTimer;
 wrap.addEventListener('wheel', e => {
-  if (e.target.closest('#bag-drawer, button, dialog')) return;
+  if (e.target.closest('#bag-drawer, button, dialog, #panel, a')) return;
   e.preventDefault();
   if (!humanTurn() || !ui.panel.hidden) return;
   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;

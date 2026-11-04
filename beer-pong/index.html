@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Backyard Beer Pong · Tailgate Games</title>
+  <meta name="description" content="Line up a cup and flick. Play backyard beer pong solo, against the CPU, or with a friend on the same screen.">
+  <meta name="theme-color" content="#163f3c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23e85b47' d='M4 5h16l-3 17H7z'/%3E%3Cellipse fill='%23fff3ce' cx='12' cy='5' rx='8' ry='3'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+</head>
+<body>
+<main id="game">
+  <div id="hud" hidden>
+    <button id="pause-button" class="pixel-button" aria-label="Pause / menu">Ⅱ PAUSE</button>
+    <div class="match-heading"><span id="mode-name">BEER PONG</span><span id="turn-label">YOUR SHOT</span></div>
+    <div id="scoreboard" aria-label="Cups remaining">
+      <div class="team red"><span id="red-label">YOUR CUPS</span><strong id="red-count">10</strong><span class="cup-pips" id="red-pips" aria-hidden="true"></span></div>
+      <div class="team blue"><span id="blue-label">CPU CUPS</span><strong id="blue-count">10</strong><span class="cup-pips" id="blue-pips" aria-hidden="true"></span></div>
+    </div>
+    <div id="practice-stats" hidden><strong id="practice-hits">0 / 0</strong><span>CUPS / THROWS</span></div>
+    <div id="message" role="status" aria-live="polite"></div>
+    <div id="meter" role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="meter-fill"></div><div id="meter-target"><span>TARGET</span></div><div id="meter-marker"></div><span class="meter-caption">POWER</span>
+    </div>
+    <button id="refill" class="pixel-button" hidden>REFILL CUPS</button>
+    <span id="shot-count">THROW 1</span>
+    <svg id="swipe-feedback" aria-hidden="true"><defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9L3 5Z" fill="#ffe16b" stroke="#172c32"/></marker></defs><line id="swipe-shadow" stroke="#172c32" stroke-width="8"/><line id="swipe-line" stroke="#ffe16b" stroke-width="4" marker-end="url(#swipe-tip)"/></svg>
+  </div>
+  <section id="menu" class="menu-card" aria-labelledby="game-title">
+    <a class="series-link" href="/">TAILGATE GAMES / CORNHOLE ↗</a>
+    <p class="eyebrow">ONE TABLE. TEN TARGETS.</p>
+    <h1 id="game-title">BACKYARD<br><span>BEER PONG</span></h1>
+    <p class="menu-intro">Pick a cup. Find your touch.</p>
+    <div class="mode-buttons">
+      <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws. Refill the rack.</small><span aria-hidden="true">01</span></button>
+      <button data-mode="cpu"><strong>VS CPU</strong><small>Clear their cups before they clear yours.</small><span aria-hidden="true">02</span></button>
+      <button data-mode="two"><strong>2 PLAYER</strong><small>Pass the device. Take your shot.</small><span aria-hidden="true">03</span></button>
+    </div>
+    <p class="menu-note">Mouse or touch · Flick upward to throw</p>
+  </section>
+  <dialog id="help" class="dialog-card" aria-labelledby="help-title">
+    <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Flick. Sink. Repeat.</h2>
+    <p>Flick upward to toss the ball.<br>Faster flicks add power; a sideways swipe steers it.</p>
+    <p>The green meter band is the range for the rack.<br>The arrow after release shows your actual swipe.</p>
+    <p>Sink a cup to remove it. One throw per turn.<br>Clear the opposing rack to win.</p>
+    <button id="help-done" autofocus>LET’S PLAY</button>
+  </dialog>
+  <dialog id="pause" class="dialog-card" aria-labelledby="pause-title"><h2 id="pause-title">Paused</h2><p>Your next cup can wait.</p><button id="resume" autofocus>RESUME GAME</button><button class="secondary" id="pause-menu">MAIN MENU</button></dialog>
+  <dialog id="handoff" class="dialog-card" aria-labelledby="handoff-title"><p class="eyebrow">PASS THE DEVICE</p><h2 id="handoff-title">RED’S SHOT</h2><p id="handoff-copy">Aim at the blue cups.</p><button id="ready" autofocus>READY TO THROW</button><button class="secondary" id="handoff-menu">MAIN MENU</button></dialog>
+  <dialog id="result" class="dialog-card" aria-labelledby="result-title"><p class="eyebrow" id="result-tag">RACK CLEARED</p><h2 id="result-title">Nice shooting.</h2><p id="result-copy"></p><button id="play-again" autofocus>PLAY AGAIN</button><button class="secondary" id="result-menu">MAIN MENU</button></dialog>
+  <div id="error" hidden>WebGL isn’t available in this browser. Try opening the game in Chrome or Safari.</div>
+</main>
+<script type="module" src="game.js"></script>
+</body>
+</html>

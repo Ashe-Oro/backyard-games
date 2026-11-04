@@ -1,6 +1,11 @@
 # tailgate-games
 
-Backyard Cornhole is a static Three.js game served from `index.html`.
+Tailgate Games contains two static Three.js games:
+
+- Backyard Cornhole: `/` (served from `index.html`).
+- Backyard Beer Pong: `/beer-pong/` — Solo Practice, vs CPU, and same-screen 2 Player.
+
+Both games use upward mouse/touch flicks for throwing and are linked from their menus.
 
 ## Deployment
 
