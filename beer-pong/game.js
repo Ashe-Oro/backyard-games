@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {layoutsFor,layoutPoints} from './rerack.mjs';
 import {OPPONENTS,SwatDefender} from './opponents.mjs';
+import {LADDER,SAVE_KEY,readProgress} from './tournament.mjs';
 import {createGlove} from './glove.js';
 import {handSwipe,SWIPE_DURATION} from './hand-swipe.mjs';
 
@@ -11,6 +12,34 @@ const CUP_R=.078, CUP_H=.17, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP_R-BALL_R-.006;
 const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], ANGLE=52*Math.PI/180;
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
 const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
+let tournamentActive=false,tournamentRound=0,progress={unlocked:0,completed:false},saveNote='';
+try{progress=readProgress(localStorage);}catch{saveNote='Progress cannot be saved on this device.';}
+function saveTournament(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(progress));}catch{saveNote='Progress cannot be saved on this device.';}}
+function tournamentCard(champion=false){
+ closeDialogs();state.phase=champion?'champion':'intro';state.paused=false;
+ $('menu').hidden=true;$('hud').hidden=true;
+ const rival=LADDER[tournamentRound];
+ $('tournament-tag').textContent=champion?'ALL SEVEN RIVALS DEFEATED':`ROUND ${tournamentRound+1} / ${LADDER.length}`;
+ $('opponent-avatar').textContent=champion?'♛':rival.avatar;
+ $('opponent-avatar').style.color=rival.color;
+ $('opponent-avatar').setAttribute('aria-label',champion?'Champion crown':`${rival.name} avatar`);
+ $('tournament-title').textContent=champion?'PONG CHAMPION!':rival.name;
+ $('tournament-copy').textContent=champion?'The table is yours. You beat The Glove!':rival.line;
+ $('tournament-ladder').innerHTML=LADDER.map((o,i)=>`<li class="${i===tournamentRound&&!champion?'current':''}">${i<progress.unlocked||progress.completed?'✓':i===tournamentRound?'▶':'·'} Round ${i+1}: ${o.name}</li>`).join('');
+ $('tournament-save').textContent=saveNote||'Progress saves after every win.';
+ $('tournament-go').textContent=champion?'PLAY FROM ROUND 1':'LET’S PLAY';
+ $('tournament-go').onclick=()=>{if(champion){tournamentRound=0;tournamentCard();}else startMatch('cpu',rival.id,true);};
+ $('tournament').showModal();
+}
+function openTournament(){showMenu();tournamentActive=true;tournamentRound=progress.unlocked;tournamentCard(progress.completed);}
+function tournamentResult(){
+ const win=state.winner===0,rival=LADDER[tournamentRound],final=win&&tournamentRound===LADDER.length-1;
+ if(win){progress.unlocked=Math.max(progress.unlocked,Math.min(tournamentRound+1,LADDER.length-1));progress.completed=progress.completed||final;saveTournament();}
+ $('result-tag').textContent=`ROUND ${tournamentRound+1} / ${LADDER.length}`;
+ $('result-title').textContent=win?'ROUND WON!':'ROUND LOST';
+ $('result-copy').textContent=`${win?'You beat':'You lost to'} ${rival.name}. ${win?'Great shooting!':'Same rival. Fresh rack.'}${saveNote?' '+saveNote:''}`;
+ $('play-again').textContent=final?'CLAIM THE TROPHY':win?'NEXT ROUND':'TRY AGAIN';
+}
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
 let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,humanSwing=null,humanPointer=null,cpuSwing=null;
 const wrap=$('game'), scene=new THREE.Scene();
@@ -155,7 +184,7 @@ function showShotFeedback(b){
 }
 function message(text,detail='',seconds=1.1){$('message').replaceChildren(document.createTextNode(text));if(detail){const small=document.createElement('small');small.textContent=detail;$('message').append(small);}$('message').classList.add('show');messageTime=seconds;}
 function updateHud(){
- $('mode-name').textContent={practice:'SOLO PRACTICE',cpu:'VS CPU',two:'2 PLAYER'}[state.mode];
+ $('mode-name').textContent=tournamentActive?`ROUND ${tournamentRound+1} · ${LADDER[tournamentRound].name.toUpperCase()}`:{practice:'SOLO PRACTICE',cpu:'VS CPU',two:'2 PLAYER'}[state.mode];
  $('turn-label').textContent=state.mode==='practice'?`${remaining(1)} CUPS LEFT`:state.mode==='cpu'?(state.turn===0?'YOUR SHOT':'CPU’S SHOT'):`${LABELS[state.turn]}’S SHOT`;
  $('red-label').textContent=state.mode==='cpu'?'YOUR CUPS':'RED CUPS';$('blue-label').textContent=state.mode==='cpu'?'CPU CUPS':'BLUE CUPS';
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
@@ -168,8 +197,9 @@ function updateHud(){
  if(state.phase==='handoff'||state.mode==='cpu'&&state.turn===1)$('shot-feedback').hidden=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){resetHumanDefense();defender.reset();glove.visible=false;$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
-function startMatch(mode='practice',opponent='regular'){
+function showMenu(){tournamentActive=false;$('tournament-subtitle').textContent=progress.completed?'Champion · View trophy.':progress.unlocked?`Continue · Round ${progress.unlocked+1} of ${LADDER.length}.`:'Beat the bracket vs CPU.';resetHumanDefense();defender.reset();glove.visible=false;$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function startMatch(mode='practice',opponent='regular',tournament=false){
+ tournamentActive=tournament;
  if(!['practice','cpu','two'].includes(mode))return;resetHumanDefense();$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
@@ -220,7 +250,7 @@ function finishShot(scoredCup=null){
  ball=null;flying.visible=false;
  if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
  else if(state.mode!=='practice'&&(remaining(0)===0||remaining(1)===0)){
-  state.winner=remaining(1)===0?0:1;state.phase='over';$('result-tag').textContent='TABLE CHAMPION';$('result-title').textContent=state.mode==='cpu'?(state.winner===0?'YOU WIN!':'CPU WINS'):LABELS[state.winner]+' WINS!';$('result-copy').textContent=`${state.shots[state.winner]} throws to clear the rack.`;$('play-again').textContent='PLAY AGAIN';$('result').showModal();
+  state.winner=remaining(1)===0?0:1;state.phase='over';$('result-tag').textContent='TABLE CHAMPION';$('result-title').textContent=state.mode==='cpu'?(state.winner===0?'YOU WIN!':'CPU WINS'):LABELS[state.winner]+' WINS!';$('result-copy').textContent=`${state.shots[state.winner]} throws to clear the rack.`;$('play-again').textContent='PLAY AGAIN';if(tournamentActive)tournamentResult();$('result').showModal();
  }else{state.phase='wait';state.delay=.85;}
  updateHud();
 }
@@ -250,11 +280,12 @@ $('rerack-button').onclick=openRerack;$('rerack-cancel').onclick=cancelRerack;$(
 $('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','',1.2);};
 function pauseGame(){humanPointer=null;if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
-document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
+document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>button.dataset.mode==='tournament'?openTournament():startMatch(button.dataset.mode));
 $('pause-button').onclick=pauseGame;$('resume').onclick=resumeGame;$('pause').oncancel=event=>{event.preventDefault();resumeGame();};
 for(const id of ['pause-menu','handoff-menu','result-menu'])$(id).onclick=showMenu;
 $('ready').onclick=()=>{$('handoff').close();state.phase='aim';updateHud();};$('handoff').oncancel=event=>event.preventDefault();
-$('refill').onclick=refillCups;$('play-again').onclick=()=>state.mode==='practice'?refillCups():startMatch(state.mode);
+$('tournament-menu').onclick=showMenu;$('tournament').oncancel=event=>{event.preventDefault();showMenu();};
+$('refill').onclick=refillCups;$('play-again').onclick=()=>{if(tournamentActive){if(state.winner===0){if(tournamentRound===LADDER.length-1){tournamentCard(true);return;}tournamentRound++;}tournamentCard();}else state.mode==='practice'?refillCups():startMatch(state.mode);};
 $('result').oncancel=event=>event.preventDefault();$('help-done').onclick=()=>$('help').close();
 function humanReady(){return state.phase==='aim'&&!state.paused&&!document.querySelector('dialog[open]');}
 function showAim(from,to,pulling=false){
@@ -403,6 +434,7 @@ try{if(localStorage.getItem('tailgate-beer-pong-help-seen')!=='1'){localStorage.
 requestAnimationFrame(frame);
 window.__pong={
  get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces,style:ball.style,deadReason:ball.deadReason}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
+ get tournament(){return {active:tournamentActive,round:tournamentRound,progress:{...progress},ladder:LADDER};},
  startMatch,throwWith:launchShot,refill:refillCups,
  court:{length:TABLE_L,center:TABLE_Z,width:TABLE_W,releaseZ:[...RELEASE_Z]},
  get defense(){return {...defender.snapshot(),visible:glove.visible,hand:handSnapshot(glove,cpuSwing)};},

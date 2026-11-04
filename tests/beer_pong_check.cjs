@@ -10,7 +10,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   await page.goto(BASE+'/beer-pong/');await page.waitForFunction(()=>!!window.__pong);
   assert(await page.locator('#help').isVisible());await page.locator('#help-done').click();
   await page.reload();await page.waitForFunction(()=>!!window.__pong);assert.equal(await page.locator('#help').isVisible(),false);
-  assert.equal(await page.locator('[data-mode]').count(),3);
+  assert.equal(await page.locator('[data-mode]').count(),4);
   if(process.env.SHOTS)await page.screenshot({path:path.join(process.env.SHOTS,'beer-pong-menu.png')});
   await page.locator('[data-mode=practice]').click();
   await page.waitForFunction(()=>__pong.state.held.visible&&__pong.state.phase==='aim');
