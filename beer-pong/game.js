@@ -146,9 +146,6 @@ function updateHud(){
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
  $('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
  $('refill').hidden=state.mode!=='practice';$('refill').disabled=state.phase!=='aim'||state.paused;
- $('ball-position-control').hidden=state.mode==='cpu'&&state.turn===1||['menu','over','handoff'].includes(state.phase);
- $('ball-position').disabled=!humanReady();$('ball-position').value=String(Math.round(state.positions[state.turn]/.28*100));
- $('ball-position').setAttribute('aria-valuetext',state.positions[state.turn]===0?'Center':`${Math.round(Math.abs(state.positions[state.turn])/.28*100)}% ${state.positions[state.turn]<0?'left':'right'}`);
  $('meter').hidden=state.mode==='cpu'&&state.turn===1||state.phase==='over'||state.phase==='handoff';
  const w=targetWindow();$('meter-target').style.bottom=`${w.lo*100}%`;$('meter-target').style.height=`${(w.hi-w.lo)*100}%`;meterDirty=true;
 }
@@ -197,15 +194,38 @@ $('ready').onclick=()=>{$('handoff').close();state.phase='aim';updateHud();};$('
 $('refill').onclick=refillCups;$('play-again').onclick=()=>state.mode==='practice'?refillCups():startMatch(state.mode);
 $('result').oncancel=event=>event.preventDefault();$('help-done').onclick=()=>$('help').close();
 function humanReady(){return state.phase==='aim'&&!state.paused&&!document.querySelector('dialog[open]');}
-$('ball-position').oninput=()=>{if(!humanReady())return;state.positions[state.turn]=Number($('ball-position').value)/100*.28;held.position.set(releaseX(state.turn),RELEASE_Y,RELEASE_Z[state.turn]);updateHud();setPower(state.power);};
 function flickFrom(points){if(points.length<2)return null;const end=points.at(-1);let i=points.length-2;while(i>0&&end.t-points[i-1].t<75)i--;const start=points[i],dt=Math.max(.016,(end.t-start.t)/1000),up=(start.y-end.y)/wrap.clientHeight/dt;return {up,slope:(end.x-start.x)/Math.max(1,start.y-end.y),from:start,to:end};}
 function powerFromFlick(up){return clamp((up-.35)/5.6,0,1);}
 function showSwipe(flick){const rect=wrap.getBoundingClientRect(),svg=$('swipe-feedback');svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);for(const id of ['swipe-shadow','swipe-line'])for(const [key,value]of Object.entries({x1:flick.from.x-rect.left,y1:flick.from.y-rect.top,x2:flick.to.x-rect.left,y2:flick.to.y-rect.top}))$(id).setAttribute(key,value);clearTimeout(swipeTimer);svg.classList.add('show');swipeTimer=setTimeout(()=>svg.classList.remove('show'),900);}
-wrap.addEventListener('pointerdown',event=>{if(event.target.closest('button,a,input,label,dialog,#menu')||!humanReady())return;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,points:[{x:event.clientX,y:event.clientY,t:event.timeStamp}]};wrap.classList.add('drag');try{wrap.setPointerCapture(event.pointerId);}catch{}});
-wrap.addEventListener('pointermove',event=>{if(!drag||event.pointerId!==drag.id)return;const samples=event.getCoalescedEvents?.()||[];for(const point of samples.length?samples:[event])drag.points.push({x:point.clientX,y:point.clientY,t:point.timeStamp});while(drag.points.length>2&&event.timeStamp-drag.points[0].t>300)drag.points.shift();const flick=flickFrom(drag.points);if(flick)setPower(powerFromFlick(flick.up));});
+function ballScreen(x=releaseX(state.turn)){
+ const p=new THREE.Vector3(x,RELEASE_Y,RELEASE_Z[state.turn]).project(camera),rect=wrap.getBoundingClientRect();
+ return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
+}
+function moveBallTo(clientX){
+ const a=ballScreen(-.28),b=ballScreen(.28),worldX=clamp(-.28+(clientX-a.x)/(b.x-a.x)*.56,-.28,.28);
+ state.positions[state.turn]=worldX*(state.turn===0?1:-1);held.position.set(worldX,RELEASE_Y,RELEASE_Z[state.turn]);updateHud();setPower(0);
+}
+wrap.addEventListener('pointerdown',event=>{
+ if(event.target.closest('button,a,input,label,dialog,#menu')||!humanReady())return;
+ const point={x:event.clientX,y:event.clientY,t:event.timeStamp},p=ballScreen();
+ const grabbed=Math.hypot(point.x-p.x,point.y-p.y)<=Math.max(30,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+14);
+ $('swipe-feedback').classList.remove('show');drag={id:event.pointerId,points:[point],mode:grabbed?'pending':'throw',anchor:point,offset:point.x-p.x};
+ wrap.classList.add('drag');try{wrap.setPointerCapture(event.pointerId);}catch{}
+});
+wrap.addEventListener('pointermove',event=>{
+ if(!drag||event.pointerId!==drag.id)return;
+ const point={x:event.clientX,y:event.clientY,t:event.timeStamp},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;let turnedUp=false;
+ if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8)drag.mode=Math.abs(dx)>Math.abs(dy)?'position':'throw';
+ if(drag.mode==='position'){
+  if(dy<-14&&-dy>Math.abs(dx)*1.3){drag.mode='throw';drag.points=[{...drag.anchor,x:point.x}];turnedUp=true;}
+  else{moveBallTo(point.x-drag.offset);if(Math.abs(dx)>Math.abs(dy))drag.anchor=point;return;}
+ }
+ const samples=turnedUp?[]:event.getCoalescedEvents?.()||[];for(const sample of samples.length?samples:[event])drag.points.push({x:sample.clientX,y:sample.clientY,t:sample.timeStamp});
+ while(drag.points.length>2&&event.timeStamp-drag.points[0].t>300)drag.points.shift();const flick=flickFrom(drag.points);if(drag.mode==='throw'&&flick)setPower(powerFromFlick(flick.up));
+});
 wrap.addEventListener('pointerup',event=>{
  if(!drag||event.pointerId!==drag.id)return;const points=drag.points,last=points.at(-1);if(last.x!==event.clientX||last.y!==event.clientY)points.push({x:event.clientX,y:event.clientY,t:event.timeStamp});
- const stale=event.timeStamp-points.at(-1).t>160,flick=stale?null:flickFrom(points);drag=null;wrap.classList.remove('drag');
+ const stale=event.timeStamp-points.at(-1).t>160,flick=stale||drag.mode!=='throw'?null:flickFrom(points);drag=null;wrap.classList.remove('drag');
  if(flick&&flick.up>=.35&&humanReady()&&launchShot(powerFromFlick(flick.up),flick.slope))showSwipe(flick);else if(humanReady())setPower(0);
 });
 wrap.addEventListener('pointercancel',()=>{drag=null;wrap.classList.remove('drag');if(humanReady())setPower(0);});
