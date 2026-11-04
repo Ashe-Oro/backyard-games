@@ -139,9 +139,9 @@ function showShotFeedback(b){
  const zone=depth<Math.min(...distances)-CUP_R?'weak':depth>Math.max(...distances)+CUP_R?'strong':'range';
  const horizontal=b.v.x*(b.team===0?1:-1),aim=Math.abs(horizontal)<.045?'↑ STRAIGHT':horizontal<0?'↖ LEFT':'↗ RIGHT';
  const panel=$('shot-feedback');panel.dataset.power=zone;panel.hidden=false;
- $('feedback-direction').textContent=`THROW DIRECTION: ${aim}`;
+ $('feedback-direction').textContent=`${aim}`;
  $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
- $('feedback-tip').textContent={weak:'Pull farther back next time.',strong:'Use a shorter pull next time.',range:'Distance reaches the cup rows.'}[zone];
+ $('feedback-tip').textContent={weak:'Pull farther.',strong:'Use a shorter pull.',range:'Cups in range.'}[zone];
  const origin=ballScreen(),yaw=Math.atan2(horizontal,Math.abs(b.v.z));showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
 }
 function message(text,detail='',seconds=1.1){$('message').replaceChildren(document.createTextNode(text));if(detail){const small=document.createElement('small');small.textContent=detail;$('message').append(small);}$('message').classList.add('show');messageTime=seconds;}
@@ -169,7 +169,7 @@ function startMatch(mode='practice',opponent='regular'){
 function beginTurn(){
  ball=null;flying.visible=false;defender.reset();glove.visible=false;messageTime=0;$('message').classList.remove('show');setCamera();setPower(0);
  if(state.mode==='two'){
-  state.phase='handoff';$('handoff-title').textContent=`${LABELS[state.turn]}’S SHOT`;$('handoff-copy').textContent=`Aim at the ${state.turn===0?'blue':'red'} cups. One throw, then pass the device.`;$('handoff').showModal();
+  state.phase='handoff';$('handoff-title').textContent=`${LABELS[state.turn]}’S SHOT`;$('handoff-copy').textContent=`Aim at the ${state.turn===0?'blue':'red'} cups.`;$('handoff').showModal();
  }else if(state.mode==='cpu'&&state.turn===1){state.phase='cpu';state.cpuTime=0;}
  else state.phase='aim';updateHud();
 }
@@ -189,16 +189,16 @@ function finishShot(scoredCup=null){
  if(scoredCup){
   const bounce=ball?.bounceBonusEligible&&ball.bounces===1&&scoredCup.team!==team;scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;let bonus=null;
   if(bounce){const candidates=cups.filter(c=>c.team===scoredCup.team&&c.alive);candidates.sort((a,b)=>Math.hypot(a.x-releaseX(team),a.z-RELEASE_Z[team])-Math.hypot(b.x-releaseX(team),b.z-RELEASE_Z[team]));bonus=candidates[0];if(bonus){bonus.alive=false;bonus.group.visible=false;state.hits[team]++;celebrate(bonus);}}
-  message(scoredCup.team===team?'OWN CUP!':bounce?(bonus?'BOUNCE · 2 CUPS!':'BOUNCE · LAST CUP!'):'CUP!',scoredCup.team===team?'That one came back to bite.':`${remaining(scoredCup.team)} cups left.`,1.2);
+  message(scoredCup.team===team?'OWN CUP!':bounce?(bonus?'BOUNCE · 2 CUPS!':'BOUNCE · LAST CUP!'):'CUP!',scoredCup.team===team?'Wrong rack.':`${remaining(scoredCup.team)} cups left.`,1.2);
  }
  else if(ball?.deadReason==='swat')message('SWATTED!',`${OPPONENTS[state.opponent].name} blocked your bounce.`,1.2);
- else if(ball?.deadReason==='second-bounce')message('DEAD BALL','Only one table bounce is allowed.',.95);
+ else if(ball?.deadReason==='second-bounce')message('DEAD BALL','Second bounce.',.95);
  else if(ball?.deadReason==='table')message('DEAD BALL','Touched the table.',.95);
- else message('NO CUP',ball?.rimHits?'Off the cup. Try a different angle.':'Adjust your pull distance or angle.',.95);
+ else message('NO CUP',ball?.rimHits?'Off the rim.':'',.95);
  ball=null;flying.visible=false;
- if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws. Refill and keep your practice going.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
+ if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
  else if(state.mode!=='practice'&&(remaining(0)===0||remaining(1)===0)){
-  state.winner=remaining(1)===0?0:1;state.phase='over';$('result-tag').textContent='TABLE CHAMPION';$('result-title').textContent=state.mode==='cpu'?(state.winner===0?'YOU WIN!':'CPU WINS'):LABELS[state.winner]+' WINS!';$('result-copy').textContent=`${state.shots[state.winner]} throws. All ten cups cleared.`;$('play-again').textContent='PLAY AGAIN';$('result').showModal();
+  state.winner=remaining(1)===0?0:1;state.phase='over';$('result-tag').textContent='TABLE CHAMPION';$('result-title').textContent=state.mode==='cpu'?(state.winner===0?'YOU WIN!':'CPU WINS'):LABELS[state.winner]+' WINS!';$('result-copy').textContent=`${state.shots[state.winner]} throws to clear the rack.`;$('play-again').textContent='PLAY AGAIN';$('result').showModal();
  }else{state.phase='wait';state.delay=.85;}
  updateHud();
 }
@@ -213,7 +213,7 @@ function applyRerack(team,id){
 }
 function openRerack(){
  if(!humanReady()||drag||state.reracksUsed[state.turn])return;const count=remaining(1-state.turn),options=layoutsFor(count);if(!options.length)return;
- cancelPull();selectedLayout=options[0].id;$('rerack-copy').textContent=`${count} cups remaining. Choose your formation.`;const container=$('rerack-options');container.replaceChildren();
+ cancelPull();selectedLayout=options[0].id;$('rerack-copy').textContent=`${count} cups. Choose a formation.`;const container=$('rerack-options');container.replaceChildren();
  for(const option of options){
   const button=document.createElement('button');button.type='button';button.dataset.layout=option.id;button.setAttribute('aria-pressed',String(option.id===selectedLayout));button.setAttribute('aria-label',option.label);
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 120 90');svg.setAttribute('aria-hidden','true');
@@ -225,7 +225,7 @@ function openRerack(){
 }
 function cancelRerack(){$('rerack-dialog').close();selectedLayout=null;updateHud();$('rerack-button').focus();}
 $('rerack-button').onclick=openRerack;$('rerack-cancel').onclick=cancelRerack;$('rerack-dialog').oncancel=e=>{e.preventDefault();cancelRerack();};
-$('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','Your one re-rack is used.',1.2);};
+$('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','',1.2);};
 function pauseGame(){if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
 document.querySelectorAll('[data-shot-style]').forEach(button=>button.onclick=()=>{if(!humanReady()||drag||state.mode==='two')return;state.shotStyle=button.dataset.shotStyle;setPower(0);$('shot-feedback').hidden=true;updateHud();});
@@ -252,9 +252,9 @@ function updatePull(point){
  setPower(pull.power);showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);
  const rect=wrap.getBoundingClientRect();$('pull-grip').setAttribute('cx',point.x-rect.left);$('pull-grip').setAttribute('cy',point.y-rect.top);
  for(const [key,value]of Object.entries({x1:origin.x-rect.left,y1:origin.y-rect.top,x2:point.x-rect.left,y2:point.y-rect.top}))$('pull-tether').setAttribute(key,value);
- $('control-hint').textContent=pull.power>0?'RELEASE TO THROW · RETURN TO CANCEL':'RETURN TO BALL TO CANCEL';return pull;
+ $('control-hint').textContent=pull.power>0?'RELEASE · RETURN TO CANCEL':'RETURN TO BALL TO CANCEL';return pull;
 }
-function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show','pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';if(humanReady())setPower(0);}
+function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show','pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';if(humanReady())setPower(0);}
 function ballScreen(x=releaseX(state.turn)){
  const p=new THREE.Vector3(x,RELEASE_Y,RELEASE_Z[state.turn]).project(camera),rect=wrap.getBoundingClientRect();
  return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
@@ -283,7 +283,7 @@ wrap.addEventListener('pointermove',event=>{
 wrap.addEventListener('pointerup',event=>{
  if(!drag||event.pointerId!==drag.id)return;
  const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null;
- drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';
+ drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';
  if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope))){cancelPull();updateHud();}
 });
 wrap.addEventListener('pointercancel',()=>{cancelPull();updateHud();});
@@ -300,7 +300,7 @@ function frame(){
   while(accumulator>=1/240){
    accumulator-=1/240;if(ball&&ball.state==='fly')stepBall(ball,1/240);
    if(state.mode==='cpu'){if(ball?.justBounced){ball.justBounced=false;defender.notice(ball);}
-    if(defender.update(1/240,ball)&&ball?.state==='fly'){ball.state='swatted';ball.deadReason='swat';ball.swatAge=0;ball.v.set(-defender.side*4.5,1.6,-.2);message('SWATTED!','The glove got there first.',.9);}
+    if(defender.update(1/240,ball)&&ball?.state==='fly'){ball.state='swatted';ball.deadReason='swat';ball.swatAge=0;ball.v.set(-defender.side*4.5,1.6,-.2);message('SWATTED!','',.9);}
    }
   }
   if(ball){

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>Backyard Beer Pong · Backyard Games</title>
-  <meta name="description" content="Line up a cup, pull back and release. Play backyard beer pong solo, against the CPU, or with a friend on the same screen.">
+  <title>Beer Pong · Backyard Games</title>
+  <meta name="description" content="Play Beer Pong solo, vs CPU or with a friend. Pull back and release to throw.">
   <meta name="theme-color" content="#163f3c">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23e85b47' d='M4 5h16l-3 17H7z'/%3E%3Cellipse fill='%23fff3ce' cx='12' cy='5' rx='8' ry='3'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,9 +25,9 @@
     <div id="practice-stats" hidden><strong id="practice-hits">0 / 0</strong><span>CUPS / THROWS</span></div>
     <div id="message" role="status" aria-live="polite"></div>
     <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div>
-    <div id="shot-style" role="group" aria-label="Shot style"><button class="pixel-button" data-shot-style="arc" aria-pressed="true" title="High arc; its first table bounce still counts">ARC</button><button class="pixel-button" data-shot-style="bounce" aria-pressed="false" title="Lower toss for planned bounce shots">BOUNCE</button></div>
+    <div id="shot-style" role="group" aria-label="Shot style"><button class="pixel-button" data-shot-style="arc" aria-pressed="true" title="High arc · one bounce allowed">ARC</button><button class="pixel-button" data-shot-style="bounce" aria-pressed="false" title="Low bounce trajectory">BOUNCE</button></div>
     <div id="rack-actions"><button id="rerack-button" class="pixel-button" disabled>RE-RACK</button><button id="refill" class="pixel-button" hidden>REFILL CUPS</button></div>
-    <span id="control-hint">DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW</span>
+    <span id="control-hint">DRAG TO MOVE · PULL TO THROW</span>
     <span id="shot-count">THROW 1</span>
     <svg id="swipe-feedback" aria-hidden="true"><defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9L3 5Z" fill="#ffe16b" stroke="#172c32"/></marker></defs><line id="pull-tether" stroke="#fff1cf" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" r="10" fill="#ffe16b" stroke="#172c32" stroke-width="3"/><line id="swipe-shadow" stroke="#172c32" stroke-width="8"/><line id="swipe-line" stroke="#ffe16b" stroke-width="4" marker-end="url(#swipe-tip)"/></svg>
   </div>
@@ -35,27 +35,25 @@
     <a class="series-link" href="/">← ALL BACKYARD GAMES</a>
     <p class="eyebrow">ONE TABLE. TEN TARGETS.</p>
     <h1 id="game-title">BACKYARD<br><span>BEER PONG</span></h1>
-    <p class="menu-intro">Pick a cup. Find your touch.</p>
     <div class="mode-buttons">
-      <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws. Refill the rack.</small><span aria-hidden="true">01</span></button>
-      <button data-mode="cpu"><strong>VS CPU</strong><small>Clear their cups. Watch the glove on bounce shots.</small><span aria-hidden="true">02</span></button>
-      <button data-mode="two"><strong>2 PLAYER</strong><small>Pass the device. Take your shot.</small><span aria-hidden="true">03</span></button>
+      <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws.</small><span aria-hidden="true">01</span></button>
+      <button data-mode="cpu"><strong>VS CPU</strong><small>Bounce shots can be swatted.</small><span aria-hidden="true">02</span></button>
+      <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small><span aria-hidden="true">03</span></button>
     </div>
-    <p class="menu-note">Mouse or touch · Pull down and release to throw</p>
+    <p class="menu-note">Mouse or touch · Pull down, release</p>
   </section>
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
     <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
-    <p>Grab the ball and drag sideways to position it.<br>Pull downward to set power. Pull diagonally to aim in the opposite direction.<br>Release to throw. Return to the starting point to cancel.</p>
-    <p>The arrow shows your throw direction.<br>After each throw, feedback tells you if your power was too weak, too strong, or in range.</p>
-    <p>Sink a cup to remove it. One throw per turn.<br>Practice / vs CPU: every human throw may bounce once.<br>A made table bounce is worth two cups. A second bounce ends the shot.<br>The CPU can swat after the bounce. Practice has no swatting.<br>Two-player mode keeps arc shots for now.<br>Clear the opposing rack to win.</p>
-    <p>One re-rack per player: before your throw, with 6, 4, 3 or 2 target cups left. Choose a formation and confirm. The button disappears after use.</p>
+    <p>Drag the ball sideways to line up.<br>Pull down for power; diagonally to aim the opposite way.<br>Release to throw. Return to start to cancel.</p>
+    <p>Clear their cups to win. One throw per turn.<br>Practice / vs CPU: one bounce allowed. Sink a bounce for two cups; the CPU can swat it.<br>Practice: no swats. Two-player: table contact ends the shot.</p>
+    <p>One re-rack per player, before throwing with 6, 4, 3 or 2 cups left.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
   </dialog>
-  <dialog id="rerack-dialog" class="dialog-card" aria-labelledby="rerack-title"><p class="eyebrow">ONE RE-RACK PER PLAYER</p><h2 id="rerack-title">Reorganize the cups</h2><p id="rerack-copy"></p><div id="rerack-options" role="group" aria-label="Cup formation"></div><p class="rerack-note">Moves the cups you’re shooting at. No cups are added.</p><button id="rerack-confirm">CONFIRM RE-RACK</button><button id="rerack-cancel" class="secondary">CANCEL</button></dialog>
-  <dialog id="pause" class="dialog-card" aria-labelledby="pause-title"><h2 id="pause-title">Paused</h2><p>Your next cup can wait.</p><button id="resume" autofocus>RESUME GAME</button><button class="secondary" id="pause-menu">MAIN MENU</button></dialog>
-  <dialog id="handoff" class="dialog-card" aria-labelledby="handoff-title"><p class="eyebrow">PASS THE DEVICE</p><h2 id="handoff-title">RED’S SHOT</h2><p id="handoff-copy">Aim at the blue cups.</p><button id="ready" autofocus>READY TO THROW</button><button class="secondary" id="handoff-menu">MAIN MENU</button></dialog>
+  <dialog id="rerack-dialog" class="dialog-card" aria-labelledby="rerack-title"><p class="eyebrow">ONE RE-RACK PER PLAYER</p><h2 id="rerack-title">Re-rack</h2><p id="rerack-copy"></p><div id="rerack-options" role="group" aria-label="Cup formation"></div><p class="rerack-note">Rearranges the opponent’s remaining cups.</p><button id="rerack-confirm">CONFIRM</button><button id="rerack-cancel" class="secondary">CANCEL</button></dialog>
+  <dialog id="pause" class="dialog-card" aria-labelledby="pause-title"><h2 id="pause-title">Paused</h2><button id="resume" autofocus>RESUME</button><button class="secondary" id="pause-menu">MAIN MENU</button></dialog>
+  <dialog id="handoff" class="dialog-card" aria-labelledby="handoff-title"><p class="eyebrow">PASS THE DEVICE</p><h2 id="handoff-title">RED’S SHOT</h2><p id="handoff-copy">Aim at the blue cups.</p><button id="ready" autofocus>READY</button><button class="secondary" id="handoff-menu">MAIN MENU</button></dialog>
   <dialog id="result" class="dialog-card" aria-labelledby="result-title"><p class="eyebrow" id="result-tag">RACK CLEARED</p><h2 id="result-title">Nice shooting.</h2><p id="result-copy"></p><button id="play-again" autofocus>PLAY AGAIN</button><button class="secondary" id="result-menu">MAIN MENU</button></dialog>
-  <div id="error" hidden>WebGL isn’t available in this browser. Try opening the game in Chrome or Safari.</div>
+  <div id="error" hidden>WebGL unavailable. Try Chrome or Safari.</div>
 </main>
 <script type="module" src="game.js"></script>
 </body>

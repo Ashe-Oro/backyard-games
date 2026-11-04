@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Backyard Cornhole · 3D pixel toss</title>
-<meta name="description" content="Pull back, release, toss. A tiny 3D pixel-art cornhole game in your browser.">
+<title>Cornhole · Backyard Games</title>
+<meta name="description" content="Play Cornhole solo, in a CPU tournament or with a friend.">
 <meta name="theme-color" content="#ffb36b">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Backyard Cornhole">
-<meta property="og:description" content="Pull back, release, toss. A tiny 3D pixel-art cornhole game.">
+<meta property="og:description" content="Toss bags. First to 21 wins.">
 <meta property="og:url" content="https://playbackyardgames.vercel.app/cornhole/">
 <meta property="og:image" content="https://playbackyardgames.vercel.app/poster.png">
 <meta name="twitter:card" content="player">
 <meta name="twitter:title" content="Backyard Cornhole">
-<meta name="twitter:description" content="Real cornhole rules: 27 ft, cancellation scoring, first to 21. Pull back and release to toss.">
+<meta name="twitter:description" content="Toss bags. First to 21 wins.">
 <meta name="twitter:player" content="https://playbackyardgames.vercel.app/cornhole/">
 <meta name="twitter:player:width" content="480">
 <meta name="twitter:player:height" content="360">
@@ -145,7 +145,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>pull back · release · toss</p></div>
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
-    <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div><div id="control-hint">DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW</div>
+    <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div><div id="control-hint">DRAG TO MOVE · PULL TO THROW</div>
     <svg id="swipe-feedback" aria-hidden="true">
       <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
       <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
@@ -153,20 +153,20 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
       <line id="swipe-line" stroke="#ffe45e" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
     </svg>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
-    <button class="hb" id="reset-bags" hidden title="Clear thrown bags and keep your practice stats">CLEAR BOARD</button>
+    <button class="hb" id="reset-bags" hidden title="Clear bags; keep stats">CLEAR BOARD</button>
     <div id="bag-drawer">
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
-      <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
+      <div class="bag-row"><span class="bag-label">BAG SURFACE</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
       <div class="btns"><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
     </div>
     <button id="bag-handle" aria-controls="bag-menu" aria-expanded="true" aria-label="Collapse bag options"><span id="bag-chevron" aria-hidden="true">◀</span><span id="bag-picks"></span></button>
     </div>
   </div>
-  <dialog class="game-dialog" id="pause-dialog" aria-labelledby="pause-heading"><h2 id="pause-heading">Paused</h2><div class="dialog-actions"><button id="resume-game" autofocus>Resume game</button><button class="secondary" id="pause-menu">Main menu</button></div></dialog>
-  <dialog class="game-dialog" id="help-dialog" aria-labelledby="help-heading"><h2 id="help-heading">Pull. Release. Toss.</h2><div class="help-swipe" aria-hidden="true">↓</div><p><strong>Grab the bag and pull down. Release to throw.</strong><br>Pull farther for more power. Pull diagonally to aim the opposite way.</p><p>Drag sideways to position the bag.<br>Return to the starting point to cancel.</p><p>The arrow shows direction; feedback tells you if your power was too weak, too strong, or in range.<br>Keep PUSH / NORMAL / KOBE for throw height.</p><div class="dialog-actions"><button id="help-done" autofocus>Got it — let’s play</button></div></dialog>
+  <dialog class="game-dialog" id="pause-dialog" aria-labelledby="pause-heading"><h2 id="pause-heading">Paused</h2><div class="dialog-actions"><button id="resume-game" autofocus>Resume</button><button class="secondary" id="pause-menu">Main menu</button></div></dialog>
+  <dialog class="game-dialog" id="help-dialog" aria-labelledby="help-heading"><h2 id="help-heading">Pull. Release. Toss.</h2><div class="help-swipe" aria-hidden="true">↓</div><p>Drag the bag sideways to line up.<br>Pull down for power; diagonally to aim the opposite way.<br>Release to throw. Return to start to cancel.</p><p>PUSH / NORMAL / KOBE sets throw height.</p><div class="dialog-actions"><button id="help-done" autofocus>Let’s play</button></div></dialog>
   <div id="panel" class="ol" hidden></div>
-  <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
+  <div id="err">WebGL unavailable.<br>Try Chrome or Safari.</div>
 </div>
 <script type="module">
 import * as THREE from 'three';
@@ -831,7 +831,7 @@ function renderHud() {
   const t = thrower();
   if (M.phase === 'aim' || M.phase === 'cpu') {
     ui.turn.className = 'ol ' + (t ? 'blue' : 'red');
-    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU IS THROWING...') : TEAM[t] + "'S THROW";
+    ui.turn.textContent = M.vs === 'cpu' ? (t === 0 ? 'YOUR THROW' : 'CPU’S THROW') : TEAM[t] + "'S THROW";
     ui.turn.style.opacity = 1;
   } else ui.turn.style.opacity = 0;
   $('wind').hidden = wind.mph <= 0;
@@ -862,9 +862,9 @@ function shotFeedback(b,actualPower,aim){
   const z=toLocal(probe.p,new THREE.Vector3()).z;
   const zone=['board','in'].includes(probe.state)?'range':z>0?'weak':z < -L?'strong':'range';
   const dir=Math.abs(b.v.x)<.045?'↑ STRAIGHT':b.v.x<0?'↖ LEFT':'↗ RIGHT';
-  $('shot-feedback').hidden=false;$('feedback-direction').textContent=`THROW DIRECTION: ${dir}`;
+  $('shot-feedback').hidden=false;$('feedback-direction').textContent=`${dir}`;
   $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
-  $('feedback-tip').textContent={weak:'Pull farther back next time.',strong:'Use a shorter pull next time.',range:'Distance reaches the board.'}[zone];
+  $('feedback-tip').textContent={weak:'Pull farther.',strong:'Use a shorter pull.',range:'Board in range.'}[zone];
   const origin=bagScreen(),yaw=Math.atan2(b.v.x,-b.v.z);showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
 }
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
@@ -884,8 +884,8 @@ const roster = [
 const circuits=['Backyard Circuit','County Fair','Tailgate Pro','King’s Court'];
 const SAVE_KEY='backyard-cornhole-career-v1';
 let career={fight:0,wins:0}, saveNote='';
-try { const c=JSON.parse(localStorage.getItem(SAVE_KEY)); if(c && Number.isInteger(c.fight) && c.fight>=0 && c.fight<=roster.length && Number.isInteger(c.wins) && c.wins>=c.fight) career={fight:c.fight,wins:c.wins}; } catch { saveNote='Storage unavailable: progress lasts this visit.'; }
-function saveCareer(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(career));}catch{saveNote='Storage unavailable: progress lasts this visit.';}}
+try { const c=JSON.parse(localStorage.getItem(SAVE_KEY)); if(c && Number.isInteger(c.fight) && c.fight>=0 && c.fight<=roster.length && Number.isInteger(c.wins) && c.wins>=c.fight) career={fight:c.fight,wins:c.wins}; } catch { saveNote='Progress won’t save on this device.'; }
+function saveCareer(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(career));}catch{saveNote='Progress won’t save on this device.';}}
 function portrait(o){
  const looks=[
  ['#f5be91','#633b29','M4 3h8v3H4z','M3 3h10v2H3zM5 2h6v1H5z'],
@@ -902,22 +902,22 @@ function portrait(o){
 }
 function careerMap(){
  M.career=false; M.phase='menu'; clearBags(); ui.title.classList.add('gone');
- ui.panel.innerHTML=`<div class="pt">ROAD TO CORNHOLE KING</div><div class="ladder">${roster.map((o,i)=>`<div class="${i<career.fight?'done':i===career.fight?'current':''}">${i<career.fight?'✓':i===career.fight?'▶':'·'} ${o.name} · ${circuits[o.circuit]}</div>`).join('')}</div><div class="pd">${career.wins} WINS · ${career.fight}/8 CLEARED</div><button class="go" id="career-go">${career.fight===8?'CHAMPION ENDING':'CONTINUE CAREER'}</button><button class="hb" id="back">MAIN MENU</button><div id="save-note">${saveNote}</div>`;
+ ui.panel.innerHTML=`<div class="pt">ROAD TO CORNHOLE KING</div><div class="ladder">${roster.map((o,i)=>`<div class="${i<career.fight?'done':i===career.fight?'current':''}">${i<career.fight?'✓':i===career.fight?'▶':'·'} ${o.name} · ${circuits[o.circuit]}</div>`).join('')}</div><div class="pd">${career.wins} WINS · ${career.fight}/8 CLEARED</div><button class="go" id="career-go">${career.fight===8?'VIEW TROPHY':'CONTINUE'}</button><button class="hb" id="back">MAIN MENU</button><div id="save-note">${saveNote}</div>`;
  ui.panel.hidden=false; $('career-go').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=showMenu; renderHud();
 }
 function careerIntro(){
  const o=roster[career.fight]; M.phase='intro'; ui.title.classList.add('gone');
- ui.panel.innerHTML=`<div class="pt">${circuits[o.circuit]} · FIGHT ${career.fight+1}/8</div><div class="pd">NEXT UP: ${o.name}</div>${portrait(o)}<div class="pd">“${o.nick}” · ${o.home}<br>RECORD ${o.record}<br>${o.taunt}<br>${o.style.toUpperCase()} · ${o.circuit===0?'CALM AIR':o.circuit===1?'LIGHT WIND':'STRONG WIND'}</div><button class="go" id="fight">LET’S TOSS</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ ui.panel.innerHTML=`<div class="pt">${circuits[o.circuit]} · MATCH ${career.fight+1}/8</div><div class="pd">NEXT UP: ${o.name}</div>${portrait(o)}<div class="pd">“${o.nick}”<br>${o.taunt}<br>${o.style.toUpperCase()} · ${o.circuit===0?'CALM AIR':o.circuit===1?'LIGHT WIND':'STRONG WIND'}</div><button class="go" id="fight">LET’S TOSS</button><button class="hb" id="back">CIRCUIT MAP</button>`;
  ui.panel.hidden=false; $('fight').onclick=()=>startMatch({career:true,vs:'cpu',exact:false}); $('back').onclick=careerMap; renderHud();
 }
 function champion(){
  M.phase='champion'; ui.panel.hidden=false; ui.title.classList.add('gone');
- ui.panel.innerHTML='<div class="pt">ALL FOUR CIRCUITS CONQUERED</div><div class="big">CORNHOLE KING!</div>'+portrait(roster[7])+'<div class="pd">The crown is yours!<br>Eight rivals. One backyard legend.<br>Your championship is saved.</div><button class="go" id="back">CIRCUIT MAP</button><button class="hb" id="restart">NEW CAREER</button>';
+ ui.panel.innerHTML='<div class="pt">ALL FOUR CIRCUITS CONQUERED</div><div class="big">CORNHOLE KING!</div>'+portrait(roster[7])+'<div class="pd">All eight rivals defeated.</div><button class="go" id="back">CIRCUIT MAP</button><button class="hb" id="restart">NEW CAREER</button>';
  $('back').onclick=careerMap; $('restart').onclick=()=>{career={fight:0,wins:0};saveCareer();careerMap();}; burst(HOLE_WORLD); renderHud();
 }
 function careerResult(win){
  const o=roster[career.fight]; if(win===0){career.fight++;career.wins++;saveCareer();}
- ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Your progress is safe. Try again!'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'TRY AGAIN'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
+ ui.panel.innerHTML=`<div class="pt">${win===0?'CIRCUIT VICTORY':'RIVAL WINS'}</div>${portrait(o)}<div class="pd">${win===0?'You beat':'You lost to'} ${o.name}<br>${M.scores[0]} – ${M.scores[1]}<br>${win===0?'Next rival unlocked!':'Try again.'}<br>${saveNote}</div><button class="go" id="next-fight">${win===0?(career.fight===8?'CLAIM THE CROWN':'NEXT UP'):'TRY AGAIN'}</button><button class="hb" id="back">CIRCUIT MAP</button>`;
  $('next-fight').onclick=()=>career.fight===8?champion():careerIntro(); $('back').onclick=careerMap;
 }
 // Calibrated against independent throws with the live 240 Hz physics.
@@ -976,7 +976,7 @@ function showMenu() {
   M.phase = 'menu'; ui.title.classList.remove('gone');
   M.career=false;
   clearBags();
-  ui.panel.innerHTML = '<div class="menu-modes"><button class="go" id="two-player">2 PLAYER<small>HUMAN VS HUMAN · SAME SCREEN</small></button><button class="go" id="practice">SOLO PRACTICE<small>JUST YOU · NO OPPONENT</small></button><button class="go" id="career">START TOURNAMENT<small>YOU VS CPU · CLIMB TO CORNHOLE KING</small></button></div>';
+  ui.panel.innerHTML = '<div class="menu-modes"><button class="go" id="two-player">2 PLAYER<small>PASS AND PLAY</small></button><button class="go" id="practice">SOLO PRACTICE<small>UNLIMITED THROWS</small></button><button class="go" id="career">START TOURNAMENT<small>8 CPU RIVALS</small></button></div>';
   ui.panel.hidden=false;
   $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
   $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
@@ -1048,9 +1048,9 @@ function afterThrow() {
   const b = M.active; M.active = null;
   const knockedIn = M.before.filter(({ o, s }) => s !== 'in' && o.state === 'in');
   const knockedOff = M.before.filter(({ o, s }) => s === 'board' && !onDeck(o) && o.state !== 'in');
-  if (b.state === 'in') { say(b.swish ? 'SWISH!' : 'CORNHOLE!', 'IN THE HOLE · 3'); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
+  if (b.state === 'in') { say(b.swish ? 'SWISH!' : 'CORNHOLE!', '3 POINTS'); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
   else if (b.state === 'board') { say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'ON THE BOARD', '1 POINT'); burst(b.p, true); }
-  else if (b.dead) say('GROUNDER', 'HIT THE GRASS FIRST · REMOVED', 1300);
+  else if (b.dead) say('GROUNDER', 'GRASS FIRST · NO SCORE', 1300);
   else say(b.offBoard ? 'OFF THE BOARD' : 'MISS', '0', 1100);
   if (knockedIn.length) { gameAfter(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
   else if (knockedOff.length) gameAfter(() => say('KNOCKED OFF!', knockedOff.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG'), 900);
@@ -1076,9 +1076,9 @@ function scoreInning() {
     : `<div class="pt">ROUND ${M.inning}</div><div class="big">${scorer < 0 ? 'WASH' : TEAM[scorer] + ' +' + net}</div>`;
   ui.panel.innerHTML = head + `
     <div class="row"><div class="r">RED<b>${pts[0]}</b>${inC[0]} IN · ${onC[0]} ON</div><div>vs</div><div class="b">BLUE<b>${pts[1]}</b>${inC[1]} IN · ${onC[1]} ON</div></div>
-    <div class="pd">${scorer < 0 ? 'EQUAL ROUND · NOBODY SCORES' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
+    <div class="pd">${scorer < 0 ? 'TIED ROUND · NO POINTS' : `${pts[scorer]} − ${pts[1 - scorer]} = ${net} (CANCELLATION)`}${bust ? '<br><span style="color:#ff8a80">BUST! OVER 21 · BACK TO 13</span>' : ''}<br>
     MATCH: <span class="r">RED ${M.scores[0]}</span> · <span class="b">BLUE ${M.scores[1]}</span><br>
-    ${win >= 0 ? '' : `${TEAM[M.first]} THROWS FIRST NEXT`}</div>
+    ${win >= 0 ? '' : `${TEAM[M.first]} THROWS FIRST`}</div>
     <button class="go" id="go">${win >= 0 ? 'NEW MATCH' : 'NEXT ROUND'}</button>`;
   ui.panel.hidden = false;
   $('go').onclick = (e) => { e.stopPropagation(); advance(); };
@@ -1129,12 +1129,12 @@ function pullAt(point){const r=wrap.getBoundingClientRect(),dy=Math.max(0,point.
  const max=Math.max(36,Math.min(150,Math.min(r.width,r.height)*.22,r.bottom-drag.anchor.y-24));
  return {power:clamp((dy-10)/(max-10),0,1),aim:clamp(Math.atan(-dx/Math.max(24,dy))*.65,-AIM_MAX,AIM_MAX)};
 }
-function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';}
+function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';}
 function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+pull.aim,length=45+pull.power*100;M.aim=pull.aim;setMeter(pull.power);
  showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);const r=wrap.getBoundingClientRect();
  $('pull-grip').setAttribute('cx',point.x-r.left);$('pull-grip').setAttribute('cy',point.y-r.top);
  for(const [key,val]of Object.entries({x1:origin.x-r.left,y1:origin.y-r.top,x2:point.x-r.left,y2:point.y-r.top}))$('pull-tether').setAttribute(key,val);
- $('control-hint').textContent=pull.power>0?'RELEASE TO THROW · RETURN TO CANCEL':'RETURN TO BAG TO CANCEL';
+ $('control-hint').textContent=pull.power>0?'RELEASE · RETURN TO CANCEL':'RETURN TO BAG TO CANCEL';
 }
 wrap.addEventListener('pointerdown',e=>{
  if(e.button!==0||drag||e.target.closest('#bag-drawer,button,dialog,a')||!ui.panel.hidden||!humanTurn())return;
@@ -1151,7 +1151,7 @@ wrap.addEventListener('pointermove',e=>{
  if(drag.mode==='pull')updatePull(point);
 });
 wrap.addEventListener('pointerup',e=>{
- if(!drag||e.pointerId!==drag.id)return;const pull=drag.mode==='pull'?pullAt({x:e.clientX,y:e.clientY}):null;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';
+ if(!drag||e.pointerId!==drag.id)return;const pull=drag.mode==='pull'?pullAt({x:e.clientX,y:e.clientY}):null;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';
  if(pull&&pull.power>0&&humanTurn()){M.aim=pull.aim;throwBag(pull.power);}else{M.aim=0;cancelPull();}
 });
 wrap.addEventListener('pointercancel',cancelPull);addEventListener('blur',cancelPull);addEventListener('resize',cancelPull);

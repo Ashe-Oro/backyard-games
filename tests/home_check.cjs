@@ -2,7 +2,7 @@ const {chromium}=require('playwright-core');const assert=require('node:assert/st
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
 (async()=>{const browser=await chromium.launch();try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>{localStorage.setItem('backyard-cornhole-help-seen','1');localStorage.setItem('tailgate-beer-pong-help-seen','1')});
- await page.goto(BASE+'/');await page.evaluate(()=>document.fonts.ready);assert.equal(await page.title(),'Backyard Games · The backyard is open');assert.equal(await page.locator('.game-card').count(),5);
+ await page.goto(BASE+'/');await page.evaluate(()=>document.fonts.ready);assert.equal(await page.title(),'Backyard Games');assert.equal(await page.locator('.game-card').count(),5);
  for(const [width,height]of [[1440,1000],[390,844],[320,700],[844,390]]){
   await page.setViewportSize({width,height});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
   for(const img of await page.locator('.game-art img').all())assert(await img.evaluate(e=>e.complete&&e.naturalWidth>0),'Game artwork must load');
