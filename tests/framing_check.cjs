@@ -56,7 +56,8 @@ const path = require('node:path');
           }
           assert(view.bag.top > view.board.bottom, 'Held bag must read as foreground');
           const center = (view.bag.left+view.bag.right)/2;
-          assert(Math.abs(center - (side==='right'?.71:.29)) < .02);
+          const boardCenter = (view.board.left+view.board.right)/2;
+          assert(Math.abs(center - boardCenter) < .02, 'Held bag must align with the board on both throwing sides');
           assert.deepEqual(view.origin,[side==='right'?.62:-.62,1.3,-.45]);
           if (aim===-.12) globalThis.fixedCamera = view.camera;
           else assert.deepEqual(view.camera,globalThis.fixedCamera,'Aiming must not move the camera');
