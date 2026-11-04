@@ -66,6 +66,9 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .hb:hover{background:#56405c}
 #reset-bags{position:absolute;right:1.6vmin;bottom:1.8vmin;min-height:44px;padding:10px 12px;font-size:clamp(8px,1.4vmin,11px)}
 #reset-bags:disabled{opacity:.45;cursor:default}
+#swipe-feedback{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .4s ease-out;overflow:visible}
+#swipe-feedback.shown{opacity:1;transition:none}
+@media(prefers-reduced-motion:reduce){#swipe-feedback{transition:none}}
 #panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(10px,1.9vmin,14px);min-width:20em;max-width:94vw}
 #panel[hidden]{display:none}
 #panel .pt{font-size:1.1em;color:#ffb36b}
@@ -128,6 +131,11 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <svg id="swipe-feedback" aria-hidden="true">
+      <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
+      <line id="swipe-outline" stroke="#2b1a2e" stroke-width="8" stroke-linecap="square"/>
+      <line id="swipe-line" stroke="#ffe45e" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
+    </svg>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
     <button class="hb" id="reset-bags" hidden title="Clear thrown bags and keep your practice stats">CLEAR BOARD</button>
     <div id="bag-drawer">
@@ -223,6 +231,7 @@ function resize() {
   camera.fov = 14 + 8 * portrait;
   camera.updateProjectionMatrix();
   meterLayoutDirty = true;
+  document.getElementById('swipe-feedback').classList.remove('shown');
 }
 addEventListener('resize', resize); resize();
 
@@ -1082,6 +1091,18 @@ let drag = null;
 const samples = [];
 const H = () => wrap.clientHeight || 1;
 const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
+let swipeTimer;
+function showSwipe(flick) {
+  const overlay = $('swipe-feedback'), rect = wrap.getBoundingClientRect();
+  overlay.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
+  for (const id of ['swipe-outline','swipe-line']) {
+    const line = $(id);
+    line.setAttribute('x1',flick.from.x-rect.left); line.setAttribute('y1',flick.from.y-rect.top);
+    line.setAttribute('x2',flick.to.x-rect.left); line.setAttribute('y2',flick.to.y-rect.top);
+  }
+  clearTimeout(swipeTimer); overlay.classList.add('shown');
+  swipeTimer = setTimeout(()=>overlay.classList.remove('shown'),900);
+}
 function flickFrom(list) {
   if (list.length < 2) return null;
   const tEnd = list[list.length - 1].t;
@@ -1089,7 +1110,7 @@ function flickFrom(list) {
   if (i === list.length - 1) i = Math.max(0, i - 1);
   const a = list[i], b = list[list.length - 1];
   const dt = Math.max(16, b.t - a.t) / 1000;
-  return { up: -(b.y - a.y) / H() / dt, side: (b.x - a.x) / H() / dt };
+  return { up: -(b.y - a.y) / H() / dt, side: (b.x - a.x) / H() / dt, from:a, to:b };
 }
 const powerFromSpeed = (up) => clamp((up - FLICK_MIN) / (FLICK_MAX - FLICK_MIN), 0, 1);
 function release(up, side) {
@@ -1100,6 +1121,7 @@ wrap.addEventListener('pointerdown', (e) => {
   if (e.target.closest('#bag-drawer, button') || !ui.panel.hidden) return;
   if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
   if (!humanTurn()) return;
+  $('swipe-feedback').classList.remove('shown');
   drag = { id: e.pointerId, aim: M.aim, pointerAim: pointerAim(e), x: e.clientX, y: e.clientY, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
   wrap.classList.add('drag');
   try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
@@ -1128,6 +1150,7 @@ function endDrag(e) {
   const f = stale ? null : flickFrom(trimmed);
   drag = null; wrap.classList.remove('drag');
   if (!f || !release(f.up, f.side)) { if (M.phase === 'aim') setMeter(0); }
+  else showSwipe(f);
 }
 wrap.addEventListener('pointerup', endDrag);
 wrap.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('drag'); });
