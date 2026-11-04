@@ -28,6 +28,7 @@
       <div id="meter-fill"></div><div id="meter-target"><span>TARGET</span></div><div id="meter-marker"></div><span class="meter-caption">POWER</span>
     </div>
     <button id="refill" class="pixel-button" hidden>REFILL CUPS</button>
+    <label id="ball-position-control" for="ball-position"><span>← MOVE BALL →</span><input id="ball-position" type="range" min="-100" max="100" value="0" step="1" aria-label="Ball starting position" aria-valuetext="Center"></label>
     <span id="shot-count">THROW 1</span>
     <svg id="swipe-feedback" aria-hidden="true"><defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9L3 5Z" fill="#ffe16b" stroke="#172c32"/></marker></defs><line id="swipe-shadow" stroke="#172c32" stroke-width="8"/><line id="swipe-line" stroke="#ffe16b" stroke-width="4" marker-end="url(#swipe-tip)"/></svg>
   </div>
@@ -45,7 +46,7 @@
   </section>
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
     <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Flick. Sink. Repeat.</h2>
-    <p>Flick upward to toss the ball.<br>Faster flicks add power; a sideways swipe steers it.</p>
+    <p>Move the ball left or right, then flick upward.<br>Faster flicks add power; a sideways swipe steers it.</p>
     <p>The green meter band is the range for the rack.<br>The arrow after release shows your actual swipe.</p>
     <p>Sink a cup to remove it. One throw per turn.<br>Table contact ends the throw—no bounce shots.<br>Clear the opposing rack to win.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
