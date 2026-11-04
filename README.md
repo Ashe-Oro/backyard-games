@@ -11,7 +11,7 @@ Tailgate Games has a buildless home page at `/` and five static Three.js games:
 All five support practice and same-screen two-player games. New games also have CPU matches, first-visit rules, pause and practice clear. Shared new-game rendering and controls are in `yard-games/engine.js`; independently tested scoring is in `yard-games/rules.mjs`. Source rule links appear in each new game’s How to Play dialog.
 
 Both games use distance-based pull-down-and-release throws: grab the bag or ball, drag sideways to position it, pull down for power and diagonally to aim, then release. Return to the starting point to cancel. Post-throw arrows and power feedback help adjust the next attempt. Cornhole retains PUSH / NORMAL / KOBE throw heights and bag surfaces. Both games are linked from their menus.
-Beer Pong uses one throw per turn; touching the table ends the throw as a dead ball.
+Beer Pong uses one throw per turn; touching the table ends the throw as a dead ball. Each player gets one optional re-rack before throwing, at 6 cups (triangle), 4 (diamond/square), 3 (triangle/stoplight), or 2 (front-to-back line). The button disappears after confirming. Practice refills restore the original rack and a fresh allowance.
 
 ## Deployment
 

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {layoutsFor,layoutPoints} from './rerack.mjs';
 
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -6,7 +7,7 @@ const G=9.8, BALL_R=.02, TABLE_Y=.76, TABLE_W=1.16, TABLE_L=2.8, TABLE_Z=-1.2;
 const CUP_R=.078, CUP_H=.17, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP_R-BALL_R-.006;
 const RELEASE_Y=1.09, RELEASE_Z=[.55,-2.95], ANGLE=52*Math.PI/180;
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
-const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],winner:null,power:0,delay:0,cpuTime:0};
+const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
 let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer;
 const wrap=$('game'), scene=new THREE.Scene();
@@ -74,7 +75,7 @@ for(let team=0;team<2;team++)for(let row=0;row<4;row++)for(let col=0;col<=row;co
  const inner=new THREE.Mesh(cupInner,innerMat);inner.position.y=CUP_H/2+.004;group.add(inner);
  const rim=new THREE.Mesh(rimGeo,rimMat);rim.rotation.x=Math.PI/2;rim.position.y=CUP_H;group.add(rim);
  const liquid=new THREE.Mesh(new THREE.CircleGeometry(.052,12),mat('#bc7d3e'));liquid.rotation.x=-Math.PI/2;liquid.position.y=.045;group.add(liquid);
- cups.push({id:cups.length,team,x,z,alive:true,enabled:true,group});
+ cups.push({id:cups.length,team,x,z,initialX:x,initialZ:z,alive:true,enabled:true,group});
 }
 const ballGeo=new THREE.SphereGeometry(BALL_R,10,8),ballMat=mat('#fff5d9');
 const held=new THREE.Mesh(ballGeo,ballMat);held.castShadow=held.receiveShadow=true;scene.add(held);
@@ -83,7 +84,7 @@ const sparkGeo=new THREE.BoxGeometry(.015,.015,.015),sparks=[];
 for(let i=0;i<24;i++){const mesh=new THREE.Mesh(sparkGeo,new THREE.MeshBasicMaterial({color:i%2?'#ffe16b':'#fff1cf'}));mesh.visible=false;scene.add(mesh);sparks.push({mesh,v:new THREE.Vector3(),life:0});}
 function celebrate(cup){for(const p of sparks){p.mesh.position.set(cup.x,RIM_Y,cup.z);p.v.set((Math.random()-.5)*.7,.5+Math.random()*.6,(Math.random()-.5)*.7);p.life=.65;p.mesh.visible=true;}}
 function remaining(team){return cups.filter(c=>c.team===team&&c.alive).length;}
-function resetCups(){for(const c of cups){c.alive=true;c.enabled=state.mode!=='practice'||c.team===1;c.group.visible=c.enabled;c.group.scale.setScalar(1);}for(const s of sparks){s.life=0;s.mesh.visible=false;}}
+function resetCups(){for(const c of cups){c.x=c.initialX;c.z=c.initialZ;c.group.position.set(c.x,TABLE_Y,c.z);c.alive=true;c.enabled=state.mode!=='practice'||c.team===1;c.group.visible=c.enabled;c.group.scale.setScalar(1);}for(const s of sparks){s.life=0;s.mesh.visible=false;}}
 function powerForPoint(x,z,team=state.turn){const d=Math.hypot(x-releaseX(team),z-RELEASE_Z[team]),dy=RIM_Y+BALL_R-RELEASE_Y;
  const speed=Math.sqrt(G*d*d/(2*Math.cos(ANGLE)**2*(d*Math.tan(ANGLE)-dy)));return clamp((speed-3.2)/3.4,0,1);}
 function newBall(team,power,slope=0){const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),speed=3.2+clamp(power,0,1)*3.4;
@@ -143,13 +144,16 @@ function updateHud(){
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
  $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
+ const canOffer=layoutsFor(remaining(1-state.turn)).length>0;
+ $('rerack-button').hidden=state.reracksUsed[state.turn]||!['aim','flight','wait'].includes(state.phase)||state.mode==='cpu'&&state.turn===1;
+ $('rerack-button').disabled=!humanReady()||!canOffer||!!drag;$('rerack-button').title=canOffer?'Choose a formation for the cups you’re shooting at':'Available with 6, 4, 3 or 2 target cups left';
  $('refill').hidden=state.mode!=='practice';$('refill').disabled=state.phase!=='aim'||state.paused;
  if(state.phase==='handoff'||state.mode==='cpu'&&state.turn===1)$('shot-feedback').hidden=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
 function showMenu(){$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
 function startMatch(mode='practice'){
- if(!['practice','cpu','two'].includes(mode))return;$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+ if(!['practice','cpu','two'].includes(mode))return;$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
@@ -160,10 +164,11 @@ function beginTurn(){
  else state.phase='aim';updateHud();
 }
 function launchShot(power,slope=0){
- if(state.paused||!['aim','cpu'].includes(state.phase))return false;
+ if(state.paused||!['aim','cpu'].includes(state.phase)||document.querySelector('dialog[open]'))return false;
  ball=newBall(state.turn,power,slope);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
 }
 function cpuShot(){
+ if(!state.reracksUsed[1]){const option=layoutsFor(remaining(0))[0];if(option)applyRerack(1,option.id);}
  const rack=cups.filter(c=>c.team===0&&c.alive),cup=rack[Math.floor(Math.random()*rack.length)];
  if(!cup)return;const precise=Math.random()<.32,jitter=precise?.025:.30,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
  const d=Math.abs(z-RELEASE_Z[1]),yaw=Math.atan2(-(x-releaseX(1)),d),slope=Math.tan(yaw/.65);
@@ -181,7 +186,30 @@ function finishShot(scoredCup=null){
  }else{state.phase='wait';state.delay=.85;}
  updateHud();
 }
-function refillCups(){if(state.mode!=='practice'||!['aim','over'].includes(state.phase)||state.paused)return;closeDialogs();ball=null;flying.visible=false;resetCups();state.phase='aim';setPower(0);updateHud();message('FRESH RACK','Practice stats kept.',.9);}
+function refillCups(){if(state.mode!=='practice'||!['aim','over'].includes(state.phase)||state.paused)return;closeDialogs();ball=null;flying.visible=false;resetCups();state.reracksUsed=[false,false];state.phase='aim';setPower(0);updateHud();message('FRESH RACK','Practice stats kept.',.9);}
+let selectedLayout=null;
+function applyRerack(team,id){
+ if(state.paused||team!==state.turn||!['aim','cpu'].includes(state.phase)||state.reracksUsed[team])return false;
+ const rack=cups.filter(c=>c.team===1-team&&c.alive),points=layoutPoints(id,rack.length);if(!points)return false;
+ const spacing=CUP_R*2+.01,back=TABLE_Z-TABLE_L/2+CUP_R+.025;
+ rack.forEach((cup,i)=>{const point=points[i],farZ=back+point.depth*spacing;cup.x=point.x*spacing;cup.z=cup.team===1?farZ:2*TABLE_Z-farZ;cup.group.position.set(cup.x,TABLE_Y,cup.z);});
+ state.reracksUsed[team]=true;return true;
+}
+function openRerack(){
+ if(!humanReady()||drag||state.reracksUsed[state.turn])return;const count=remaining(1-state.turn),options=layoutsFor(count);if(!options.length)return;
+ cancelPull();selectedLayout=options[0].id;$('rerack-copy').textContent=`${count} cups remaining. Choose your formation.`;const container=$('rerack-options');container.replaceChildren();
+ for(const option of options){
+  const button=document.createElement('button');button.type='button';button.dataset.layout=option.id;button.setAttribute('aria-pressed',String(option.id===selectedLayout));button.setAttribute('aria-label',option.label);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 120 90');svg.setAttribute('aria-hidden','true');
+  const points=layoutPoints(option.id,count);
+  for(const p of points){const circle=document.createElementNS(svg.namespaceURI,'circle');circle.setAttribute('cx',String(60+p.x*24));circle.setAttribute('cy',String(18+p.depth*24));circle.setAttribute('r','10');circle.setAttribute('fill','#'+COLORS[1-state.turn].toString(16));circle.setAttribute('stroke','#fff1cf');circle.setAttribute('stroke-width','2');svg.append(circle);}
+  const label=document.createElement('span');label.textContent=option.label;button.append(svg,label);button.onclick=()=>{selectedLayout=option.id;for(const b of container.children)b.setAttribute('aria-pressed',String(b===button));};container.append(button);
+ }
+ $('rerack-dialog').showModal();updateHud();
+}
+function cancelRerack(){$('rerack-dialog').close();selectedLayout=null;updateHud();$('rerack-button').focus();}
+$('rerack-button').onclick=openRerack;$('rerack-cancel').onclick=cancelRerack;$('rerack-dialog').oncancel=e=>{e.preventDefault();cancelRerack();};
+$('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','Your one re-rack is used.',1.2);};
 function pauseGame(){if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
@@ -223,7 +251,7 @@ wrap.addEventListener('pointerdown',event=>{
  const point={x:event.clientX,y:event.clientY},p=ballScreen();
  if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
  $('shot-feedback').hidden=true;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
- wrap.classList.add('drag');try{wrap.setPointerCapture(event.pointerId);}catch{}
+ wrap.classList.add('drag');$('rerack-button').disabled=true;try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{
  if(!drag||event.pointerId!==drag.id)return;
@@ -239,10 +267,10 @@ wrap.addEventListener('pointerup',event=>{
  if(!drag||event.pointerId!==drag.id)return;
  const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null;
  drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';
- if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope)))cancelPull();
+ if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope))){cancelPull();updateHud();}
 });
-wrap.addEventListener('pointercancel',cancelPull);
-addEventListener('blur',cancelPull);
+wrap.addEventListener('pointercancel',()=>{cancelPull();updateHud();});
+addEventListener('blur',()=>{cancelPull();updateHud();});
 addEventListener('keydown',event=>{if(document.querySelector('dialog[open]'))return;if(event.key==='Escape'){event.preventDefault();pauseGame();}});
 const clock=new THREE.Clock();
 function frame(){
