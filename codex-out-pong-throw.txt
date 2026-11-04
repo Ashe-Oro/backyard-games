@@ -1,0 +1,7 @@
+Restored upward mouse flicks and touch swipes while preserving pull-down throws, swats, and bounce shots.
+
+Breaking commit: `aed719a`, which removed flick support.
+
+All 18 JavaScript suites passed after follow-up fixes/reruns. Fifteen legacy Python checks still fail on unrelated Cornhole assumptions; details are documented.
+
+Saved before/after screenshots and [codex-summary-pong-throw.md](/workspace/tailgate-games/codex-summary-pong-throw.md).

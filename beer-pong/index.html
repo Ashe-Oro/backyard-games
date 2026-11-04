@@ -25,7 +25,6 @@
     <div id="practice-stats" hidden><strong id="practice-hits">0 / 0</strong><span>CUPS / THROWS</span></div>
     <div id="message" role="status" aria-live="polite"></div>
     <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div>
-    <div id="shot-style" role="group" aria-label="Shot style"><button class="pixel-button" data-shot-style="arc" aria-pressed="true" title="High arc · one bounce allowed">ARC</button><button class="pixel-button" data-shot-style="bounce" aria-pressed="false" title="Low bounce trajectory">BOUNCE</button></div>
     <div id="rack-actions"><button id="rerack-button" class="pixel-button" disabled>RE-RACK</button><button id="refill" class="pixel-button" hidden>REFILL CUPS</button></div>
     <button id="swat-target" aria-label="Swat bouncing ball" title="Tap, click or press Space to swat" hidden></button>
     <span id="defense-hint" hidden></span>
@@ -41,13 +40,15 @@
       <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws.</small><span aria-hidden="true">01</span></button>
       <button data-mode="cpu"><strong>VS CPU</strong><small>Bounce. Swat. Clear the cups.</small><span aria-hidden="true">02</span></button>
       <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small><span aria-hidden="true">03</span></button>
+      <button data-mode="tournament"><strong>TOURNAMENT</strong><small id="tournament-subtitle">Beat the bracket vs CPU.</small><span aria-hidden="true">04</span></button>
     </div>
-    <p class="menu-note">Mouse or touch · Pull down, release</p>
+    <p class="menu-note">Mouse or touch · Flick up or pull back, release</p>
   </section>
+  <dialog id="tournament" class="dialog-card" aria-labelledby="tournament-title"><p class="eyebrow" id="tournament-tag"></p><div id="opponent-avatar" role="img"></div><h2 id="tournament-title"></h2><p id="tournament-copy"></p><ol id="tournament-ladder" aria-label="Tournament ladder"></ol><p id="tournament-save" role="status"></p><button id="tournament-go" autofocus>CONTINUE</button><button id="tournament-menu" class="secondary">MAIN MENU</button></dialog>
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
     <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
     <p>Drag the ball sideways to line up.<br>Pull down for power; diagonally to aim the opposite way.<br>Release to throw. Return to start to cancel.</p>
-    <p>Clear their cups to win. One throw per turn.<br>Practice / vs CPU: one bounce allowed. Sink a bounce for two cups.<br>Vs CPU: tap or click a bounced ball on your half to swat. Space also swats.<br>Practice: no defense. Two-player: table contact ends the shot.</p>
+    <p>Clear their cups to win. One throw per turn.<br>Practice / vs CPU: soft throws bounce; firm throws arc. One bounce allowed. Sink a bounce for two cups.<br>Vs CPU: tap or click a bounced ball on your half to swat. Space also swats.<br>Practice: no defense. Two-player: table contact ends the shot.</p>
     <p>One re-rack per player, before throwing with 6, 4, 3 or 2 cups left.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
   </dialog>
