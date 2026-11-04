@@ -131,7 +131,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
-      <div class="bag-row" id="practice-box" hidden><span class="bag-label">PITCHER’S BOX</span><div class="bag-choices"><button class="hb" data-box="left">LEFT</button><button class="hb" data-box="right">RIGHT</button></div></div>
       <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
     </div>
     <button id="bag-handle" aria-controls="bag-menu" aria-expanded="true" aria-label="Collapse bag options"><span id="bag-chevron" aria-hidden="true">◀</span><span id="bag-picks"></span></button>
@@ -159,7 +158,7 @@ const V_MIN = 5.6;
 const AIM_MAX = 0.12;
 const FLICK_MIN = 0.5, FLICK_MAX = 7.5;     // screen heights / second
 const REL_Y = 1.3, REL_Z = -0.45;           // feet stay behind the foul line (z = 0); the hand reaches past it on release
-const RX = [0.62, -0.62];                   // red throws from the right pitcher's box, blue from the left
+const RX = [0, 0];                         // both teams release along the centered bag's line
 const TEAM = ['RED', 'BLUE'];
 const HOLE_WORLD = new THREE.Vector3();
 
@@ -675,8 +674,7 @@ function makeBagMesh(team, side) {
   mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
 }
 const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); scene.add(held);
-// Present the held bag as a foreground hand model. Physics still releases from
-// the regulation pitcher's box; screen framing must not change that origin.
+// Present the held bag as a foreground hand model aligned with the throw origin.
 const heldTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(.8, 0, 0));
 function positionHeldBag(yaw) {
   const portrait = clamp((1.2 - camera.aspect) / .65, 0, 1);
@@ -747,9 +745,7 @@ const M = {
   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
   position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
 };
-let practiceBox='right';
-try{practiceBox=localStorage.getItem('backyard-cornhole-practice-box')==='left'?'left':'right';}catch{}
-const releaseX=(t)=> (M.practice && t===0 && practiceBox==='left'?RX[1]:RX[t])+M.position[t];
+const releaseX=(t)=>RX[t];
 const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
 const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[Math.min(career.fight,roster.length-1)].name : 'CPU') : TEAM[t]);
@@ -809,8 +805,6 @@ function renderHud() {
   $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
   $('reset-bags').hidden=!M.practice;
-  $('practice-box').hidden=!M.practice;
-  document.querySelectorAll('[data-box]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.box===practiceBox));
   ui.t[1].hidden=M.practice;
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
@@ -1074,7 +1068,6 @@ function pointerAim(e){
  }
 }
 function pointAim(e){const a=pointerAim(e);if(a!==undefined)M.aim=clamp(a,-AIM_MAX,AIM_MAX);}
-document.querySelectorAll('[data-box]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;practiceBox=b.dataset.box;try{localStorage.setItem('backyard-cornhole-practice-box',practiceBox);}catch{}renderHud();});
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
 $('menu').onclick=()=>{if(M.active)return;showMenu();};
 $('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
