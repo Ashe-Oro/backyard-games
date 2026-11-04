@@ -31,7 +31,7 @@ const path = require('node:path');
         launch(body,releaseX(thrower()),.55,M.aim,0);
         return {bag:bounds(held),board:bounds(target.outer),visible:held.visible,
           camera:[...camera.position.toArray(),...camera.quaternion.toArray(),camera.fov],
-          origin:body.p.toArray()};
+          origin:body.p.toArray(),velocity:body.v.toArray()};
       };
       window.__game = {`);
     const url = 'http://127.0.0.1:8012/';
@@ -42,17 +42,17 @@ const path = require('node:path');
     await page.waitForFunction(() => __game.state.phase === 'aim');
     for (const [width,height] of [[390,844],[456,872],[844,390],[1280,800],[1600,900],[2560,1080]]) {
       await page.setViewportSize({width,height});
-      for (const side of ['right','left']) {
-        // The drawer may be collapsed on a real phone; use its existing handler.
-        await page.evaluate(side => document.querySelector('[data-box="'+side+'"]').click(), side);
+      for (const team of [0,1]) {
+        await page.evaluate(first => __game.startMatch({practice:false,vs:'2p',first}), team);
+        await page.waitForFunction(() => __game.state.phase === 'aim');
         for (const aim of [-.12,0,.12]) {
           await page.evaluate(aim => __game.setAim(aim), aim);
           await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
           const view = await page.evaluate(() => __framing());
           assert(view.visible);
           for (const object of [view.bag,view.board]) {
-            assert(object.left > .05 && object.right < .95, JSON.stringify({width,height,side,view}));
-            assert(object.top > .15 && object.bottom < .9, JSON.stringify({width,height,side,view}));
+            assert(object.left > .05 && object.right < .95, JSON.stringify({width,height,team,view}));
+            assert(object.top > .15 && object.bottom < .9, JSON.stringify({width,height,team,view}));
           }
           assert(view.bag.top > view.board.bottom, 'Held bag must read as foreground');
           if (width/height >= 1.2) {
@@ -61,15 +61,15 @@ const path = require('node:path');
           }
           const center = (view.bag.left+view.bag.right)/2;
           const boardCenter = (view.board.left+view.board.right)/2;
-          assert(Math.abs(center - boardCenter) < .02, 'Held bag must align with the board on both throwing sides');
-          assert.deepEqual(view.origin,[side==='right'?.62:-.62,1.3,-.45]);
+          assert(Math.abs(center - boardCenter) < .02, 'Held bag must align with the board for both teams');
+          assert.deepEqual(view.origin,[0,1.3,-.45]);
+          if (aim===0) assert.equal(view.velocity[0],0,'Straight throws must travel along the centerline');
           if (aim===-.12) globalThis.fixedCamera = view.camera;
           else assert.deepEqual(view.camera,globalThis.fixedCamera,'Aiming must not move the camera');
-          if (aim===0) console.log(`${width}x${height} ${side}: board height ${((view.board.bottom-view.board.top)*100).toFixed(1)}%, bag center ${center.toFixed(2)}`);
+          if (aim===0) console.log(`${width}x${height} team ${team}: board height ${((view.board.bottom-view.board.top)*100).toFixed(1)}%, bag center ${center.toFixed(2)}`);
         }
       }
       if (process.env.SHOTS) {
-        await page.evaluate(() => document.querySelector('[data-box="right"]').click());
         await page.evaluate(() => __game.setAim(0));
         if (width < 600) await page.evaluate(() => {if(document.querySelector('#bag-handle').getAttribute('aria-expanded')==='true')document.querySelector('#bag-handle').click();});
         await page.waitForTimeout(250);
@@ -77,13 +77,22 @@ const path = require('node:path');
       }
     }
     await page.setViewportSize({width:1600,height:900});
-    await page.evaluate(() => {document.querySelector('[data-box="right"]').click();__game.setAim(0);});
+    assert.equal(await page.locator('[data-box]').count(),0,'Remove obsolete side-launch controls');
+    await page.evaluate(() => __game.startMatch({practice:true,vs:'2p',first:0}));
+    await page.waitForFunction(() => __game.state.phase === 'aim');
+    await page.evaluate(() => __game.setAim(0));
     const sweet = await page.evaluate(() => __game.state.sweet.mid);
-    await page.evaluate(power => __game.throwWith(power), sweet);
+    const release = await page.evaluate(power => {__game.throwWith(power);return __game.state.bags.at(-1).p;}, sweet);
+    assert.deepEqual(release,[0,1.3,-.45], 'Actual practice throw must spawn in the center');
     await page.waitForFunction(() => __game.state.bags.length === 1);
     await page.waitForFunction(() => __game.state.phase === 'aim');
     assert.equal(await page.evaluate(() => __game.state.practiceStats.throws),1);
     assert.equal(await page.evaluate(() => __framing().visible),true);
+    await page.evaluate(() => __game.startMatch({practice:false,vs:'2p',first:1}));
+    await page.waitForFunction(() => __game.state.phase === 'aim');
+    const blueRelease = await page.evaluate(() => {__game._setWind(0,0);__game.setAim(0);__game.throwWith(__game.state.sweet.mid);return __game.state.bags.at(-1).p;});
+    assert.deepEqual(blueRelease,[0,1.3,-.45], 'Actual blue-team throw must spawn in the center');
+    await page.waitForFunction(() => __game.state.phase === 'aim');
     assert.deepEqual(errors,[]);
     console.log('Framing, fixed camera, release origins, and practice throw passed.');
   } finally { await browser.close(); }
