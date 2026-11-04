@@ -1,10 +1,10 @@
 // Overall opponent profiles: tournament opponents select a profile, never a separate swat setting.
 // Metres / seconds. Attention decides whether the bounce is noticed; contact is always geometric.
 export const OPPONENTS={
- rookie:{name:'Patio Rookie',shoot:{precise:.15,jitter:.38},swat:{attention:.40,reaction:.18,jitter:.10,speed:3.7,error:.16,tracking:.10,prediction:.65,reach:.65,radius:.11,windup:.065}},
- regular:{name:'Backyard Regular',shoot:{precise:.32,jitter:.30},swat:{attention:.74,reaction:.14,jitter:.065,speed:4.1,error:.09,tracking:.06,prediction:.85,reach:.85,radius:.11,windup:.045}},
- ace:{name:'Cup Captain',shoot:{precise:.57,jitter:.18},swat:{attention:.93,reaction:.085,jitter:.025,speed:5.4,error:.045,tracking:.035,prediction:.95,reach:1,radius:.11,windup:.035}},
- boss:{name:'The Glove',shoot:{precise:.80,jitter:.10},swat:{attention:.995,reaction:.045,jitter:.015,speed:7,error:.018,tracking:.02,prediction:1,reach:1.1,radius:.11,windup:.025}}
+ rookie:{name:'Patio Rookie',shoot:{precise:.15,jitter:.38,bounce:.22},swat:{attention:.40,reaction:.18,jitter:.10,speed:3.7,error:.16,tracking:.10,prediction:.65,reach:.65,radius:.11,windup:.065}},
+ regular:{name:'Backyard Regular',shoot:{precise:.32,jitter:.30,bounce:.32},swat:{attention:.74,reaction:.14,jitter:.065,speed:4.1,error:.09,tracking:.06,prediction:.85,reach:.85,radius:.11,windup:.045}},
+ ace:{name:'Cup Captain',shoot:{precise:.57,jitter:.18,bounce:.38},swat:{attention:.93,reaction:.085,jitter:.025,speed:5.4,error:.045,tracking:.035,prediction:.95,reach:1,radius:.11,windup:.035}},
+ boss:{name:'The Glove',shoot:{precise:.80,jitter:.10,bounce:.44},swat:{attention:.995,reaction:.045,jitter:.015,speed:7,error:.018,tracking:.02,prediction:1,reach:1.1,radius:.11,windup:.025}}
 };
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
