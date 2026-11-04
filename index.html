@@ -1030,14 +1030,15 @@ function physicalPower(p){
 }
 const aimRay=new THREE.Raycaster(),aimPoint=new THREE.Vector3();
 const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),-.2);
-function pointAim(e){
+function pointerAim(e){
  const r=wrap.getBoundingClientRect();
  aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
  if(aimRay.ray.intersectPlane(aimPlane,aimPoint)){
  const rx=releaseX(thrower());
- M.aim=clamp(Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx),-AIM_MAX,AIM_MAX);
+ return Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx);
  }
 }
+function pointAim(e){const a=pointerAim(e);if(a!==undefined)M.aim=clamp(a,-AIM_MAX,AIM_MAX);}
 document.querySelectorAll('[data-box]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;practiceBox=b.dataset.box;try{localStorage.setItem('backyard-cornhole-practice-box',practiceBox);}catch{}renderHud();});
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
 $('menu').onclick=()=>{if(M.active)return;showMenu();};
@@ -1067,15 +1068,17 @@ wrap.addEventListener('pointerdown', (e) => {
   if (e.target.closest('#bag-menu, button') || !ui.panel.hidden) return;
   if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
   if (!humanTurn()) return;
-  pointAim(e);
-  drag = { id: e.pointerId, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
+  drag = { id: e.pointerId, aim: M.aim, pointerAim: pointerAim(e), x: e.clientX, y: e.clientY, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
   wrap.classList.add('drag');
   try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
 });
 wrap.addEventListener('pointermove', (e) => {
   if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
   if (drag && e.pointerId === drag.id) {
-    pointAim(e);
+    // Only horizontal movement changes aim, relative to the touch-down aim.
+    const a=pointerAim({clientX:e.clientX,clientY:drag.y});
+    if(e.clientX===drag.x)M.aim=drag.aim;
+    else if(a!==undefined && drag.pointerAim!==undefined)M.aim=clamp(drag.aim+(a-drag.pointerAim),-AIM_MAX,AIM_MAX);
     const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
@@ -1210,8 +1213,8 @@ function frame() {
   const yaw = baseYaw(rx) + M.aim;
   held.visible = showHeld;
   if (showHeld) { held.position.set(rx, REL_Y, REL_Z); held.rotation.set(0.15, -yaw, 0); }
-  // Calm-air preview shares the exact release origin used by throwBag.
-  const preview=newBody(t);launch(preview,rx,drag ? physicalPower(clamp(parseFloat(ui.fill.style.height)/100,0,1)) : WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
+  // One calm-air sweet-spot reference throw, independent of touch and meter speed.
+  const preview=newBody(t);launch(preview,rx,WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
   aimDots.forEach((d, i) => {
     const seconds=i*.09;
     d.position.copy(preview.p).addScaledVector(preview.v,seconds);

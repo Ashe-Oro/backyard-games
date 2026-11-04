@@ -1,0 +1,8 @@
+Implemented Task 15.
+
+- Preview uses fixed reference power before and during touch.
+- Touch-down preserves aim; horizontal movement adjusts it.
+- All 12 height/box/surface touch tests pass.
+- Screenshots and position captures saved under `shots/task15-*`.
+
+Recent regression suites pass. Older test limitations are documented in [codex-summary-15.md](/workspace/cornhole/codex-summary-15.md). No writes to `.git`.
