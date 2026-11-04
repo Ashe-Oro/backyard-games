@@ -30,10 +30,12 @@ const path = require('node:path');
         const body = newBody(thrower());
         launch(body,releaseX(thrower()),.55,M.aim,0);
         bagGeo.computeBoundingBox();
+        const rect = document.getElementById('meter').getBoundingClientRect();
         return {bag:bounds(held),board:bounds(target.outer),visible:held.visible,
           camera:[...camera.position.toArray(),...camera.quaternion.toArray(),camera.fov],
           origin:body.p.toArray(),velocity:body.v.toArray(),heldPosition:held.position.toArray(),
-          previewPosition:trajectory[0].position.toArray(),heldScale:held.scale.toArray(),
+          meter:{left:rect.left/innerWidth,right:rect.right/innerWidth,top:rect.top/innerHeight,bottom:rect.bottom/innerHeight},
+          heldScale:held.scale.toArray(),
           bagDimensions:bagGeo.boundingBox.getSize(new THREE.Vector3()).toArray()};
       };
       window.__releaseContinuity = () => {
@@ -72,7 +74,12 @@ const path = require('node:path');
           assert(Math.abs(center - boardCenter) < .02, 'Held bag must align with the board for both teams');
           assert.deepEqual(view.origin,[0,1.3,-.45]);
           assert.deepEqual(view.heldPosition,view.origin,'Held bag must occupy the real release position');
-          assert.deepEqual(view.previewPosition,view.origin,'Trajectory must start at the held bag');
+          assert(view.meter.left>view.bag.right,'Power bar must sit beside the bag without covering it');
+          assert((view.meter.left-view.bag.right)*width<60,'Power bar must remain close to the bag');
+          assert(view.meter.top>view.board.bottom,'Power bar must not cover the target');
+          assert(view.meter.bottom<.98 && view.meter.right<.98,'Power bar must stay inside the viewport');
+          assert(Math.abs((view.meter.top+view.meter.bottom)/2-(view.bag.top+view.bag.bottom)/2)<.05,
+            'Power bar must align vertically with the bag: '+JSON.stringify({width,height,view}));
           assert.deepEqual(view.heldScale,[1,1,1],'Held bag must use physical scale');
           assert(Math.abs(view.bagDimensions[0]-.1524)<1e-6 && Math.abs(view.bagDimensions[2]-.1524)<1e-6,
             'Rendered bags must match the six-inch physical dimensions');

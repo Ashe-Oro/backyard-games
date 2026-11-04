@@ -48,12 +48,12 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
 #turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
 #turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
-#meter{position:absolute;right:1.8vmin;bottom:1.8vmin;width:2.2em;height:36%;border:.3em solid #2b1a2e;background:#3b2a40;box-shadow:.3em .3em 0 rgba(43,26,46,.35)}
+#meter{position:absolute;left:50%;top:80%;transform:translateY(-50%);width:clamp(16px,1.8vmin,22px);height:clamp(80px,18vh,160px);border:.3em solid #2b1a2e;background:#3b2a40;box-shadow:.3em .3em 0 rgba(43,26,46,.35)}
 #fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#ffb340 0 .5em,#ff8a3d .5em 1em)}
 #sweet,#onb{position:absolute;left:-.55em;right:-.55em;height:6%}
 #onb{border:.2em dashed rgba(255,255,255,.55)}
 #sweet{border:0}
-.mlbl{position:absolute;bottom:-.2em;right:calc(100% + .6em);font-size:.8em;white-space:nowrap}
+.mlbl{position:absolute;top:calc(100% + .7em);left:50%;transform:translateX(-50%);font-size:.65em;white-space:nowrap}
 #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
 #msg.on{opacity:1;transform:scale(1)}
 #msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
@@ -206,6 +206,7 @@ const CAM_PORTRAIT_POS = new THREE.Vector3(0, 2.6, 4);
 const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
 camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
 camera.userData.look = CAM_LOOK.clone();
+let meterLayoutDirty = true;
 
 function resize() {
   const w = wrap.clientWidth, h = wrap.clientHeight;
@@ -218,6 +219,7 @@ function resize() {
   camera.lookAt(CAM_LOOK);
   camera.fov = 14 + 8 * portrait;
   camera.updateProjectionMatrix();
+  meterLayoutDirty = true;
 }
 addEventListener('resize', resize); resize();
 
@@ -679,12 +681,14 @@ function positionHeldBag(yaw) {
   held.position.set(releaseX(thrower()), REL_Y, REL_Z);
   held.rotation.set(.7, -yaw, 0);
 }
-const trajectory=[];
-for(let i=0;i<48;i++){const d=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.035),basic('#ffe45e'));scene.add(d);trajectory.push(d);}
-const aimDots = [];
-{
-  const dm = basic({ color: '#ffffff', transparent: true, opacity: 0.75 });
-  for (let i = 0; i < 14; i++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), dm); d.rotation.x = -Math.PI / 2; scene.add(d); aimDots.push(d); }
+const meterAnchor = new THREE.Vector3();
+function positionPowerMeter() {
+  const meter = document.getElementById('meter'), w = wrap.clientWidth, h = wrap.clientHeight;
+  // Keep the bar beside the real release point, including after screen rotation.
+  meterAnchor.set(RX[0] + BAG * .75, REL_Y, REL_Z).project(camera);
+  meter.style.left = `${clamp((meterAnchor.x+1)*w/2 + 12, 12, w-meter.offsetWidth-12)}px`;
+  meter.style.top = `${clamp((1-meterAnchor.y)*h/2, meter.offsetHeight/2+8, h-meter.offsetHeight/2-22)}px`;
+  meterLayoutDirty = false;
 }
 const confetti = [];
 {
@@ -770,6 +774,7 @@ $('bag-handle').onclick=()=>{
   updateBagDrawer();
 };
 function renderHud() {
+  meterLayoutDirty = true;
   // Keep human height in sync even during the incoming thrower's wait phase.
   if (isHuman(thrower())) M.arc = M.heights[thrower()];
   updateBagDrawer();
@@ -1234,23 +1239,13 @@ function frame() {
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
   updateFlightTrail(dt);
-  // The held bag stays centered below the board; aim indicators follow the thrower.
+  // The held bag and nearby power meter share the real release position.
   const t = thrower(), rx = releaseX(t);
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
   const yaw = baseYaw(rx) + M.aim;
   held.visible = showHeld;
   if (showHeld) positionHeldBag(yaw);
-  // One calm-air sweet-spot reference throw, independent of touch and meter speed.
-  const preview=newBody(t);launch(preview,rx,WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
-  aimDots.forEach((d, i) => {
-    const seconds=i*.09;
-    d.position.copy(preview.p).addScaledVector(preview.v,seconds);
-    d.position.y-=.5*G*seconds*seconds;
-    d.quaternion.copy(camera.quaternion);
-    d.visible=showHeld && isHuman(t) && d.position.y>.03;
-    d.material.opacity=.5;
-  });
-  trajectory.forEach((d,i)=>{const seconds=i*.045;d.position.copy(preview.p).addScaledVector(preview.v,seconds);d.position.y-=.5*G*seconds*seconds;d.position.x+=M.spin*.05*seconds*seconds;d.scale.setScalar(camera.position.distanceTo(d.position)*.025);d.visible=showHeld && isHuman(t) && d.position.y>.03 && d.position.z>BOARD_Z-1.4;});
+  if (meterLayoutDirty) positionPowerMeter();
   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
   dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
