@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import {layoutsFor,layoutPoints} from './rerack.mjs';
+import {OPPONENTS,SwatDefender} from './opponents.mjs';
+import {createGlove} from './glove.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -7,7 +9,7 @@ const G=9.8, BALL_R=.02, TABLE_Y=.76, TABLE_W=1.16, TABLE_L=2.8, TABLE_Z=-1.2;
 const CUP_R=.078, CUP_H=.17, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP_R-BALL_R-.006;
 const RELEASE_Y=1.09, RELEASE_Z=[.55,-2.95], ANGLE=52*Math.PI/180;
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
-const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
+const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
 let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer;
 const wrap=$('game'), scene=new THREE.Scene();
@@ -17,6 +19,7 @@ try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-perf
 renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;
 wrap.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(40,1,.05,80);
+const defender=new SwatDefender('regular',()=>Math.random()),glove=createGlove();scene.add(glove);
 scene.add(new THREE.HemisphereLight('#fff0cc','#315c43',2));
 const sun=new THREE.DirectionalLight('#ffd3a5',2.1);sun.position.set(-4,7,3);sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.5,far:20});
@@ -87,8 +90,10 @@ function remaining(team){return cups.filter(c=>c.team===team&&c.alive).length;}
 function resetCups(){for(const c of cups){c.x=c.initialX;c.z=c.initialZ;c.group.position.set(c.x,TABLE_Y,c.z);c.alive=true;c.enabled=state.mode!=='practice'||c.team===1;c.group.visible=c.enabled;c.group.scale.setScalar(1);}for(const s of sparks){s.life=0;s.mesh.visible=false;}}
 function powerForPoint(x,z,team=state.turn){const d=Math.hypot(x-releaseX(team),z-RELEASE_Z[team]),dy=RIM_Y+BALL_R-RELEASE_Y;
  const speed=Math.sqrt(G*d*d/(2*Math.cos(ANGLE)**2*(d*Math.tan(ANGLE)-dy)));return clamp((speed-3.2)/3.4,0,1);}
-function newBall(team,power,slope=0){const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),speed=3.2+clamp(power,0,1)*3.4;
- return {team,power,state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(ANGLE)*speed*screenRight,Math.sin(ANGLE)*speed,Math.cos(yaw)*Math.cos(ANGLE)*speed*direction),age:0,sinkAge:0,hitCup:null,bounces:0,deadReason:null,rimHits:0};}
+function newBall(team,power,slope=0,style=team===0&&state.mode!=='two'?state.shotStyle:'arc'){
+ const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),angle=style==='bounce'?36*Math.PI/180:ANGLE,speed=(style==='bounce'?2.8:3.2)+clamp(power,0,1)*3.4;
+ return {team,power,slope,style,bounceAllowed:style==='bounce'&&team===0&&state.mode!=='two',state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(angle)*speed*screenRight,Math.sin(angle)*speed,Math.cos(yaw)*Math.cos(angle)*speed*direction),age:0,sinkAge:0,swatAge:0,hitCup:null,bounces:0,justBounced:false,deadReason:null,rimHits:0};
+}
 function stepBall(b,dt){
  if(b.state!=='fly')return;b.age+=dt;b.prev.copy(b.p);b.v.y-=G*dt;b.p.addScaledVector(b.v,dt);
  for(const c of cups){
@@ -111,7 +116,9 @@ function stepBall(b,dt){
   }
  }
  const onTable=Math.abs(b.p.x)<TABLE_W/2+BALL_R&&Math.abs(b.p.z-TABLE_Z)<TABLE_L/2+BALL_R;
- if(onTable&&b.p.y<=TABLE_Y+BALL_R&&b.prev.y>=TABLE_Y+BALL_R){b.p.y=TABLE_Y+BALL_R;b.v.set(0,0,0);b.deadReason='table';b.state='done';return;}
+ if(onTable&&b.p.y<=TABLE_Y+BALL_R&&b.prev.y>=TABLE_Y+BALL_R){
+  b.p.y=TABLE_Y+BALL_R;if(b.bounceAllowed&&b.bounces===0&&b.rimHits===0){b.bounces=1;b.justBounced=true;b.v.y=Math.abs(b.v.y)*.72;b.v.x*=.86;b.v.z*=.86;return;}
+  b.v.set(0,0,0);b.deadReason=b.bounces?'second-bounce':'table';b.state='done';return;}
  if(b.p.y<=BALL_R){b.p.y=BALL_R;b.v.set(0,0,0);b.deadReason='ground';b.state='done';return;}
  if(b.age>5||Math.abs(b.p.x)>7||b.p.z>8||b.p.z<-10)b.state='done';
 }
@@ -126,7 +133,8 @@ addEventListener('resize',resize);resize();
 function setPower(power){state.power=clamp(power,0,1);}
 function showShotFeedback(b){
  const direction=b.team===0?-1:1,rack=cups.filter(c=>c.team===1-b.team&&c.alive);
- const time=(b.v.y+Math.sqrt(b.v.y*b.v.y+2*G*(RELEASE_Y-RIM_Y-BALL_R)))/G,depth=Math.abs(b.v.z)*time;
+ const time=(b.v.y+Math.sqrt(b.v.y*b.v.y+2*G*(RELEASE_Y-RIM_Y-BALL_R)))/G;let depth=Math.abs(b.v.z)*time;
+ if(b.style==='bounce'){const probe=newBall(b.team,b.power,b.slope,'bounce');for(let i=0;i<600&&probe.state==='fly'&&!probe.bounces;i++)stepBall(probe,1/240);if(probe.bounces){const d=probe.v.y*probe.v.y-2*G*(RIM_Y-TABLE_Y);depth=d<0?0:Math.abs(probe.p.z-RELEASE_Z[b.team])+Math.abs(probe.v.z)*(probe.v.y+Math.sqrt(d))/G;}}
  const distances=rack.map(c=>(c.z-RELEASE_Z[b.team])*direction);
  const zone=depth<Math.min(...distances)-CUP_R?'weak':depth>Math.max(...distances)+CUP_R?'strong':'range';
  const horizontal=b.v.x*(b.team===0?1:-1),aim=Math.abs(horizontal)<.045?'↑ STRAIGHT':horizontal<0?'↖ LEFT':'↗ RIGHT';
@@ -144,6 +152,8 @@ function updateHud(){
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
  $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
+ $('shot-style').hidden=state.mode==='two'||state.turn!==0||!['aim','flight','wait'].includes(state.phase);
+ document.querySelectorAll('[data-shot-style]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.shotStyle===state.shotStyle));b.disabled=!humanReady()||!!drag;});
  const canOffer=layoutsFor(remaining(1-state.turn)).length>0;
  $('rerack-button').hidden=state.reracksUsed[state.turn]||!['aim','flight','wait'].includes(state.phase)||state.mode==='cpu'&&state.turn===1;
  $('rerack-button').disabled=!humanReady()||!canOffer||!!drag;$('rerack-button').title=canOffer?'Choose a formation for the cups you’re shooting at':'Available with 6, 4, 3 or 2 target cups left';
@@ -151,13 +161,13 @@ function updateHud(){
  if(state.phase==='handoff'||state.mode==='cpu'&&state.turn===1)$('shot-feedback').hidden=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
-function startMatch(mode='practice'){
- if(!['practice','cpu','two'].includes(mode))return;$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+function showMenu(){defender.reset();glove.visible=false;$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function startMatch(mode='practice',opponent='regular'){
+ if(!['practice','cpu','two'].includes(mode))return;$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
- ball=null;flying.visible=false;messageTime=0;$('message').classList.remove('show');setCamera();setPower(0);
+ ball=null;flying.visible=false;defender.reset();glove.visible=false;messageTime=0;$('message').classList.remove('show');setCamera();setPower(0);
  if(state.mode==='two'){
   state.phase='handoff';$('handoff-title').textContent=`${LABELS[state.turn]}’S SHOT`;$('handoff-copy').textContent=`Aim at the ${state.turn===0?'blue':'red'} cups. One throw, then pass the device.`;$('handoff').showModal();
  }else if(state.mode==='cpu'&&state.turn===1){state.phase='cpu';state.cpuTime=0;}
@@ -165,18 +175,24 @@ function beginTurn(){
 }
 function launchShot(power,slope=0){
  if(state.paused||!['aim','cpu'].includes(state.phase)||document.querySelector('dialog[open]'))return false;
- ball=newBall(state.turn,power,slope);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
+ defender.reset();glove.visible=false;ball=newBall(state.turn,power,slope);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
 }
 function cpuShot(){
  if(!state.reracksUsed[1]){const option=layoutsFor(remaining(0))[0];if(option)applyRerack(1,option.id);}
  const rack=cups.filter(c=>c.team===0&&c.alive),cup=rack[Math.floor(Math.random()*rack.length)];
- if(!cup)return;const precise=Math.random()<.32,jitter=precise?.025:.30,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
+ if(!cup)return;const shooting=OPPONENTS[state.opponent].shoot,precise=Math.random()<shooting.precise,jitter=precise?.025:shooting.jitter,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
  const d=Math.abs(z-RELEASE_Z[1]),yaw=Math.atan2(-(x-releaseX(1)),d),slope=Math.tan(yaw/.65);
  launchShot(powerForPoint(x,z,1),slope);
 }
 function finishShot(scoredCup=null){
  const team=state.turn;
- if(scoredCup){scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;message(scoredCup.team===team?'OWN CUP!':'CUP!',scoredCup.team===team?'That one came back to bite.':`${remaining(scoredCup.team)} cups left.`,1.2);}
+ if(scoredCup){
+  const bounce=ball?.bounceAllowed&&ball.bounces===1&&scoredCup.team!==team;scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;let bonus=null;
+  if(bounce){const candidates=cups.filter(c=>c.team===scoredCup.team&&c.alive);candidates.sort((a,b)=>Math.hypot(a.x-releaseX(team),a.z-RELEASE_Z[team])-Math.hypot(b.x-releaseX(team),b.z-RELEASE_Z[team]));bonus=candidates[0];if(bonus){bonus.alive=false;bonus.group.visible=false;state.hits[team]++;celebrate(bonus);}}
+  message(scoredCup.team===team?'OWN CUP!':bounce?(bonus?'BOUNCE · 2 CUPS!':'BOUNCE · LAST CUP!'):'CUP!',scoredCup.team===team?'That one came back to bite.':`${remaining(scoredCup.team)} cups left.`,1.2);
+ }
+ else if(ball?.deadReason==='swat')message('SWATTED!',`${OPPONENTS[state.opponent].name} blocked your bounce.`,1.2);
+ else if(ball?.deadReason==='second-bounce')message('DEAD BALL','Only one table bounce is allowed.',.95);
  else if(ball?.deadReason==='table')message('DEAD BALL','Touched the table.',.95);
  else message('NO CUP',ball?.rimHits?'Off the cup. Try a different angle.':'Adjust your pull distance or angle.',.95);
  ball=null;flying.visible=false;
@@ -186,7 +202,7 @@ function finishShot(scoredCup=null){
  }else{state.phase='wait';state.delay=.85;}
  updateHud();
 }
-function refillCups(){if(state.mode!=='practice'||!['aim','over'].includes(state.phase)||state.paused)return;closeDialogs();ball=null;flying.visible=false;resetCups();state.reracksUsed=[false,false];state.phase='aim';setPower(0);updateHud();message('FRESH RACK','Practice stats kept.',.9);}
+function refillCups(){if(state.mode!=='practice'||!['aim','over'].includes(state.phase)||state.paused)return;closeDialogs();ball=null;flying.visible=false;defender.reset();glove.visible=false;resetCups();state.reracksUsed=[false,false];state.phase='aim';setPower(0);updateHud();message('FRESH RACK','Practice stats kept.',.9);}
 let selectedLayout=null;
 function applyRerack(team,id){
  if(state.paused||team!==state.turn||!['aim','cpu'].includes(state.phase)||state.reracksUsed[team])return false;
@@ -212,6 +228,7 @@ $('rerack-button').onclick=openRerack;$('rerack-cancel').onclick=cancelRerack;$(
 $('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','Your one re-rack is used.',1.2);};
 function pauseGame(){if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
+document.querySelectorAll('[data-shot-style]').forEach(button=>button.onclick=()=>{if(!humanReady()||drag||state.mode==='two')return;state.shotStyle=button.dataset.shotStyle;setPower(0);$('shot-feedback').hidden=true;updateHud();});
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
 $('pause-button').onclick=pauseGame;$('resume').onclick=resumeGame;$('pause').oncancel=event=>{event.preventDefault();resumeGame();};
 for(const id of ['pause-menu','handoff-menu','result-menu'])$(id).onclick=showMenu;
@@ -280,9 +297,15 @@ function frame(){
   if(state.phase==='cpu'){state.cpuTime+=dt;if(state.cpuTime>1.1)cpuShot();}
   if(state.phase==='wait'){state.delay-=dt;if(state.delay<=0){if(state.mode!=='practice')state.turn=1-state.turn;beginTurn();}}
   accumulator+=dt;
-  while(accumulator>=1/240){accumulator-=1/240;if(ball&&ball.state==='fly')stepBall(ball,1/240);}
+  while(accumulator>=1/240){
+   accumulator-=1/240;if(ball&&ball.state==='fly')stepBall(ball,1/240);
+   if(state.mode==='cpu'){if(ball?.justBounced){ball.justBounced=false;defender.notice(ball);}
+    if(defender.update(1/240,ball)&&ball?.state==='fly'){ball.state='swatted';ball.deadReason='swat';ball.swatAge=0;ball.v.set(-defender.side*4.5,1.6,-.2);message('SWATTED!','The glove got there first.',.9);}
+   }
+  }
   if(ball){
-   if(ball.state==='sink'){
+   if(ball.state==='swatted'){ball.swatAge+=dt;ball.v.y-=G*dt;ball.p.addScaledVector(ball.v,dt);if(ball.swatAge>.4)finishShot();}
+   else if(ball.state==='sink'){
     ball.sinkAge+=dt;const f=clamp(ball.sinkAge/.3,0,1),cup=ball.hitCup;ball.p.x=THREE.MathUtils.lerp(ball.p.x,cup.x,f);ball.p.z=THREE.MathUtils.lerp(ball.p.z,cup.z,f);ball.p.y=RIM_Y+BALL_R-f*(CUP_H-.025);flying.scale.setScalar(1-f*.4);
     if(f>=1)finishShot(cup);
    }else if(ball.state==='done')finishShot();
@@ -291,16 +314,19 @@ function frame(){
   for(const p of sparks)if(p.life>0){p.life-=dt;p.v.y-=G*dt;p.mesh.position.addScaledVector(p.v,dt);p.mesh.visible=p.life>0;}
  }
  held.visible=['aim','cpu'].includes(state.phase);if(held.visible)held.position.set(releaseX(state.turn),RELEASE_Y,RELEASE_Z[state.turn]);
+ const defense=defender.snapshot();glove.visible=state.mode==='cpu'&&['windup','swing','recover'].includes(defense.phase);
+ if(glove.visible){glove.position.set(defense.position.x,defense.position.y,defense.position.z);glove.rotation.set(-.15,0,defense.phase==='windup'?-.2:defense.phase==='recover'?.18:0);}
  renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 showMenu();
 try{if(localStorage.getItem('tailgate-beer-pong-help-seen')!=='1'){localStorage.setItem('tailgate-beer-pong-help-seen','1');$('help').showModal();}}catch{$('help').showModal();}
 requestAnimationFrame(frame);
 window.__pong={
- get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
+ get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces,style:ball.style,deadReason:ball.deadReason}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
  startMatch,throwWith:launchShot,refill:refillCups,
+ get defense(){return {...defender.snapshot(),visible:glove.visible};},
  _screen:(x,y,z)=>{const p=new THREE.Vector3(x,y,z).project(camera);return {x:(p.x+1)*wrap.clientWidth/2,y:(1-p.y)*wrap.clientHeight/2};},
  _powerFor:(id)=>{const c=cups[id];return powerForPoint(c.x,c.z);},
- _probe:(power,slope=0,team=0)=>{const b=newBall(team,power,slope);for(let i=0;i<1440&&b.state==='fly';i++)stepBall(b,1/240);return {state:b.state,cup:b.hitCup?.id??null,p:b.p.toArray(),v:b.v.toArray(),rimHits:b.rimHits,bounces:b.bounces,deadReason:b.deadReason};},
+ _probe:(power,slope=0,team=0,style)=>{const b=newBall(team,power,slope,style);const start=b.p.clone(),velocity=b.v.clone();for(let i=0;i<1440&&b.state==='fly';i++)stepBall(b,1/240);return {state:b.state,cup:b.hitCup?.id??null,p:b.p.toArray(),v:b.v.toArray(),rimHits:b.rimHits,bounces:b.bounces,deadReason:b.deadReason,start:start.toArray(),velocity:velocity.toArray()};},
  _dropAt:(id)=>{if(!humanReady())return false;const c=cups[id];if(!c.alive||!c.enabled)return false;ball=newBall(state.turn,.4);ball.p.set(c.x,RIM_Y+.25,c.z);ball.v.set(0,-.8,0);state.shots[state.turn]++;state.phase='flight';flying.visible=true;flying.scale.setScalar(1);flying.position.copy(ball.p);updateHud();return true;}
 };
