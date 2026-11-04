@@ -1,9 +1,14 @@
 # tailgate-games
 
-Tailgate Games has a buildless home page at `/` and two static Three.js games:
+Tailgate Games has a buildless home page at `/` and five static Three.js games:
 
 - Backyard Cornhole: `/cornhole/` (served from `cornhole/index.html`).
 - Backyard Beer Pong: `/beer-pong/` — Solo Practice, vs CPU, and same-screen 2 Player.
+- Ladder Golf: `/ladder-golf/` — three rungs, three bolas, exact 21; optional bonus.
+- Washers: `/washers/` — box-and-cup rules, three washers, exact 21.
+- Lawn Darts: `/lawn-darts/` — Handly Cup scoring, two darts, first to 21+.
+
+All five support practice and same-screen two-player games. New games also have CPU matches, first-visit rules, pause and practice clear. Shared new-game rendering and controls are in `yard-games/engine.js`; independently tested scoring is in `yard-games/rules.mjs`. Source rule links appear in each new game’s How to Play dialog.
 
 Both games use distance-based pull-down-and-release throws: grab the bag or ball, drag sideways to position it, pull down for power and diagonally to aim, then release. Return to the starting point to cancel. Post-throw arrows and power feedback help adjust the next attempt. Cornhole retains PUSH / NORMAL / KOBE throw heights and bag surfaces. Both games are linked from their menus.
 Beer Pong uses one throw per turn; touching the table ends the throw as a dead ball.
