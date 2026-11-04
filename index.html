@@ -64,6 +64,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
 .hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
 .hb:hover{background:#56405c}
+#reset-bags{position:absolute;right:1.6vmin;bottom:1.8vmin;min-height:44px;padding:10px 12px;font-size:clamp(8px,1.4vmin,11px)}
+#reset-bags:disabled{opacity:.45;cursor:default}
 #panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(10px,1.9vmin,14px);min-width:20em;max-width:94vw}
 #panel[hidden]{display:none}
 #panel .pt{font-size:1.1em;color:#ffb36b}
@@ -127,11 +129,12 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="msg" class="ol"></div>
     <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
+    <button class="hb" id="reset-bags" hidden title="Clear thrown bags and keep your practice stats">CLEAR BOARD</button>
     <div id="bag-drawer">
     <div id="bag-menu" role="group" aria-label="Bag options">
       <div class="bag-row"><span class="bag-label">THROW HEIGHT</span><div id="height-choice" class="bag-choices"><button class="hb" data-height="0">PUSH</button><button class="hb" data-height="1">NORMAL</button><button class="hb" data-height="2">KOBE</button></div></div>
       <div class="bag-row"><span class="bag-label">BAG SIDE DOWN</span><div class="bag-choices"><button class="hb" id="side" data-side="slick">SLICK</button><button class="hb" data-side="sticky">STICKY</button></div></div>
-      <div class="btns"><button class="hb" id="reset-bags" hidden>RESET BAGS</button><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
+      <div class="btns"><button class="hb" id="menu">MENU</button><button class="hb" id="mode" hidden title="Toggle controls (M)">MOUSE</button></div>
     </div>
     <button id="bag-handle" aria-controls="bag-menu" aria-expanded="true" aria-label="Collapse bag options"><span id="bag-chevron" aria-hidden="true">◀</span><span id="bag-picks"></span></button>
     </div>
@@ -801,6 +804,7 @@ function renderHud() {
   $('wind').setAttribute('aria-label', `Wind blowing ${['away','away and right','right','toward you and right','toward you','toward you and left','left','away and left'][Math.round(wind.angle/(Math.PI/4))%8]} at ${wind.mph} miles per hour`);
   document.querySelectorAll('[data-height]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.height===M.arc)));
   $('reset-bags').hidden=!M.practice;
+  $('reset-bags').disabled=M.phase!=='aim'||bags.length===0;
   ui.t[1].hidden=M.practice;
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
@@ -1069,7 +1073,8 @@ function pointerAim(e){
 function pointAim(e){const a=pointerAim(e);if(a!==undefined)M.aim=clamp(a,-AIM_MAX,AIM_MAX);}
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
 $('menu').onclick=()=>{if(M.active)return;showMenu();};
-$('reset-bags').onclick=()=>{if(!humanTurn())return;clearBags();renderHud();};
+$('reset-bags').onclick=()=>{if(!M.practice || !humanTurn())return;clearBags();renderHud();};
+$('reset-bags').onkeydown=e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();};
 document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
 
 // ---------- input ----------
