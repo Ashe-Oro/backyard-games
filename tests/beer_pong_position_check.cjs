@@ -8,7 +8,8 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>localStorage.setItem('tailgate-beer-pong-help-seen','1'));
   await page.goto(BASE+'/beer-pong/');await page.waitForFunction(()=>!!window.__pong);
   await page.locator('[data-mode=practice]').click();assert.equal(await page.locator('input[type=range]').count(),0);
-  const point=()=>page.evaluate(()=>__pong._screen(...__pong.state.held.p));
+  // Let resize update the camera and cancel old input before grabbing the ball.
+  const point=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(__pong._screen(...__pong.state.held.p))))));
   async function moveMouse(sign){const p=await point();await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+sign*500,p.y,{steps:15});await page.mouse.up();}
   for(const [width,height]of [[1280,800],[390,844],[844,390]]){
    await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));

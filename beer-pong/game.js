@@ -259,9 +259,10 @@ function showAim(from,to,pulling=false){
  if(!pulling)swipeTimer=setTimeout(()=>svg.classList.remove('show'),2400);
 }
 function pullAt(point){
- const dx=point.x-drag.anchor.x,dy=Math.max(0,point.y-drag.anchor.y),rect=wrap.getBoundingClientRect();
+ // Upward swipes aim with the gesture; downward pulls aim in the opposite direction.
+ const dx=point.x-drag.anchor.x,dy=Math.max(0,(point.y-drag.anchor.y)*(drag.mode==='flick'?-1:1)),rect=wrap.getBoundingClientRect();
  const maxPull=Math.max(36,Math.min(150,Math.min(rect.width,rect.height)*.22,rect.bottom-drag.anchor.y-24));
- return {power:clamp((dy-10)/(maxPull-10),0,1),slope:-dx/Math.max(24,dy),dy,dx};
+ return {power:clamp((dy-10)/(maxPull-10),0,1),slope:(drag.mode==='flick'?dx:-dx)/Math.max(24,dy),dy,dx};
 }
 function updatePull(point){
  const pull=pullAt(point),origin=ballScreen(),yaw=clamp(Math.atan(pull.slope)*.65,-.35,.35),length=45+pull.power*100;
@@ -329,17 +330,17 @@ wrap.addEventListener('pointermove',event=>{
  if(humanPointer?.id===event.pointerId&&humanDefenseTurn()&&event.buttons){const point={x:event.clientX,y:event.clientY};if(!humanPointer.swung)humanPointer.swung=swipeHumanSwat(humanPointer.last,point);humanPointer.last=point;return;}
  if(!drag||event.pointerId!==drag.id)return;
  const point={x:event.clientX,y:event.clientY},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;
- if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8){if(dy>0&&dy>=Math.abs(dx)*.55)drag.mode='pull';else if(Math.abs(dx)>Math.abs(dy))drag.mode='position';}
+ if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8){if(dy>0&&dy>=Math.abs(dx)*.55)drag.mode='pull';else if(dy<0&&-dy>=Math.abs(dx)*.55)drag.mode='flick';else if(Math.abs(dx)>Math.abs(dy))drag.mode='position';}
  if(drag.mode==='position'){
   if(dy>12&&dy>Math.abs(dx)*1.3){drag.mode='pull';drag.anchor={...drag.anchor,x:point.x};}
   else{moveBallTo(point.x-drag.offset);if(Math.abs(dx)>Math.abs(dy))drag.anchor=point;return;}
  }
- if(drag.mode==='pull')updatePull(point);
+ if(drag.mode==='pull'||drag.mode==='flick')updatePull(point);
 });
 wrap.addEventListener('pointerup',event=>{
  if(humanPointer?.id===event.pointerId){if(!humanPointer.swung)attemptHumanSwat({x:event.clientX,y:event.clientY});humanPointer=null;}
  if(!drag||event.pointerId!==drag.id)return;
- const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null;
+ const pull=drag.mode==='pull'||drag.mode==='flick'?pullAt({x:event.clientX,y:event.clientY}):null;
  drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';
  if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope))){cancelPull();updateHud();}
 });
