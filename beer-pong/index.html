@@ -24,9 +24,7 @@
     </div>
     <div id="practice-stats" hidden><strong id="practice-hits">0 / 0</strong><span>CUPS / THROWS</span></div>
     <div id="message" role="status" aria-live="polite"></div>
-    <div id="meter" role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <div id="meter-fill"></div><div id="meter-target"><span>TARGET</span></div><div id="meter-marker"></div><span class="meter-caption">POWER</span>
-    </div>
+    <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div>
     <button id="refill" class="pixel-button" hidden>REFILL CUPS</button>
     <span id="control-hint">DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW</span>
     <span id="shot-count">THROW 1</span>
@@ -47,7 +45,7 @@
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
     <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
     <p>Grab the ball and drag sideways to position it.<br>Pull downward to set power. Pull diagonally to aim in the opposite direction.<br>Release to throw. Return to the starting point to cancel.</p>
-    <p>The green meter band is the range for the rack.<br>The arrow shows your throw direction before you release.</p>
+    <p>The arrow shows your throw direction.<br>After each throw, feedback tells you if your power was too weak, too strong, or in range.</p>
     <p>Sink a cup to remove it. One throw per turn.<br>Table contact ends the throw—no bounce shots.<br>Clear the opposing rack to win.</p>
     <button id="help-done" autofocus>LET’S PLAY</button>
   </dialog>

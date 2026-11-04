@@ -86,8 +86,6 @@ function remaining(team){return cups.filter(c=>c.team===team&&c.alive).length;}
 function resetCups(){for(const c of cups){c.alive=true;c.enabled=state.mode!=='practice'||c.team===1;c.group.visible=c.enabled;c.group.scale.setScalar(1);}for(const s of sparks){s.life=0;s.mesh.visible=false;}}
 function powerForPoint(x,z,team=state.turn){const d=Math.hypot(x-releaseX(team),z-RELEASE_Z[team]),dy=RIM_Y+BALL_R-RELEASE_Y;
  const speed=Math.sqrt(G*d*d/(2*Math.cos(ANGLE)**2*(d*Math.tan(ANGLE)-dy)));return clamp((speed-3.2)/3.4,0,1);}
-function targetWindow(){const rack=cups.filter(c=>c.team===1-state.turn&&c.alive);const powers=rack.map(c=>powerForPoint(c.x,c.z));
- return powers.length?{lo:Math.min(...powers)-.012,hi:Math.max(...powers)+.012}:{lo:.4,hi:.6};}
 function newBall(team,power,slope=0){const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),speed=3.2+clamp(power,0,1)*3.4;
  return {team,power,state:'fly',p:new THREE.Vector3(releaseX(team),RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(ANGLE)*speed*screenRight,Math.sin(ANGLE)*speed,Math.cos(yaw)*Math.cos(ANGLE)*speed*direction),age:0,sinkAge:0,hitCup:null,bounces:0,deadReason:null,rimHits:0};}
 function stepBall(b,dt){
@@ -116,26 +114,26 @@ function stepBall(b,dt){
  if(b.p.y<=BALL_R){b.p.y=BALL_R;b.v.set(0,0,0);b.deadReason='ground';b.state='done';return;}
  if(b.age>5||Math.abs(b.p.x)>7||b.p.z>8||b.p.z<-10)b.state='done';
 }
-let meterDirty=true;
 function setCamera(){
  const w=wrap.clientWidth,h=wrap.clientHeight,portrait=clamp((1.05-w/h)/.55,0,1);
  viewTeam=state.mode==='two'?state.turn:0;
  camera.position.set(0,2,viewTeam===0?2.2:2*TABLE_Z-2.2);camera.lookAt(0,.75+.15*portrait,TABLE_Z);
- camera.aspect=w/h;camera.fov=38+12*portrait;camera.updateProjectionMatrix();camera.updateMatrixWorld();meterDirty=true;
+ camera.aspect=w/h;camera.fov=38+12*portrait;camera.updateProjectionMatrix();camera.updateMatrixWorld();
 }
 function resize(){if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
 addEventListener('resize',resize);resize();
-function positionMeter(){
- const meter=$('meter'),right=viewTeam===0?1:-1,w=wrap.clientWidth,h=wrap.clientHeight;
- const p=new THREE.Vector3(releaseX(state.turn)+right*.045,RELEASE_Y,RELEASE_Z[state.turn]).project(camera);
- let left=(p.x+1)*w/2+14;const flip=left>w-meter.offsetWidth-64;
- if(flip){const edge=new THREE.Vector3(releaseX(state.turn)-right*.045,RELEASE_Y,RELEASE_Z[state.turn]).project(camera);left=(edge.x+1)*w/2-14-meter.offsetWidth;}
- meter.classList.toggle('left-side',flip);meter.style.left=`${clamp(left,14,w-meter.offsetWidth-14)}px`;
- meter.style.top=`${clamp((1-p.y)*h/2,meter.offsetHeight/2+20,h-meter.offsetHeight/2-34)}px`;meterDirty=false;
-}
-function setPower(power){state.power=clamp(power,0,1);const w=targetWindow(),meter=$('meter');
- $('meter-fill').style.height=`${state.power*100}%`;$('meter-marker').style.bottom=`${state.power*100}%`;
- meter.dataset.zone=state.power>w.hi?'high':state.power>=w.lo?'target':'low';meter.setAttribute('aria-valuenow',String(Math.round(state.power*100)));
+function setPower(power){state.power=clamp(power,0,1);}
+function showShotFeedback(b){
+ const direction=b.team===0?-1:1,rack=cups.filter(c=>c.team===1-b.team&&c.alive);
+ const time=(b.v.y+Math.sqrt(b.v.y*b.v.y+2*G*(RELEASE_Y-RIM_Y-BALL_R)))/G,depth=Math.abs(b.v.z)*time;
+ const distances=rack.map(c=>(c.z-RELEASE_Z[b.team])*direction);
+ const zone=depth<Math.min(...distances)-CUP_R?'weak':depth>Math.max(...distances)+CUP_R?'strong':'range';
+ const horizontal=b.v.x*(b.team===0?1:-1),aim=Math.abs(horizontal)<.045?'↑ STRAIGHT':horizontal<0?'↖ LEFT':'↗ RIGHT';
+ const panel=$('shot-feedback');panel.dataset.power=zone;panel.hidden=false;
+ $('feedback-direction').textContent=`THROW DIRECTION: ${aim}`;
+ $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
+ $('feedback-tip').textContent={weak:'Pull farther back next time.',strong:'Use a shorter pull next time.',range:'Distance reaches the cup rows.'}[zone];
+ const origin=ballScreen(),yaw=Math.atan2(horizontal,Math.abs(b.v.z));showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
 }
 function message(text,detail='',seconds=1.1){$('message').replaceChildren(document.createTextNode(text));if(detail){const small=document.createElement('small');small.textContent=detail;$('message').append(small);}$('message').classList.add('show');messageTime=seconds;}
 function updateHud(){
@@ -146,13 +144,12 @@ function updateHud(){
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
  $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
  $('refill').hidden=state.mode!=='practice';$('refill').disabled=state.phase!=='aim'||state.paused;
- $('meter').hidden=state.mode==='cpu'&&state.turn===1||state.phase==='over'||state.phase==='handoff';
- const w=targetWindow();$('meter-target').style.bottom=`${w.lo*100}%`;$('meter-target').style.height=`${(w.hi-w.lo)*100}%`;meterDirty=true;
+ if(state.phase==='handoff'||state.mode==='cpu'&&state.turn===1)$('shot-feedback').hidden=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function showMenu(){$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
 function startMatch(mode='practice'){
- if(!['practice','cpu','two'].includes(mode))return;closeDialogs();state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+ if(!['practice','cpu','two'].includes(mode))return;$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
@@ -164,7 +161,7 @@ function beginTurn(){
 }
 function launchShot(power,slope=0){
  if(state.paused||!['aim','cpu'].includes(state.phase))return false;
- ball=newBall(state.turn,power,slope);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);updateHud();return true;
+ ball=newBall(state.turn,power,slope);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
 }
 function cpuShot(){
  const rack=cups.filter(c=>c.team===0&&c.alive),cup=rack[Math.floor(Math.random()*rack.length)];
@@ -198,7 +195,7 @@ function showAim(from,to,pulling=false){
  const rect=wrap.getBoundingClientRect(),svg=$('swipe-feedback');clearTimeout(swipeTimer);svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
  for(const id of ['swipe-shadow','swipe-line'])for(const [key,value]of Object.entries({x1:from.x-rect.left,y1:from.y-rect.top,x2:to.x-rect.left,y2:to.y-rect.top}))$(id).setAttribute(key,value);
  svg.classList.add('show');svg.classList.toggle('pulling',pulling);
- if(!pulling)swipeTimer=setTimeout(()=>svg.classList.remove('show'),900);
+ if(!pulling)swipeTimer=setTimeout(()=>svg.classList.remove('show'),2400);
 }
 function pullAt(point){
  const dx=point.x-drag.anchor.x,dy=Math.max(0,point.y-drag.anchor.y),rect=wrap.getBoundingClientRect();
@@ -210,7 +207,7 @@ function updatePull(point){
  setPower(pull.power);showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);
  const rect=wrap.getBoundingClientRect();$('pull-grip').setAttribute('cx',point.x-rect.left);$('pull-grip').setAttribute('cy',point.y-rect.top);
  for(const [key,value]of Object.entries({x1:origin.x-rect.left,y1:origin.y-rect.top,x2:point.x-rect.left,y2:point.y-rect.top}))$('pull-tether').setAttribute(key,value);
- $('control-hint').textContent=pull.power>0?`${Math.round(pull.power*100)}% POWER · RELEASE TO THROW`:'RETURN TO BALL TO CANCEL';return pull;
+ $('control-hint').textContent=pull.power>0?'RELEASE TO THROW · RETURN TO CANCEL':'RETURN TO BALL TO CANCEL';return pull;
 }
 function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show','pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';if(humanReady())setPower(0);}
 function ballScreen(x=releaseX(state.turn)){
@@ -225,7 +222,7 @@ wrap.addEventListener('pointerdown',event=>{
  if(event.button!==0||event.target.closest('button,a,input,label,dialog,#menu')||!humanReady()||drag)return;
  const point={x:event.clientX,y:event.clientY},p=ballScreen();
  if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
- $('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
+ $('shot-feedback').hidden=true;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
  wrap.classList.add('drag');try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{
@@ -240,11 +237,9 @@ wrap.addEventListener('pointermove',event=>{
 });
 wrap.addEventListener('pointerup',event=>{
  if(!drag||event.pointerId!==drag.id)return;
- const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null,origin=ballScreen();
+ const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null;
  drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';
- if(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope)){
-  const yaw=clamp(Math.atan(pull.slope)*.65,-.35,.35);showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
- }else cancelPull();
+ if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope)))cancelPull();
 });
 wrap.addEventListener('pointercancel',cancelPull);
 addEventListener('blur',cancelPull);
@@ -268,7 +263,7 @@ function frame(){
   for(const p of sparks)if(p.life>0){p.life-=dt;p.v.y-=G*dt;p.mesh.position.addScaledVector(p.v,dt);p.mesh.visible=p.life>0;}
  }
  held.visible=['aim','cpu'].includes(state.phase);if(held.visible)held.position.set(releaseX(state.turn),RELEASE_Y,RELEASE_Z[state.turn]);
- if(meterDirty&&state.phase!=='menu')positionMeter();renderer.render(scene,camera);requestAnimationFrame(frame);
+ renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 showMenu();
 try{if(localStorage.getItem('tailgate-beer-pong-help-seen')!=='1'){localStorage.setItem('tailgate-beer-pong-help-seen','1');$('help').showModal();}}catch{$('help').showModal();}

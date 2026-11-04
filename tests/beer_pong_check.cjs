@@ -28,11 +28,11 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   for(const [width,height]of [[1440,900],[1280,800],[390,844],[456,872],[844,390]]){
    await page.setViewportSize({width,height});await page.waitForTimeout(120);
    const view=await page.evaluate(()=>{
-    const st=__pong.state,ball=__pong._screen(...st.held.p),meter=document.querySelector('#meter').getBoundingClientRect();
-    return {ball,meter:{left:meter.left,right:meter.right,top:meter.top,bottom:meter.bottom},cups:st.cups.filter(c=>c.enabled&&c.alive).map(c=>__pong._screen(c.x,.93,c.z))};
+    const st=__pong.state,ball=__pong._screen(...st.held.p);
+    return {ball,cups:st.cups.filter(c=>c.enabled&&c.alive).map(c=>__pong._screen(c.x,.93,c.z))};
    });
    assert(view.ball.x>20&&view.ball.x<width-20&&view.ball.y>height*.5&&view.ball.y<height*.85,JSON.stringify({width,height,view}));
-   assert(view.meter.left>view.ball.x&&view.meter.right<width-5&&view.meter.bottom<height-10);
+   assert.equal(await page.locator('[role=meter]').count(),0);
    for(const c of view.cups)assert(c.x>10&&c.x<width-10&&c.y>80&&c.y<height*.7,JSON.stringify({width,height,c}));
    if(process.env.SHOTS)await page.screenshot({path:path.join(process.env.SHOTS,`beer-pong-practice-${width}.png`)});
   }
