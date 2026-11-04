@@ -53,7 +53,7 @@ const tableMap=texture(128,256,(g,w,h)=>{
  for(let i=0;i<500;i++){g.fillStyle=i%2?'#2b7568':'#25675e';g.fillRect(Math.random()*w|0,Math.random()*h|0,2,3);}
  g.strokeStyle='#dfd9b6';g.lineWidth=2;g.strokeRect(4,4,w-8,h-8);g.fillRect(w/2-1,4,2,h-8);
  g.fillStyle='#dfd9b6';g.fillRect(4,h/2-1,w-8,2);
- g.save();g.translate(w/2,h/2);g.rotate(-Math.PI/2);g.fillStyle='#edce6f';g.font='bold 11px monospace';g.textAlign='center';g.fillText('TAILGATE GAMES',0,-8);g.restore();
+ g.save();g.translate(w/2,h/2);g.rotate(-Math.PI/2);g.fillStyle='#edce6f';g.font='bold 11px monospace';g.textAlign='center';g.fillText('BACKYARD GAMES',0,-8);g.restore();
 });
 const tableSide=mat('#b3a06d'),tableTop=new THREE.MeshLambertMaterial({map:tableMap});
 box(TABLE_W,.075,TABLE_L,[tableSide,tableSide,tableTop,tableSide,tableSide,tableSide],0,TABLE_Y-.0375,TABLE_Z);

@@ -1,6 +1,6 @@
-# tailgate-games
+# Backyard Games
 
-Tailgate Games has a buildless home page at `/` and five static Three.js games:
+Backyard Games has a buildless home page at `/` and five static Three.js games:
 
 - Backyard Cornhole: `/cornhole/` (served from `cornhole/index.html`).
 - Backyard Beer Pong: `/beer-pong/` — Solo Practice, vs CPU, and same-screen 2 Player.
@@ -15,10 +15,10 @@ Beer Pong uses one throw per turn; touching the table ends the throw as a dead b
 
 ## Deployment
 
-The GitHub repository is connected to the existing Vercel project `cornhole`
+The GitHub repository is connected to the existing Vercel project `backyard-games`
 in the `ashe-oros-projects` team.
 
-- Production: https://backyard-cornhole.vercel.app/
+- Production: https://playbackyardgames.vercel.app/
 - Every push or merge to `main` automatically creates a production deployment.
 - Vercel automatically assigns the production domains after a successful deployment.
 - Other branches receive preview deployments through the Vercel Git integration.
@@ -34,3 +34,5 @@ and are not an automated release gate.
 ## Adding a game
 
 Keep each game in its own directory, such as `cornhole/` or `beer-pong/`, with a menu link back to `/`. Add an `article.game-card` to the home page’s `.game-grid` in `index.html`, a 720 × 400 scene image in `assets/`, and a direct Play link. The responsive grid wraps automatically as games are added. `home.css` styles the shared home page independently of the games.
+
+The primary Vercel address is https://playbackyardgames.vercel.app/. The previous backyard-cornhole.vercel.app address remains attached for existing links.

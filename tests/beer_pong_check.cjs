@@ -92,7 +92,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   assert(await page.locator('#result').isVisible());await page.locator('#result-menu').click();assert.equal(await page.evaluate(()=>__pong.state.phase),'menu');
   await page.goto(BASE+'/cornhole/');await page.waitForFunction(()=>!!window.__game);
   const help=page.locator('#help-dialog');if(await help.isVisible())await page.locator('#help-done').click();
-  await page.getByRole('link',{name:'ALL TAILGATE GAMES'}).click();await page.getByRole('link',{name:'Play Beer Pong'}).click();await page.waitForFunction(()=>!!window.__pong);
+  await page.getByRole('link',{name:'ALL BACKYARD GAMES'}).click();await page.getByRole('link',{name:'Play Beer Pong'}).click();await page.waitForFunction(()=>!!window.__pong);
   assert.deepEqual(errors,[]);console.log('Two Player: handoffs, mirrored cameras, 19-shot complete win, and Cornhole navigation passed.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
