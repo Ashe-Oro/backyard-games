@@ -201,7 +201,8 @@ wrap.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog('#ffd3a8', 26, 75);
 const camera = new THREE.PerspectiveCamera(19, 1, 0.1, 200);
-const CAM_POS = new THREE.Vector3(0, 4, 4);
+const CAM_POS = new THREE.Vector3(0, 3.6, 8);
+const CAM_PORTRAIT_POS = new THREE.Vector3(0, 2.6, 4);
 const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
 camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
 camera.userData.look = CAM_LOOK.clone();
@@ -211,11 +212,11 @@ function resize() {
   const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  // Give wide screens more court depth while preserving the tighter phone view.
+  // Frame the real release point and board together, without a screen-space bag.
   const portrait = clamp((1.2 - camera.aspect) / 0.65, 0, 1);
-  camera.position.copy(CAM_POS);
+  camera.position.copy(CAM_POS).lerp(CAM_PORTRAIT_POS, portrait);
   camera.lookAt(CAM_LOOK);
-  camera.fov = 18 + 4 * portrait;
+  camera.fov = 14 + 8 * portrait;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -631,7 +632,7 @@ function simulate(rx, power, side, aim = 0, drift = 0, arc = 1) {
   for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
   return b.state === 'in' ? 3 : b.state === 'board' ? 1 : 0;
 }
-// power windows for the meter / CPU, per thrower box and bag side
+// power windows for the meter / CPU, per team and bag side
 const WIN = {};
 for (const t of [0, 1]) for (const side of ['slick', 'sticky']) for (const arc of [0, 1, 2]) {
   let lo = 1, hi = 0, olo = 1, ohi = 0;
@@ -654,8 +655,6 @@ const bagGeo = (() => {
     const x = p.getX(i) / (BAG / 2), z = p.getZ(i) / (BAG / 2);
     p.setY(i, p.getY(i) * (1 - 0.45 * (x * x + z * z) / 2));
   }
-  // Render bags 30% larger; physics retains the batch-12 cloth dimensions.
-  g.scale(1.3, 1.3, 1.3);
   g.computeVertexNormals(); return g;
 })();
 // box faces: +x,-x,+y(top),-y(bottom),+z,-z ; slick (duck cloth) on top, sticky (suede) underneath when "slick side down" is flipped
@@ -673,20 +672,12 @@ function makeBagMesh(team, side) {
   const mesh = new THREE.Mesh(bagGeo, [up, up, up, down, up, up]);
   mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
 }
-const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); scene.add(held);
-// Present the held bag as a foreground hand model aligned with the throw origin.
-const heldTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(.8, 0, 0));
+const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick);
+held.castShadow = held.receiveShadow = true; scene.add(held);
+// The held bag shares the launched bag's world position, geometry, and scale.
 function positionHeldBag(yaw) {
-  const portrait = clamp((1.2 - camera.aspect) / .65, 0, 1);
-  // Keep the desktop bag smaller and lower to separate the hand from the target.
-  const width = Math.min(.065 + .055 * portrait, (.06 + .04 * portrait) / camera.aspect);
-  const halfFov = Math.tan(camera.fov * Math.PI / 360);
-  const depth = BAG / (2 * halfFov * camera.aspect * width);
-  const halfHeight = depth * halfFov;
-  held.position.set(0, (-.70 + .14 * portrait) * halfHeight, -depth)
-    .applyQuaternion(camera.quaternion).add(camera.position);
-  held.quaternion.copy(camera.quaternion).multiply(heldTilt);
-  held.rotateY(-yaw);
+  held.position.set(releaseX(thrower()), REL_Y, REL_Z);
+  held.rotation.set(.7, -yaw, 0);
 }
 const trajectory=[];
 for(let i=0;i<48;i++){const d=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.035),basic('#ffe45e'));scene.add(d);trajectory.push(d);}
@@ -985,6 +976,9 @@ function throwBag(power, drift = 0, team = thrower()) {
   const actualPower=isHuman(team) ? physicalPower(power) : power;
   const b = newBody(team, side); launch(b, releaseX(team), actualPower, M.aim, drift + (isHuman(team)?gauss() * 0.025:0), M.arc, isHuman(team) ? 0 : M.spin);
   b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
+  positionHeldBag(baseYaw(releaseX(team)) + M.aim);
+  b.mesh.quaternion.copy(held.quaternion);
+  b.releaseQ = held.quaternion.clone();
   if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
   M.before = bags.map((o) => ({ o, s: o.state }));
   bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
@@ -1228,7 +1222,10 @@ function frame() {
   if (M.phase === 'settle' && settled()) scoreInning();
   for (const b of bags) {
     const m = b.mesh; m.position.copy(b.p);
-    if (b.state === 'fly') { m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15; }
+    if (b.state === 'fly') {
+      m.rotation.y += b.spin * dt; m.rotation.x = Math.sin(b.t * b.tumble) * 0.25; m.rotation.z = Math.cos(b.t * b.tumble * 0.7) * 0.15;
+      if (b.releaseQ && b.t < .16) m.quaternion.slerp(b.releaseQ, 1-b.t/.16);
+    }
     else if (onDeck(b) || b.state === 'hole') { const yaw = b.yaw ?? (b.yaw = m.rotation.y); if (b.state === 'slide') b.yaw += b.spin * dt * 0.3; m.quaternion.copy(boardQ); m.rotateY(b.yaw); }
     else if (b.state === 'ground' || b.state === 'grass') { m.rotation.x = 0; m.rotation.z = 0; }
     // Soft cloth folds inward while passing through the six-inch opening.
