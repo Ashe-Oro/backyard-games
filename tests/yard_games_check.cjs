@@ -40,7 +40,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
    await page.waitForFunction(()=>__yard.state.phase!=='flight');
    if(i<count*2-1)await page.waitForFunction(()=>['aim','handoff'].includes(__yard.state.phase));else await page.waitForFunction(()=>__yard.state.phase==='over');
   }
-  assert.equal(await page.evaluate(()=>__yard.state.winner),0);assert.equal(await page.evaluate(()=>__yard.state.scores[0]),21);assert(await page.locator('#round-result').isVisible());await page.locator('#result-menu').click();await page.getByRole('link',{name:'ALL TAILGATE GAMES'}).click();assert.equal(await page.locator('.game-card').count(),5);
+  assert.equal(await page.evaluate(()=>__yard.state.winner),0);assert.equal(await page.evaluate(()=>__yard.state.scores[0]),21);assert(await page.locator('#round-result').isVisible());await page.locator('#result-menu').click();await page.getByRole('link',{name:'ALL BACKYARD GAMES'}).click();assert.equal(await page.locator('.game-card').count(),5);
   console.log(kind+': native controls, reachability, real scoring, practice clear, pause, CPU, handoffs and complete winning round passed.');
  }
  assert.deepEqual(errors,[]);

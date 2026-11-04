@@ -9,15 +9,15 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Backyard Cornhole">
 <meta property="og:description" content="Pull back, release, toss. A tiny 3D pixel-art cornhole game.">
-<meta property="og:url" content="https://backyard-cornhole.vercel.app/cornhole/">
-<meta property="og:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<meta property="og:url" content="https://playbackyardgames.vercel.app/cornhole/">
+<meta property="og:image" content="https://playbackyardgames.vercel.app/poster.png">
 <meta name="twitter:card" content="player">
 <meta name="twitter:title" content="Backyard Cornhole">
 <meta name="twitter:description" content="Real cornhole rules: 27 ft, cancellation scoring, first to 21. Pull back and release to toss.">
-<meta name="twitter:player" content="https://backyard-cornhole.vercel.app/cornhole/">
+<meta name="twitter:player" content="https://playbackyardgames.vercel.app/cornhole/">
 <meta name="twitter:player:width" content="480">
 <meta name="twitter:player:height" content="360">
-<meta name="twitter:image" content="https://backyard-cornhole.vercel.app/poster.png">
+<meta name="twitter:image" content="https://playbackyardgames.vercel.app/poster.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22 shape-rendering=%22crispEdges%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%231aa39a%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%232b1a2e%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -981,7 +981,7 @@ function showMenu() {
   $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
   $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
   $('career').onclick=careerMap;
-  ui.panel.insertAdjacentHTML('beforeend','<a class="game-link" href="/">← ALL TAILGATE GAMES</a>');
+  ui.panel.insertAdjacentHTML('beforeend','<a class="game-link" href="/">← ALL BACKYARD GAMES</a>');
   renderHud();
 }
 function startMatch(opts = {}) {
