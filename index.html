@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Backyard Cornhole · 3D pixel toss</title>
-<meta name="description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game in your browser.">
+<meta name="description" content="Pull back, release, toss. A tiny 3D pixel-art cornhole game in your browser.">
 <meta name="theme-color" content="#ffb36b">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Backyard Cornhole">
-<meta property="og:description" content="Line up, flick, toss. A tiny 3D pixel-art cornhole game.">
+<meta property="og:description" content="Pull back, release, toss. A tiny 3D pixel-art cornhole game.">
 <meta property="og:url" content="https://backyard-cornhole.vercel.app/">
 <meta property="og:image" content="https://backyard-cornhole.vercel.app/poster.png">
 <meta name="twitter:card" content="player">
@@ -48,17 +48,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
 #turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
 #turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
-#meter{position:absolute;left:50%;top:80%;transform:translateY(-50%);width:clamp(24px,2.8vmin,30px);height:clamp(110px,22vh,190px);border:3px solid #231b2b;background:linear-gradient(0deg,#172f35,#34483d 65%,#644338);box-shadow:inset 2px 0 #fff4dc55,3px 3px 0 #231b2b88}
-#meter::after{content:'';position:absolute;inset:0 3px;z-index:3;background:repeating-linear-gradient(0deg,transparent 0 calc(10% - 1px),#fff4dc77 calc(10% - 1px) 10%);pointer-events:none}
-#fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#f8ce4b 0 5px,#dca035 5px 6px);box-shadow:inset 2px 0 #fff0a0}
-#sweet,#onb{position:absolute;height:6%;z-index:2}
-#onb{left:0;right:0;background:#65e3a333;border-top:1px solid #65e3a3;border-bottom:1px solid #65e3a3}
-#sweet{left:-5px;right:-5px;border:2px solid #baff99;background:#35c96fbb;box-shadow:0 0 0 1px #173825}
-#sweet::after{content:'TARGET';position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);font-size:7px;color:#c8ffae;text-shadow:1px 1px #162a20,-1px -1px #162a20}
-#power-marker{position:absolute;left:-8px;right:-8px;height:4px;bottom:0;background:#fff4dc;box-shadow:0 0 0 2px #231b2b;z-index:4}
-#meter[data-zone="target"] #power-marker{background:#baff99}
-#meter[data-zone="high"] #power-marker{background:#ff7f6e}
-.mlbl{position:absolute;top:calc(100% + .7em);left:50%;transform:translateX(-50%);font-size:.65em;white-space:nowrap}
 #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
 #msg.on{opacity:1;transform:scale(1)}
 #msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
@@ -134,6 +123,13 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 @media(max-width:600px){#bag-drawer:not(.collapsed) #bag-handle{bottom:56px}}
 @media(max-height:450px){#bag-drawer #bag-menu{max-height:65vh}}
 @media(prefers-reduced-motion:reduce){#bag-drawer{transition:none}#bag-drawer.collapsed #bag-menu{transition:none}}
+
+#shot-feedback{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:grid;gap:5px;width:max-content;max-width:90%;padding:8px 12px;text-align:center;background:#30283bed;border:2px solid #2b1a2e;font-size:7px;line-height:1.5}
+#shot-feedback[hidden],#control-hint[hidden]{display:none}#feedback-power{font-size:12px;color:#ffe45e;font-weight:400}#feedback-tip{font:12px/1.4 system-ui,sans-serif;color:#fff4dc;text-shadow:none}
+#control-hint{position:absolute;bottom:65px;left:50%;transform:translateX(-50%);width:90%;text-align:center;font-size:7px;color:#ffe45e;line-height:1.7;pointer-events:none}
+@media(max-width:600px){#shot-feedback{bottom:62px}}
+#pull-grip,#pull-tether{display:none}#swipe-feedback.pulling #pull-grip,#swipe-feedback.pulling #pull-tether{display:block}
+@media(max-height:450px){#shot-feedback{left:auto;right:14px;bottom:110px;transform:none;max-width:30%;padding:8px;gap:5px}#feedback-direction{font-size:6px}#feedback-power{font-size:9px}#feedback-tip{font-size:11px}#control-hint{bottom:62px;left:auto;right:14px;transform:none;width:32%;font-size:6px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -146,12 +142,13 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
       <div class="mid"><div id="inn">ROUND 1</div><div id="goal">TO 21</div></div>
       <div class="team blue" id="t1"><div class="tn"><span id="n1">CPU</span></div><div class="ts" id="s1">0</div><div class="pips" id="p1"></div></div>
     </div>
-    <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
+    <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>pull back · release · toss</p></div>
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
-    <div id="meter" role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div id="power-marker"></div><div class="mlbl ol">POWER</div></div>
+    <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div><div id="control-hint">DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW</div>
     <svg id="swipe-feedback" aria-hidden="true">
       <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
+      <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
       <line id="swipe-outline" stroke="#2b1a2e" stroke-width="8" stroke-linecap="square"/>
       <line id="swipe-line" stroke="#ffe45e" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
     </svg>
@@ -167,7 +164,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     </div>
   </div>
   <dialog class="game-dialog" id="pause-dialog" aria-labelledby="pause-heading"><h2 id="pause-heading">Paused</h2><div class="dialog-actions"><button id="resume-game" autofocus>Resume game</button><button class="secondary" id="pause-menu">Main menu</button></div></dialog>
-  <dialog class="game-dialog" id="help-dialog" aria-labelledby="help-heading"><h2 id="help-heading">Line up. Flick. Toss.</h2><div class="help-swipe" aria-hidden="true">↑</div><p><strong>Flick upward to throw.</strong><br>Faster flicks add more power.</p><p>Aim for the green TARGET band on the meter.<br>A sideways swipe steers your throw.</p><p>The arrow after release shows your swipe direction.</p><div class="dialog-actions"><button id="help-done" autofocus>Got it — let’s play</button></div></dialog>
+  <dialog class="game-dialog" id="help-dialog" aria-labelledby="help-heading"><h2 id="help-heading">Pull. Release. Toss.</h2><div class="help-swipe" aria-hidden="true">↓</div><p><strong>Grab the bag and pull down. Release to throw.</strong><br>Pull farther for more power. Pull diagonally to aim the opposite way.</p><p>Drag sideways to position the bag.<br>Return to the starting point to cancel.</p><p>The arrow shows direction; feedback tells you if your power was too weak, too strong, or in range.<br>Keep PUSH / NORMAL / KOBE for throw height.</p><div class="dialog-actions"><button id="help-done" autofocus>Got it — let’s play</button></div></dialog>
   <div id="panel" class="ol" hidden></div>
   <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
 </div>
@@ -188,7 +185,6 @@ const MU_GROUND = 1.1, BAG_E = 0.25;
 const ELEV = 35 * Math.PI / 180;
 const V_MIN = 5.6;
 const AIM_MAX = 0.12;
-const FLICK_MIN = 0.5, FLICK_MAX = 7.5;     // screen heights / second
 const REL_Y = 1.3, REL_Z = -0.45;           // feet stay behind the foul line (z = 0); the hand reaches past it on release
 const RX = [0, 0];                         // both teams release along the centered bag's line
 const TEAM = ['RED', 'BLUE'];
@@ -238,7 +234,7 @@ const CAM_PORTRAIT_POS = new THREE.Vector3(0, 2.6, 4);
 const CAM_LOOK = new THREE.Vector3(0, 0.5, -8.7);
 camera.position.copy(CAM_POS); camera.lookAt(CAM_LOOK);
 camera.userData.look = CAM_LOOK.clone();
-let meterLayoutDirty = true;
+
 
 function resize() {
   const w = wrap.clientWidth, h = wrap.clientHeight;
@@ -251,7 +247,6 @@ function resize() {
   camera.lookAt(CAM_LOOK);
   camera.fov = 14 + 8 * portrait;
   camera.updateProjectionMatrix();
-  meterLayoutDirty = true;
   document.getElementById('swipe-feedback').classList.remove('shown');
 }
 addEventListener('resize', resize); resize();
@@ -667,7 +662,7 @@ function simulate(rx, power, side, aim = 0, drift = 0, arc = 1) {
   for (let i = 0; i < 240 * 8; i++) { step(b, 1 / 240); if (['board', 'grass', 'in', 'removed'].includes(b.state)) break; }
   return b.state === 'in' ? 3 : b.state === 'board' ? 1 : 0;
 }
-// power windows for the meter / CPU, per team and bag side
+// calibrated power windows for CPU and throw-height mapping, per team and bag side
 const WIN = {};
 for (const t of [0, 1]) for (const side of ['slick', 'sticky']) for (const arc of [0, 1, 2]) {
   let lo = 1, hi = 0, olo = 1, ohi = 0;
@@ -714,15 +709,6 @@ function positionHeldBag(yaw) {
   held.position.set(releaseX(thrower()), REL_Y, REL_Z);
   held.rotation.set(.7, -yaw, 0);
 }
-const meterAnchor = new THREE.Vector3();
-function positionPowerMeter() {
-  const meter = document.getElementById('meter'), w = wrap.clientWidth, h = wrap.clientHeight;
-  // Keep the bar beside the real release point, including after screen rotation.
-  meterAnchor.set(RX[0] + BAG * .75, REL_Y, REL_Z).project(camera);
-  meter.style.left = `${clamp((meterAnchor.x+1)*w/2 + 12, 12, w-meter.offsetWidth-12)}px`;
-  meter.style.top = `${clamp((1-meterAnchor.y)*h/2, meter.offsetHeight/2+8, h-meter.offsetHeight/2-22)}px`;
-  meterLayoutDirty = false;
-}
 const confetti = [];
 {
   const cc = ['#ffe45e', '#ff6a4d', '#7ee081', '#ff8fc0', '#9ff0e6', '#ffffff'];
@@ -768,17 +754,17 @@ function updateFlightTrail(dt) {
 
 // ---------- match state ----------
 const $ = (id) => document.getElementById(id);
-const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
+const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
 const M = {
   paused:false,
   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
-  position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
+  position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null, power:0,
 };
 const gameTimers = new Set();
 function gameAfter(fn,ms){const timer={fn,left:ms};gameTimers.add(timer);return timer;}
 function pauseGame(){
   if(M.paused || ['menu','intro','champion'].includes(M.phase))return;
-  M.paused=true;drag=null;flick=null;samples.length=0;wheelGesture=[];clearTimeout(wheelTimer);
+  cancelPull();M.paused=true;
   wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown');
   if(document.pointerLockElement)document.exitPointerLock();
   if(M.phase==='aim')setMeter(0);
@@ -794,7 +780,7 @@ $('resume-game').onclick=resumeGame;
 $('pause-dialog').oncancel=e=>{e.preventDefault();resumeGame();};
 $('pause-menu').onclick=()=>{resumeGame();showMenu();$('two-player').focus();};
 $('help-done').onclick=()=>$('help-dialog').close();
-const releaseX=(t)=>RX[t];
+const releaseX=(t)=>RX[t]+(isHuman(t)?M.position[t]:0);
 const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
 const teamName = (t) => (M.vs === 'cpu' ? (t === 0 ? 'YOU' : M.career ? roster[Math.min(career.fight,roster.length-1)].name : 'CPU') : TEAM[t]);
@@ -828,7 +814,6 @@ $('bag-handle').onclick=()=>{
   updateBagDrawer();
 };
 function renderHud() {
-  meterLayoutDirty = true;
   // Keep human height in sync even during the incoming thrower's wait phase.
   if (isHuman(thrower())) M.arc = M.heights[thrower()];
   updateBagDrawer();
@@ -860,24 +845,27 @@ function renderHud() {
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
-  const w = meterWindow();
-  ui.sweet.style.bottom = (w.lo * 100) + '%'; ui.sweet.style.height = ((w.hi - w.lo) * 100) + '%';
-  ui.onb.style.bottom = (w.olo * 100) + '%'; ui.onb.style.height = Math.max(2, (w.ohi - w.olo) * 100) + '%';
+  $('control-hint').hidden=!humanTurn()||!$('shot-feedback').hidden;
+  if(!isHuman(t)||!['aim','flying','wait'].includes(M.phase))$('shot-feedback').hidden=true;
 }
-function hint() {
-  ui.mode.textContent = M.ctrl === 'drag' ? '🖱 MOUSE' : '🕹 SPINNER';
-  wrap.classList.toggle('spin', M.ctrl === 'spin');
-}
+function hint() {}
 let msgTimer;
 function say(big, small = '', ms = 1400) {
   ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
   gameTimers.delete(msgTimer); msgTimer = gameAfter(() => ui.msg.classList.remove('on'), ms);
 }
-function setMeter(p) {
-  p=clamp(p,0,1);const w=meterWindow(),meter=$('meter');
-  ui.fill.style.height=`${p*100}%`;$('power-marker').style.bottom=`${p*100}%`;
-  meter.dataset.zone=p>w.hi?'high':p>=w.lo?'target':'low';
-  meter.setAttribute('aria-valuenow',String(Math.round(p*100)));
+function setMeter(p) { M.power=clamp(p,0,1); }
+function shotFeedback(b,actualPower,aim){
+  // Isolate distance from lateral aim and blockers, using the same wind, arc and bag surface.
+  const probe=newBody(b.team,b.side);launch(probe,releaseX(b.team),actualPower,0,0,b.arc);
+  for(let i=0;i<1920;i++){step(probe,1/240);if(['board','grass','in','removed'].includes(probe.state))break;}
+  const z=toLocal(probe.p,new THREE.Vector3()).z;
+  const zone=['board','in'].includes(probe.state)?'range':z>0?'weak':z < -L?'strong':'range';
+  const dir=Math.abs(b.v.x)<.045?'↑ STRAIGHT':b.v.x<0?'↖ LEFT':'↗ RIGHT';
+  $('shot-feedback').hidden=false;$('feedback-direction').textContent=`THROW DIRECTION: ${dir}`;
+  $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
+  $('feedback-tip').textContent={weak:'Pull farther back next time.',strong:'Use a shorter pull next time.',range:'Distance reaches the board.'}[zone];
+  const origin=bagScreen(),yaw=Math.atan2(b.v.x,-b.v.z);showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
 }
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 
@@ -983,6 +971,7 @@ function planCareerShot(o){
  return {t:0,side,power:best.power,aim:best.aim,drift:0,goal};
 }
 function showMenu() {
+  cancelPull();$('shot-feedback').hidden=true;
   gameTimers.clear();M.active=null;M.before=null;M.paused=false;
   M.phase = 'menu'; ui.title.classList.remove('gone');
   M.career=false;
@@ -996,11 +985,12 @@ function showMenu() {
   renderHud();
 }
 function startMatch(opts = {}) {
+  cancelPull();$('shot-feedback').hidden=true;
   gameTimers.clear();M.paused=false;
   if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
   M.career = opts.career === true;
   M.practice=opts.practice===true;M.practiceStats={throws:0,in:0,on:0};M.heights=[1,1];
-  M.sweetShift=M.career && career.fight>=2 ? .24+Math.random()*.5 : 0;
+  M.sweetShift=0;
   wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
   if(M.career){const c=roster[career.fight].circuit;wind.mph=c===0?0:c===1?2+Math.floor(Math.random()*3):c===2?6+Math.floor(Math.random()*3):9+Math.floor(Math.random()*4);}
   if(M.practice) wind.mph=0;
@@ -1024,7 +1014,6 @@ function nextTurn() {
   if(['menu','intro','champion'].includes(M.phase))return;
   if (!M.practice && M.k >= 8) { M.phase = 'settle'; renderHud(); return; }
   const t = thrower(); M.aim = 0; M.arc=M.heights[t]; setMeter(0);
-  if(M.career && roster[career.fight].circuit===3) M.sweetShift=.24+Math.random()*.5;
   held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick'];
   if (isHuman(t)) M.phase = 'aim';
   else {
@@ -1043,7 +1032,7 @@ function throwBag(power, drift = 0, team = thrower()) {
   if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
   const side = M.side[team];
   const actualPower=isHuman(team) ? physicalPower(power) : power;
-  const b = newBody(team, side); launch(b, releaseX(team), actualPower, M.aim, drift + (isHuman(team)?gauss() * 0.025:0), M.arc, isHuman(team) ? 0 : M.spin);
+  const b = newBody(team, side); launch(b, releaseX(team), actualPower, M.aim, drift, M.arc, isHuman(team) ? 0 : M.spin);
   b.mesh = makeBagMesh(team, side); b.mesh.position.copy(b.p);
   positionHeldBag(baseYaw(releaseX(team)) + M.aim);
   b.mesh.quaternion.copy(held.quaternion);
@@ -1051,6 +1040,7 @@ function throwBag(power, drift = 0, team = thrower()) {
   if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
   M.before = bags.map((o) => ({ o, s: o.state }));
   bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
+  if(isHuman(team))shotFeedback(b,actualPower,M.aim);
   renderHud();
   return true;
 }
@@ -1120,155 +1110,55 @@ function physicalPower(p){
  if(p>w.hi)return base.hi+(p-w.hi)/(1-w.hi)*(1-base.hi);
  return base.lo+(p-w.lo)/(w.hi-w.lo)*(base.hi-base.lo);
 }
-const aimRay=new THREE.Raycaster(),aimPoint=new THREE.Vector3();
-const aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),-.2);
-function pointerAim(e){
- const r=wrap.getBoundingClientRect();
- aimRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,1-(e.clientY-r.top)/r.height*2),camera);
- if(aimRay.ray.intersectPlane(aimPlane,aimPoint)){
- const rx=releaseX(thrower());
- return Math.atan2(aimPoint.x-rx,REL_Z-aimPoint.z)-baseYaw(rx);
- }
-}
-function pointAim(e){const a=pointerAim(e);if(a!==undefined)M.aim=clamp(a,-AIM_MAX,AIM_MAX);}
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
 $('menu').onclick=pauseGame;
 $('reset-bags').onclick=()=>{if(!M.practice || !humanTurn())return;clearBags();renderHud();};
 $('reset-bags').onkeydown=e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();};
 document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
 
-// ---------- input ----------
-let drag = null;
-const samples = [];
-const H = () => wrap.clientHeight || 1;
-const humanTurn = () => !M.paused && !$('help-dialog').open && M.phase === 'aim' && isHuman(thrower());
-let swipeTimer;
-function showSwipe(flick) {
-  const overlay = $('swipe-feedback'), rect = wrap.getBoundingClientRect();
-  overlay.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
-  for (const id of ['swipe-outline','swipe-line']) {
-    const line = $(id);
-    line.setAttribute('x1',flick.from.x-rect.left); line.setAttribute('y1',flick.from.y-rect.top);
-    line.setAttribute('x2',flick.to.x-rect.left); line.setAttribute('y2',flick.to.y-rect.top);
-  }
-  clearTimeout(swipeTimer); overlay.classList.add('shown');
-  swipeTimer = setTimeout(()=>overlay.classList.remove('shown'),900);
+// ---------- distance-based pull and release ----------
+let drag=null,swipeTimer;
+const humanTurn=()=>!M.paused&&!$('help-dialog').open&&M.phase==='aim'&&isHuman(thrower());
+function bagScreen(x=releaseX(thrower())){const p=new THREE.Vector3(x,REL_Y,REL_Z).project(camera),r=wrap.getBoundingClientRect();return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
+function showAim(from,to,pulling=false){
+ const overlay=$('swipe-feedback'),r=wrap.getBoundingClientRect();clearTimeout(swipeTimer);overlay.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);
+ for(const id of ['swipe-outline','swipe-line'])for(const [key,val]of Object.entries({x1:from.x-r.left,y1:from.y-r.top,x2:to.x-r.left,y2:to.y-r.top}))$(id).setAttribute(key,val);
+ overlay.classList.add('shown');overlay.classList.toggle('pulling',pulling);if(!pulling)swipeTimer=setTimeout(()=>overlay.classList.remove('shown'),2400);
 }
-function flickFrom(list) {
-  if (list.length < 2) return null;
-  const tEnd = list[list.length - 1].t;
-  let i = list.length - 1; while (i > 0 && tEnd - list[i - 1].t < 70) i--;
-  if (i === list.length - 1) i = Math.max(0, i - 1);
-  const a = list[i], b = list[list.length - 1];
-  const dt = Math.max(16, b.t - a.t) / 1000;
-  return { up: -(b.y - a.y) / H() / dt, side: (b.x - a.x) / H() / dt, from:a, to:b };
+function pullAt(point){const r=wrap.getBoundingClientRect(),dy=Math.max(0,point.y-drag.anchor.y),dx=point.x-drag.anchor.x;
+ const max=Math.max(36,Math.min(150,Math.min(r.width,r.height)*.22,r.bottom-drag.anchor.y-24));
+ return {power:clamp((dy-10)/(max-10),0,1),aim:clamp(Math.atan(-dx/Math.max(24,dy))*.65,-AIM_MAX,AIM_MAX)};
 }
-const powerFromSpeed = (up) => clamp((up - FLICK_MIN) / (FLICK_MAX - FLICK_MIN), 0, 1);
-function release(up, side) {
-  if (up < FLICK_MIN) return false;
-  return throwBag(powerFromSpeed(up), clamp(side / Math.max(up, 0.001), -1, 1));
+function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';}
+function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+pull.aim,length=45+pull.power*100;M.aim=pull.aim;setMeter(pull.power);
+ showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);const r=wrap.getBoundingClientRect();
+ $('pull-grip').setAttribute('cx',point.x-r.left);$('pull-grip').setAttribute('cy',point.y-r.top);
+ for(const [key,val]of Object.entries({x1:origin.x-r.left,y1:origin.y-r.top,x2:point.x-r.left,y2:point.y-r.top}))$('pull-tether').setAttribute(key,val);
+ $('control-hint').textContent=pull.power>0?'RELEASE TO THROW · RETURN TO CANCEL':'RETURN TO BAG TO CANCEL';
 }
-wrap.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('#bag-drawer, button') || !ui.panel.hidden) return;
-  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { if (!document.pointerLockElement && wrap.requestPointerLock) { try { const r = wrap.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} } return; }
-  if (!humanTurn()) return;
-  $('swipe-feedback').classList.remove('shown');
-  drag = { id: e.pointerId, aim: M.aim, pointerAim: pointerAim(e), x: e.clientX, y: e.clientY, list: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
-  wrap.classList.add('drag');
-  try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+wrap.addEventListener('pointerdown',e=>{
+ if(e.button!==0||drag||e.target.closest('#bag-drawer,button,dialog,a')||!ui.panel.hidden||!humanTurn())return;
+ const p=bagScreen(),point={x:e.clientX,y:e.clientY};if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(34,Math.abs(bagScreen(releaseX(thrower())+BAG*.6).x-p.x)+12))return;
+ $('shot-feedback').hidden=true;$('control-hint').hidden=false;$('swipe-feedback').classList.remove('shown');drag={id:e.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};wrap.classList.add('drag');try{wrap.setPointerCapture(e.pointerId);}catch{}
 });
-wrap.addEventListener('pointermove', (e) => {
-  if (M.ctrl === 'spin' && e.pointerType === 'mouse') { spinMove(e); return; }
-  if (drag && e.pointerId === drag.id) {
-    // Only horizontal movement changes aim, relative to the touch-down aim.
-    const a=pointerAim({clientX:e.clientX,clientY:drag.y});
-    if(e.clientX===drag.x)M.aim=drag.aim;
-    else if(a!==undefined && drag.pointerAim!==undefined)M.aim=clamp(drag.aim+(a-drag.pointerAim),-AIM_MAX,AIM_MAX);
-    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-    for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
-    while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
-    const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
-  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-drawer, button, dialog') && humanTurn()) {
-    pointAim(e);
-  }
+wrap.addEventListener('pointermove',e=>{
+ if(!drag||e.pointerId!==drag.id)return;const point={x:e.clientX,y:e.clientY},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;
+ if(drag.mode==='pending'&&Math.hypot(dx,dy)>=8){if(dy>0&&dy>=Math.abs(dx)*.55)drag.mode='pull';else if(Math.abs(dx)>Math.abs(dy))drag.mode='position';}
+ if(drag.mode==='position'){
+  if(dy>12&&dy>Math.abs(dx)*1.3){drag.mode='pull';drag.anchor={...drag.anchor,x:point.x};}
+  else{const a=bagScreen(-.45),b=bagScreen(.45);M.position[thrower()]=clamp(-.45+(point.x-drag.offset-a.x)/(b.x-a.x)*.9,-.45,.45);positionHeldBag(baseYaw(releaseX(thrower())));if(Math.abs(dx)>Math.abs(dy))drag.anchor=point;return;}
+ }
+ if(drag.mode==='pull')updatePull(point);
 });
-function endDrag(e) {
-  if (!drag || e.pointerId !== drag.id) return;
-  drag.list.push({ t: e.timeStamp, x: e.clientX, y: e.clientY });
-  const list = drag.list.filter((s, i, a) => i === 0 || s.t !== a[i - 1].t || s.y !== a[i - 1].y);
-  const trimmed = list.length > 2 && list[list.length - 1].y === list[list.length - 2].y ? list.slice(0, -1) : list;
-  const stale = e.timeStamp - trimmed[trimmed.length - 1].t > 160;
-  const f = stale ? null : flickFrom(trimmed);
-  drag = null; wrap.classList.remove('drag');
-  if (!f || !release(f.up, f.side)) { if (M.phase === 'aim') setMeter(0); }
-  else showSwipe(f);
-}
-wrap.addEventListener('pointerup', endDrag);
-wrap.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('drag'); });
-let flick = null, lastMoveT = 0;
-function spinMove(e) {
-  const t = e.timeStamp; lastMoveT = t;
-  const dx = e.movementX || 0, dy = e.movementY || 0;
-  samples.push({ t, dx, dy });
-  while (samples.length && t - samples[0].t > 80) samples.shift();
-  let sy = 0, sx = 0; for (const s of samples) { sy += s.dy; sx += s.dx; }
-  const span = Math.max(30, t - samples[0].t) / 1000;
-  const up = -sy / H() / span;
-  if (M.phase === 'summary' || M.phase === 'over') { if (up > FLICK_MIN * 2 && M.phase === 'summary') advance(); return; }
-  if (!humanTurn()) return;
-  if (!flick) {
-    if (up > FLICK_MIN * 1.4) flick = { t0: t, peak: up, side: 0, up: 0 };
-    else M.aim = clamp(M.aim + dx * 0.0007, -AIM_MAX, AIM_MAX);
-  }
-  if (flick) {
-    flick.peak = Math.max(flick.peak, up); flick.side += dx; flick.up += -dy;
-    setMeter(powerFromSpeed(flick.peak));
-    if (up < flick.peak * 0.45 || t - flick.t0 > 220) finishFlick();
-  }
-}
-function finishFlick() {
-  const f = flick; flick = null; samples.length = 0;
-  if (f) release(f.peak, f.up > 0 ? f.side / f.up * f.peak : 0);
-}
-document.addEventListener('pointerlockchange', hint);
-function toggleCtrl() { M.ctrl = M.ctrl === 'drag' ? 'spin' : 'drag'; if (M.ctrl === 'drag' && document.pointerLockElement) document.exitPointerLock(); flick = null; drag = null; hint(); }
-function flipSide() { const t = thrower(); if (!humanTurn()) return; M.side[t] = M.side[t] === 'slick' ? 'sticky' : 'slick'; held.material = TEAM_MATS[t][M.side[t] === 'slick' ? 'sticky' : 'slick']; renderHud(); }
-ui.mode.addEventListener('click', (e) => { e.stopPropagation(); toggleCtrl(); });
-
-function adjust(k) {
-  if (!humanTurn()) return;
-  const t = thrower();
-  if (k === 'h') {M.arc=(M.arc+1)%3;M.heights[t]=M.arc;}
-  renderHud();
-}
-let wheelGesture = [], wheelTimer;
-wrap.addEventListener('wheel', e => {
-  if (e.target.closest('#bag-drawer, button, dialog, #panel, a')) return;
-  e.preventDefault();
-  if (!humanTurn() || !ui.panel.hidden) return;
-  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
-  wheelGesture.push({t: performance.now(), x: e.deltaX * unit, y: e.deltaY * unit});
-  clearTimeout(wheelTimer);
-  wheelTimer = setTimeout(() => {
-    const g = wheelGesture; wheelGesture = [];
-    const up = -g.reduce((n,s) => n+s.y,0) / H() / Math.max(.08,(g.at(-1).t-g[0].t)/1000);
-    release(up, g.reduce((n,s)=>n+s.x,0) / H());
-  }, 90);
-}, {passive:false});
-addEventListener('blur', () => { drag = null; });
-addEventListener('keydown', (e) => {
-  if($('help-dialog').open || $('pause-dialog').open)return;
-  if(e.key==='Escape'){e.preventDefault();pauseGame();return;}
-  if (e.repeat) return;
-  const k = e.key.toLowerCase();
-  if (k === 'h') { e.preventDefault(); adjust(k); }
-  else if (k === 'm') toggleCtrl();
-  else if (k === 'f') flipSide();
-  else if (k === ' ' || k === 'enter') {
-    e.preventDefault();
-    if (M.phase === 'summary' || M.phase === 'over') advance();
-
-  }
+wrap.addEventListener('pointerup',e=>{
+ if(!drag||e.pointerId!==drag.id)return;const pull=drag.mode==='pull'?pullAt({x:e.clientX,y:e.clientY}):null;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG SIDEWAYS TO MOVE · PULL DOWN TO THROW';
+ if(pull&&pull.power>0&&humanTurn()){M.aim=pull.aim;throwBag(pull.power);}else{M.aim=0;cancelPull();}
+});
+wrap.addEventListener('pointercancel',cancelPull);addEventListener('blur',cancelPull);addEventListener('resize',cancelPull);
+function flipSide(){if(!humanTurn())return;const t=thrower();M.side[t]=M.side[t]==='slick'?'sticky':'slick';held.material=TEAM_MATS[t][M.side[t]==='slick'?'sticky':'slick'];renderHud();}
+addEventListener('keydown',e=>{
+ if($('help-dialog').open||$('pause-dialog').open)return;if(e.key==='Escape'){e.preventDefault();pauseGame();return;}if(e.repeat)return;
+ const k=e.key.toLowerCase();if(k==='h'&&humanTurn()){M.arc=(M.arc+1)%3;M.heights[thrower()]=M.arc;renderHud();}else if(k==='f')flipSide();else if(k===' '||k==='enter'){e.preventDefault();if(M.phase==='summary'||M.phase==='over')advance();}
 });
 // The free end droops in calm air; stronger wind extends it and tightens the ripples.
 function animatePennant(seconds) {
@@ -1291,10 +1181,9 @@ const clock = new THREE.Clock();
 let acc = 0, time = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
-  if(M.paused){if(meterLayoutDirty)positionPowerMeter();renderer.render(scene,camera);requestAnimationFrame(frame);return;}
+  if(M.paused){renderer.render(scene,camera);requestAnimationFrame(frame);return;}
   time += dt;
   for(const timer of [...gameTimers]){timer.left-=dt*1000;if(timer.left<=0){gameTimers.delete(timer);timer.fn();}}
-  if (flick && performance.now() - lastMoveT > 60) finishFlick();
   if (M.phase === 'cpu') {
     const c = M.cpu; c.t += dt;
     M.aim += (c.aim - M.aim) * Math.min(1, dt * 3);
@@ -1323,13 +1212,12 @@ function frame() {
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
   updateFlightTrail(dt);
-  // The held bag and nearby power meter share the real release position.
+  // The held bag shares the real release position.
   const t = thrower(), rx = releaseX(t);
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
   const yaw = baseYaw(rx) + M.aim;
   held.visible = showHeld;
   if (showHeld) positionHeldBag(yaw);
-  if (meterLayoutDirty) positionPowerMeter();
   for (const c of clouds) { c.position.x += dt * 0.35; if (c.position.x > 50) c.position.x = -50; }
   for (const bl of bulbs) bl.gl.material.opacity = 0.5 + 0.25 * Math.sin(time * 2 + bl.ph);
   dog.tail.rotation.y = Math.sin(time * (M.phase === 'flying' ? 18 : 7)) * 0.6;
@@ -1353,18 +1241,19 @@ if (POSTER) {
     const b = newBody(team); b.mesh = makeBagMesh(team, 'slick'); b.lp.set(lx, BAG_H, lz); toWorld(b.lp, b.p); b.state = st; b.yaw = Math.random() * 3; bags.push(b);
   }
   M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
-  for (const el of [$('bag-drawer'), $('meter')]) el.style.display = 'none';
+  for (const el of [$('bag-drawer')]) el.style.display = 'none';
 } else {showMenu();showHelpOnce();}
 requestAnimationFrame(frame);
 
 window.__game = {
   get state() { return { paused:M.paused, practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  _bagScreen:()=>bagScreen(),
   _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
   _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
   _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
   get career(){return {...career,roster:roster.map(o=>({...o})),active:!!M.career};},
   careerMap, careerIntro,
-  win: WIN, flick: { min: FLICK_MIN, max: FLICK_MAX },
+  win: WIN,
   startMatch, advance, lie: () => lie(),
   throwWith: (p, d = 0) => throwBag(p, d),
   setAim: (a) => { M.aim = a; },

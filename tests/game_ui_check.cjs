@@ -27,14 +27,12 @@ const path=require('node:path');
   for(const [width,height] of [[1280,800],[390,844],[844,390]]){
    await page.setViewportSize({width,height});
    await page.evaluate(()=>__setPower(__game.state.sweet.mid));
-   assert.equal(await page.locator('#meter').getAttribute('data-zone'),'target');
+   assert.equal(await page.locator('[role=meter]').count(),0);
    const layout=await page.evaluate(()=>{
     const b=document.querySelector('#pause-button').getBoundingClientRect(),t=document.querySelector('#t0').getBoundingClientRect();
-    const sweet=document.querySelector('#sweet').getBoundingClientRect(),marker=document.querySelector('#power-marker').getBoundingClientRect();
-    return {pause:[b.x,b.y,b.right,b.bottom],scoreY:t.y+54,target:[sweet.top,sweet.bottom],marker:(marker.top+marker.bottom)/2};
+    return {pause:[b.x,b.y,b.right,b.bottom],scoreY:t.y+54};
    });
    assert(layout.pause[0]>=0 && layout.pause[1]>=0 && layout.pause[3]<layout.scoreY+2,'Pause must fit above score');
-   assert(layout.marker>=layout.target[0]-3 && layout.marker<=layout.target[1]+3,'Power marker must match green target');
    if(width<600 && await page.locator('#bag-handle').getAttribute('aria-expanded')==='true')await page.locator('#bag-handle').click();
    if(process.env.SHOTS){await page.waitForTimeout(800);await page.screenshot({path:path.join(process.env.SHOTS,`meter-ui-${width}.png`)});}
   }
@@ -71,7 +69,18 @@ const path=require('node:path');
   assert.equal(await page.evaluate(()=>__game.state.phase),'menu');
   assert.equal(await page.evaluate(()=>__game.state.bags.length),0,'Leaving to menu cancels queued game events');
   assert.equal(await page.locator('#help-dialog').isVisible(),false);
+  // Complete a physical two-player round and verify cancellation scoring.
+  await page.evaluate(()=>{__game.startMatch({vs:'2p',practice:false,first:0});__game._setWind(0,0);});
+  for(let i=0;i<8;i++){
+   await page.waitForFunction(()=>__game.state.phase==='aim');
+   await page.evaluate(()=>__game.throwWith(__game.state.thrower===0?__game.state.sweet.mid:0));
+   await page.waitForFunction(()=>__game.state.phase!=='flying');
+  }
+  await page.waitForFunction(()=>__game.state.phase==='summary');
+  const round=await page.evaluate(()=>({state:__game.state,lie:__game.lie()}));
+  assert.equal(round.state.bags.length,8);const [red,blue]=round.lie.pts;
+  assert.deepEqual(round.state.scores,[Math.max(0,red-blue),Math.max(0,blue-red)]);
   assert.deepEqual(errors,[]);
-  console.log('First-visit help, meter, pause physics/CPU/timers, resume, and menu passed.');
+  console.log('First-visit help, controls, pause physics/CPU/timers, resume, and menu passed.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
