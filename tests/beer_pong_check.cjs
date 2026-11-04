@@ -90,10 +90,9 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
   assert.equal(await page.evaluate(()=>__pong.state.winner),0);assert.deepEqual(await page.evaluate(()=>__pong.state.remaining),[1,0]);
   if(process.env.SHOTS)await page.screenshot({path:path.join(process.env.SHOTS,'beer-pong-win.png')});
   assert(await page.locator('#result').isVisible());await page.locator('#result-menu').click();assert.equal(await page.evaluate(()=>__pong.state.phase),'menu');
-  await page.goto(BASE+'/');await page.waitForFunction(()=>!!window.__game);
+  await page.goto(BASE+'/cornhole/');await page.waitForFunction(()=>!!window.__game);
   const help=page.locator('#help-dialog');if(await help.isVisible())await page.locator('#help-done').click();
-  assert.equal(await page.locator('a[href="/beer-pong/"]').count(),1,'Cornhole must link to Beer Pong');
-  await page.locator('a[href="/beer-pong/"]').click();await page.waitForFunction(()=>!!window.__pong);
+  await page.getByRole('link',{name:'ALL TAILGATE GAMES'}).click();await page.getByRole('link',{name:'Play Beer Pong'}).click();await page.waitForFunction(()=>!!window.__pong);
   assert.deepEqual(errors,[]);console.log('Two Player: handoffs, mirrored cameras, 19-shot complete win, and Cornhole navigation passed.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

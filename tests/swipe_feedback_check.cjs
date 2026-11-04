@@ -2,7 +2,7 @@ const {chromium}=require('playwright-core');const assert=require('node:assert/st
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
 (async()=>{const browser=await chromium.launch();try{
  const context=await browser.newContext({viewport:{width:1280,height:800},hasTouch:true}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(()=>localStorage.setItem('backyard-cornhole-help-seen','1'));await page.goto(BASE+'/');await page.waitForFunction(()=>!!window.__game);
+ await page.addInitScript(()=>localStorage.setItem('backyard-cornhole-help-seen','1'));await page.goto(BASE+'/cornhole/');await page.waitForFunction(()=>!!window.__game);
  async function start(opts={}){await page.evaluate(opts=>__game.startMatch({practice:true,vs:'2p',first:0,...opts}),opts);await page.waitForFunction(()=>__game.state.phase==='aim');}
  const origin=()=>page.evaluate(()=>__game._bagScreen());
  async function pull(dx,dy,hold=0){const p=await origin();await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+dx,p.y+dy,{steps:5});if(hold)await page.waitForTimeout(hold);await page.mouse.up();return page.evaluate(()=>__game.state);}
