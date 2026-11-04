@@ -19,8 +19,8 @@ async def main():
   await page.wait_for_timeout(1200)
   left=await page.evaluate('__game._screenPoint(-.3048,-8.8)')
   right=await page.evaluate('__game._screenPoint(.3048,-8.8)')
-  # Exact centered v2 framing projects this board span to about 127.6 pixels.
-  assert 127 < right['x']-left['x'] < 129
+  # Task 17 tightens the former ~128px desktop board span.
+  assert 145 < right['x']-left['x'] < 160
   target=await page.evaluate('__game._screenPoint(.12,-8.8)')
   await page.mouse.move(target['x'],target['y'])
   actual=await page.evaluate('__game.state.aim')

@@ -5,7 +5,14 @@ import subprocess
 import sys
 
 if len(sys.argv)>1 and sys.argv[1]=='--worker':
- from playwright.async_api import Browser, BrowserContext
+ from playwright.async_api import Browser, BrowserContext, BrowserType
+ import shutil
+ launch_original=BrowserType.launch
+ async def launch(self,*args,**kwargs):
+  if self.name=="chromium" and "executable_path" not in kwargs and shutil.which("google-chrome"):
+   kwargs["executable_path"]=shutil.which("google-chrome")
+  return await launch_original(self,*args,**kwargs)
+ BrowserType.launch=launch
  original=BrowserContext.new_page
  async def new_page(self,*args,**kwargs):
   page=await original(self,*args,**kwargs)

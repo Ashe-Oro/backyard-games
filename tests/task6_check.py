@@ -21,7 +21,7 @@ async def main():
    assert 'RED RED' not in await page.locator('#t0').inner_text()
    assert await page.locator('#hint').count()==0
    assert await page.locator('#more, #touch-controls, [data-spin], [data-control], #step-value').count()==0
-   assert await page.locator('#bag-menu .bag-row').count()==2
+   assert await page.locator('#bag-menu .bag-row:visible').count()==2
    # Every button belongs to one panel; scrolling is allowed, overlap is not.
    assert await page.locator('#bag-menu [data-height]').count()==3
    rects=await page.locator('#bag-menu button').evaluate_all('(bs)=>bs.filter(b=>b.getClientRects().length).map(b=>{const r=b.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};})')
@@ -32,12 +32,12 @@ async def main():
    assert await page.locator('[data-side="sticky"]').get_attribute('aria-pressed')=='true'
    await page.evaluate('__game.setAim(0)');await page.wait_for_timeout(1500)
    neutral=await page.evaluate('__view.camera.position.toArray()')
-   assert abs(neutral[0]-.5)<.001 and neutral[1:]==[2.05,2.45],neutral
+   assert neutral==([0,5,14] if width<height else [0,3.6,14]),neutral
    for aim in [-.12,.12]:
     await page.evaluate('(a)=>__game.setAim(a)',aim)
     await page.wait_for_timeout(1800)
     view=await page.evaluate('''()=>{const {camera,THREE}=__view;return {x:camera.position.x,look:camera.userData.look.x,board:[-.3048,.3048].flatMap(x=>[-8.23,-9.45].map(z=>new THREE.Vector3(x,.3,z).project(camera).toArray()))}}''')
-    assert view['x']==.5 and view['look']==0,view
+    assert view['x']==0 and view['look']==0,view
     assert all(abs(v[0])<1 and abs(v[1])<1 for v in view['board']),view
    before=await page.evaluate('__game.state.aim')
    for key in ['ArrowLeft','ArrowRight','q','e','a','d']:

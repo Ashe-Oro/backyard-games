@@ -52,11 +52,13 @@ async def main():
   mp.on('pageerror',lambda e:(print(str(e),flush=True),errors.append(str(e))))
   await mp.goto('http://127.0.0.1:8000');await mp.wait_for_function('!!window.__game')
   await mp.evaluate('__game.startMatch({vs:"2p",first:0})');await mp.wait_for_timeout(1100)
+  # The device's usable viewport is 664px high; expose the flick area.
+  await mp.click('#bag-handle');await mp.wait_for_timeout(200)
   cdp=await mobile.new_cdp_session(mp)
   await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':195,'y':460}]})
   before=await mp.evaluate('__game.state.aim')
   await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':460}]})
-  assert await mp.evaluate('__game.state.aim')>before
+  await mp.wait_for_function('before => __game.state.aim > before',arg=before)
   for y in [430,390,340,280]:
    await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':220,'y':y}]});await mp.wait_for_timeout(30)
   await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
