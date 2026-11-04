@@ -88,7 +88,7 @@ function powerForPoint(x,z,team=state.turn){const d=Math.hypot(x,z-RELEASE_Z[tea
 function targetWindow(){const rack=cups.filter(c=>c.team===1-state.turn&&c.alive);const powers=rack.map(c=>powerForPoint(c.x,c.z));
  return powers.length?{lo:Math.min(...powers)-.012,hi:Math.max(...powers)+.012}:{lo:.4,hi:.6};}
 function newBall(team,power,slope=0){const direction=team===0?-1:1,screenRight=team===0?1:-1,yaw=clamp(Math.atan(slope)*.65,-.35,.35),speed=3.2+clamp(power,0,1)*3.4;
- return {team,power,state:'fly',p:new THREE.Vector3(0,RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(ANGLE)*speed*screenRight,Math.sin(ANGLE)*speed,Math.cos(yaw)*Math.cos(ANGLE)*speed*direction),age:0,sinkAge:0,hitCup:null,bounces:0,tableBounces:0,rimHits:0};}
+ return {team,power,state:'fly',p:new THREE.Vector3(0,RELEASE_Y,RELEASE_Z[team]),prev:new THREE.Vector3(),v:new THREE.Vector3(Math.sin(yaw)*Math.cos(ANGLE)*speed*screenRight,Math.sin(ANGLE)*speed,Math.cos(yaw)*Math.cos(ANGLE)*speed*direction),age:0,sinkAge:0,hitCup:null,bounces:0,deadReason:null,rimHits:0};}
 function stepBall(b,dt){
  if(b.state!=='fly')return;b.age+=dt;b.prev.copy(b.p);b.v.y-=G*dt;b.p.addScaledVector(b.v,dt);
  for(const c of cups){
@@ -111,8 +111,8 @@ function stepBall(b,dt){
   }
  }
  const onTable=Math.abs(b.p.x)<TABLE_W/2+BALL_R&&Math.abs(b.p.z-TABLE_Z)<TABLE_L/2+BALL_R;
- if(onTable&&b.p.y<=TABLE_Y+BALL_R&&b.prev.y>=TABLE_Y+BALL_R){b.p.y=TABLE_Y+BALL_R;b.v.y=Math.abs(b.v.y)*.65;b.v.x*=.88;b.v.z*=.88;b.bounces++;b.tableBounces++;}
- if(b.p.y<=BALL_R){b.p.y=BALL_R;b.v.y=Math.abs(b.v.y)*.28;b.v.x*=.65;b.v.z*=.65;b.bounces++;if(b.v.length()<.3||b.bounces>5)b.state='done';}
+ if(onTable&&b.p.y<=TABLE_Y+BALL_R&&b.prev.y>=TABLE_Y+BALL_R){b.p.y=TABLE_Y+BALL_R;b.v.set(0,0,0);b.deadReason='table';b.state='done';return;}
+ if(b.p.y<=BALL_R){b.p.y=BALL_R;b.v.set(0,0,0);b.deadReason='ground';b.state='done';return;}
  if(b.age>5||Math.abs(b.p.x)>7||b.p.z>8||b.p.z<-10)b.state='done';
 }
 let meterDirty=true;
@@ -171,6 +171,7 @@ function cpuShot(){
 function finishShot(scoredCup=null){
  const team=state.turn;
  if(scoredCup){scoredCup.alive=false;scoredCup.group.visible=false;celebrate(scoredCup);if(scoredCup.team!==team)state.hits[team]++;message(scoredCup.team===team?'OWN CUP!':'CUP!',scoredCup.team===team?'That one came back to bite.':`${remaining(scoredCup.team)} cups left.`,1.2);}
+ else if(ball?.deadReason==='table')message('DEAD BALL','Touched the table.',.95);
  else message('NO CUP',ball?.rimHits?'Off the cup. Try a different angle.':'Adjust your power or swipe angle.',.95);
  ball=null;flying.visible=false;
  if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws. Refill and keep your practice going.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
@@ -234,6 +235,6 @@ window.__pong={
  startMatch,throwWith:launchShot,refill:refillCups,
  _screen:(x,y,z)=>{const p=new THREE.Vector3(x,y,z).project(camera);return {x:(p.x+1)*wrap.clientWidth/2,y:(1-p.y)*wrap.clientHeight/2};},
  _powerFor:(id)=>{const c=cups[id];return powerForPoint(c.x,c.z);},
- _probe:(power,slope=0,team=0)=>{const b=newBall(team,power,slope);for(let i=0;i<1440&&b.state==='fly';i++)stepBall(b,1/240);return {state:b.state,cup:b.hitCup?.id??null,p:b.p.toArray(),rimHits:b.rimHits,bounces:b.bounces,tableBounces:b.tableBounces};},
+ _probe:(power,slope=0,team=0)=>{const b=newBall(team,power,slope);for(let i=0;i<1440&&b.state==='fly';i++)stepBall(b,1/240);return {state:b.state,cup:b.hitCup?.id??null,p:b.p.toArray(),v:b.v.toArray(),rimHits:b.rimHits,bounces:b.bounces,deadReason:b.deadReason};},
  _dropAt:(id)=>{if(!humanReady())return false;const c=cups[id];if(!c.alive||!c.enabled)return false;ball=newBall(state.turn,.4);ball.p.set(c.x,RIM_Y+.25,c.z);ball.v.set(0,-.8,0);state.shots[state.turn]++;state.phase='flight';flying.visible=true;flying.scale.setScalar(1);flying.position.copy(ball.p);updateHud();return true;}
 };
