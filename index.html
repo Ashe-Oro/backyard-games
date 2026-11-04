@@ -679,14 +679,14 @@ const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); scene.add(held);
 // Present the held bag as a foreground hand model. Physics still releases from
 // the regulation pitcher's box; screen framing must not change that origin.
 const heldTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(.8, 0, 0));
-function positionHeldBag(rx, yaw) {
+function positionHeldBag(yaw) {
   const portrait = clamp((1.2 - camera.aspect) / .65, 0, 1);
   // Cap screen height too, so a wide landscape phone doesn't enlarge the bag.
   const width = Math.min(.065 + .055 * portrait, .10 / camera.aspect);
   const halfFov = Math.tan(camera.fov * Math.PI / 360);
   const depth = BAG / (2 * halfFov * camera.aspect * width);
   const halfHeight = depth * halfFov;
-  held.position.set((rx < 0 ? -.42 : .42) * halfHeight * camera.aspect, -.56 * halfHeight, -depth)
+  held.position.set(0, -.56 * halfHeight, -depth)
     .applyQuaternion(camera.quaternion).add(camera.position);
   held.quaternion.copy(camera.quaternion).multiply(heldTilt);
   held.rotateY(-yaw);
@@ -1245,12 +1245,12 @@ function frame() {
     if (b.state === 'slide') b.spin *= Math.pow(0.1, dt);
   }
   updateFlightTrail(dt);
-  // Held bag and indicators follow the thrower and aim; the camera stays fixed.
+  // The held bag stays centered below the board; aim indicators follow the thrower.
   const t = thrower(), rx = releaseX(t);
   const showHeld = M.phase === 'aim' || M.phase === 'cpu';
   const yaw = baseYaw(rx) + M.aim;
   held.visible = showHeld;
-  if (showHeld) positionHeldBag(rx, yaw);
+  if (showHeld) positionHeldBag(yaw);
   // One calm-air sweet-spot reference throw, independent of touch and meter speed.
   const preview=newBody(t);launch(preview,rx,WIN[t+M.side[t]+M.arc].mid,M.aim,0,M.arc,M.spin);
   aimDots.forEach((d, i) => {
