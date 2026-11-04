@@ -11,6 +11,7 @@ const path = require('node:path');
       const width=touch?390:1280,height=touch?844:800;
       const context=await browser.newContext({viewport:{width,height},hasTouch:touch});
       const page=await context.newPage(), errors=[];
+      await page.addInitScript(()=>{try{localStorage.setItem('backyard-cornhole-help-seen','1');}catch{}});
       page.on('pageerror',e=>errors.push(e.message));
       const url='http://127.0.0.1:8012/';
       await page.route(url,r=>r.fulfill({body:fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),contentType:'text/html'}));

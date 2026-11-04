@@ -34,7 +34,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(10px,1.9vmin,14px)}
 #hud.menu > :not(#title){display:none!important}
 #sb{position:absolute;left:0;right:0;top:1.4vmin;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;padding:0 1.6vmin}
-.team{min-width:0}.team.blue{grid-column:3;text-align:right}
+.team{min-width:0;padding-top:54px}.team.blue{grid-column:3;text-align:right}
 .tn{font-size:.9em;letter-spacing:.06em}
 .red .tn{color:#ff8a80}.blue .tn{color:#9db8ff}
 .ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
@@ -48,11 +48,16 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
 #turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
 #turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
-#meter{position:absolute;left:50%;top:80%;transform:translateY(-50%);width:clamp(16px,1.8vmin,22px);height:clamp(80px,18vh,160px);border:.3em solid #2b1a2e;background:#3b2a40;box-shadow:.3em .3em 0 rgba(43,26,46,.35)}
-#fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#ffb340 0 .5em,#ff8a3d .5em 1em)}
-#sweet,#onb{position:absolute;left:-.55em;right:-.55em;height:6%}
-#onb{border:.2em dashed rgba(255,255,255,.55)}
-#sweet{border:0}
+#meter{position:absolute;left:50%;top:80%;transform:translateY(-50%);width:clamp(24px,2.8vmin,30px);height:clamp(110px,22vh,190px);border:3px solid #231b2b;background:linear-gradient(0deg,#172f35,#34483d 65%,#644338);box-shadow:inset 2px 0 #fff4dc55,3px 3px 0 #231b2b88}
+#meter::after{content:'';position:absolute;inset:0 3px;z-index:3;background:repeating-linear-gradient(0deg,transparent 0 calc(10% - 1px),#fff4dc77 calc(10% - 1px) 10%);pointer-events:none}
+#fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(0deg,#f8ce4b 0 5px,#dca035 5px 6px);box-shadow:inset 2px 0 #fff0a0}
+#sweet,#onb{position:absolute;height:6%;z-index:2}
+#onb{left:0;right:0;background:#65e3a333;border-top:1px solid #65e3a3;border-bottom:1px solid #65e3a3}
+#sweet{left:-5px;right:-5px;border:2px solid #baff99;background:#35c96fbb;box-shadow:0 0 0 1px #173825}
+#sweet::after{content:'TARGET';position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);font-size:7px;color:#c8ffae;text-shadow:1px 1px #162a20,-1px -1px #162a20}
+#power-marker{position:absolute;left:-8px;right:-8px;height:4px;bottom:0;background:#fff4dc;box-shadow:0 0 0 2px #231b2b;z-index:4}
+#meter[data-zone="target"] #power-marker{background:#baff99}
+#meter[data-zone="high"] #power-marker{background:#ff7f6e}
 .mlbl{position:absolute;top:calc(100% + .7em);left:50%;transform:translateX(-50%);font-size:.65em;white-space:nowrap}
 #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
 #msg.on{opacity:1;transform:scale(1)}
@@ -64,6 +69,17 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 .btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
 .hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
 .hb:hover{background:#56405c}
+#pause-button{position:absolute;left:1.6vmin;top:1.4vmin;min-height:44px;padding:10px 12px;font-size:9px}
+.game-dialog{margin:auto;width:min(420px,92vw);max-height:90dvh;overflow:auto;padding:24px;background:#30283b;color:#fff4dc;border:4px solid #ffe45e;box-shadow:6px 6px 0 #211827;font:12px/1.8 'Press Start 2P',monospace;text-align:center}
+.game-dialog::backdrop{background:#101b24bb}
+.game-dialog h2{font-size:20px;color:#ffe45e;margin-bottom:18px}
+.game-dialog p{font:14px/1.6 ui-sans-serif,system-ui,sans-serif;margin:14px 0;color:#f1e7ce}
+.game-dialog .dialog-actions{display:grid;gap:12px;margin-top:22px}
+.game-dialog button{min-height:48px;font:inherit;font-size:11px;border:3px solid #211827;background:#ffe45e;color:#282035;padding:12px;cursor:pointer}
+.game-dialog button.secondary{background:#494155;color:#fff4dc;border-color:#817188}
+.game-dialog button:focus-visible,#pause-button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.help-swipe{font:32px/1 monospace;color:#baff99;margin:12px auto}
+@media(max-height:450px){.game-dialog{padding:16px}.game-dialog h2{font-size:16px;margin-bottom:8px}.game-dialog p{margin:8px 0}.game-dialog .dialog-actions{margin-top:12px;gap:8px}.help-swipe{display:none}}
 #reset-bags{position:absolute;right:1.6vmin;bottom:1.8vmin;min-height:44px;padding:10px 12px;font-size:clamp(8px,1.4vmin,11px)}
 #reset-bags:disabled{opacity:.45;cursor:default}
 #swipe-feedback{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .4s ease-out;overflow:visible}
@@ -91,7 +107,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
 #bag-menu > *{flex-shrink:0}
 .bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
-#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#sweet{box-shadow:inset 0 0 0 1px #fff,0 0 6px #fff;background:#ffffff33}#panel .go{display:block;margin:12px auto}
+#height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#panel .go{display:block;margin:12px auto}
 @media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
 /* Mode descriptions share one readable, responsive button column. */
 #panel:has(.menu-modes){width:540px;padding:12px;max-width:94vw}
@@ -114,6 +130,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #bag-picks{display:none;white-space:nowrap;font-size:7px}
 .collapsed #bag-picks{display:block}
 @media(pointer:coarse),(max-width:600px){#bag-handle{min-width:44px;min-height:44px}#bag-drawer #bag-menu{max-height:60vh}}
+@media(max-width:600px){#bag-drawer:not(.collapsed) #bag-handle{bottom:56px}}
 @media(max-height:450px){#bag-drawer #bag-menu{max-height:65vh}}
 @media(prefers-reduced-motion:reduce){#bag-drawer{transition:none}#bag-drawer.collapsed #bag-menu{transition:none}}
 </style>
@@ -122,6 +139,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 <body>
 <div id="game">
   <div id="hud">
+    <button class="hb" id="pause-button" aria-label="Pause / menu">Ⅱ PAUSE</button>
     <div id="sb" class="ol">
       <div class="team red" id="t0"><div class="tn"><span id="n0">YOU</span></div><div class="ts" id="s0">0</div><div class="pips" id="p0"></div></div>
       <div class="mid"><div id="inn">ROUND 1</div><div id="goal">TO 21</div></div>
@@ -130,7 +148,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>line up · flick · toss</p></div>
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
-    <div id="meter"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div class="mlbl ol">PWR</div></div>
+    <div id="meter" role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="fill"></div><div id="onb"></div><div id="sweet"></div><div id="power-marker"></div><div class="mlbl ol">POWER</div></div>
     <svg id="swipe-feedback" aria-hidden="true">
       <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
       <line id="swipe-outline" stroke="#2b1a2e" stroke-width="8" stroke-linecap="square"/>
@@ -147,6 +165,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <button id="bag-handle" aria-controls="bag-menu" aria-expanded="true" aria-label="Collapse bag options"><span id="bag-chevron" aria-hidden="true">◀</span><span id="bag-picks"></span></button>
     </div>
   </div>
+  <dialog class="game-dialog" id="pause-dialog" aria-labelledby="pause-heading"><h2 id="pause-heading">Paused</h2><div class="dialog-actions"><button id="resume-game" autofocus>Resume game</button><button class="secondary" id="pause-menu">Main menu</button></div></dialog>
+  <dialog class="game-dialog" id="help-dialog" aria-labelledby="help-heading"><h2 id="help-heading">Line up. Flick. Toss.</h2><div class="help-swipe" aria-hidden="true">↑</div><p><strong>Flick upward to throw.</strong><br>Faster flicks add more power.</p><p>Aim for the green TARGET band on the meter.<br>A sideways swipe steers your throw.</p><p>The arrow after release shows your swipe direction.</p><div class="dialog-actions"><button id="help-done" autofocus>Got it — let’s play</button></div></dialog>
   <div id="panel" class="ol" hidden></div>
   <div id="err">WebGL isn't available here.<br>Open this page in a desktop browser.</div>
 </div>
@@ -749,9 +769,30 @@ function updateFlightTrail(dt) {
 const $ = (id) => document.getElementById(id);
 const ui = { s: [$('s0'), $('s1')], p: [$('p0'), $('p1')], t: [$('t0'), $('t1')], n: [$('n0'), $('n1')], inn: $('inn'), goal: $('goal'), turn: $('turn'), msg: $('msg'), fill: $('fill'), sweet: $('sweet'), onb: $('onb'), title: $('title'), mode: $('mode'), side: $('side'), panel: $('panel') };
 const M = {
+  paused:false,
   vs: 'cpu', exact: false, scores: [0, 0], inning: 1, first: 0, k: 0, phase: 'menu', aim: 0, ctrl: 'drag',
   position: [0, 0], heights: [1,1], practice:false, practiceStats:{throws:0,in:0,on:0}, sweetShift:0, spin: 0, arc: 1, side: ['slick', 'slick'], active: null, before: null, cpu: null, history: [], winner: -1, lastPower: null,
 };
+const gameTimers = new Set();
+function gameAfter(fn,ms){const timer={fn,left:ms};gameTimers.add(timer);return timer;}
+function pauseGame(){
+  if(M.paused || ['menu','intro','champion'].includes(M.phase))return;
+  M.paused=true;drag=null;flick=null;samples.length=0;wheelGesture=[];clearTimeout(wheelTimer);
+  wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown');
+  if(document.pointerLockElement)document.exitPointerLock();
+  if(M.phase==='aim')setMeter(0);
+  $('pause-dialog').showModal();
+}
+function resumeGame(){M.paused=false;$('pause-dialog').close();$('pause-button').focus();}
+function showHelpOnce(){
+  try{if(localStorage.getItem('backyard-cornhole-help-seen')==='1')return;localStorage.setItem('backyard-cornhole-help-seen','1');}catch{}
+  $('help-dialog').showModal();
+}
+$('pause-button').onclick=pauseGame;
+$('resume-game').onclick=resumeGame;
+$('pause-dialog').oncancel=e=>{e.preventDefault();resumeGame();};
+$('pause-menu').onclick=()=>{resumeGame();showMenu();$('two-player').focus();};
+$('help-done').onclick=()=>$('help-dialog').close();
 const releaseX=(t)=>RX[t];
 const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
@@ -829,9 +870,14 @@ function hint() {
 let msgTimer;
 function say(big, small = '', ms = 1400) {
   ui.msg.innerHTML = big + (small ? `<small>${small}</small>` : ''); ui.msg.classList.add('on');
-  clearTimeout(msgTimer); msgTimer = setTimeout(() => ui.msg.classList.remove('on'), ms);
+  gameTimers.delete(msgTimer); msgTimer = gameAfter(() => ui.msg.classList.remove('on'), ms);
 }
-function setMeter(p) { ui.fill.style.height = (clamp(p, 0, 1) * 100) + '%'; }
+function setMeter(p) {
+  p=clamp(p,0,1);const w=meterWindow(),meter=$('meter');
+  ui.fill.style.height=`${p*100}%`;$('power-marker').style.bottom=`${p*100}%`;
+  meter.dataset.zone=p>w.hi?'high':p>=w.lo?'target':'low';
+  meter.setAttribute('aria-valuenow',String(Math.round(p*100)));
+}
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 
 function clearBags() { for (const b of bags) scene.remove(b.mesh); bags.length = 0; }
@@ -936,6 +982,7 @@ function planCareerShot(o){
  return {t:0,side,power:best.power,aim:best.aim,drift:0,goal};
 }
 function showMenu() {
+  gameTimers.clear();M.active=null;M.before=null;M.paused=false;
   M.phase = 'menu'; ui.title.classList.remove('gone');
   M.career=false;
   clearBags();
@@ -947,6 +994,7 @@ function showMenu() {
   renderHud();
 }
 function startMatch(opts = {}) {
+  gameTimers.clear();M.paused=false;
   if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
   M.career = opts.career === true;
   M.practice=opts.practice===true;M.practiceStats={throws:0,in:0,on:0};M.heights=[1,1];
@@ -968,7 +1016,7 @@ function startMatch(opts = {}) {
 }
 function beginInning(delay = 300) {
   clearBags(); M.k = 0; M.phase = 'wait'; renderHud();
-  setTimeout(nextTurn, delay);
+  gameAfter(nextTurn, delay);
 }
 function nextTurn() {
   if(['menu','intro','champion'].includes(M.phase))return;
@@ -989,6 +1037,7 @@ function nextTurn() {
   renderHud();
 }
 function throwBag(power, drift = 0, team = thrower()) {
+  if(M.paused)return false;
   if (!(M.phase === 'aim' || M.phase === 'cpu')) return false;
   const side = M.side[team];
   const actualPower=isHuman(team) ? physicalPower(power) : power;
@@ -1011,11 +1060,11 @@ function afterThrow() {
   else if (b.state === 'board') { say(holeDist(b.lp) < HOLE_R + BAG_R * 0.6 ? 'HANGER!' : 'ON THE BOARD', '1 POINT'); burst(b.p, true); }
   else if (b.dead) say('GROUNDER', 'HIT THE GRASS FIRST · REMOVED', 1300);
   else say(b.offBoard ? 'OFF THE BOARD' : 'MISS', '0', 1100);
-  if (knockedIn.length) { setTimeout(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
-  else if (knockedOff.length) setTimeout(() => say('KNOCKED OFF!', knockedOff.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG'), 900);
+  if (knockedIn.length) { gameAfter(() => say('KNOCKED IN!', knockedIn.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG +3'), 900); burst(HOLE_WORLD.clone().setY(HOLE_WORLD.y + 0.1)); }
+  else if (knockedOff.length) gameAfter(() => say('KNOCKED OFF!', knockedOff.map(({ o }) => TEAM[o.team]).join(' + ') + ' BAG'), 900);
   if(M.practice){const n=M.practiceStats;n.throws++;n.in+=b.state==='in'?1:0;n.on+=b.state==='board'?1:0;}
   M.k++; M.phase = 'wait'; renderHud();
-  setTimeout(nextTurn, knockedIn.length || knockedOff.length ? 1500 : 750);
+  gameAfter(nextTurn, knockedIn.length || knockedOff.length ? 1500 : 750);
 }
 function scoreInning() {
   const { pts, inC, onC } = lie();
@@ -1081,7 +1130,7 @@ function pointerAim(e){
 }
 function pointAim(e){const a=pointerAim(e);if(a!==undefined)M.aim=clamp(a,-AIM_MAX,AIM_MAX);}
 document.querySelectorAll('[data-side]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.side[thrower()]=b.dataset.side;held.material=TEAM_MATS[thrower()][b.dataset.side==='slick'?'sticky':'slick'];renderHud();});
-$('menu').onclick=()=>{if(M.active)return;showMenu();};
+$('menu').onclick=pauseGame;
 $('reset-bags').onclick=()=>{if(!M.practice || !humanTurn())return;clearBags();renderHud();};
 $('reset-bags').onkeydown=e=>{if(e.key==='Enter'||e.key===' ')e.stopPropagation();};
 document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTurn())return;M.arc=+b.dataset.height;M.heights[thrower()]=M.arc;renderHud();});
@@ -1090,7 +1139,7 @@ document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTu
 let drag = null;
 const samples = [];
 const H = () => wrap.clientHeight || 1;
-const humanTurn = () => M.phase === 'aim' && isHuman(thrower());
+const humanTurn = () => !M.paused && !$('help-dialog').open && M.phase === 'aim' && isHuman(thrower());
 let swipeTimer;
 function showSwipe(flick) {
   const overlay = $('swipe-feedback'), rect = wrap.getBoundingClientRect();
@@ -1137,7 +1186,7 @@ wrap.addEventListener('pointermove', (e) => {
     for (const c of (evs.length ? evs : [e])) drag.list.push({ t: c.timeStamp, x: c.clientX, y: c.clientY });
     while (drag.list.length > 2 && e.timeStamp - drag.list[0].t > 300) drag.list.shift();
     const f = flickFrom(drag.list); if (f) setMeter(powerFromSpeed(f.up));
-  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-drawer') && humanTurn()) {
+  } else if (e.pointerType === 'mouse' && !e.target.closest('#bag-drawer, button, dialog') && humanTurn()) {
     pointAim(e);
   }
 });
@@ -1192,7 +1241,7 @@ function adjust(k) {
 }
 let wheelGesture = [], wheelTimer;
 wrap.addEventListener('wheel', e => {
-  if (e.target.closest('#bag-drawer')) return;
+  if (e.target.closest('#bag-drawer, button, dialog')) return;
   e.preventDefault();
   if (!humanTurn() || !ui.panel.hidden) return;
   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1;
@@ -1206,6 +1255,8 @@ wrap.addEventListener('wheel', e => {
 }, {passive:false});
 addEventListener('blur', () => { drag = null; });
 addEventListener('keydown', (e) => {
+  if($('help-dialog').open || $('pause-dialog').open)return;
+  if(e.key==='Escape'){e.preventDefault();pauseGame();return;}
   if (e.repeat) return;
   const k = e.key.toLowerCase();
   if (k === 'h') { e.preventDefault(); adjust(k); }
@@ -1237,7 +1288,10 @@ function animatePennant(seconds) {
 const clock = new THREE.Clock();
 let acc = 0, time = 0;
 function frame() {
-  const dt = Math.min(clock.getDelta(), 0.05); time += dt;
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if(M.paused){if(meterLayoutDirty)positionPowerMeter();renderer.render(scene,camera);requestAnimationFrame(frame);return;}
+  time += dt;
+  for(const timer of [...gameTimers]){timer.left-=dt*1000;if(timer.left<=0){gameTimers.delete(timer);timer.fn();}}
   if (flick && performance.now() - lastMoveT > 60) finishFlick();
   if (M.phase === 'cpu') {
     const c = M.cpu; c.t += dt;
@@ -1298,11 +1352,11 @@ if (POSTER) {
   }
   M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
   for (const el of [$('bag-drawer'), $('meter')]) el.style.display = 'none';
-} else showMenu();
+} else {showMenu();showHelpOnce();}
 requestAnimationFrame(frame);
 
 window.__game = {
-  get state() { return { practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
+  get state() { return { paused:M.paused, practice:M.practice, practiceStats:{...M.practiceStats}, heights:[...M.heights], side:[...M.side], sweet:meterWindow(), phase: M.phase, vs: M.vs, exact: M.exact, inning: M.inning, scores: [...M.scores], first: M.first, k: M.k, thrower: thrower(), aim: M.aim, position: [...M.position], spin: M.spin, arc: M.arc, wind: {...wind}, lastPower: M.lastPower, history: M.history.map((h) => ({ ...h })), winner: M.winner, bags: bags.map((b) => ({ team: b.team, state: b.state, dead: b.dead, side: b.side, p: b.p.toArray(), lp: b.lp.toArray(), velocity: b.lv.toArray() })) }; },
   _setWind:(mph,angle)=>{wind.mph=mph;wind.angle=angle;wind.x=Math.sin(angle)*mph*.025;wind.z=-Math.cos(angle)*mph*.025;renderHud();},
   _flag:(seconds)=>{if(seconds!==undefined)animatePennant(seconds);return {...pennant.userData,vertices:Array.from(pennant.geometry.attributes.position.array)};},
   _screenPoint:(x,z)=>{const v=new THREE.Vector3(x,.2,z).project(camera);return {x:(v.x+1)*wrap.clientWidth/2,y:(1-v.y)*wrap.clientHeight/2};},
