@@ -55,6 +55,10 @@ const path = require('node:path');
             assert(object.top > .15 && object.bottom < .9, JSON.stringify({width,height,side,view}));
           }
           assert(view.bag.top > view.board.bottom, 'Held bag must read as foreground');
+          if (width/height >= 1.2) {
+            assert(view.bag.top-view.board.bottom > .14, 'Wide screens need visible throwing distance between bag and board');
+            assert(view.bag.bottom-view.bag.top < .10, 'Desktop bag must not dominate the court');
+          }
           const center = (view.bag.left+view.bag.right)/2;
           const boardCenter = (view.board.left+view.board.right)/2;
           assert(Math.abs(center - boardCenter) < .02, 'Held bag must align with the board on both throwing sides');
