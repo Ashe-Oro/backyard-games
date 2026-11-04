@@ -1,8 +1,8 @@
 # tailgate-games
 
-Tailgate Games contains two static Three.js games:
+Tailgate Games has a buildless home page at `/` and two static Three.js games:
 
-- Backyard Cornhole: `/` (served from `index.html`).
+- Backyard Cornhole: `/cornhole/` (served from `cornhole/index.html`).
 - Backyard Beer Pong: `/beer-pong/` — Solo Practice, vs CPU, and same-screen 2 Player.
 
 Both games use distance-based pull-down-and-release throws: grab the bag or ball, drag sideways to position it, pull down for power and diagonally to aim, then release. Return to the starting point to cancel. Post-throw arrows and power feedback help adjust the next attempt. Cornhole retains PUSH / NORMAL / KOBE throw heights and bag surfaces. Both games are linked from their menus.
@@ -25,3 +25,7 @@ commits and in the Vercel dashboard.
 
 This integration deploys the game; browser regression tests currently run locally
 and are not an automated release gate.
+
+## Adding a game
+
+Keep each game in its own directory, such as `cornhole/` or `beer-pong/`, with a menu link back to `/`. Add an `article.game-card` to the home page’s `.game-grid` in `index.html`, a 720 × 400 scene image in `assets/`, and a direct Play link. The responsive grid wraps automatically as games are added. `home.css` styles the shared home page independently of the games.

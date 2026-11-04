@@ -11,7 +11,7 @@ const path = require('node:path');
     const errors = [];
     await page.addInitScript(()=>{try{localStorage.setItem('backyard-cornhole-help-seen','1');}catch{}});
     page.on('pageerror', error => errors.push(error.message));
-    const source = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../cornhole/index.html'), 'utf8');
     // Inspect geometry without adding production-only test interfaces.
     const instrumented = source.replace('window.__game = {', `
       window.__framing = () => {
@@ -43,7 +43,7 @@ const path = require('node:path');
           scaleGap:b.mesh.scale.distanceTo(held.scale),sameGeometry:b.mesh.geometry===held.geometry};
       };
       window.__game = {`);
-    const url = 'http://127.0.0.1:8012/';
+    const url = 'http://127.0.0.1:8012/cornhole/';
     await page.route(url, route => route.fulfill({body:instrumented,contentType:'text/html'}));
     await page.goto(url);
     await page.waitForFunction(() => !!window.__game);

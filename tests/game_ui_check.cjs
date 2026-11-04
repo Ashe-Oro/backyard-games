@@ -7,8 +7,8 @@ const path=require('node:path');
  try{
   const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  const url='http://127.0.0.1:8012/';
-  const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8').replace('window.__game = {','window.__setPower=setMeter; window.__game = {');
+  const url='http://127.0.0.1:8012/cornhole/';
+  const source=fs.readFileSync(path.join(__dirname,'../cornhole/index.html'),'utf8').replace('window.__game = {','window.__setPower=setMeter; window.__game = {');
   await page.route(url,r=>r.fulfill({body:source,contentType:'text/html'}));
   await page.goto(url);await page.waitForFunction(()=>!!window.__game);
   assert(await page.locator('#help-dialog').isVisible(),'First visit needs instructions');
