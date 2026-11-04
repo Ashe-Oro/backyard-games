@@ -3,7 +3,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
 (async()=>{const browser=await chromium.launch();try{
  const context=await browser.newContext({viewport:{width:1280,height:800},hasTouch:true}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>localStorage.setItem('tailgate-beer-pong-help-seen','1'));await page.goto(BASE+'/beer-pong/');await page.waitForFunction(()=>!!window.__pong);await page.locator('[data-mode=practice]').click();
- const origin=()=>page.evaluate(()=>__pong._screen(...__pong.state.held.p));
+ const origin=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(__pong._screen(...__pong.state.held.p))))));
  const reset=()=>page.evaluate(()=>__pong.startMatch('practice'));
  async function pull(dx,dy,hold=0){const p=await origin();await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+dx,p.y+dy,{steps:5});if(hold)await page.waitForTimeout(hold);const power=await page.evaluate(()=>__pong.state.power);await page.mouse.up();return {power,state:await page.evaluate(()=>__pong.state)};}
  let fast=await pull(15,80);assert.equal(fast.state.shots[0],1);assert(fast.state.ball.v[0]<0,'Pull right aims left');await reset();let slow=await pull(15,80,700);assert.equal(slow.power,fast.power);assert.equal(slow.state.ball.v[0],fast.state.ball.v[0]);assert.equal(slow.state.ball.v[2],fast.state.ball.v[2]);

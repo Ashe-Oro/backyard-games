@@ -13,3 +13,12 @@ for(const id of Object.keys(OPPONENTS)){
 }
 assert(outcomes[0]>0&&outcomes[0]<outcomes[1]);assert(outcomes[1]<outcomes[2]);assert(outcomes[2]<=outcomes[3]);assert(outcomes[1]>250&&outcomes[1]<750);assert(outcomes[3]<1000,'Boss must retain a possible attention lapse');
 const d=new SwatDefender('regular',()=>0),b=baseline();d.notice(b);d.reset();assert.equal(d.result,null);assert.equal(d.phase,'idle');assert.equal(d.target,null);console.log('Swat legality, physical contact, reaction timing, difficulty ordering and shot resets passed.');
+
+const {handSwipe,SWIPE_DURATION}=await import('../beer-pong/hand-swipe.mjs');
+for(const side of [-1,1]){
+ const impact={x:side*.2,y:.3,z:.98},start=handSwipe(0,impact,side),middle=handSwipe(SWIPE_DURATION/2,impact,side),end=handSwipe(SWIPE_DURATION,impact,side);
+ assert.equal(start.x,side*1.35);assert(Math.abs(middle.x-impact.x)<1e-12);assert.equal(middle.y,impact.y);assert.equal(middle.z,impact.z);assert.deepEqual(end,start);
+ let previous=start.x;
+ for(let i=1;i<=20;i++){const p=handSwipe(SWIPE_DURATION*i/40,impact,side);assert.equal(p.y,start.y);assert.equal(p.z,start.z);assert((p.x-previous)*side<=0);previous=p.x;}
+}
+console.log('Both hand edges start outside the viewport, swipe horizontally through impact, and return to the same edge.');

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {layoutsFor,layoutPoints} from './rerack.mjs';
 import {OPPONENTS,SwatDefender} from './opponents.mjs';
 import {createGlove} from './glove.js';
+import {handSwipe,SWIPE_DURATION} from './hand-swipe.mjs';
 
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -11,7 +12,7 @@ const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], A
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
 const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
-let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,humanSwing=null,humanPointer=null;
+let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,humanSwing=null,humanPointer=null,cpuSwing=null;
 const wrap=$('game'), scene=new THREE.Scene();
 scene.background=new THREE.Color('#edc5a0');scene.fog=new THREE.Fog('#c9d6ac',12,35);
 let renderer;
@@ -276,7 +277,7 @@ function ballScreen(x=releaseX(state.turn)){
  const p=new THREE.Vector3(x,RELEASE_Y,RELEASE_Z[state.turn]).project(camera),rect=wrap.getBoundingClientRect();
  return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
 }
-function resetHumanDefense(){humanSwing=null;humanPointer=null;playerGlove.visible=false;$('swat-target').hidden=true;$('defense-hint').hidden=true;}
+function resetHumanDefense(){humanSwing=null;humanPointer=null;cpuSwing=null;playerGlove.visible=false;$('swat-target').hidden=true;$('defense-hint').hidden=true;}
 function humanDefenseTurn(){return state.mode==='cpu'&&state.turn===1&&state.phase==='flight'&&!state.paused&&!document.querySelector('dialog[open]');}
 function canHumanSwat(){
  if(!humanDefenseTurn()||ball?.state!=='fly'||ball.bounces!==1||!ball.bounceAllowed||ball.p.z<TABLE_Z-.05)return false;
@@ -294,7 +295,7 @@ function attemptHumanSwat(point){
  const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((point.x-r.left)/r.width*2-1,1-(point.y-r.top)/r.height*2),camera);
  const impact=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,0,1),-ball.p.z),new THREE.Vector3());
  if(!impact)return false;
- humanSwing={age:0,impact,side,hit};
+ humanSwing={age:0,impact,side,hit,screen:impact.clone().project(camera)};
  if(hit){swatBall(ball,side);message('YOU SWATTED!','',.9);}
  return hit;
 }
@@ -303,13 +304,20 @@ function swipeHumanSwat(from,to){
  const p=incomingScreen(),dx=to.x-from.x,dy=to.y-from.y,f=clamp(((p.x-from.x)*dx+(p.y-from.y)*dy)/(dx*dx+dy*dy||1),0,1),near={x:from.x+dx*f,y:from.y+dy*f};
  return Math.hypot(near.x-p.x,near.y-p.y)<=humanHitRadius()&&attemptHumanSwat(near);
 }
+function placeSwipe(hand,swing){
+ const point=handSwipe(swing.age,swing.screen,swing.side);
+ hand.position.copy(new THREE.Vector3(point.x,point.y,point.z).unproject(camera));
+ // Mirror once for the entering edge; no animated rotation or scale.
+ hand.rotation.set(0,swing.side===1?0:Math.PI,0);
+}
+function handSnapshot(hand,swing){return {visible:hand.visible,age:swing?.age??null,side:swing?.side??null,start:swing?handSwipe(0,swing.screen,swing.side):null,screen:hand.position.clone().project(camera).toArray(),rotation:hand.rotation.toArray().slice(0,3),scale:hand.scale.toArray()};}
 function humanDefenseUi(){
  const defending=humanDefenseTurn()&&ball?.state==='fly',legal=canHumanSwat();
  $('defense-hint').hidden=!defending;$('defense-hint').textContent=legal?'TAP / CLICK THE BALL':ball?.bounces===0?'WAIT FOR THE BOUNCE':'WATCH THE BALL';
  const target=$('swat-target');target.hidden=!legal;
  if(legal){const p=incomingScreen(),r=wrap.getBoundingClientRect();target.style.left=`${p.x-r.left}px`;target.style.top=`${p.y-r.top}px`;target.disabled=!!humanSwing&&humanSwing.age<.25;}
- playerGlove.visible=!!humanSwing&&humanSwing.age<.28;
- if(playerGlove.visible){const {age,impact,side}=humanSwing,f=clamp(age/.28,0,1);playerGlove.position.copy(impact).add(new THREE.Vector3(side*(.12-f*.55),f*.12,0));playerGlove.rotation.set(-.15,side===1?0:Math.PI,side*(f-.5)*.35);}
+ playerGlove.visible=!!humanSwing&&humanSwing.age<SWIPE_DURATION;
+ if(playerGlove.visible)placeSwipe(playerGlove,humanSwing);
 }
 $('swat-target').onclick=event=>{if(event.detail===0&&canHumanSwat())attemptHumanSwat(incomingScreen());};
 function moveBallTo(clientX){
@@ -373,8 +381,14 @@ function frame(){
   for(const p of sparks)if(p.life>0){p.life-=dt;p.v.y-=G*dt;p.mesh.position.addScaledVector(p.v,dt);p.mesh.visible=p.life>0;}
  }
  held.visible=['aim','cpu'].includes(state.phase);if(held.visible)held.position.set(releaseX(state.turn),RELEASE_Y,RELEASE_Z[state.turn]);
- const defense=defender.snapshot();glove.visible=state.mode==='cpu'&&['windup','swing','recover'].includes(defense.phase);
- if(glove.visible){glove.position.set(defense.position.x,defense.position.y,defense.position.z);glove.rotation.set(-.15,0,defense.phase==='windup'?-.2:defense.phase==='recover'?.18:0);}
+ const defense=defender.snapshot(),active=['windup','swing','recover'].includes(defense.phase);
+ if(!active)cpuSwing=null;
+ if(active&&!cpuSwing){
+  const target=defense.target||defense.position,screen=new THREE.Vector3(target.x,target.y,target.z).project(camera);
+  cpuSwing={age:0,screen,side:screen.x<0?-1:1};
+ }else if(cpuSwing&&!state.paused)cpuSwing.age+=dt;
+ glove.visible=state.mode==='cpu'&&!!cpuSwing&&cpuSwing.age<SWIPE_DURATION;
+ if(glove.visible)placeSwipe(glove,cpuSwing);
  humanDefenseUi();
  renderer.render(scene,camera);requestAnimationFrame(frame);
 }
@@ -385,8 +399,8 @@ window.__pong={
  get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces,style:ball.style,deadReason:ball.deadReason}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
  startMatch,throwWith:launchShot,refill:refillCups,
  court:{length:TABLE_L,center:TABLE_Z,width:TABLE_W,releaseZ:[...RELEASE_Z]},
- get defense(){return {...defender.snapshot(),visible:glove.visible};},
- get humanDefense(){return {active:canHumanSwat(),swing:humanSwing?{age:humanSwing.age,hit:humanSwing.hit,impact:humanSwing.impact.toArray()}:null,visible:playerGlove.visible};},
+ get defense(){return {...defender.snapshot(),visible:glove.visible,hand:handSnapshot(glove,cpuSwing)};},
+ get humanDefense(){return {active:canHumanSwat(),swing:humanSwing?{age:humanSwing.age,hit:humanSwing.hit,impact:humanSwing.impact.toArray()}:null,visible:playerGlove.visible,hand:handSnapshot(playerGlove,humanSwing)};},
  _screen:(x,y,z)=>{const p=new THREE.Vector3(x,y,z).project(camera);return {x:(p.x+1)*wrap.clientWidth/2,y:(1-p.y)*wrap.clientHeight/2};},
  _slopeFor:(id)=>{const c=cups[id],yaw=Math.atan2((c.x-releaseX(state.turn))*(state.turn===0?1:-1),Math.abs(c.z-RELEASE_Z[state.turn]));return Math.tan(yaw/.65);},
  _powerFor:(id)=>{const c=cups[id];return powerForPoint(c.x,c.z);},
