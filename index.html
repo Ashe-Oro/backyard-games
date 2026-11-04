@@ -212,12 +212,11 @@ function resize() {
   const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));
   renderer.setSize(Math.ceil(w / scale), Math.ceil(h / scale), false);
   camera.aspect = w / h;
-  // A closer, elevated view gives the deck depth instead of flattening the fence.
-  // Blend by aspect ratio so phones and wide desktops share the same composition.
+  // Give wide screens more court depth while preserving the tighter phone view.
   const portrait = clamp((1.2 - camera.aspect) / 0.65, 0, 1);
   camera.position.copy(CAM_POS);
   camera.lookAt(CAM_LOOK);
-  camera.fov = 14 + 8 * portrait;
+  camera.fov = 18 + 4 * portrait;
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -681,12 +680,12 @@ const held = new THREE.Mesh(bagGeo, TEAM_MATS[0].slick); scene.add(held);
 const heldTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(.8, 0, 0));
 function positionHeldBag(yaw) {
   const portrait = clamp((1.2 - camera.aspect) / .65, 0, 1);
-  // Cap screen height too, so a wide landscape phone doesn't enlarge the bag.
-  const width = Math.min(.065 + .055 * portrait, .10 / camera.aspect);
+  // Keep the desktop bag smaller and lower to separate the hand from the target.
+  const width = Math.min(.065 + .055 * portrait, (.06 + .04 * portrait) / camera.aspect);
   const halfFov = Math.tan(camera.fov * Math.PI / 360);
   const depth = BAG / (2 * halfFov * camera.aspect * width);
   const halfHeight = depth * halfFov;
-  held.position.set(0, -.56 * halfHeight, -depth)
+  held.position.set(0, (-.70 + .14 * portrait) * halfHeight, -depth)
     .applyQuaternion(camera.quaternion).add(camera.position);
   held.quaternion.copy(camera.quaternion).multiply(heldTilt);
   held.rotateY(-yaw);
