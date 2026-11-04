@@ -24,7 +24,7 @@ body{font-family:'Press Start 2P',monospace;color:var(--cream)}button,a{-webkit-
 #pull-grip,#pull-tether{display:none}#swipe-feedback.pulling #pull-grip,#swipe-feedback.pulling #pull-tether{display:block}
 @media(max-height:480px){#control-hint{bottom:12px;width:50%;font-size:6px}}
 
-#shot-feedback{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);display:grid;gap:9px;width:max-content;max-width:90%;padding:12px 16px;text-align:center;background:#173f3de8;border:2px solid var(--ink);font-size:7px;line-height:1.5}
+#shot-feedback{position:absolute;left:50%;bottom:50px;transform:translateX(-50%);display:grid;gap:9px;width:max-content;max-width:90%;padding:12px 16px;text-align:center;background:#173f3de8;border:2px solid var(--ink);font-size:7px;line-height:1.5}
 #feedback-direction{color:var(--cream)}#feedback-power{font-size:12px;font-weight:400;color:var(--mint)}#feedback-tip{font:12px/1.4 system-ui,sans-serif;color:var(--cream);text-shadow:none}#shot-feedback[data-power=weak] #feedback-power,#shot-feedback[data-power=strong] #feedback-power{color:var(--gold)}
 @media(max-height:480px){#shot-feedback{left:14px;bottom:64px;transform:none;max-width:34%;gap:5px;padding:8px}#feedback-direction{font-size:6px}#feedback-power{font-size:9px}#feedback-tip{font-size:11px}}
 
@@ -32,5 +32,5 @@ body{font-family:'Press Start 2P',monospace;color:var(--cream)}button,a{-webkit-
 @media(max-height:480px){#rerack-options button{min-height:95px}#rerack-options svg{height:52px}#rerack-dialog .eyebrow{font-size:6px}}
 
 #shot-style{position:absolute;left:14px;bottom:62px;display:flex;gap:5px;pointer-events:auto}#shot-style button{min-height:38px;padding:8px 10px;font-size:7px}#shot-style [aria-pressed=true]{background:var(--gold);color:var(--ink)}
-@media(max-width:600px){#control-hint{bottom:110px}#shot-feedback{bottom:150px}}
+@media(max-width:600px){#control-hint{bottom:110px}#shot-feedback{bottom:110px;padding:8px 12px;gap:5px}}
 @media(max-height:480px){#shot-style{bottom:14px;left:14px}#shot-count{bottom:62px;left:14px;transform:none}#shot-feedback{bottom:112px}#control-hint{bottom:62px}}
