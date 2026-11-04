@@ -1,0 +1,5 @@
+Implemented task 17: removed the extra board, enlarged bags 30%, and tightened phone and desktop framing while preserving physics and controls.
+
+All 16 test suites pass. Requested screenshots are saved as `shots/task17-*.png`.
+
+Details: [codex-summary-17.md](/workspace/cornhole/codex-summary-17.md).

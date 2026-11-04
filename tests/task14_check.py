@@ -30,7 +30,7 @@ async def main():
      assert max(xs)-min(xs)>=w*.10 and max(ys)-min(ys)>=h*.025,data
      await page.screenshot(path=f'shots/task14-{w}x{h}-{side}.png')
     else:
-     assert await page.evaluate('''()=>{const {camera:c,CAM_POS,CAM_LOOK,THREE:T}=__view;const q=new T.Quaternion();const m=new T.Matrix4().lookAt(CAM_POS,CAM_LOOK,c.up);q.setFromRotationMatrix(m);return c.position.equals(CAM_POS)&&c.quaternion.equals(q)&&c.fov===19}''')
+     assert await page.evaluate('''()=>{const {camera:c,CAM_POS,CAM_LOOK,THREE:T}=__view;const q=new T.Quaternion();const m=new T.Matrix4().lookAt(CAM_POS,CAM_LOOK,c.up);q.setFromRotationMatrix(m);return c.position.equals(CAM_POS)&&c.quaternion.equals(q)&&c.fov===8}''')
     async def camera():
      return await page.evaluate('''()=>{const c=__view.camera;return [c.position.toArray(),c.quaternion.toArray(),c.fov]}''')
     fixed=await camera()
