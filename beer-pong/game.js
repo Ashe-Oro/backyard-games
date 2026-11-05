@@ -4,6 +4,7 @@ import {OPPONENTS,SwatDefender} from './opponents.mjs';
 import {createGlove} from './glove.js';
 import {FEATURES} from './features.mjs';
 import {createBackyard} from '../yard-games/backyard.js';
+import {CIRCUITS,RIVALS,TournamentProgress,portraitSvg} from './tournament.mjs';
 
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -12,7 +13,9 @@ const CUP_R=.084, CUP_H=.17, RIM_THICKNESS=.004, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP
 const RIM_RESTITUTION=.30, WALL_RESTITUTION=.25;
 const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], ANGLE=52*Math.PI/180;
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
-const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
+let tournamentStorage;try{tournamentStorage=localStorage;}catch{}
+const tournament=new TournamentProgress(tournamentStorage);
+const state={tournament:false,rival:null,mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
 let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,helpFromPause=false,humanSwing=null,humanPointer=null;
 const wrap=$('game'), scene=new THREE.Scene();
@@ -121,9 +124,10 @@ function showThrowDirection(b){
 }
 function message(text,detail='',seconds=1.1){$('message').replaceChildren(document.createTextNode(text));if(detail){const small=document.createElement('small');small.textContent=detail;$('message').append(small);}$('message').classList.add('show');messageTime=seconds;}
 function updateHud(){
- $('mode-name').textContent={practice:'SOLO PRACTICE',cpu:'VS CPU',two:'2 PLAYER'}[state.mode];
- $('turn-label').textContent=state.mode==='practice'?`${remaining(1)} CUPS LEFT`:state.mode==='cpu'?(state.turn===0?'YOUR SHOT':'CPU’S SHOT'):`${LABELS[state.turn]}’S SHOT`;
- $('red-label').textContent=state.mode==='cpu'?'YOUR CUPS':'RED CUPS';$('blue-label').textContent=state.mode==='cpu'?'CPU CUPS':'BLUE CUPS';
+ const rival=matchRival();$('mode-name').textContent=rival?`TOURNAMENT · ${rival.index+1}/${RIVALS.length}`:{practice:'SOLO PRACTICE',cpu:'VS CPU',two:'2 PLAYER'}[state.mode];
+ $('turn-label').textContent=state.mode==='practice'?`${remaining(1)} CUPS LEFT`:state.mode==='cpu'?(state.turn===0?'YOUR SHOT':rival?`${rival.name.toUpperCase()}’S SHOT`:'CPU’S SHOT'):`${LABELS[state.turn]}’S SHOT`;
+ $('red-label').textContent=state.mode==='cpu'?'YOUR CUPS':'RED CUPS';$('blue-label').textContent=rival?rival.name.toUpperCase():state.mode==='cpu'?'CPU CUPS':'BLUE CUPS';
+ $('pause-menu').textContent=state.tournament?'CIRCUIT':'MAIN MENU';$('result-menu').textContent=state.tournament?'CIRCUIT':'MAIN MENU';
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
  $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
@@ -134,10 +138,46 @@ function updateHud(){
  $('rerack-button').disabled=!humanReady()||!canOffer||!!drag;$('rerack-button').title=canOffer?'Choose a formation for the cups you’re shooting at':'Available with 6, 4, 3 or 2 target cups left';
  $('refill').hidden=state.mode!=='practice';$('refill').disabled=state.phase!=='aim'||state.paused;
 }
+function matchRival(){return state.tournament?RIVALS[state.rival]:null;}
+function updateTournamentStatus(){
+ $('tournament-status').textContent=tournament.complete?'Champion':tournament.cleared?`Continue · ${tournament.cleared}/${RIVALS.length}`:'8 rivals. One crown.';
+}
+function showTournamentMap(){
+ showMenu();$('menu').hidden=true;$('tournament-menu').hidden=false;
+ const list=$('tournament-rivals');list.replaceChildren();
+ for(const circuit of CIRCUITS){
+  const group=document.createElement('section');group.className='circuit-group';const title=document.createElement('h3');title.textContent=circuit;group.append(title);
+  const pair=document.createElement('ol');pair.className='circuit-pair';
+  for(const rival of RIVALS.filter(r=>r.circuit===circuit)){
+   const done=rival.index<tournament.cleared,current=rival.index===tournament.cleared,item=document.createElement('li');item.className=`rival-card ${done?'cleared':current?'current':'locked'}`;if(current)item.setAttribute('aria-current','step');
+   item.innerHTML=portraitSvg(rival);const name=document.createElement('span');name.className='rival-name';name.textContent=rival.name;item.append(name);
+   const mark=document.createElement('span');mark.className='rival-mark';mark.textContent=done?'✓':current?'▶':'·';mark.setAttribute('aria-label',done?'Beaten':current?'Next rival':'Locked');item.append(mark);pair.append(item);
+  }
+  group.append(pair);list.append(group);
+ }
+ $('tournament-progress').textContent=`${tournament.cleared} / ${RIVALS.length}`;$('tournament-continue').textContent=tournament.complete?'VIEW TROPHY':tournament.cleared?'CONTINUE':'PLAY';
+ $('tournament-reset').hidden=tournament.cleared===0;$('tournament-save-note').hidden=tournament.canSave;$('tournament-back').focus();
+}
+function openTournamentIntro(){
+ if(tournament.complete){showTournamentChampion();return;}const rival=RIVALS[tournament.cleared];closeDialogs();
+ $('rival-stage').textContent=`${rival.circuit} · ${rival.index+1}/${RIVALS.length}`;$('rival-name').textContent=rival.name;$('rival-portrait').innerHTML=portraitSvg(rival);$('rival-taunt').textContent=rival.taunt;$('tournament-intro').showModal();
+}
+function startTournamentMatch(){if(tournament.complete)return;const rival=RIVALS[tournament.cleared];startMatch('cpu',rival.profile,rival.index);}
+function finishTournamentMatch(){
+ const rival=matchRival(),won=state.winner===0;if(won)tournament.recordWin(rival.index);updateTournamentStatus();
+ $('result-tag').textContent=`${rival.circuit} · ${rival.index+1}/${RIVALS.length}`;$('result-title').textContent=won?'YOU WIN!':'RIVAL WINS';$('result-copy').textContent=rival.name;
+ $('result-portrait').innerHTML=portraitSvg(rival);$('result-portrait').hidden=false;$('play-again').textContent=won?(tournament.complete?'CLAIM TROPHY':'NEXT RIVAL'):'REMATCH';
+}
+function showTournamentChampion(){showTournamentMap();$('tournament-champion').showModal();}
+$('tournament-button').onclick=showTournamentMap;$('tournament-back').onclick=showMenu;$('tournament-continue').onclick=openTournamentIntro;
+$('rival-play').onclick=startTournamentMatch;$('rival-back').onclick=showTournamentMap;$('tournament-intro').oncancel=event=>{event.preventDefault();showTournamentMap();};
+function newTournament(){tournament.reset();showTournamentMap();}
+$('tournament-reset').onclick=newTournament;$('champion-new').onclick=newTournament;$('champion-menu').onclick=showMenu;
+$('tournament-champion').oncancel=event=>{event.preventDefault();showTournamentMap();};
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){resetHumanDefense();defender.reset();glove.visible=false;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
-function startMatch(mode='practice',opponent='regular'){
- if(!['practice','cpu','two'].includes(mode))return;resetHumanDefense();closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+function showMenu(){state.tournament=false;state.rival=null;$('tournament-menu').hidden=true;updateTournamentStatus();resetHumanDefense();defender.reset();glove.visible=false;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function startMatch(mode='practice',opponent='regular',rivalIndex=null){
+ if(!['practice','cpu','two'].includes(mode))return;state.tournament=mode==='cpu'&&Number.isInteger(rivalIndex)&&rivalIndex===tournament.cleared&&rivalIndex<RIVALS.length;state.rival=state.tournament?rivalIndex:null;$('tournament-menu').hidden=true;$('result-portrait').hidden=true;resetHumanDefense();closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
@@ -168,7 +208,7 @@ function bouncePlan(x,z,team){
 function cpuShot(){
  if(!state.reracksUsed[1]){const option=layoutsFor(remaining(0))[0];if(option)applyRerack(1,option.id);}
  const rack=cups.filter(c=>c.team===0&&c.alive),cup=rack[Math.floor(Math.random()*rack.length)];
- if(!cup)return;const shooting=OPPONENTS[state.opponent].shoot,precise=Math.random()<shooting.precise,jitter=precise?.025:shooting.jitter,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
+ if(!cup)return;const shooting=matchRival()?.shoot||OPPONENTS[state.opponent].shoot,precise=Math.random()<shooting.precise,jitter=precise?.025:shooting.jitter,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
  const d=Math.abs(z-RELEASE_Z[1]),yaw=Math.atan2(-(x-releaseX(1)),d),slope=Math.tan(yaw/.65);
  if(Math.random()<shooting.bounce){const plan=bouncePlan(x,z,1);if(plan){launchShot(plan.power,plan.slope,'bounce');return;}}
  launchShot(powerForPoint(x,z,1),slope);
@@ -186,7 +226,7 @@ function finishShot(scoredCup=null){
  ball=null;flying.visible=false;
  if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
  else if(state.mode!=='practice'&&(remaining(0)===0||remaining(1)===0)){
-  state.winner=remaining(1)===0?0:1;state.phase='over';$('result-tag').textContent='TABLE CHAMPION';$('result-title').textContent=state.mode==='cpu'?(state.winner===0?'YOU WIN!':'CPU WINS'):LABELS[state.winner]+' WINS!';$('result-copy').textContent=`${state.shots[state.winner]} throws to clear the rack.`;$('play-again').textContent='PLAY AGAIN';$('result').showModal();
+  state.winner=remaining(1)===0?0:1;state.phase='over';$('result-tag').textContent='TABLE CHAMPION';$('result-title').textContent=state.mode==='cpu'?(state.winner===0?'YOU WIN!':'CPU WINS'):LABELS[state.winner]+' WINS!';$('result-copy').textContent=`${state.shots[state.winner]} throws to clear the rack.`;$('play-again').textContent='PLAY AGAIN';if(state.tournament)finishTournamentMatch();$('result').showModal();
  }else{state.phase='wait';state.delay=.85;}
  updateHud();
 }
@@ -219,9 +259,9 @@ function resumeGame(){state.paused=false;$('pause').close();$('pause-button').fo
 document.querySelectorAll('[data-shot-style]').forEach(button=>button.onclick=()=>{if(!humanReady()||drag||state.mode==='two')return;state.shotStyle=button.dataset.shotStyle;setPower(0);updateHud();});
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
 $('pause-button').onclick=pauseGame;$('resume').onclick=resumeGame;$('pause').oncancel=event=>{event.preventDefault();resumeGame();};
-for(const id of ['pause-menu','handoff-menu','result-menu'])$(id).onclick=showMenu;
+for(const id of ['pause-menu','handoff-menu','result-menu'])$(id).onclick=()=>state.tournament?showTournamentMap():showMenu();
 $('ready').onclick=()=>{$('handoff').close();state.phase='aim';updateHud();};$('handoff').oncancel=event=>event.preventDefault();
-$('refill').onclick=refillCups;$('play-again').onclick=()=>state.mode==='practice'?refillCups():startMatch(state.mode);
+$('refill').onclick=refillCups;$('play-again').onclick=()=>{if(state.tournament){if(state.winner===0){if(tournament.complete)showTournamentChampion();else openTournamentIntro();}else startTournamentMatch();}else state.mode==='practice'?refillCups():startMatch(state.mode);};
 $('result').oncancel=event=>event.preventDefault();
 function openHelp(fromPause=false){helpFromPause=fromPause;if(fromPause)$('pause').close();$('help-rules').open=false;$('help').showModal();}
 function closeHelp(){$('help').close();if(helpFromPause){helpFromPause=false;$('pause').showModal();}else $('menu-help').focus();}
@@ -359,6 +399,7 @@ window.__pong={
  get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces,style:ball.style,deadReason:ball.deadReason}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
  startMatch,throwWith:launchShot,refill:refillCups,
  court:{length:TABLE_L,center:TABLE_Z,width:TABLE_W,releaseZ:[...RELEASE_Z]},
+ get tournament(){return {cleared:tournament.cleared,total:RIVALS.length,complete:tournament.complete,canSave:tournament.canSave};},
  get defense(){return {...defender.snapshot(),visible:glove.visible};},
  get humanDefense(){return {active:canHumanSwat(),swing:humanSwing?{age:humanSwing.age,hit:humanSwing.hit,impact:humanSwing.impact.toArray()}:null,visible:playerGlove.visible};},
  _screen:(x,y,z)=>{const p=new THREE.Vector3(x,y,z).project(camera);return {x:(p.x+1)*wrap.clientWidth/2,y:(1-p.y)*wrap.clientHeight/2};},
