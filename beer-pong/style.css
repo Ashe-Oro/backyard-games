@@ -27,9 +27,8 @@ body{font-family:'Press Start 2P',monospace;color:var(--cream)}button,a{-webkit-
 #rerack-dialog{width:min(480px,94vw)}#rerack-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#rerack-options button{margin:0;background:#28584c;color:var(--cream);border:3px solid #749d83;padding:10px 6px;font-size:8px;min-height:120px}#rerack-options button[aria-pressed=true]{border-color:var(--gold);background:#3f6447;box-shadow:inset 0 0 0 1px var(--gold)}#rerack-options button:only-child{grid-column:1/-1}#rerack-options svg{display:block;width:100%;height:74px;margin-bottom:8px}#rerack-dialog .rerack-note{font-size:12px;color:#b6d9c0}#rerack-dialog #rerack-confirm{font-size:9px}
 @media(max-height:480px){#rerack-options button{min-height:95px}#rerack-options svg{height:52px}#rerack-dialog .eyebrow{font-size:6px}}
 
-#shot-style{position:absolute;left:14px;bottom:62px;display:flex;gap:5px;pointer-events:auto}#shot-style button{min-height:38px;padding:8px 10px;font-size:7px}#shot-style [aria-pressed=true]{background:var(--gold);color:var(--ink)}
 @media(max-width:600px){#control-hint{bottom:110px}}
-@media(max-height:480px){#shot-style{bottom:14px;left:14px}#shot-count{bottom:62px;left:14px;transform:none}#control-hint{bottom:62px}}
+@media(max-height:480px){#shot-count{bottom:62px;left:14px;transform:none}#control-hint{bottom:62px}}
 
 #swat-target{position:absolute;transform:translate(-50%,-50%);width:76px;height:76px;border:3px solid var(--gold);border-radius:50%;background:#ffe16b18;box-shadow:0 0 0 5px #172c3240;pointer-events:auto;cursor:crosshair;padding:0;touch-action:none}#swat-target:after{content:'';position:absolute;inset:8px;border:1px solid #fff1cf99;border-radius:50%}#swat-target:disabled{opacity:.45}#defense-hint{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);width:max-content;max-width:90%;padding:12px;background:#173f3de8;border:2px solid var(--ink);color:var(--gold);font-size:8px;line-height:1.7;text-align:center}
 @media(max-width:600px){#swat-target{width:88px;height:88px}#defense-hint{bottom:110px;font-size:7px}}
