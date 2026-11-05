@@ -141,11 +141,11 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 }
 
 
-#control-hint[hidden]{display:none}
-#control-hint{position:absolute;bottom:65px;left:50%;transform:translateX(-50%);width:90%;text-align:center;font-size:7px;color:#ffe45e;line-height:1.7;pointer-events:none}
+
+
 
 #pull-grip,#pull-tether{display:none}#swipe-feedback.pulling #pull-grip,#swipe-feedback.pulling #pull-tether{display:block}
-@media(max-height:450px){#control-hint{bottom:62px;left:auto;right:14px;transform:none;width:32%;font-size:6px}}
+
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -161,7 +161,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>pull back · release · toss</p></div>
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
-    <div id="control-hint">DRAG TO MOVE · PULL TO THROW</div>
+
     <svg id="swipe-feedback" aria-hidden="true">
       <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path id="swipe-tip-fill" data-power-tip d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
       <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" data-power-grip r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
@@ -691,7 +691,7 @@ function renderHud() {
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
-  $('control-hint').hidden=!humanTurn();
+
 }
 function hint() {}
 let msgTimer;
@@ -970,17 +970,17 @@ function pullAt(point){const r=wrap.getBoundingClientRect(),dy=Math.max(0,point.
  const max=Math.max(36,Math.min(150,Math.min(r.width,r.height)*.22,r.bottom-drag.anchor.y-24));
  return {power:clamp((dy-10)/(max-10),0,1),aim:clamp(Math.atan(-dx/Math.max(24,dy))*.65,-AIM_MAX,AIM_MAX)};
 }
-function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';}
+function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');}
 function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+pull.aim,length=powerArrowLength(physicalPower(pull.power));M.aim=pull.aim;setMeter(pull.power);
  showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);const r=wrap.getBoundingClientRect();
  $('pull-grip').setAttribute('cx',point.x-r.left);$('pull-grip').setAttribute('cy',point.y-r.top);
  for(const [key,val]of Object.entries({x1:origin.x-r.left,y1:origin.y-r.top,x2:point.x-r.left,y2:point.y-r.top}))$('pull-tether').setAttribute(key,val);
- $('control-hint').textContent=pull.power>0?'RELEASE · RETURN TO CANCEL':'RETURN TO BAG TO CANCEL';
+
 }
 wrap.addEventListener('pointerdown',e=>{
  if(e.button!==0||drag||e.target.closest('#bag-drawer,button,dialog,a')||!ui.panel.hidden||!humanTurn())return;
  const p=bagScreen(),point={x:e.clientX,y:e.clientY};if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(34,Math.abs(bagScreen(releaseX(thrower())+BAG*.6).x-p.x)+12))return;
- $('control-hint').hidden=false;$('swipe-feedback').classList.remove('shown');drag={id:e.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};wrap.classList.add('drag');try{wrap.setPointerCapture(e.pointerId);}catch{}
+ $('swipe-feedback').classList.remove('shown');drag={id:e.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};wrap.classList.add('drag');try{wrap.setPointerCapture(e.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',e=>{
  if(!drag||e.pointerId!==drag.id)return;const point={x:e.clientX,y:e.clientY},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;
@@ -992,7 +992,7 @@ wrap.addEventListener('pointermove',e=>{
  if(drag.mode==='pull')updatePull(point);
 });
 wrap.addEventListener('pointerup',e=>{
- if(!drag||e.pointerId!==drag.id)return;const pull=drag.mode==='pull'?pullAt({x:e.clientX,y:e.clientY}):null;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';
+ if(!drag||e.pointerId!==drag.id)return;const pull=drag.mode==='pull'?pullAt({x:e.clientX,y:e.clientY}):null;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');
  if(pull&&pull.power>0&&humanTurn()){M.aim=pull.aim;throwBag(pull.power);}else{M.aim=0;cancelPull();}
 });
 wrap.addEventListener('pointercancel',cancelPull);addEventListener('blur',cancelPull);addEventListener('resize',cancelPull);

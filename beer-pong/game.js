@@ -133,7 +133,7 @@ function updateHud(){
  $('pause-menu').textContent=state.tournament?'CIRCUIT':'MAIN MENU';$('result-menu').textContent=state.tournament?'CIRCUIT':'MAIN MENU';
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
- $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
+ $('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
  const canOffer=layoutsFor(remaining(1-state.turn)).length>0;
  $('rerack-button').hidden=state.reracksUsed[state.turn]||!['aim','flight','wait'].includes(state.phase)||state.mode==='cpu'&&state.turn===1;
  $('rerack-button').disabled=!humanReady()||!canOffer||!!drag;$('rerack-button').title=canOffer?'Choose a formation for the cups you’re shooting at':'Available with 6, 4, 3 or 2 target cups left';
@@ -285,9 +285,9 @@ function updatePull(point){
  setPower(pull.power);showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);
  const rect=wrap.getBoundingClientRect();$('pull-grip').setAttribute('cx',point.x-rect.left);$('pull-grip').setAttribute('cy',point.y-rect.top);
  for(const [key,value]of Object.entries({x1:origin.x-rect.left,y1:origin.y-rect.top,x2:point.x-rect.left,y2:point.y-rect.top}))$('pull-tether').setAttribute(key,value);
- $('control-hint').textContent=pull.power>0?'RELEASE · RETURN TO CANCEL':'RETURN TO BALL TO CANCEL';return pull;
+ return pull;
 }
-function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show','pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';if(humanReady())setPower(0);}
+function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show','pulling');if(humanReady())setPower(0);}
 function ballScreen(x=releaseX(state.turn)){
  const p=new THREE.Vector3(x,RELEASE_Y,RELEASE_Z[state.turn]).project(camera),rect=wrap.getBoundingClientRect();
  return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};
@@ -339,7 +339,7 @@ wrap.addEventListener('pointerdown',event=>{
  if(event.button!==0||event.target.closest('button,a,input,label,dialog,#menu')||!humanReady()||drag)return;
  const point={x:event.clientX,y:event.clientY},p=ballScreen();
  if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
- $('control-hint').hidden=false;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
+ $('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
  wrap.classList.add('drag');$('rerack-button').disabled=true;try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{
@@ -357,7 +357,7 @@ wrap.addEventListener('pointerup',event=>{
  if(humanPointer?.id===event.pointerId){if(!humanPointer.swung)attemptHumanSwat({x:event.clientX,y:event.clientY});humanPointer=null;}
  if(!drag||event.pointerId!==drag.id)return;
  const pull=drag.mode==='pull'?pullAt({x:event.clientX,y:event.clientY}):null;
- drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';
+ drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('pulling');
  if(!(pull&&pull.power>0&&humanReady()&&launchShot(pull.power,pull.slope))){cancelPull();updateHud();}
 });
 wrap.addEventListener('pointercancel',()=>{humanPointer=null;cancelPull();updateHud();});
