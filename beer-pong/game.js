@@ -74,7 +74,7 @@ const CUP_ART_R=.078;
 const cupOuter=new THREE.CylinderGeometry(CUP_ART_R,.052,CUP_H,12,1,true);
 const cupInner=new THREE.CylinderGeometry(CUP_ART_R-.006,.046,CUP_H-.012,12,1,true);
 const rimGeo=new THREE.TorusGeometry(CUP_ART_R-.002,.006,4,16);
-const rimMat=mat('#fff1cf'),innerMat=new THREE.MeshLambertMaterial({color:'#23383d',side:THREE.BackSide});
+const rimMat=mat('#fff1cf'),innerMat=new THREE.MeshLambertMaterial({color:'#ffffff',side:THREE.BackSide});
 const cups=[];
 for(let team=0;team<2;team++)for(let row=0;row<4;row++)for(let col=0;col<=row;col++){
  const x=(col-row/2)*.18,farZ=TABLE_Z-TABLE_L/2+.34+(3-row)*.17,z=team===1?farZ:2*TABLE_Z-farZ;
