@@ -172,6 +172,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 import * as THREE from 'three';
 import {createBackyard} from '../yard-games/backyard.js';
 import {throwPower,pullPower,roundWind} from './controls.mjs';
+import {createWindStreaks} from './wind-streaks.js';
 
 // ---------- constants (regulation ACL/ACA dimensions, metres) ----------
 const G = 9.8;
@@ -264,6 +265,7 @@ scene.add(sun, sun.target);
 
 // Shared voxel scenery stays outside the board and bag collision system.
 createBackyard(scene, {farZ:-13, nearZ:4, propZ:-7});
+const windStreaks=createWindStreaks(scene);
 
 // ---------- props ----------
 let pennant;
@@ -1057,6 +1059,7 @@ function frame() {
     c.m.material.opacity=.7*c.life/.4; c.m.visible=c.life>0;
   }
   animatePennant(time);
+  windStreaks.update(dt,wind,!['menu','intro','champion','poster'].includes(M.phase));
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
