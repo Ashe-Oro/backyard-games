@@ -13,7 +13,7 @@ const BASE=process.env.BASE_URL||'http://127.0.0.1:8012';
  // Direct horizontal positioning changes the real launch origin without an accidental throw.
  await start();p=await origin();await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+150,p.y,{steps:10});await page.mouse.up();let s=await page.evaluate(()=>__game.state);assert(s.position[0]>0);assert.equal(s.bags.length,0);const pos=s.position[0];s=await pull(0,50);assert(Math.abs(s.bags[0].p[0]-pos)<.05);
  for(const arc of [0,1,2])for(const side of ['slick','sticky']){
-  await start();await page.locator(`[data-height="${arc}"]`).click();await page.locator(`[data-side="${side}"]`).click();await page.evaluate(()=>__game.throwWith(__game.state.sweet.mid));assert.equal(await page.locator('#feedback-power').textContent(),'POWER IN RANGE',`arc ${arc} ${side}`);assert.equal((await page.evaluate(()=>__game.state)).arc,arc);
+  await start();if(await page.locator('#bag-handle').getAttribute('aria-expanded')==='false')await page.locator('#bag-handle').click();await page.locator(`[data-height="${arc}"]`).click();await page.locator(`[data-side="${side}"]`).click();await page.evaluate(()=>__game.throwWith(__game.state.sweet.mid));assert.equal(await page.locator('#feedback-power').textContent(),'POWER IN RANGE',`arc ${arc} ${side}`);assert.equal((await page.evaluate(()=>__game.state)).arc,arc);
  }
  for(const [power,label]of [[.01,'TOO WEAK'],[1,'TOO STRONG']]){await start();await page.evaluate(p=>__game.throwWith(p),power);assert.equal(await page.locator('#feedback-power').textContent(),label);}
  for(const [width,height]of [[1280,800],[390,844],[844,390]]){
