@@ -56,3 +56,9 @@ Tournament rules match casual CPU play: ten cups, one bounce allowed, one cup pe
 Tournament checks: `node tests/beer_pong_tournament_check.mjs` and `BASE_URL=http://127.0.0.1:8013 NODE_PATH=/opt/homebrew/lib/node_modules/agent-browser/node_modules node tests/beer_pong_tournament_ui_check.cjs` against a local server.
 
 Tournament tuning lives in `beer-pong/tournament.mjs`: each rival has shooting accuracy/spread and a `rimBounce` restitution value for their target cups. Pete opens with broad aim errors and very soft rims; rim bounce rises from 0.05 to the standard 0.30 by the final rival. Player-owned cups and non-tournament cup physics keep their standard response. Cup artwork/opening size, one-bounce/one-cup scoring and no-swat rules are unchanged.
+
+### Cornhole challenge
+
+Human pull power uses a continuous, steeper curve in `cornhole/controls.mjs`; the inverse keeps internal arc/surface calibration aligned. This roughly halves the normal-throw scoring tolerance without adding throw noise. Lob calibration remains usable on touchscreens. CPU releases keep their physical power values.
+
+Matches share one crosswind for both players throughout a round. The next round switches its direction and chooses a fresh strength. Casual matches use 6–10 mph; tournament circuits progress through 4–6, 6–9, 9–12 and 12–15 mph. The existing wind arrow and pennant show the conditions. Practice remains calm. No aim sway, new controls, board-size changes or scoring changes.

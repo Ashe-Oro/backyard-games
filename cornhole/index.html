@@ -171,6 +171,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 <script type="module">
 import * as THREE from 'three';
 import {createBackyard} from '../yard-games/backyard.js';
+import {throwPower,pullPower,roundWind} from './controls.mjs';
 
 // ---------- constants (regulation ACL/ACA dimensions, metres) ----------
 const G = 9.8;
@@ -815,14 +816,10 @@ function startMatch(opts = {}) {
   M.career = opts.career === true;
   M.practice=opts.practice===true;M.practiceStats={throws:0,in:0,on:0};M.heights=[1,1];
   M.sweetShift=0;
-  wind.angle = Math.random() * Math.PI * 2; wind.mph = 2 + Math.floor(Math.random() * 7);
-  if(M.career){const c=roster[career.fight].circuit;wind.mph=c===0?0:c===1?2+Math.floor(Math.random()*3):c===2?6+Math.floor(Math.random()*3):9+Math.floor(Math.random()*4);}
-  if(M.practice) wind.mph=0;
   const color=M.career?roster[career.fight].color:'#2f5fe8';
   for(const mat of Object.values(TEAM_MATS[1])){mat.map.dispose();mat.dispose();}
   TEAM_MATS[1]=bagMats(color,'#252237','#ffffff');
   document.documentElement.style.setProperty('--rival',color);
-  wind.x = Math.sin(wind.angle) * wind.mph * 0.025; wind.z = -Math.cos(wind.angle) * wind.mph * 0.025;
   M.position = [0, 0]; M.spin = 0; M.arc = 1;
   M.scores = [0, 0]; M.inning = 1; M.history = []; M.winner = -1;
   M.first = opts.first != null ? opts.first : (Math.random() < 0.5 ? 0 : 1);   // coin toss
@@ -831,6 +828,7 @@ function startMatch(opts = {}) {
   beginInning(900);
 }
 function beginInning(delay = 300) {
+  Object.assign(wind,roundWind({practice:M.practice,circuit:M.career?roster[career.fight].circuit:null,previousX:M.inning>1?wind.x:0}));
   clearBags(); M.k = 0; M.phase = 'wait'; renderHud();
   gameAfter(nextTurn, delay);
 }
@@ -914,10 +912,10 @@ function advance() {
 }
 
 
-function meterWindow(){
+function calibratedWindow(){
  const t=thrower(),w=WIN[t+M.side[t]+M.arc];
  const normal=WIN[t+M.side[t]+1],normalWidth=normal.hi-normal.lo;
- // Keep the calibrated physics range intact; KOBE gets a friendlier input range.
+ // Preserve a touch-playable lob range before the stricter pull curve.
  const baseWidth=M.arc===2 ? normalWidth*.78 : w.hi-w.lo;
  if(!M.sweetShift && M.arc!==2)return {...w};
  const width=M.sweetShift ? Math.max(M.arc===2 ? normalWidth*.60 : .014,baseWidth*.78) : baseWidth;
@@ -927,9 +925,14 @@ function meterWindow(){
  const inputPower=p=>p<w.lo ? p/w.lo*lo : p>w.hi ? hi+(p-w.hi)/(1-w.hi)*(1-hi) : lo+(p-w.lo)/(w.hi-w.lo)*width;
  return {...w,lo,hi,mid,...(M.arc===2 ? {olo:inputPower(w.olo),ohi:inputPower(w.ohi)} : {})};
 }
+function meterWindow(){
+ const w=calibratedWindow();
+ return Object.fromEntries(Object.entries(w).map(([key,value])=>[key,pullPower(value)]));
+}
 function physicalPower(p){
+ p=throwPower(p);
  if(!M.sweetShift && M.arc!==2)return p;
- const t=thrower(),base=WIN[t+M.side[t]+M.arc],w=meterWindow();
+ const t=thrower(),base=WIN[t+M.side[t]+M.arc],w=calibratedWindow();
  if(p<w.lo)return p/w.lo*base.lo;
  if(p>w.hi)return base.hi+(p-w.hi)/(1-w.hi)*(1-base.hi);
  return base.lo+(p-w.lo)/(w.hi-w.lo)*(base.hi-base.lo);
