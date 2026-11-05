@@ -68,3 +68,5 @@ Cornhole wind also drives faint world-space gust streaks (`cornhole/wind-streaks
 Cornhole mobile bag choices start collapsed as a compact bottom-left button. Expanded choices open below the score area, with 44px targets; Pause provides menu access. Mobile starts compact even when an older saved preference says expanded. Game document entry assets use root-relative paths so clean and trailing-slash routes both load. Check with `tests/game_route_check.cjs` and `tests/cornhole_mobile_options_check.cjs`.
 
 Shot-strength feedback uses only the colored arrow in every game. Post-throw strength/direction coaching boxes are removed; scoring and round messages remain.
+
+Gameplay has no persistent drag/pull/release/cancel text prompts. Colored arrows and grab/pull visuals provide the cues; optional help and rules remain available.
