@@ -31,6 +31,10 @@ commits and in the Vercel dashboard.
 This integration deploys the game; browser regression tests currently run locally
 and are not an automated release gate.
 
+## Shared scenery
+
+Beer Pong, Ladder Golf, Washers and Lawn Darts use `yard-games/backyard.js` for a deterministic voxel backyard: oak/birch trees, fences, plants, lanterns and party props. Static blocks are instanced by material. Scenery stays separate from camera, collision and scoring logic. Cornhole keeps its original artwork.
+
 ## Adding a game
 
 Keep each game in its own directory, such as `cornhole/` or `beer-pong/`, with a menu link back to `/`. Add an `article.game-card` to the home page’s `.game-grid` in `index.html`, a 720 × 400 scene image in `assets/`, and a direct Play link. The responsive grid wraps automatically as games are added. `home.css` styles the shared home page independently of the games.

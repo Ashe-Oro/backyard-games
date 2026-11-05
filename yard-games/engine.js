@@ -1,24 +1,18 @@
 import * as THREE from 'three';
 import {games,settleRound,roundPoints} from './rules.mjs';
+import {createBackyard} from './backyard.js';
 const kind=document.body.dataset.game,cfg=games[kind],$=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const G=9.8,ANGLE=43*Math.PI/180,RY=1.05,RZ=.25,TZ=RZ-cfg.distance,COLORS=[0xe85f49,0x4b8cdb],RUNG_Y=[.34,.67,1];
 const state={mode:'practice',phase:'menu',turn:0,first:0,round:1,scores:[0,0],counts:[0,0],positions:[0,0],paused:false,winner:null,overtime:false,bonus:false,power:0,stats:{throws:0,points:0},delay:0};
 const wrap=$('game'),scene=new THREE.Scene();scene.background=new THREE.Color('#edc5a0');scene.fog=new THREE.Fog('#c4d3a7',20,55);
 let renderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});}catch(e){$('error').hidden=false;throw e;}
 renderer.setPixelRatio(1);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;wrap.prepend(renderer.domElement);
-const camera=new THREE.PerspectiveCamera(36,1,.05,100);scene.add(new THREE.HemisphereLight('#fff0cb','#426139',2));
+const camera=new THREE.PerspectiveCamera(36,1,.05,100);scene.add(new THREE.HemisphereLight('#e3eee8','#426139',1.4));
 const sun=new THREE.DirectionalLight('#ffd7ad',2);sun.position.set(-4,8,4);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:.5,far:40});sun.shadow.normalBias=.015;scene.add(sun);
 const mat=color=>new THREE.MeshLambertMaterial({color});
 function box(w,h,d,m,x,y,z,parent=scene){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);return mesh;}
 function texture(w,h,draw,repeat=1){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeat,repeat);return t;}
-const grass=texture(64,64,(g,w,h)=>{g.fillStyle='#5e9b43';g.fillRect(0,0,w,h);for(let i=0;i<500;i++){g.fillStyle=['#6eac4c','#7bbb51','#4e8a3a','#88bf56'][i%4];g.fillRect(Math.random()*w,Math.random()*h,2+Math.random()*7,1+Math.random()*3);}},30);
-const lawn=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({map:grass}));lawn.rotation.x=-Math.PI/2;lawn.receiveShadow=true;scene.add(lawn);
-const wood=mat('#b7894e'),darkwood=mat('#795835'),leaves=['#37663c','#4c803c','#639c43'].map(mat),back=TZ-3;
-for(let i=-40;i<=40;i++)box(.22,1.45,.08,i%3?wood:darkwood,i*.26,.725,back);for(const y of [.4,1.05])box(21,.1,.12,darkwood,0,y,back);
-for(const [x,z,s]of [[-3,back-.6,1.5],[3,back-1,1.6],[-4,-1,1.2],[4,-3,1.3]]){box(.24,2.8,.24,darkwood,x,1.4,z);for(let i=0;i<3;i++)box(s*(1.2-i*.1),s*.7,s,leaves[i],x+(i-1)*.14,2.3+i*.32,z);}
-for(const x of [-2,2.1]){box(.8,.45,.6,leaves[0],x,.225,TZ-1);box(.55,.4,.4,leaves[1],x+.2,.4,TZ-.8);}
-const lightPoints=[];for(let i=0;i<=40;i++){const x=-6+i*.3;lightPoints.push(new THREE.Vector3(x,2.15-.35*(1-(x/6)**2),back+.6));}scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(lightPoints),new THREE.LineBasicMaterial({color:'#263d30'})));for(let i=0;i<18;i++){const x=-5.7+i*.67;box(.07,.12,.07,new THREE.MeshBasicMaterial({color:['#ffe274','#ff9a7e','#ade6cc'][i%3]}),x,2.08-.35*(1-(x/6)**2),back+.6);}
-box(.6,.4,.4,mat('#317c9e'),-2,.2,TZ+.5);box(.64,.07,.44,mat('#ece1bd'),-2,.435,TZ+.5);
+createBackyard(scene,{farZ:TZ-3,nearZ:6,propZ:TZ+.5});
 function label(text,x,y,z,color='#fff1cf',size=.22){const t=texture(256,32,g=>{g.fillStyle=color;g.font='bold 20px monospace';g.textAlign='center';g.fillText(text,128,24)});const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.position.set(x,y,z);s.scale.set(size*8,size,1);scene.add(s);return s;}
 const targetGroup=new THREE.Group();scene.add(targetGroup);targetGroup.position.z=TZ;
 if(kind==='ladder-golf'){

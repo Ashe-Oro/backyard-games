@@ -3,6 +3,7 @@ import {layoutsFor,layoutPoints} from './rerack.mjs';
 import {OPPONENTS,SwatDefender} from './opponents.mjs';
 import {createGlove} from './glove.js';
 import {FEATURES} from './features.mjs';
+import {createBackyard} from '../yard-games/backyard.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -23,7 +24,7 @@ wrap.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(40,1,.05,80);
 const defender=new SwatDefender('regular',()=>Math.random(),{homeZ:TABLE_Z-TABLE_L*.16,nearZ:TABLE_Z+.05,farZ:TABLE_Z-TABLE_L/2+.12}),glove=createGlove();scene.add(glove);
 const playerGlove=createGlove();scene.add(playerGlove);
-scene.add(new THREE.HemisphereLight('#fff0cc','#315c43',2));
+scene.add(new THREE.HemisphereLight('#e3eee8','#426139',1.4));
 const sun=new THREE.DirectionalLight('#ffd3a5',2.1);sun.position.set(-4,7,3);sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:.5,far:20});
 sun.shadow.bias=-.0006;sun.shadow.normalBias=.012;scene.add(sun);
@@ -34,41 +35,19 @@ function texture(w,h,draw,repeat=1){
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.magFilter=map.minFilter=THREE.NearestFilter;map.generateMipmaps=false;
  map.wrapS=map.wrapT=THREE.RepeatWrapping;map.repeat.set(repeat,repeat);return map;
 }
-const grass=texture(64,64,(g,w,h)=>{g.fillStyle='#5b934b';g.fillRect(0,0,w,h);for(let i=0;i<480;i++){g.fillStyle=['#659e50','#76aa58','#4a8446','#83b660'][i%4];g.fillRect(Math.random()*w|0,Math.random()*h|0,2+Math.random()*7|0,1+Math.random()*3|0);}},24);
-const lawn=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshLambertMaterial({map:grass}));lawn.rotation.x=-Math.PI/2;lawn.receiveShadow=true;scene.add(lawn);
-const wood=mat('#ac7a43'),woodDark=mat('#795432');
-for(const z of [-7,5]){
- for(let i=-25;i<=25;i++){const x=i*.27;box(.23,1.35,.08,i%3?wood:woodDark,x,.675,z);}
- box(14,.1,.12,woodDark,0,.38,z);box(14,.1,.12,woodDark,0,1.02,z);
-}
-const leafMats=['#376445','#44794a','#598c50'].map(mat);
-for(const [x,z,s] of [[-3,-4,1.2],[3.2,-4.8,1.5],[-4,2,1.4],[3.8,3,1.1],[-2.4,-6,1],[4,-1,1]]){
- box(.25,2.6,.25,woodDark,x,1.3,z);
- for(let i=0;i<3;i++)box(s*(1.3-i*.12),s*.75,s*(1.2-i*.1),leafMats[i],x+(i-1)*s*.2,2.3+i*.3,z);
- box(s,.5,s*.7,leafMats[1],x,.25,z+.6);
-}
-for(const z of [-4.2,3.5]){
- const points=[];
- for(let i=0;i<=32;i++){const x=-5+i*10/32;points.push(new THREE.Vector3(x,1.95-.28*(1-(x/5)**2),z));}
- scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:'#293e3b'})));
- for(let i=1;i<16;i++){const x=-5+i*10/16,y=1.95-.28*(1-(x/5)**2);box(.07,.11,.07,new THREE.MeshBasicMaterial({color:['#ffe486','#ff9d7e','#ace4d0'][i%3]}),x,y-.07,z);}
-}
+const {wood,woodDark}=createBackyard(scene,{farZ:-7,nearZ:5,propZ:-1.5});
 // One readable playing surface. Its markings stay on the table, never on the lawn.
 const tableMap=texture(128,256,(g,w,h)=>{
  g.fillStyle='#286d62';g.fillRect(0,0,w,h);
  for(let i=0;i<500;i++){g.fillStyle=i%2?'#2b7568':'#25675e';g.fillRect(Math.random()*w|0,Math.random()*h|0,2,3);}
  g.strokeStyle='#dfd9b6';g.lineWidth=2;g.strokeRect(4,4,w-8,h-8);g.fillRect(w/2-1,4,2,h-8);
  g.fillStyle='#dfd9b6';g.fillRect(4,h/2-1,w-8,2);
- g.save();g.translate(w/2,h/2);g.rotate(-Math.PI/2);g.fillStyle='#edce6f';g.font='bold 11px monospace';g.textAlign='center';g.fillText('BACKYARD GAMES',0,-8);g.restore();
+ g.fillStyle='#8bab80';for(const [x,y,ww,hh]of [[w/2-5,h/2-3,10,6],[w/2-3,h/2-5,6,10]])g.fillRect(x,y,ww,hh);g.fillStyle='#286d62';g.fillRect(w/2-2,h/2-2,4,4);
 });
-const tableSide=mat('#b3a06d'),tableTop=new THREE.MeshLambertMaterial({map:tableMap});
+const tableSide=wood,tableTop=new THREE.MeshLambertMaterial({map:tableMap});
 box(TABLE_W,.075,TABLE_L,[tableSide,tableSide,tableTop,tableSide,tableSide,tableSide],0,TABLE_Y-.0375,TABLE_Z);
 for(const x of [-.43,.43])for(const z of [TABLE_Z-TABLE_L/2+.38,TABLE_Z+TABLE_L/2-.38])box(.055,TABLE_Y-.08,.055,mat('#24413f'),x,(TABLE_Y-.08)/2,z);
 box(.9,.045,.055,woodDark,0,.25,TABLE_Z-TABLE_L/2+.38);box(.9,.045,.055,woodDark,0,.25,TABLE_Z+TABLE_L/2-.38);
-// Nearby party props establish scale without crowding the cup rack.
-box(.55,.38,.38,mat('#356f8a'),1.6,.19,-1.5);box(.59,.07,.42,mat('#e4d9b4'),1.6,.415,-1.5);
-for(let i=0;i<3;i++)box(.45,.22,.33,mat('#b19a54'),-1.7,.11+i*.22,-2.5);
-
 // Keep the original cup silhouette independent of forgiving collision tolerances.
 const CUP_ART_R=.078;
 const cupOuter=new THREE.CylinderGeometry(CUP_ART_R,.052,CUP_H,12,1,true);
