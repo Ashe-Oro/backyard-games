@@ -62,3 +62,5 @@ Tournament tuning lives in `beer-pong/tournament.mjs`: each rival has shooting a
 Human pull power uses a continuous, steeper curve in `cornhole/controls.mjs`; the inverse keeps internal arc/surface calibration aligned. This roughly halves the normal-throw scoring tolerance without adding throw noise. Lob calibration remains usable on touchscreens. CPU releases keep their physical power values.
 
 Matches share one crosswind for both players throughout a round. The next round switches its direction and chooses a fresh strength. Casual matches use 6–10 mph; tournament circuits progress through 4–6, 6–9, 9–12 and 12–15 mph. The existing wind arrow and pennant show the conditions. Practice remains calm. No aim sway, new controls, board-size changes or scoring changes.
+
+Cornhole wind also drives faint world-space gust streaks (`cornhole/wind-streaks.js`). Density, length, speed and opacity scale with strength; calm weather and reduced-motion preferences hide them, and pausing freezes them. A separate seed and one draw call keep the effect independent of gameplay.
