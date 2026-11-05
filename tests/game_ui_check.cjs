@@ -7,11 +7,13 @@ const path=require('node:path');
  try{
   const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  const url='http://127.0.0.1:8012/cornhole/';
+  const url=(process.env.BASE_URL||'http://127.0.0.1:8012')+'/cornhole/';
   const source=fs.readFileSync(path.join(__dirname,'../cornhole/index.html'),'utf8').replace('window.__game = {','window.__setPower=setMeter; window.__game = {');
   await page.route(url,r=>r.fulfill({body:source,contentType:'text/html'}));
   await page.goto(url);await page.waitForFunction(()=>!!window.__game);
-  assert(await page.locator('#help-dialog').isVisible(),'First visit needs instructions');
+  assert.equal(await page.locator('#help-dialog').isVisible(),false,'Help must be optional on a fresh visit');
+  await page.locator('#menu-help').click();
+  assert(await page.locator('#help-dialog').isVisible());
   for(const [width,height] of [[390,844],[844,390]]){
    await page.setViewportSize({width,height});
    const box=await page.locator('#help-done').boundingBox();
@@ -81,6 +83,6 @@ const path=require('node:path');
   assert.equal(round.state.bags.length,8);const [red,blue]=round.lie.pts;
   assert.deepEqual(round.state.scores,[Math.max(0,red-blue),Math.max(0,blue-red)]);
   assert.deepEqual(errors,[]);
-  console.log('First-visit help, controls, pause physics/CPU/timers, resume, and menu passed.');
+  console.log('Optional help, controls, pause physics/CPU/timers, resume, and menu passed.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
