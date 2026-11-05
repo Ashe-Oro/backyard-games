@@ -213,7 +213,7 @@ function finishShot(scoredCup=null){
  else if(ball?.deadReason==='swat')message(team===1?'YOU SWATTED!':'SWATTED!',team===0?`${OPPONENTS[state.opponent].name} blocked your bounce.`:'',1.2);
  else if(ball?.deadReason==='second-bounce')message('DEAD BALL','Second bounce.',.95);
  else if(ball?.deadReason==='table')message('DEAD BALL','Touched the table.',.95);
- else message('NO CUP',ball?.rimHits?'Off the rim.':'',.95);
+ else message('MISS',ball?.rimHits?'Off the rim.':'',.95);
  ball=null;flying.visible=false;
  if(state.mode==='practice'&&remaining(1)===0){state.phase='over';$('result-tag').textContent='RACK CLEARED';$('result-title').textContent='Ten down.';$('result-copy').textContent=`${state.hits[0]} cups in ${state.shots[0]} throws.`;$('play-again').textContent='NEW RACK';$('result').showModal();}
  else if(state.mode!=='practice'&&(remaining(0)===0||remaining(1)===0)){
