@@ -140,12 +140,12 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
  #bag-chevron{display:inline-block;transform:rotate(-90deg)}
 }
 
-#shot-feedback{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:grid;gap:5px;width:max-content;max-width:90%;padding:8px 12px;text-align:center;background:#30283bed;border:2px solid #2b1a2e;font-size:7px;line-height:1.5}
-#shot-feedback[hidden],#control-hint[hidden]{display:none}#feedback-power{font-size:12px;color:#ffe45e;font-weight:400}#feedback-tip{font:12px/1.4 system-ui,sans-serif;color:#fff4dc;text-shadow:none}
+
+#control-hint[hidden]{display:none}
 #control-hint{position:absolute;bottom:65px;left:50%;transform:translateX(-50%);width:90%;text-align:center;font-size:7px;color:#ffe45e;line-height:1.7;pointer-events:none}
-@media(max-width:600px){#shot-feedback{bottom:62px}}
+
 #pull-grip,#pull-tether{display:none}#swipe-feedback.pulling #pull-grip,#swipe-feedback.pulling #pull-tether{display:block}
-@media(max-height:450px){#shot-feedback{left:auto;right:14px;bottom:110px;transform:none;max-width:30%;padding:8px;gap:5px}#feedback-direction{font-size:6px}#feedback-power{font-size:9px}#feedback-tip{font-size:11px}#control-hint{bottom:62px;left:auto;right:14px;transform:none;width:32%;font-size:6px}}
+@media(max-height:450px){#control-hint{bottom:62px;left:auto;right:14px;transform:none;width:32%;font-size:6px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
 </head>
@@ -161,7 +161,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="title" class="ol"><h1>BACKYARD<br>CORNHOLE</h1><p>pull back · release · toss</p></div>
     <div id="turn" class="ol"></div>
     <div id="msg" class="ol"></div>
-    <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div><div id="control-hint">DRAG TO MOVE · PULL TO THROW</div>
+    <div id="control-hint">DRAG TO MOVE · PULL TO THROW</div>
     <svg id="swipe-feedback" aria-hidden="true">
       <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path id="swipe-tip-fill" data-power-tip d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
       <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" data-power-grip r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
@@ -691,8 +691,7 @@ function renderHud() {
   if(M.practice){const n=M.practiceStats;ui.inn.textContent='SOLO PRACTICE';ui.goal.textContent=`${n.in} IN · ${n.on} ON BOARD\n${n.throws ? Math.round((n.in+n.on)/n.throws*100):0}% HIT · ${n.throws} THROWS`;}
   $('setup').textContent = arcNames[M.arc];
   document.querySelectorAll('[data-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.side===M.side[t])));
-  $('control-hint').hidden=!humanTurn()||!$('shot-feedback').hidden;
-  if(!isHuman(t)||!['aim','flying','wait'].includes(M.phase))$('shot-feedback').hidden=true;
+  $('control-hint').hidden=!humanTurn();
 }
 function hint() {}
 let msgTimer;
@@ -701,17 +700,9 @@ function say(big, small = '', ms = 1400) {
   gameTimers.delete(msgTimer); msgTimer = gameAfter(() => ui.msg.classList.remove('on'), ms);
 }
 function setMeter(p) { M.power=clamp(p,0,1); }
-function shotFeedback(b,actualPower,aim){
-  // Isolate distance from lateral aim and blockers, using the same wind, arc and bag surface.
-  const probe=newBody(b.team,b.side);launch(probe,releaseX(b.team),actualPower,0,0,b.arc);
-  for(let i=0;i<1920;i++){step(probe,1/240);if(['board','grass','in','removed'].includes(probe.state))break;}
-  const z=toLocal(probe.p,new THREE.Vector3()).z;
-  const zone=['board','in'].includes(probe.state)?'range':z>0?'weak':z < -L?'strong':'range';
-  const dir=Math.abs(b.v.x)<.045?'↑ STRAIGHT':b.v.x<0?'↖ LEFT':'↗ RIGHT';
-  $('shot-feedback').hidden=false;$('feedback-direction').textContent=`${dir}`;
-  $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
-  $('feedback-tip').textContent={weak:'Pull farther.',strong:'Use a shorter pull.',range:'Board in range.'}[zone];
-  const origin=bagScreen(),yaw=Math.atan2(b.v.x,-b.v.z),length=powerArrowLength(actualPower);showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},false,actualPower);
+function showShotArrow(b,actualPower){
+ const origin=bagScreen(),yaw=Math.atan2(b.v.x,-b.v.z),length=powerArrowLength(actualPower);
+ showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},false,actualPower);
 }
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 
@@ -817,7 +808,7 @@ function planCareerShot(o){
  return {t:0,side,power:best.power,aim:best.aim,drift:0,goal};
 }
 function showMenu() {
-  cancelPull();$('shot-feedback').hidden=true;
+  cancelPull();
   gameTimers.clear();M.active=null;M.before=null;M.paused=false;
   M.phase = 'menu'; ui.title.classList.remove('gone');
   M.career=false;
@@ -832,7 +823,7 @@ function showMenu() {
 }
 function startMatch(opts = {}) {
   if(compactBagOptions.matches)bagMenuCollapsed=true;
-  cancelPull();$('shot-feedback').hidden=true;
+  cancelPull();
   gameTimers.clear();M.paused=false;
   if (opts.vs) M.vs = opts.vs; if (opts.exact != null) M.exact = opts.exact;
   M.career = opts.career === true;
@@ -884,7 +875,7 @@ function throwBag(power, drift = 0, team = thrower()) {
   if (!isHuman(team)) b.spin += drift * 2; b.tumble = 0.6 + Math.random();
   M.before = bags.map((o) => ({ o, s: o.state }));
   bags.push(b); M.active = b; M.phase = 'flying'; M.lastPower = power; setMeter(power);
-  if(isHuman(team))shotFeedback(b,actualPower,M.aim);
+  if(isHuman(team))showShotArrow(b,actualPower);
   renderHud();
   return true;
 }
@@ -989,7 +980,7 @@ function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseY
 wrap.addEventListener('pointerdown',e=>{
  if(e.button!==0||drag||e.target.closest('#bag-drawer,button,dialog,a')||!ui.panel.hidden||!humanTurn())return;
  const p=bagScreen(),point={x:e.clientX,y:e.clientY};if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(34,Math.abs(bagScreen(releaseX(thrower())+BAG*.6).x-p.x)+12))return;
- $('shot-feedback').hidden=true;$('control-hint').hidden=false;$('swipe-feedback').classList.remove('shown');drag={id:e.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};wrap.classList.add('drag');try{wrap.setPointerCapture(e.pointerId);}catch{}
+ $('control-hint').hidden=false;$('swipe-feedback').classList.remove('shown');drag={id:e.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};wrap.classList.add('drag');try{wrap.setPointerCapture(e.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',e=>{
  if(!drag||e.pointerId!==drag.id)return;const point={x:e.clientX,y:e.clientY},dx=point.x-drag.anchor.x,dy=point.y-drag.anchor.y;
