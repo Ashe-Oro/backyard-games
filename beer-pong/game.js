@@ -136,18 +136,9 @@ function setCamera(){
 function resize(){humanPointer=null;if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
 addEventListener('resize',resize);resize();
 function setPower(power){state.power=clamp(power,0,1);}
-function showShotFeedback(b){
- const direction=b.team===0?-1:1,rack=cups.filter(c=>c.team===1-b.team&&c.alive);
- const time=(b.v.y+Math.sqrt(b.v.y*b.v.y+2*G*(RELEASE_Y-RIM_Y-BALL_R)))/G;let depth=Math.abs(b.v.z)*time;
- if(b.bounceAllowed){const probe=newBall(b.team,b.power,b.slope,b.style);for(let i=0;i<600&&probe.state==='fly'&&!probe.bounces;i++)stepBall(probe,1/240);if(probe.bounces){const d=probe.v.y*probe.v.y-2*G*(RIM_Y-TABLE_Y);depth=d<0?0:Math.abs(probe.p.z-RELEASE_Z[b.team])+Math.abs(probe.v.z)*(probe.v.y+Math.sqrt(d))/G;}}
- const distances=rack.map(c=>(c.z-RELEASE_Z[b.team])*direction);
- const zone=depth<Math.min(...distances)-CUP_R?'weak':depth>Math.max(...distances)+CUP_R?'strong':'range';
- const horizontal=b.v.x*(b.team===0?1:-1),aim=Math.abs(horizontal)<.045?'↑ STRAIGHT':horizontal<0?'↖ LEFT':'↗ RIGHT';
- const panel=$('shot-feedback');panel.dataset.power=zone;panel.hidden=false;
- $('feedback-direction').textContent=`${aim}`;
- $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
- $('feedback-tip').textContent={weak:'Pull farther.',strong:'Use a shorter pull.',range:'Cups in range.'}[zone];
- const origin=ballScreen(),yaw=Math.atan2(horizontal,Math.abs(b.v.z));showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
+function showThrowDirection(b){
+ const horizontal=b.v.x*(b.team===0?1:-1),origin=ballScreen(),yaw=Math.atan2(horizontal,Math.abs(b.v.z));
+ showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
 }
 function message(text,detail='',seconds=1.1){$('message').replaceChildren(document.createTextNode(text));if(detail){const small=document.createElement('small');small.textContent=detail;$('message').append(small);}$('message').classList.add('show');messageTime=seconds;}
 function updateHud(){
@@ -156,19 +147,18 @@ function updateHud(){
  $('red-label').textContent=state.mode==='cpu'?'YOUR CUPS':'RED CUPS';$('blue-label').textContent=state.mode==='cpu'?'CPU CUPS':'BLUE CUPS';
  for(const [team,id]of [[0,'red'],[1,'blue']]){$(`${id}-count`).textContent=remaining(team);$(`${id}-pips`).innerHTML=Array.from({length:10},(_,i)=>`<i class="${i>=remaining(team)?'out':''}"></i>`).join('');}
  $('scoreboard').hidden=state.mode==='practice';$('practice-stats').hidden=state.mode!=='practice';$('practice-hits').textContent=`${state.hits[0]} / ${state.shots[0]}`;
- $('control-hint').hidden=state.phase!=='aim'||!$('shot-feedback').hidden;$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
+ $('control-hint').hidden=state.phase!=='aim';$('shot-count').textContent=`${state.mode==='practice'?'':LABELS[state.turn]+' · '}THROW ${state.shots[state.turn]+(['aim','cpu','handoff'].includes(state.phase)?1:0)}`;
  $('shot-style').hidden=state.mode==='two'||state.turn!==0||!['aim','flight','wait'].includes(state.phase);
  document.querySelectorAll('[data-shot-style]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.shotStyle===state.shotStyle));b.disabled=!humanReady()||!!drag;});
  const canOffer=layoutsFor(remaining(1-state.turn)).length>0;
  $('rerack-button').hidden=state.reracksUsed[state.turn]||!['aim','flight','wait'].includes(state.phase)||state.mode==='cpu'&&state.turn===1;
  $('rerack-button').disabled=!humanReady()||!canOffer||!!drag;$('rerack-button').title=canOffer?'Choose a formation for the cups you’re shooting at':'Available with 6, 4, 3 or 2 target cups left';
  $('refill').hidden=state.mode!=='practice';$('refill').disabled=state.phase!=='aim'||state.paused;
- if(state.phase==='handoff'||state.mode==='cpu'&&state.turn===1)$('shot-feedback').hidden=true;
 }
 function closeDialogs(){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();}
-function showMenu(){resetHumanDefense();defender.reset();glove.visible=false;$('shot-feedback').hidden=true;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
+function showMenu(){resetHumanDefense();defender.reset();glove.visible=false;closeDialogs();state.phase='menu';state.paused=false;ball=null;drag=null;wrap.classList.remove('drag');state.turn=0;state.delay=0;$('menu').hidden=false;$('hud').hidden=true;flying.visible=held.visible=false;$('swipe-feedback').classList.remove('show');$('message').classList.remove('show');state.mode='cpu';resetCups();setCamera();}
 function startMatch(mode='practice',opponent='regular'){
- if(!['practice','cpu','two'].includes(mode))return;resetHumanDefense();$('shot-feedback').hidden=true;closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
+ if(!['practice','cpu','two'].includes(mode))return;resetHumanDefense();closeDialogs();state.mode=mode;state.opponent=OPPONENTS[opponent]?opponent:'regular';defender.setProfile(state.opponent);glove.visible=false;state.shotStyle='arc';state.phase='wait';state.paused=false;state.turn=0;state.shots=[0,0];state.hits=[0,0];state.positions=[0,0];state.reracksUsed=[false,false];state.winner=null;state.power=0;state.delay=0;ball=null;drag=null;wrap.classList.remove('drag');flying.visible=false;
  $('menu').hidden=true;$('hud').hidden=false;$('message').classList.remove('show');$('swipe-feedback').classList.remove('show');resetCups();setCamera();beginTurn();
 }
 function beginTurn(){
@@ -180,7 +170,7 @@ function beginTurn(){
 }
 function launchShot(power,slope=0,style){
  if(state.paused||!['aim','cpu'].includes(state.phase)||document.querySelector('dialog[open]'))return false;
- resetHumanDefense();defender.reset();glove.visible=false;ball=newBall(state.turn,power,slope,style);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showShotFeedback(ball);updateHud();return true;
+ resetHumanDefense();defender.reset();glove.visible=false;ball=newBall(state.turn,power,slope,style);state.phase='flight';state.shots[state.turn]++;flying.position.copy(ball.p);flying.scale.setScalar(1);flying.visible=true;held.visible=false;setPower(power);if(!(state.mode==='cpu'&&state.turn===1))showThrowDirection(ball);updateHud();return true;
 }
 // Search the same table/cup physics used by real throws, including the first rebound.
 function bouncePlan(x,z,team){
@@ -244,10 +234,10 @@ function openRerack(){
 }
 function cancelRerack(){$('rerack-dialog').close();selectedLayout=null;updateHud();$('rerack-button').focus();}
 $('rerack-button').onclick=openRerack;$('rerack-cancel').onclick=cancelRerack;$('rerack-dialog').oncancel=e=>{e.preventDefault();cancelRerack();};
-$('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;$('shot-feedback').hidden=true;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','',1.2);};
+$('rerack-confirm').onclick=()=>{if(!applyRerack(state.turn,selectedLayout))return;$('rerack-dialog').close();selectedLayout=null;setPower(0);updateHud();$('pause-button').focus();message('RE-RACKED','',1.2);};
 function pauseGame(){humanPointer=null;if(state.phase==='menu'||state.paused||document.querySelector('dialog[open]'))return;cancelPull();state.paused=true;drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('show');$('pause').showModal();updateHud();}
 function resumeGame(){state.paused=false;$('pause').close();$('pause-button').focus();updateHud();}
-document.querySelectorAll('[data-shot-style]').forEach(button=>button.onclick=()=>{if(!humanReady()||drag||state.mode==='two')return;state.shotStyle=button.dataset.shotStyle;setPower(0);$('shot-feedback').hidden=true;updateHud();});
+document.querySelectorAll('[data-shot-style]').forEach(button=>button.onclick=()=>{if(!humanReady()||drag||state.mode==='two')return;state.shotStyle=button.dataset.shotStyle;setPower(0);updateHud();});
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>startMatch(button.dataset.mode));
 $('pause-button').onclick=pauseGame;$('resume').onclick=resumeGame;$('pause').oncancel=event=>{event.preventDefault();resumeGame();};
 for(const id of ['pause-menu','handoff-menu','result-menu'])$(id).onclick=showMenu;
@@ -329,7 +319,7 @@ wrap.addEventListener('pointerdown',event=>{
  if(event.button!==0||event.target.closest('button,a,input,label,dialog,#menu')||!humanReady()||drag)return;
  const point={x:event.clientX,y:event.clientY},p=ballScreen();
  if(Math.hypot(point.x-p.x,point.y-p.y)>Math.max(32,Math.abs(ballScreen(releaseX(state.turn)+BALL_R).x-p.x)+16))return;
- $('shot-feedback').hidden=true;$('control-hint').hidden=false;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
+ $('control-hint').hidden=false;$('swipe-feedback').classList.remove('show');drag={id:event.pointerId,mode:'pending',anchor:point,offset:point.x-p.x};
  wrap.classList.add('drag');$('rerack-button').disabled=true;try{wrap.setPointerCapture(event.pointerId);}catch{}
 });
 wrap.addEventListener('pointermove',event=>{

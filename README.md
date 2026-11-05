@@ -10,7 +10,7 @@ Backyard Games has a buildless home page at `/` and five static Three.js games:
 
 All five support practice and same-screen two-player games. New games also have CPU matches, first-visit rules, pause and practice clear. Shared new-game rendering and controls are in `yard-games/engine.js`; independently tested scoring is in `yard-games/rules.mjs`. Source rule links appear in each new game’s How to Play dialog.
 
-Both games use distance-based pull-down-and-release throws: grab the bag or ball, drag sideways to position it, pull down for power and diagonally to aim, then release. Return to the starting point to cancel. Post-throw arrows and power feedback help adjust the next attempt. Cornhole retains PUSH / NORMAL / KOBE throw heights and bag surfaces. Both games are linked from their menus.
+Both games use distance-based pull-down-and-release throws: grab the bag or ball, drag sideways to position it, pull down for power and diagonally to aim, then release. Return to the starting point to cancel. Post-throw arrows show direction. Cornhole also gives power feedback. Cornhole retains PUSH / NORMAL / KOBE throw heights and bag surfaces. Both games are linked from their menus.
 Beer Pong uses one throw per turn. Every mode allows one table bounce; a second bounce ends the shot. Every sink removes exactly one cup. CPU opponents mix arc and bounce shots. Swatting is disabled for both players via `beer-pong/features.mjs` (`FEATURES.swatting=false`), including hands, targets, cues and input. Each player gets one optional re-rack before throwing at 6, 4, 3 or 2 target cups. Practice refills restore the rack and re-rack allowance.
 
 ## Deployment
