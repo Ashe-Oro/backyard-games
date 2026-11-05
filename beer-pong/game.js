@@ -4,6 +4,7 @@ import {OPPONENTS,SwatDefender} from './opponents.mjs';
 import {createGlove} from './glove.js';
 import {FEATURES} from './features.mjs';
 import {createBackyard} from '../yard-games/backyard.js';
+import {powerArrowLength,paintPowerArrow} from '../yard-games/power-arrow.js';
 import {CIRCUITS,RIVALS,TournamentProgress,portraitSvg} from './tournament.mjs';
 
 const $=id=>document.getElementById(id);
@@ -119,9 +120,6 @@ function setCamera(){
 }
 function resize(){humanPointer=null;if(drag)cancelPull();const w=wrap.clientWidth,h=wrap.clientHeight,scale=Math.max(1,Math.round(Math.min(h,w*.9)/430));renderer.setSize(Math.ceil(w/scale),Math.ceil(h/scale),false);setCamera();$('swipe-feedback').classList.remove('show');}
 addEventListener('resize',resize);resize();
-const POWER_ARROW_MAX=145,POWER_COLORS=['#8fc6ee','#a7efb1','#ffe16b','#f6a35c','#f1755f'].map(c=>new THREE.Color(c));
-const powerArrowLength=power=>Math.max(16,clamp(power,0,1)*POWER_ARROW_MAX);
-function shotPowerColor(power){const position=clamp(power,0,1)*(POWER_COLORS.length-1),index=Math.min(POWER_COLORS.length-2,Math.floor(position));return '#'+POWER_COLORS[index].clone().lerp(POWER_COLORS[index+1],position-index).getHexString();}
 function setPower(power){state.power=clamp(power,0,1);}
 function showThrowDirection(b){
  const horizontal=b.v.x*(b.team===0?1:-1),origin=ballScreen(),yaw=Math.atan2(horizontal,Math.abs(b.v.z)),length=powerArrowLength(b.power);
@@ -273,10 +271,7 @@ function humanReady(){return state.phase==='aim'&&!state.paused&&!document.query
 function showAim(from,to,pulling=false,power=state.power){
  const rect=wrap.getBoundingClientRect(),svg=$('swipe-feedback');clearTimeout(swipeTimer);svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
  for(const id of ['swipe-shadow','swipe-line'])for(const [key,value]of Object.entries({x1:from.x-rect.left,y1:from.y-rect.top,x2:to.x-rect.left,y2:to.y-rect.top}))$(id).setAttribute(key,value);
- const color=shotPowerColor(power);$('swipe-line').setAttribute('stroke',color);$('swipe-tip-fill').setAttribute('fill',color);$('pull-grip').setAttribute('fill',color);
- const dx=to.x-from.x,dy=to.y-from.y,length=Math.max(1,Math.hypot(dx,dy)),end={x:from.x+dx/length*POWER_ARROW_MAX,y:from.y+dy/length*POWER_ARROW_MAX};
- for(const [key,value]of Object.entries({x1:from.x-rect.left,y1:from.y-rect.top,x2:end.x-rect.left,y2:end.y-rect.top}))$('power-track').setAttribute(key,value);
- $('power-limit').setAttribute('cx',end.x-rect.left);$('power-limit').setAttribute('cy',end.y-rect.top);
+ paintPowerArrow(svg,power,from,to,rect);
  svg.classList.add('show');svg.classList.toggle('pulling',pulling);
  if(!pulling)swipeTimer=setTimeout(()=>svg.classList.remove('show'),2400);
 }

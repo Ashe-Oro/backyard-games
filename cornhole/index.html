@@ -147,10 +147,10 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="msg" class="ol"></div>
     <div id="shot-feedback" role="status" aria-live="polite" hidden><span id="feedback-direction"></span><strong id="feedback-power"></strong><span id="feedback-tip"></span></div><div id="control-hint">DRAG TO MOVE · PULL TO THROW</div>
     <svg id="swipe-feedback" aria-hidden="true">
-      <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
-      <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
-      <line id="swipe-outline" stroke="#2b1a2e" stroke-width="8" stroke-linecap="square"/>
-      <line id="swipe-line" stroke="#ffe45e" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
+      <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path id="swipe-tip-fill" data-power-tip d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
+      <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" data-power-grip r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
+      <line id="power-track" data-power-track stroke="#fff1cf" stroke-width="3" opacity=".28"/><circle id="power-limit" data-power-limit r="3" fill="#fff1cf" opacity=".55"/><line id="swipe-outline" stroke="#2b1a2e" stroke-width="8" stroke-linecap="square"/>
+      <line id="swipe-line" data-power-shaft stroke="#ffe45e" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
     </svg>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
     <button class="hb" id="reset-bags" hidden title="Clear bags; keep stats">CLEAR BOARD</button>
@@ -173,6 +173,7 @@ import * as THREE from 'three';
 import {createBackyard} from '../yard-games/backyard.js';
 import {throwPower,pullPower,roundWind} from './controls.mjs';
 import {createWindStreaks} from './wind-streaks.js';
+import {powerArrowLength,paintPowerArrow} from '../yard-games/power-arrow.js';
 
 // ---------- constants (regulation ACL/ACA dimensions, metres) ----------
 const G = 9.8;
@@ -692,7 +693,7 @@ function shotFeedback(b,actualPower,aim){
   $('shot-feedback').hidden=false;$('feedback-direction').textContent=`${dir}`;
   $('feedback-power').textContent={weak:'TOO WEAK',strong:'TOO STRONG',range:'POWER IN RANGE'}[zone];
   $('feedback-tip').textContent={weak:'Pull farther.',strong:'Use a shorter pull.',range:'Board in range.'}[zone];
-  const origin=bagScreen(),yaw=Math.atan2(b.v.x,-b.v.z);showAim(origin,{x:origin.x+Math.sin(yaw)*100,y:origin.y-Math.cos(yaw)*100});
+  const origin=bagScreen(),yaw=Math.atan2(b.v.x,-b.v.z),length=powerArrowLength(actualPower);showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},false,actualPower);
 }
 const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 
@@ -949,9 +950,10 @@ document.querySelectorAll('[data-height]').forEach(b=>b.onclick=()=>{if(!humanTu
 let drag=null,swipeTimer;
 const humanTurn=()=>!M.paused&&!$('help-dialog').open&&M.phase==='aim'&&isHuman(thrower());
 function bagScreen(x=releaseX(thrower())){const p=new THREE.Vector3(x,REL_Y,REL_Z).project(camera),r=wrap.getBoundingClientRect();return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
-function showAim(from,to,pulling=false){
+function showAim(from,to,pulling=false,power=physicalPower(M.power)){
  const overlay=$('swipe-feedback'),r=wrap.getBoundingClientRect();clearTimeout(swipeTimer);overlay.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);
  for(const id of ['swipe-outline','swipe-line'])for(const [key,val]of Object.entries({x1:from.x-r.left,y1:from.y-r.top,x2:to.x-r.left,y2:to.y-r.top}))$(id).setAttribute(key,val);
+ paintPowerArrow(overlay,power,from,to,r);
  overlay.classList.add('shown');overlay.classList.toggle('pulling',pulling);if(!pulling)swipeTimer=setTimeout(()=>overlay.classList.remove('shown'),2400);
 }
 function pullAt(point){const r=wrap.getBoundingClientRect(),dy=Math.max(0,point.y-drag.anchor.y),dx=point.x-drag.anchor.x;
@@ -959,7 +961,7 @@ function pullAt(point){const r=wrap.getBoundingClientRect(),dy=Math.max(0,point.
  return {power:clamp((dy-10)/(max-10),0,1),aim:clamp(Math.atan(-dx/Math.max(24,dy))*.65,-AIM_MAX,AIM_MAX)};
 }
 function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');$('control-hint').textContent='DRAG TO MOVE · PULL TO THROW';}
-function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+pull.aim,length=45+pull.power*100;M.aim=pull.aim;setMeter(pull.power);
+function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+pull.aim,length=powerArrowLength(physicalPower(pull.power));M.aim=pull.aim;setMeter(pull.power);
  showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},true);const r=wrap.getBoundingClientRect();
  $('pull-grip').setAttribute('cx',point.x-r.left);$('pull-grip').setAttribute('cy',point.y-r.top);
  for(const [key,val]of Object.entries({x1:origin.x-r.left,y1:origin.y-r.top,x2:point.x-r.left,y2:point.y-r.top}))$('pull-tether').setAttribute(key,val);
