@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Cornhole · Backyard Games</title>
 <meta name="description" content="Play Cornhole solo, in a CPU tournament or with a friend.">
-<meta name="theme-color" content="#ffb36b">
+<meta name="theme-color" content="#a7efb1">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Backyard Cornhole">
 <meta property="og:description" content="Toss bags. First to 21 wins.">
@@ -30,42 +30,42 @@ body{font-family:'Press Start 2P',ui-monospace,Menlo,monospace;color:#fff}
 #game.drag{cursor:grabbing}
 #game.spin{cursor:crosshair}
 canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-.ol{text-shadow:.13em 0 #2b1a2e,-.13em 0 #2b1a2e,0 .13em #2b1a2e,0 -.13em #2b1a2e,.13em .13em #2b1a2e,-.13em .13em #2b1a2e,.13em -.13em #2b1a2e,-.13em -.13em #2b1a2e}
+.ol{text-shadow:.13em 0 #172c32,-.13em 0 #172c32,0 .13em #172c32,0 -.13em #172c32,.13em .13em #172c32,-.13em .13em #172c32,.13em -.13em #172c32,-.13em -.13em #172c32}
 #hud{position:absolute;inset:0;pointer-events:none;font-size:clamp(10px,1.9vmin,14px)}
 #hud.menu > :not(#title){display:none!important}
 #sb{position:absolute;left:0;right:0;top:1.4vmin;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;padding:0 1.6vmin}
 .team{min-width:0;padding-top:54px}.team.blue{grid-column:3;text-align:right}
 .tn{font-size:.9em;letter-spacing:.06em}
-.red .tn{color:#ff8a80}.blue .tn{color:#9db8ff}
-.ts{font-size:2.6em;margin-top:.3em;color:#ffe45e}
+.red .tn{color:#f1755f}.blue .tn{color:#8fc6ee}
+.ts{font-size:2.6em;margin-top:.3em;color:#ffe16b}
 .pips{display:flex;gap:.4em;margin-top:.6em}.blue .pips{justify-content:flex-end}
-.pips i{display:block;width:1.4em;height:1.4em;border:.22em solid #2b1a2e;box-shadow:inset -.22em -.22em 0 rgba(0,0,0,.25),inset .18em .18em 0 rgba(255,255,255,.35)}
+.pips i{display:block;width:1.4em;height:1.4em;border:.22em solid #172c32;box-shadow:inset -.22em -.22em 0 rgba(0,0,0,.25),inset .18em .18em 0 rgba(255,255,255,.35)}
 .red .pips i{background:#e8423c}.blue .pips i{background:var(--rival,#3f6ee8)}
-.pips i.used{background:#6b5a63!important;opacity:.4;box-shadow:none}
-.team.now .tn::before{content:'▶ ';color:#ffe45e}
-.blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe45e}
+.pips i.used{background:#769184!important;opacity:.4;box-shadow:none}
+.team.now .tn::before{content:'▶ ';color:#ffe16b}
+.blue.now .tn::before{content:''}.blue.now .tn::after{content:' ◀';color:#ffe16b}
 .mid{grid-column:2;text-align:center;padding-top:.2em;max-width:58vw}#goal.practice{white-space:pre-line;line-height:1.7}
-#inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#ffb36b}
+#inn{font-size:1em}#goal{font-size:.75em;margin-top:.7em;color:#a7efb1}
 #turn{position:absolute;left:0;right:0;top:19%;text-align:center;font-size:1.25em;color:#fff;transition:opacity .3s}
-#turn.red{color:#ff8a80}#turn.blue{color:#9db8ff}
+#turn.red{color:#f1755f}#turn.blue{color:#8fc6ee}
 #msg{position:absolute;left:0;right:0;top:31%;text-align:center;font-size:2.2em;color:#fff;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s cubic-bezier(.3,1.8,.5,1)}
 #msg.on{opacity:1;transform:scale(1)}
-#msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe45e}
+#msg small{display:block;font-size:.45em;margin-top:.8em;color:#ffe16b}
 #title{position:absolute;left:0;right:0;top:15%;text-align:center;transition:opacity .6s}
-#title h1{font-size:3.2em;font-weight:400;color:#ffe45e;letter-spacing:.04em;line-height:1.2}
+#title h1{font-size:3.2em;font-weight:400;color:#ffe16b;letter-spacing:.04em;line-height:1.2}
 #title p{font-size:1em;margin-top:1em}
 #title.gone{opacity:0}
 .btns{position:absolute;left:1.6vmin;bottom:1.8vmin;display:flex;flex-direction:column;gap:.6em;align-items:flex-start}
-.hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#3b2a40;border:.25em solid #2b1a2e;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
-.hb:hover{background:#56405c}
+.hb{pointer-events:auto;font:inherit;font-size:.8em;color:#fff;background:#173f3d;border:.25em solid #172c32;padding:.6em .7em;cursor:pointer;box-shadow:.25em .25em 0 rgba(43,26,46,.35)}
+.hb:hover{background:#2e6156}
 #pause-button{position:absolute;left:1.6vmin;top:1.4vmin;min-height:44px;padding:10px 12px;font-size:9px}
-.game-dialog{margin:auto;width:min(420px,92vw);max-height:90dvh;overflow:auto;padding:24px;background:#30283b;color:#fff4dc;border:4px solid #ffe45e;box-shadow:6px 6px 0 #211827;font:12px/1.8 'Press Start 2P',monospace;text-align:center}
+.game-dialog{margin:auto;width:min(420px,92vw);max-height:90dvh;overflow:auto;padding:24px;background:#173f3d;color:#fff1cf;border:4px solid #ffe16b;box-shadow:6px 6px 0 #172c32;font:12px/1.8 'Press Start 2P',monospace;text-align:center}
 .game-dialog::backdrop{background:#101b24bb}
-.game-dialog h2{font-size:20px;color:#ffe45e;margin-bottom:18px}
+.game-dialog h2{font-size:20px;color:#ffe16b;margin-bottom:18px}
 .game-dialog p{font:14px/1.6 ui-sans-serif,system-ui,sans-serif;margin:14px 0;color:#f1e7ce}
 .game-dialog .dialog-actions{display:grid;gap:12px;margin-top:22px}
-.game-dialog button{min-height:48px;font:inherit;font-size:11px;border:3px solid #211827;background:#ffe45e;color:#282035;padding:12px;cursor:pointer}
-.game-dialog button.secondary{background:#494155;color:#fff4dc;border-color:#817188}
+.game-dialog button{min-height:48px;font:inherit;font-size:11px;border:3px solid #172c32;background:#ffe16b;color:#282035;padding:12px;cursor:pointer}
+.game-dialog button.secondary{background:#2d5a51;color:#fff1cf;border-color:#769184}
 .game-dialog button:focus-visible,#pause-button:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .help-swipe{font:32px/1 monospace;color:#baff99;margin:12px auto}
 @media(max-height:450px){.game-dialog{padding:16px}.game-dialog h2{font-size:16px;margin-bottom:8px}.game-dialog p{margin:8px 0}.game-dialog .dialog-actions{margin-top:12px;gap:8px}.help-swipe{display:none}}
@@ -74,29 +74,29 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #swipe-feedback{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .4s ease-out;overflow:visible}
 #swipe-feedback.shown{opacity:1;transition:none}
 @media(prefers-reduced-motion:reduce){#swipe-feedback{transition:none}}
-#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#3b2a40;border:.4em solid #2b1a2e;box-shadow:0 0 0 .3em #ffe45e,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(10px,1.9vmin,14px);min-width:20em;max-width:94vw}
+#panel{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#173f3d;border:.4em solid #172c32;box-shadow:0 0 0 .3em #ffe16b,.6em .6em 0 .3em rgba(43,26,46,.45);padding:1.4em 1.8em;text-align:center;font-size:clamp(10px,1.9vmin,14px);min-width:20em;max-width:94vw}
 #panel[hidden]{display:none}
-#panel .pt{font-size:1.1em;color:#ffb36b}
-#panel .big{font-size:2.6em;color:#ffe45e;margin:.45em 0 .3em}
+#panel .pt{font-size:1.1em;color:#a7efb1}
+#panel .big{font-size:2.6em;color:#ffe16b;margin:.45em 0 .3em}
 #panel .row{display:flex;justify-content:center;gap:2.2em;margin:.9em 0 .3em;line-height:1.9;font-size:.85em}
 #panel .row b{display:block;font-weight:400;font-size:2em}
-#panel .r{color:#ff8a80}#panel .b{color:#9db8ff}
+#panel .r{color:#f1755f}#panel .b{color:#8fc6ee}
 #panel .pd{font-size:.8em;line-height:1.9;margin-top:.5em}
 #panel .opt{display:flex;gap:.5em;justify-content:center;margin-top:.8em}
-#panel .opt button{font:inherit;font-size:.8em;padding:.6em .7em;color:#fff;background:#2b1a2e;border:.2em solid #6b5a63;cursor:pointer}
-#panel .opt button.on{background:#ffe45e;color:#2b1a2e;border-color:#2b1a2e}
-#panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#2b1a2e;background:#ffe45e;border:.25em solid #2b1a2e;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
+#panel .opt button{font:inherit;font-size:.8em;padding:.6em .7em;color:#fff;background:#172c32;border:.2em solid #769184;cursor:pointer}
+#panel .opt button.on{background:#ffe16b;color:#172c32;border-color:#172c32}
+#panel .go{font:inherit;font-size:1em;margin-top:1.1em;padding:.8em 1em;color:#172c32;background:#ffe16b;border:.25em solid #172c32;cursor:pointer;box-shadow:inset -.25em -.25em 0 #e0a52a}
 #panel .go:hover{background:#fff07f}
 #panel .note{font-size:.65em;line-height:1.8;margin-top:1em;opacity:.8}
-#panel .game-link{display:block;margin-top:16px;font-size:9px;color:#baff99;line-height:1.8;text-decoration:none}#panel .game-link:hover{color:#ffe45e}
+#panel .game-link{display:block;margin-top:16px;font-size:9px;color:#baff99;line-height:1.8;text-decoration:none}#panel .game-link:hover{color:#ffe16b}
 @media (max-width:560px){#title{top:12%}#title h1{font-size:2.4em}}
-#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#3b2a40e6;border:.25em solid #2b1a2e;box-shadow:.25em .25em 0 rgba(43,26,46,.35);color:#ffe45e;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;margin:2px auto 8px;width:36px;height:36px}#wind-speed{white-space:nowrap}
+#conditions{position:absolute;top:12%;left:0;right:0;text-align:center;font-size:.75em;line-height:1.9}#wind{position:absolute;right:2%;top:35%;padding:10px;background:#173f3de6;border:.25em solid #172c32;box-shadow:.25em .25em 0 rgba(43,26,46,.35);color:#ffe16b;text-align:center;font-size:clamp(8px,1.5vmin,12px);line-height:1.7}#wind[hidden]{display:none}#wind-arrow{display:block;margin:2px auto 8px;width:36px;height:36px}#wind-speed{white-space:nowrap}
 @media(max-height:450px){#turn{top:24%}#conditions{top:13%}#panel{top:55%;padding:.8em}#title{top:8%}#title h1{font-size:2em}}
-#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#3b2a40;font-size:12px;line-height:2}
-#panel{max-height:90vh;overflow:auto;touch-action:pan-y} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe45e}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe45e}#save-note{font-size:.65em;color:#ffb36b;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
-#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#3b2a40ed;border:2px solid #2b1a2e;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:2em;background:#173f3d;font-size:12px;line-height:2}
+#panel{max-height:90vh;overflow:auto;touch-action:pan-y} .portrait{width:64px;height:64px;image-rendering:pixelated;margin:8px auto;display:block;border:3px solid #ffe16b}.ladder{font-size:.7em;line-height:2;text-align:left;margin-top:1em}.ladder .done{color:#7ee081}.ladder .current{color:#ffe16b}#save-note{font-size:.65em;color:#a7efb1;margin-top:.8em}@media(max-height:450px){.portrait{width:40px;height:40px;margin:4px auto}.ladder{line-height:1.5}#panel .big{font-size:1.7em}}
+#bag-menu{position:absolute;left:1.6vmin;bottom:1.8vmin;width:clamp(156px,23vw,230px);max-height:70%;overflow:auto;pointer-events:auto;background:#173f3ded;border:2px solid #172c32;padding:8px;font-size:clamp(7px,1.3vmin,10px);display:flex;flex-direction:column;gap:7px;cursor:default;touch-action:pan-y}
 #bag-menu > *{flex-shrink:0}
-.bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#ffb36b;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe45e;color:#2b1a2e}
+.bag-row{display:flex;flex-direction:column;gap:4px}.bag-label{color:#a7efb1;font-size:.85em}.bag-choices{display:flex;gap:4px}.bag-choices .hb{flex:1;min-width:0;padding:7px 3px;font-size:.85em}.hb[aria-pressed="true"]{background:#ffe16b;color:#172c32}
 #height-choice{display:flex}.btns{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}.btns .hb{padding:7px 5px}#setup{display:none}#panel .go{display:block;margin:12px auto}
 @media(max-height:450px){#hud,#panel{font-size:10px}#goal,#wind{font-size:9px}#bag-menu{width:200px;max-height:69%;padding:4px;gap:3px;font-size:10px}.bag-row{gap:2px}.bag-label{font-size:9px}.bag-choices .hb,.btns .hb{font-size:9px;min-height:36px;padding:3px 2px}}
 /* Mode descriptions share one readable, responsive button column. */
@@ -115,8 +115,8 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 #bag-drawer #bag-menu{position:relative;left:0;bottom:0;max-height:70vh}
 #bag-drawer.collapsed{transform:translateX(calc(-100% - 1.6vmin))}
 #bag-drawer.collapsed #bag-menu{visibility:hidden;pointer-events:none;transition:visibility 0s 150ms}
-#bag-handle{position:absolute;left:100%;bottom:0;min-width:32px;min-height:32px;padding:8px 5px;pointer-events:auto;touch-action:manipulation;cursor:pointer;font:inherit;font-size:8px;line-height:1.8;color:#ffe45e;background:#3b2a40ed;border:2px solid #2b1a2e;border-left:0;box-shadow:2px 2px 0 #2b1a2e}
-#bag-handle:focus-visible{outline:2px solid #ffe45e;outline-offset:2px}
+#bag-handle{position:absolute;left:100%;bottom:0;min-width:32px;min-height:32px;padding:8px 5px;pointer-events:auto;touch-action:manipulation;cursor:pointer;font:inherit;font-size:8px;line-height:1.8;color:#ffe16b;background:#173f3ded;border:2px solid #172c32;border-left:0;box-shadow:2px 2px 0 #172c32}
+#bag-handle:focus-visible{outline:2px solid #ffe16b;outline-offset:2px}
 #bag-picks{display:none;white-space:nowrap;font-size:7px}
 .collapsed #bag-picks{display:block}
 @media(pointer:coarse),(max-width:600px){#bag-handle{min-width:44px;min-height:44px}#bag-drawer #bag-menu{max-height:60vh}}
@@ -128,14 +128,14 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 /* Compact mobile options keep the bag and board clear, including saved expanded states. */
 @media(pointer:coarse),(max-width:600px){
  #bag-drawer,#bag-drawer.collapsed{left:12px;bottom:max(12px,env(safe-area-inset-bottom));transform:none;transition:none}
- #bag-drawer #bag-menu{position:fixed;left:12px;top:max(134px,18dvh);bottom:auto;width:min(216px,calc(100vw - 112px));max-height:calc(100dvh - 160px);padding:8px;gap:8px;font-size:10px;background:#3b2a40}
+ #bag-drawer #bag-menu{position:fixed;left:12px;top:max(134px,18dvh);bottom:auto;width:min(216px,calc(100vw - 112px));max-height:calc(100dvh - 160px);padding:8px;gap:8px;font-size:10px;background:#173f3d}
  #hud:has(#bag-drawer:not(.collapsed)) #turn{visibility:hidden}
  #bag-menu .bag-label{font-size:8px;line-height:1.4}
  #bag-menu .bag-row{gap:4px}
  #bag-menu .bag-choices .hb{min-height:44px;padding:6px 1px;border-width:2px;font-size:9px;line-height:1.4}
  #bag-menu .btns{display:none}
  #bag-drawer.collapsed #bag-menu{display:none;transition:none}
- #bag-drawer #bag-handle{position:relative;left:0;bottom:0;display:flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:10px;border:2px solid #2b1a2e}
+ #bag-drawer #bag-handle{position:relative;left:0;bottom:0;display:flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:10px;border:2px solid #172c32}
  #bag-drawer #bag-picks{display:block;font-size:8px;line-height:1.5}
  #bag-chevron{display:inline-block;transform:rotate(-90deg)}
 }
@@ -148,6 +148,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+<link rel="stylesheet" href="/yard-games/ui.css">
 </head>
 <body>
 <div id="game">
@@ -163,10 +164,10 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <div id="msg" class="ol"></div>
 
     <svg id="swipe-feedback" aria-hidden="true">
-      <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path id="swipe-tip-fill" data-power-tip d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe45e" stroke="#2b1a2e" stroke-width="1"/></marker></defs>
-      <line id="pull-tether" stroke="#fff4dc" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" data-power-grip r="11" fill="#ffe45e" stroke="#2b1a2e" stroke-width="3"/>
-      <line id="power-track" data-power-track stroke="#fff1cf" stroke-width="3" opacity=".28"/><circle id="power-limit" data-power-limit r="3" fill="#fff1cf" opacity=".55"/><line id="swipe-outline" stroke="#2b1a2e" stroke-width="8" stroke-linecap="square"/>
-      <line id="swipe-line" data-power-shaft stroke="#ffe45e" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
+      <defs><marker id="swipe-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path id="swipe-tip-fill" data-power-tip d="M 1 1 L 9 5 L 1 9 L 3 5 Z" fill="#ffe16b" stroke="#172c32" stroke-width="1"/></marker></defs>
+      <line id="pull-tether" stroke="#fff1cf" stroke-width="2" stroke-dasharray="5 5"/><circle id="pull-grip" data-power-grip r="11" fill="#ffe16b" stroke="#172c32" stroke-width="3"/>
+      <line id="power-track" data-power-track stroke="#fff1cf" stroke-width="3" opacity=".28"/><circle id="power-limit" data-power-limit r="3" fill="#fff1cf" opacity=".55"/><line id="swipe-outline" stroke="#172c32" stroke-width="8" stroke-linecap="square"/>
+      <line id="swipe-line" data-power-shaft stroke="#ffe16b" stroke-width="4" stroke-linecap="square" marker-end="url(#swipe-tip)"/>
     </svg>
     <div id="wind" class="ol" hidden role="status"><span>WIND</span><canvas id="wind-arrow" width="12" height="12" aria-hidden="true"></canvas><span id="wind-speed"></span></div><div id="conditions" class="ol"><div id="setup"></div></div>
     <button class="hb" id="reset-bags" hidden title="Clear bags; keep stats">CLEAR BOARD</button>
@@ -179,7 +180,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
     <button id="bag-handle" aria-controls="bag-menu" aria-expanded="true" aria-label="Collapse bag options"><span id="bag-chevron" aria-hidden="true">◀</span><span id="bag-picks"></span></button>
     </div>
   </div>
-  <dialog class="game-dialog" id="pause-dialog" aria-labelledby="pause-heading"><h2 id="pause-heading">Paused</h2><div class="dialog-actions"><button id="resume-game" autofocus>Resume</button><button class="secondary" id="pause-menu">Main menu</button></div></dialog>
+  <dialog class="game-dialog" id="pause-dialog" aria-labelledby="pause-heading"><h2 id="pause-heading">Paused</h2><div class="dialog-actions"><button id="resume-game" autofocus>Resume</button><button class="secondary" id="pause-help">How to play</button><button class="secondary" id="pause-menu">Main menu</button></div></dialog>
   <dialog class="game-dialog" id="help-dialog" aria-labelledby="help-heading"><h2 id="help-heading">Pull. Release. Toss.</h2><div class="help-swipe" aria-hidden="true">↓</div><p>Drag the bag sideways to line up.<br>Pull down for power; diagonally to aim the opposite way.<br>Release to throw. Return to start to cancel.</p><p>PUSH / NORMAL / KOBE sets throw height.</p><div class="dialog-actions"><button id="help-done" autofocus>Let’s play</button></div></dialog>
   <div id="panel" class="ol" hidden></div>
   <div id="err">WebGL unavailable.<br>Try Chrome or Safari.</div>
@@ -615,15 +616,15 @@ function pauseGame(){
   $('pause-dialog').showModal();
 }
 function resumeGame(){M.paused=false;$('pause-dialog').close();$('pause-button').focus();}
-function showHelpOnce(){
-  try{if(localStorage.getItem('backyard-cornhole-help-seen')==='1')return;localStorage.setItem('backyard-cornhole-help-seen','1');}catch{}
-  $('help-dialog').showModal();
-}
 $('pause-button').onclick=pauseGame;
 $('resume-game').onclick=resumeGame;
 $('pause-dialog').oncancel=e=>{e.preventDefault();resumeGame();};
 $('pause-menu').onclick=()=>{resumeGame();showMenu();$('two-player').focus();};
-$('help-done').onclick=()=>$('help-dialog').close();
+let helpFromPause=false;
+$('pause-help').onclick=()=>{helpFromPause=true;$('pause-dialog').close();$('help-dialog').showModal();};
+function closeHelp(){ $('help-dialog').close();if(helpFromPause){helpFromPause=false;$('pause-dialog').showModal();} }
+$('help-done').onclick=closeHelp;
+$('help-dialog').oncancel=e=>{e.preventDefault();closeHelp();};
 const releaseX=(t)=>RX[t]+(isHuman(t)?M.position[t]:0);
 const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);
 const isHuman = (t) => t === 0 || M.vs === '2p';
@@ -813,12 +814,12 @@ function showMenu() {
   M.phase = 'menu'; ui.title.classList.remove('gone');
   M.career=false;
   clearBags();
-  ui.panel.innerHTML = '<div class="menu-modes"><button class="go" id="two-player">2 PLAYER<small>PASS AND PLAY</small></button><button class="go" id="practice">SOLO PRACTICE<small>UNLIMITED THROWS</small></button><button class="go" id="career">START TOURNAMENT<small>8 CPU RIVALS</small></button></div>';
+  ui.panel.innerHTML = '<a class="game-link" href="/">← ALL BACKYARD GAMES</a><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="menu-modes"><button class="go" id="practice">SOLO PRACTICE<small>Unlimited throws.</small></button><button class="go" id="two-player">2 PLAYER<small>Pass and play.</small></button><button class="go" id="career">TOURNAMENT<small>8 rivals. One crown.</small></button></div><button id="menu-help" class="help-link">How to play</button>';
   ui.panel.hidden=false;
   $('two-player').onclick=()=>startMatch({vs:'2p',exact:false});
   $('practice').onclick=()=>startMatch({vs:'2p',practice:true,first:0});
   $('career').onclick=careerMap;
-  ui.panel.insertAdjacentHTML('beforeend','<a class="game-link" href="/">← ALL BACKYARD GAMES</a>');
+  $('menu-help').onclick=()=>$('help-dialog').showModal();
   renderHud();
 }
 function startMatch(opts = {}) {
@@ -1082,7 +1083,7 @@ if (POSTER) {
   }
   M.phase = 'poster'; M.scores = [17, 12]; M.inning = 6; renderHud();
   for (const el of [$('bag-drawer')]) el.style.display = 'none';
-} else {showMenu();showHelpOnce();}
+} else {showMenu();}
 requestAnimationFrame(frame);
 
 window.__game = {

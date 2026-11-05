@@ -70,3 +70,13 @@ Cornhole mobile bag choices start collapsed as a compact bottom-left button. Exp
 Shot-strength feedback uses only the colored arrow in every game. Post-throw strength/direction coaching boxes are removed; scoring and round messages remain.
 
 Gameplay has no persistent drag/pull/release/cancel text prompts. Colored arrows and grab/pull visuals provide the cues; optional help and rules remain available.
+
+### Shared game UI
+
+All five games load `/yard-games/ui.css` after their local styles. It owns the
+teal/cream/gold palette, pixel typography, mode tiles, HUD controls, focus states,
+and modal actions. Keep game-specific layout and scene art in the game's own
+files; add shared UI changes here so the games stay consistent. Mode choices use
+cream tiles; primary actions use gold; secondary actions use teal. Touch controls
+are at least 44px high. Help is optional from the menu or pause screen in every
+game; play never waits for an instruction screen.

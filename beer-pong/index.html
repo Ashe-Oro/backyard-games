@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/beer-pong/style.css">
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js"}}</script>
+<link rel="stylesheet" href="/yard-games/ui.css">
 </head>
 <body>
 <main id="game">
@@ -33,13 +34,12 @@
   </div>
   <section id="menu" class="menu-card" aria-labelledby="game-title">
     <a class="series-link" href="/">← ALL BACKYARD GAMES</a>
-    <p class="eyebrow">ONE TABLE. TEN TARGETS.</p>
     <h1 id="game-title">BACKYARD<br><span>BEER PONG</span></h1>
     <div class="mode-buttons">
-      <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws.</small><span aria-hidden="true">01</span></button>
-      <button data-mode="cpu"><strong>VS CPU</strong><small>Clear their cups.</small><span aria-hidden="true">02</span></button>
-      <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small><span aria-hidden="true">03</span></button>
-      <button id="tournament-button"><strong>TOURNAMENT</strong><small id="tournament-status">8 rivals. One crown.</small><span aria-hidden="true">04</span></button>
+      <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws.</small></button>
+      <button data-mode="cpu"><strong>VS CPU</strong><small>Clear their cups.</small></button>
+      <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small></button>
+      <button id="tournament-button"><strong>TOURNAMENT</strong><small id="tournament-status">8 rivals. One crown.</small></button>
     </div>
     <button id="menu-help" class="help-link">How to play</button>
   </section>
