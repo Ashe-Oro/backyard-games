@@ -42,17 +42,39 @@
       <button data-mode="cpu"><strong>VS CPU</strong><small>Bounce. Swat. Clear the cups.</small><span aria-hidden="true">02</span></button>
       <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small><span aria-hidden="true">03</span></button>
     </div>
-    <p class="menu-note">Mouse or touch · Pull down, release</p>
+    <button id="menu-help" class="help-link">How to play</button>
   </section>
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
-    <p class="eyebrow">YOUR FIRST SHOT</p><h2 id="help-title">Pull. Release. Sink.</h2>
-    <p>Drag the ball sideways to line up.<br>Pull down for power; diagonally to aim the opposite way.<br>Release to throw. Return to start to cancel.</p>
-    <p>Clear their cups to win. One throw per turn.<br>Practice / vs CPU: one bounce allowed. Sink a bounce for two cups.<br>Vs CPU: tap or click a bounced ball on your half to swat. Space also swats.<br>Practice: no defense. Two-player: table contact ends the shot.</p>
-    <p>One re-rack per player, before throwing with 6, 4, 3 or 2 cups left.</p>
-    <button id="help-done" autofocus>LET’S PLAY</button>
+    <h2 id="help-title">Grab. Pull. Release.</h2>
+    <div class="throw-steps">
+      <figure><svg viewBox="0 0 120 110" role="img" aria-label="Grab the ball and drag left or right to line up">
+        <path d="M15 62h90m-78-12L15 62l12 12m66-24 12 12-12 12" class="gesture"/>
+        <ellipse cx="60" cy="77" rx="16" ry="4" class="diagram-shadow"/><circle cx="60" cy="54" r="11" class="diagram-ball"/>
+        <path d="M58 94V73q0-7 6-7t6 7v8l4-2 9 7-3 17H62z" class="diagram-hand"/>
+      </svg><figcaption>Move</figcaption></figure>
+      <figure><svg viewBox="0 0 120 110" role="img" aria-label="Pull down for power. Pull diagonally to aim the opposite way. Farther pulls throw harder.">
+        <path d="m60 42 20 48" class="diagram-tether"/><path d="m58 40-19-25m-1 13 1-13 13 3" class="gesture"/>
+        <circle cx="60" cy="43" r="11" class="diagram-ball"/><circle cx="80" cy="91" r="12" class="diagram-grip"/>
+        <path d="M78 104V86q0-7 6-7t6 7v6l5-2 8 7-3 12H82" class="diagram-hand"/>
+      </svg><figcaption>Pull back<small>Farther = stronger</small></figcaption></figure>
+      <figure><svg viewBox="0 0 120 110" role="img" aria-label="Release to throw the ball into a cup">
+        <path d="M17 89Q39 0 86 39" class="gesture"/><path d="m75 39 13 2-1-13" class="gesture"/>
+        <circle cx="49" cy="29" r="8" class="diagram-ball"/>
+        <path d="m72 51 5 40h24l5-40" class="diagram-cup"/><ellipse cx="89" cy="51" rx="17" ry="6" class="diagram-rim"/>
+        <path d="m14 98 4-10m6 15 4-10" class="diagram-tether"/>
+      </svg><figcaption>Let go</figcaption></figure>
+    </div>
+    <details id="help-rules"><summary>Rules</summary><ul>
+      <li>Clear their cups. One throw per turn.</li>
+      <li>Practice / vs CPU: one bounce allowed. Sink a bounce for 2 cups.</li>
+      <li>Vs CPU: tap or click a bounced ball on your half to swat. Space works too.</li>
+      <li>Practice: no swats. Two-player: no bounces.</li>
+      <li>Re-rack once per player, with 6, 4, 3 or 2 cups left.</li>
+    </ul><p>Return to the grab point to cancel a throw.</p></details>
+    <button id="help-done" autofocus>PLAY</button>
   </dialog>
   <dialog id="rerack-dialog" class="dialog-card" aria-labelledby="rerack-title"><p class="eyebrow">ONE RE-RACK PER PLAYER</p><h2 id="rerack-title">Re-rack</h2><p id="rerack-copy"></p><div id="rerack-options" role="group" aria-label="Cup formation"></div><p class="rerack-note">Rearranges the opponent’s remaining cups.</p><button id="rerack-confirm">CONFIRM</button><button id="rerack-cancel" class="secondary">CANCEL</button></dialog>
-  <dialog id="pause" class="dialog-card" aria-labelledby="pause-title"><h2 id="pause-title">Paused</h2><button id="resume" autofocus>RESUME</button><button class="secondary" id="pause-menu">MAIN MENU</button></dialog>
+  <dialog id="pause" class="dialog-card" aria-labelledby="pause-title"><h2 id="pause-title">Paused</h2><button id="resume" autofocus>RESUME</button><button class="secondary" id="pause-help">HOW TO PLAY</button><button class="secondary" id="pause-menu">MAIN MENU</button></dialog>
   <dialog id="handoff" class="dialog-card" aria-labelledby="handoff-title"><p class="eyebrow">PASS THE DEVICE</p><h2 id="handoff-title">RED’S SHOT</h2><p id="handoff-copy">Aim at the blue cups.</p><button id="ready" autofocus>READY</button><button class="secondary" id="handoff-menu">MAIN MENU</button></dialog>
   <dialog id="result" class="dialog-card" aria-labelledby="result-title"><p class="eyebrow" id="result-tag">RACK CLEARED</p><h2 id="result-title">Nice shooting.</h2><p id="result-copy"></p><button id="play-again" autofocus>PLAY AGAIN</button><button class="secondary" id="result-menu">MAIN MENU</button></dialog>
   <div id="error" hidden>WebGL unavailable. Try Chrome or Safari.</div>

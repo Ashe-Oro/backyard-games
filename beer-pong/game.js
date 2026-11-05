@@ -12,7 +12,7 @@ const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], A
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
 const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
 const releaseX=team=>state.positions[team]*(team===0?1:-1);
-let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,humanSwing=null,humanPointer=null;
+let ball=null,drag=null,viewTeam=0,accumulator=0,messageTime=0,swipeTimer,helpFromPause=false,humanSwing=null,humanPointer=null;
 const wrap=$('game'), scene=new THREE.Scene();
 scene.background=new THREE.Color('#edc5a0');scene.fog=new THREE.Fog('#c9d6ac',12,35);
 let renderer;
@@ -251,7 +251,11 @@ $('pause-button').onclick=pauseGame;$('resume').onclick=resumeGame;$('pause').on
 for(const id of ['pause-menu','handoff-menu','result-menu'])$(id).onclick=showMenu;
 $('ready').onclick=()=>{$('handoff').close();state.phase='aim';updateHud();};$('handoff').oncancel=event=>event.preventDefault();
 $('refill').onclick=refillCups;$('play-again').onclick=()=>state.mode==='practice'?refillCups():startMatch(state.mode);
-$('result').oncancel=event=>event.preventDefault();$('help-done').onclick=()=>$('help').close();
+$('result').oncancel=event=>event.preventDefault();
+function openHelp(fromPause=false){helpFromPause=fromPause;if(fromPause)$('pause').close();$('help-rules').open=false;$('help').showModal();}
+function closeHelp(){$('help').close();if(helpFromPause){helpFromPause=false;$('pause').showModal();}else $('menu-help').focus();}
+$('menu-help').onclick=()=>openHelp();$('pause-help').onclick=()=>openHelp(true);$('help-done').onclick=closeHelp;
+$('help').oncancel=event=>{event.preventDefault();closeHelp();};
 function humanReady(){return state.phase==='aim'&&!state.paused&&!document.querySelector('dialog[open]');}
 function showAim(from,to,pulling=false){
  const rect=wrap.getBoundingClientRect(),svg=$('swipe-feedback');clearTimeout(swipeTimer);svg.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
@@ -379,7 +383,6 @@ function frame(){
  renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 showMenu();
-try{if(localStorage.getItem('tailgate-beer-pong-help-seen')!=='1'){localStorage.setItem('tailgate-beer-pong-help-seen','1');$('help').showModal();}}catch{$('help').showModal();}
 requestAnimationFrame(frame);
 window.__pong={
  get state(){return {...state,remaining:[remaining(0),remaining(1)],ball:ball?{team:ball.team,state:ball.state,p:ball.p.toArray(),v:ball.v.toArray(),rimHits:ball.rimHits,bounces:ball.bounces,style:ball.style,deadReason:ball.deadReason}:null,cups:cups.map(c=>({id:c.id,team:c.team,x:c.x,z:c.z,alive:c.alive,enabled:c.enabled})),held:{p:held.position.toArray(),visible:held.visible},camera:{position:camera.position.toArray(),fov:camera.fov}};},
