@@ -1,14 +1,14 @@
 export const TOURNAMENT_KEY='backyard-beer-pong-tournament-v1';
 export const CIRCUITS=['Backyard','Block Party','County Fair','Cup Finals'];
 export const RIVALS=[
- {name:'Patio Pete',profile:'rookie',color:'#e6a45c',taunt:'Pull up a chair.',shoot:{precise:.10,jitter:.40,bounce:.18}},
- {name:'Bounce Bea',profile:'rookie',color:'#b393db',taunt:'One bounce. One cup.',shoot:{precise:.18,jitter:.36,bounce:.40}},
- {name:'Lucky Lou',profile:'regular',color:'#86b65d',taunt:'Luck has good aim.',shoot:{precise:.26,jitter:.32,bounce:.24}},
- {name:'Bankshot Barb',profile:'regular',color:'#e98291',taunt:'Mind the bounce.',shoot:{precise:.36,jitter:.28,bounce:.50}},
- {name:'Captain Cups',profile:'ace',color:'#79b8d4',taunt:'Steady as she goes.',shoot:{precise:.47,jitter:.22,bounce:.28}},
- {name:'Steady Sam',profile:'ace',color:'#db9458',taunt:'No wasted shots.',shoot:{precise:.59,jitter:.17,bounce:.40}},
- {name:'Ace Avery',profile:'boss',color:'#8eb5d2',taunt:'Your move.',shoot:{precise:.70,jitter:.12,bounce:.30}},
- {name:'Cup Queen',profile:'boss',color:'#d49cc5',taunt:'Earn the crown.',shoot:{precise:.82,jitter:.085,bounce:.40}}
+ {name:'Patio Pete',rimBounce:.05,profile:'rookie',color:'#e6a45c',taunt:'Pull up a chair.',shoot:{precise:.02,jitter:.95,depthJitter:.90,bounce:.08}},
+ {name:'Bounce Bea',rimBounce:.08,profile:'rookie',color:'#b393db',taunt:'One bounce. One cup.',shoot:{precise:.18,jitter:.36,bounce:.40}},
+ {name:'Lucky Lou',rimBounce:.12,profile:'regular',color:'#86b65d',taunt:'Luck has good aim.',shoot:{precise:.26,jitter:.32,bounce:.24}},
+ {name:'Bankshot Barb',rimBounce:.16,profile:'regular',color:'#e98291',taunt:'Mind the bounce.',shoot:{precise:.36,jitter:.28,bounce:.50}},
+ {name:'Captain Cups',rimBounce:.20,profile:'ace',color:'#79b8d4',taunt:'Steady as she goes.',shoot:{precise:.47,jitter:.22,bounce:.28}},
+ {name:'Steady Sam',rimBounce:.24,profile:'ace',color:'#db9458',taunt:'No wasted shots.',shoot:{precise:.59,jitter:.17,bounce:.40}},
+ {name:'Ace Avery',rimBounce:.28,profile:'boss',color:'#8eb5d2',taunt:'Your move.',shoot:{precise:.70,jitter:.12,bounce:.30}},
+ {name:'Cup Queen',rimBounce:.30,profile:'boss',color:'#d49cc5',taunt:'Earn the crown.',shoot:{precise:.82,jitter:.085,bounce:.40}}
 ].map((r,index)=>Object.freeze({...r,index,circuit:CIRCUITS[Math.floor(index/2)],shoot:Object.freeze(r.shoot)}));
 Object.freeze(RIVALS);
 function parsedProgress(raw){try{const data=JSON.parse(raw);return data?.version===1&&Number.isInteger(data.cleared)&&data.cleared>=0&&data.cleared<=RIVALS.length?data.cleared:0;}catch{return 0;}}

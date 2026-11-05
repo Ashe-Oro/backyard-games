@@ -54,3 +54,5 @@ The Cup Circuit has eight named rivals across four circuits, with increasingly a
 Tournament rules match casual CPU play: ten cups, one bounce allowed, one cup per sink, no swatting, and one re-rack per player. Solo practice, casual CPU and pass-and-play remain separate modes.
 
 Tournament checks: `node tests/beer_pong_tournament_check.mjs` and `BASE_URL=http://127.0.0.1:8013 NODE_PATH=/opt/homebrew/lib/node_modules/agent-browser/node_modules node tests/beer_pong_tournament_ui_check.cjs` against a local server.
+
+Tournament tuning lives in `beer-pong/tournament.mjs`: each rival has shooting accuracy/spread and a `rimBounce` restitution value for their target cups. Pete opens with broad aim errors and very soft rims; rim bounce rises from 0.05 to the standard 0.30 by the final rival. Player-owned cups and non-tournament cup physics keep their standard response. Cup artwork/opening size, one-bounce/one-cup scoring and no-swat rules are unchanged.
