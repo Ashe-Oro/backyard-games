@@ -6,7 +6,8 @@ import {createGlove} from './glove.js';
 const $=id=>document.getElementById(id);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const G=9.8, BALL_R=.02, TABLE_Y=.76, TABLE_W=1.16, TABLE_L=3.5, TABLE_Z=-1.2;
-const CUP_R=.078, CUP_H=.17, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP_R-BALL_R-.006;
+const CUP_R=.084, CUP_H=.17, RIM_THICKNESS=.004, RIM_Y=TABLE_Y+CUP_H, HOLE_R=CUP_R-BALL_R-RIM_THICKNESS;
+const RIM_RESTITUTION=.30, WALL_RESTITUTION=.25;
 const RELEASE_Y=1.09, RELEASE_Z=[TABLE_Z+TABLE_L/2+.35,TABLE_Z-TABLE_L/2-.35], ANGLE=52*Math.PI/180;
 const COLORS=[0xe75c46,0x448fc4], LABELS=['RED','BLUE'];
 const state={mode:'practice',phase:'menu',turn:0,paused:false,shots:[0,0],hits:[0,0],positions:[0,0],shotStyle:'arc',opponent:'regular',reracksUsed:[false,false],winner:null,power:0,delay:0,cpuTime:0};
@@ -68,8 +69,8 @@ box(.55,.38,.38,mat('#356f8a'),1.6,.19,-1.5);box(.59,.07,.42,mat('#e4d9b4'),1.6,
 for(let i=0;i<3;i++)box(.45,.22,.33,mat('#b19a54'),-1.7,.11+i*.22,-2.5);
 
 const cupOuter=new THREE.CylinderGeometry(CUP_R,.052,CUP_H,12,1,true);
-const cupInner=new THREE.CylinderGeometry(CUP_R-.006,.046,CUP_H-.012,12,1,true);
-const rimGeo=new THREE.TorusGeometry(CUP_R-.002,.006,4,16);
+const cupInner=new THREE.CylinderGeometry(CUP_R-RIM_THICKNESS,.046,CUP_H-.012,12,1,true);
+const rimGeo=new THREE.TorusGeometry(CUP_R-.001,RIM_THICKNESS,4,16);
 const rimMat=mat('#fff1cf'),innerMat=new THREE.MeshLambertMaterial({color:'#eee1c2',side:THREE.BackSide});
 const cups=[];
 for(let team=0;team<2;team++)for(let row=0;row<4;row++)for(let col=0;col<=row;col++){
@@ -103,9 +104,9 @@ function stepBall(b,dt){
    const fraction=(b.prev.y-RIM_Y-BALL_R)/(b.prev.y-b.p.y),x=THREE.MathUtils.lerp(b.prev.x,b.p.x,fraction),z=THREE.MathUtils.lerp(b.prev.z,b.p.z,fraction);
    const dx=x-c.x,dz=z-c.z,d=Math.hypot(dx,dz);
    if(d<HOLE_R){b.state='sink';b.hitCup=c;b.p.set(x,RIM_Y+BALL_R,z);return;}
-   if(d<CUP_R+BALL_R+.006){
+   if(d<CUP_R+BALL_R+RIM_THICKNESS){
     const n=new THREE.Vector3(dx/Math.max(d,.001)*(d-CUP_R),BALL_R,dz/Math.max(d,.001)*(d-CUP_R)).normalize();
-    const vn=b.v.dot(n);if(vn<0)b.v.addScaledVector(n,-1.65*vn);
+    const vn=b.v.dot(n);if(vn<0)b.v.addScaledVector(n,-(1+RIM_RESTITUTION)*vn);
     b.p.set(x,RIM_Y+BALL_R+.004,z);b.rimHits++;return;
    }
   }
@@ -113,7 +114,7 @@ function stepBall(b,dt){
   if(b.p.y>TABLE_Y+BALL_R&&b.p.y<RIM_Y&&d<CUP_R+BALL_R&&d>HOLE_R){
    const nx=dx/Math.max(d,.001),nz=dz/Math.max(d,.001),vn=b.v.x*nx+b.v.z*nz;
    b.p.x=c.x+nx*(CUP_R+BALL_R+.002);b.p.z=c.z+nz*(CUP_R+BALL_R+.002);
-   if(vn<0){b.v.x-=1.5*vn*nx;b.v.z-=1.5*vn*nz;}b.rimHits++;
+   if(vn<0){b.v.x-=(1+WALL_RESTITUTION)*vn*nx;b.v.z-=(1+WALL_RESTITUTION)*vn*nz;}b.rimHits++;
   }
  }
  const onTable=Math.abs(b.p.x)<TABLE_W/2+BALL_R&&Math.abs(b.p.z-TABLE_Z)<TABLE_L/2+BALL_R;
