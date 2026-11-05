@@ -91,7 +91,9 @@ function stepBall(b,dt){
    if(d<HOLE_R){b.state='sink';b.hitCup=c;b.p.set(x,RIM_Y+BALL_R,z);return;}
    if(d<CUP_R+BALL_R+RIM_THICKNESS){
     const n=new THREE.Vector3(dx/Math.max(d,.001)*(d-CUP_R),BALL_R,dz/Math.max(d,.001)*(d-CUP_R)).normalize();
-    const vn=b.v.dot(n);if(vn<0)b.v.addScaledVector(n,-(1+RIM_RESTITUTION)*vn);
+    // Only the rival's target cups get tournament rim tuning; the human rack stays consistent.
+    const rimBounce=state.tournament&&b.team===0&&c.team===1?matchRival().rimBounce:RIM_RESTITUTION;
+    const vn=b.v.dot(n);if(vn<0)b.v.addScaledVector(n,-(1+rimBounce)*vn);
     b.p.set(x,RIM_Y+BALL_R+.004,z);b.rimHits++;return;
    }
   }
@@ -206,7 +208,7 @@ function bouncePlan(x,z,team){
 function cpuShot(){
  if(!state.reracksUsed[1]){const option=layoutsFor(remaining(0))[0];if(option)applyRerack(1,option.id);}
  const rack=cups.filter(c=>c.team===0&&c.alive),cup=rack[Math.floor(Math.random()*rack.length)];
- if(!cup)return;const shooting=matchRival()?.shoot||OPPONENTS[state.opponent].shoot,precise=Math.random()<shooting.precise,jitter=precise?.025:shooting.jitter,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:.24);
+ if(!cup)return;const shooting=matchRival()?.shoot||OPPONENTS[state.opponent].shoot,precise=Math.random()<shooting.precise,jitter=precise?.025:shooting.jitter,x=cup.x+(Math.random()-.5)*jitter*2,z=cup.z+(Math.random()-.5)*(precise?.035:(shooting.depthJitter??.24));
  const d=Math.abs(z-RELEASE_Z[1]),yaw=Math.atan2(-(x-releaseX(1)),d),slope=Math.tan(yaw/.65);
  if(Math.random()<shooting.bounce){const plan=bouncePlan(x,z,1);if(plan){launchShot(plan.power,plan.slope,'bounce');return;}}
  launchShot(powerForPoint(x,z,1),slope);
