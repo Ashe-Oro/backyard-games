@@ -3,7 +3,7 @@
 Backyard Games has a buildless home page at `/` and five static Three.js games:
 
 - Backyard Cornhole: `/cornhole/` (served from `cornhole/index.html`).
-- Backyard Beer Pong: `/beer-pong/` — Solo Practice, vs CPU, and same-screen 2 Player.
+- Backyard Beer Pong: `/beer-pong/` — Solo Practice, vs CPU, same-screen 2 Player, and the eight-rival Cup Circuit tournament.
 - Ladder Golf: `/ladder-golf/` — three rungs, three bolas, exact 21; optional bonus.
 - Washers: `/washers/` — box-and-cup rules, three washers, exact 21.
 - Lawn Darts: `/lawn-darts/` — Handly Cup scoring, two darts, first to 21+.
@@ -46,3 +46,11 @@ The primary Vercel address is https://playbackyardgames.vercel.app/. The previou
 Swatting code is parked behind the disabled release switch in `beer-pong/features.mjs`; changing that switch requires a deployment. `beer-pong/opponents.mjs` couples shooting accuracy and swat ability in overall opponent profiles (`rookie`, `regular`, `ace`, `boss`). `startMatch('cpu', profileId)` is ready for tournament opponents; the current vs-CPU match uses `regular`. There is no separate swat settings screen. Tune attention, reaction delay/jitter, hand speed, tracking interval, prediction, aim error and reach in those profiles. Attention gates noticing a bounce; a miss or hit is then determined by the fixed-step hand/ball geometry. `beer-pong/glove.js` renders the floating white glove at that same simulated position. CPU opponents mix arcs and physically planned bounce shots; bounce frequency belongs to the same overall opponent profile. There are no separate bounce/swat difficulty settings.
 
 Original bounce reference (this game awards one cup per sink): [BPONG sections 4.2–4.3](https://bpong.com/wsobp/official-rules-of-the-world-series-of-beer-pong/). This game retains its existing one-shot turns and one optional re-rack house rules.
+
+### Beer Pong tournament
+
+The Cup Circuit has eight named rivals across four circuits, with increasingly accurate CPU throws and distinct pixel portraits. Wins unlock the next rival and save locally; losses allow rematches. Reloading restarts the pending match. A completed circuit awards the champion trophy, and New Tournament resets progress. If browser storage is blocked, the tournament remains playable for the current session.
+
+Tournament rules match casual CPU play: ten cups, one bounce allowed, one cup per sink, no swatting, and one re-rack per player. Solo practice, casual CPU and pass-and-play remain separate modes.
+
+Tournament checks: `node tests/beer_pong_tournament_check.mjs` and `BASE_URL=http://127.0.0.1:8013 NODE_PATH=/opt/homebrew/lib/node_modules/agent-browser/node_modules node tests/beer_pong_tournament_ui_check.cjs` against a local server.

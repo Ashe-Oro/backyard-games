@@ -40,9 +40,26 @@
       <button data-mode="practice"><strong>SOLO PRACTICE</strong><small>Unlimited throws.</small><span aria-hidden="true">01</span></button>
       <button data-mode="cpu"><strong>VS CPU</strong><small>Clear their cups.</small><span aria-hidden="true">02</span></button>
       <button data-mode="two"><strong>2 PLAYER</strong><small>Pass and play.</small><span aria-hidden="true">03</span></button>
+      <button id="tournament-button"><strong>TOURNAMENT</strong><small id="tournament-status">8 rivals. One crown.</small><span aria-hidden="true">04</span></button>
     </div>
     <button id="menu-help" class="help-link">How to play</button>
   </section>
+  <section id="tournament-menu" class="menu-card" aria-labelledby="tournament-title" hidden>
+    <button id="tournament-back" class="help-link">← MENU</button>
+    <div class="tournament-heading"><h2 id="tournament-title">CUP CIRCUIT</h2><span id="tournament-progress" aria-live="polite">0 / 8</span></div>
+    <div id="tournament-rivals" class="circuit-list"></div>
+    <button id="tournament-continue" class="tournament-play">PLAY</button>
+    <button id="tournament-reset" class="help-link" hidden>New tournament</button>
+    <p id="tournament-save-note" hidden>Progress won’t save on this device.</p>
+  </section>
+  <dialog id="tournament-intro" class="dialog-card" aria-labelledby="rival-name">
+    <p id="rival-stage" class="eyebrow"></p><div id="rival-portrait"></div><h2 id="rival-name"></h2><p id="rival-taunt"></p>
+    <button id="rival-play" autofocus>PLAY</button><button id="rival-back" class="secondary">CIRCUIT</button>
+  </dialog>
+  <dialog id="tournament-champion" class="dialog-card" aria-labelledby="champion-title">
+    <svg class="tournament-trophy" viewBox="0 0 24 24" role="img" aria-label="Champion trophy" shape-rendering="crispEdges"><path fill="#bb853d" d="M5 3H1v8h5v2h3v4H6v4h12v-4h-3v-4h3v-2h5V3h-4V1H5zm0 6H3V5h2zm14 0V5h2v4z"/><path fill="#ffe16b" d="M6 2h12v8h-2v2h-3v5h4v3H7v-3h4v-5H8v-2H6z"/><path fill="#fff1cf" d="M8 4h2v5H8z"/></svg>
+    <h2 id="champion-title">CUP CHAMPION!</h2><p>8 rivals beaten.</p><button id="champion-new" autofocus>NEW TOURNAMENT</button><button id="champion-menu" class="secondary">MAIN MENU</button>
+  </dialog>
   <dialog id="help" class="dialog-card" aria-labelledby="help-title">
     <h2 id="help-title">Grab. Pull. Release.</h2>
     <div class="throw-steps">
@@ -73,7 +90,7 @@
   <dialog id="rerack-dialog" class="dialog-card" aria-labelledby="rerack-title"><p class="eyebrow">ONE RE-RACK PER PLAYER</p><h2 id="rerack-title">Re-rack</h2><p id="rerack-copy"></p><div id="rerack-options" role="group" aria-label="Cup formation"></div><p class="rerack-note">Rearranges the opponent’s remaining cups.</p><button id="rerack-confirm">CONFIRM</button><button id="rerack-cancel" class="secondary">CANCEL</button></dialog>
   <dialog id="pause" class="dialog-card" aria-labelledby="pause-title"><h2 id="pause-title">Paused</h2><button id="resume" autofocus>RESUME</button><button class="secondary" id="pause-help">HOW TO PLAY</button><button class="secondary" id="pause-menu">MAIN MENU</button></dialog>
   <dialog id="handoff" class="dialog-card" aria-labelledby="handoff-title"><p class="eyebrow">PASS THE DEVICE</p><h2 id="handoff-title">RED’S SHOT</h2><p id="handoff-copy">Aim at the blue cups.</p><button id="ready" autofocus>READY</button><button class="secondary" id="handoff-menu">MAIN MENU</button></dialog>
-  <dialog id="result" class="dialog-card" aria-labelledby="result-title"><p class="eyebrow" id="result-tag">RACK CLEARED</p><h2 id="result-title">Nice shooting.</h2><p id="result-copy"></p><button id="play-again" autofocus>PLAY AGAIN</button><button class="secondary" id="result-menu">MAIN MENU</button></dialog>
+  <dialog id="result" class="dialog-card" aria-labelledby="result-title"><p class="eyebrow" id="result-tag">RACK CLEARED</p><div id="result-portrait" hidden></div><h2 id="result-title">Nice shooting.</h2><p id="result-copy"></p><button id="play-again" autofocus>PLAY AGAIN</button><button class="secondary" id="result-menu">MAIN MENU</button></dialog>
   <div id="error" hidden>WebGL unavailable. Try Chrome or Safari.</div>
 </main>
 <script type="module" src="game.js"></script>
