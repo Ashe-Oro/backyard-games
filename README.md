@@ -33,7 +33,7 @@ and are not an automated release gate.
 
 ## Shared scenery
 
-Beer Pong, Ladder Golf, Washers and Lawn Darts use `yard-games/backyard.js` for a deterministic voxel backyard: oak/birch trees, fences, plants, lanterns and party props. Static blocks are instanced by material. Scenery stays separate from camera, collision and scoring logic. Cornhole keeps its original artwork.
+All five games use `yard-games/backyard.js` for a deterministic voxel backyard: oak/birch trees, fences, plants, lanterns and party props. Static blocks are instanced by material. Scenery stays separate from camera, collision and scoring logic. Cornhole retains its board and bag art, animated dog and wind pennant. Shared grain textures and equipment details tie the lawn games together; target dimensions and scoring geometry are unchanged.
 
 ## Adding a game
 

@@ -43,7 +43,7 @@ const path = require('node:path');
           scaleGap:b.mesh.scale.distanceTo(held.scale),sameGeometry:b.mesh.geometry===held.geometry};
       };
       window.__game = {`);
-    const url = 'http://127.0.0.1:8012/cornhole/';
+    const url = (process.env.BASE_URL || 'http://127.0.0.1:8012') + '/cornhole/';
     await page.route(url, route => route.fulfill({body:instrumented,contentType:'text/html'}));
     await page.goto(url);
     await page.waitForFunction(() => !!window.__game);
