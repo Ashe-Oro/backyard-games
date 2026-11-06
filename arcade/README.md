@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2
+Backyard Cornhole Arcade — trackball prototype 0.2.1
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.

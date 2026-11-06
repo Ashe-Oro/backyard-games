@@ -5,7 +5,7 @@ const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.1</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options"><label>Power</label><div><button data-power="hybrid">STROKE</button><button data-power="distance">DISTANCE</button></div>
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>

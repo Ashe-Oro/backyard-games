@@ -24,6 +24,9 @@ html=html.replace('</head>','<link rel="stylesheet" href="/arcade/arcade.css">\n
 const replace=(from,to)=>{if(!html.includes(from))throw new Error('Game integration anchor changed: '+from);html=html.replace(from,to);};
 replace("isHuman(team) ? 0 : M.spin",'M.spin');
 replace("arcNames = ['PUSH', 'NORMAL', 'KOBE']","arcNames = ['SLIDER', 'NORMAL', 'KOBE']");
+// Cornhole announcements: identify the starting player and name a made bag.
+replace("say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);", "say(TEAM[M.first] + ' THROWS FIRST', '', 1500);");
+replace("say(b.swish ? 'SWISH!' : 'CORNHOLE!', '3 POINTS')", "say('CORNHOLE!', '3 POINTS')");
 // Bag rotation changes the landing, never creates a golf-like curved flight.
 replace('b.curl = drift * 0.12 + spin * 0.10;', 'b.curl = 0;');
 replace('b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt;', 'b.v.x += wind.x * dt;');
@@ -61,7 +64,7 @@ if(platform==='win32'){
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
  await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));
- const output=path.join(dist,'BackyardCornhole-Trackball-v0.2-Windows-x64.zip'),archive=new yazl.ZipFile();
+ const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.1-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));
