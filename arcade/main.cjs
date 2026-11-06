@@ -14,14 +14,17 @@ app.whenReady().then(async()=>{
   const file=path.resolve(root,'.'+pathname);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return new Response('Not found',{status:404});
   const type={'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.css':'text/css','.woff2':'font/woff2'}[path.extname(file)]||'application/octet-stream';
-  return new Response(await fs.promises.readFile(file),{headers:{'content-type':type}});
+  return new Response(await fs.promises.readFile(file),{headers:{'content-type':type,'cache-control':'no-store'}});
  });
  session.defaultSession.setPermissionRequestHandler((wc,permission,callback)=>callback(wc.getURL().startsWith('backyard://game/')&&['pointerLock','fullscreen'].includes(permission)));
  session.defaultSession.setPermissionCheckHandler((wc,permission)=>!!wc&&wc.getURL().startsWith('backyard://game/')&&['pointerLock','fullscreen'].includes(permission));
  // The cabinet build has no remote resources, update checks, login, or external navigation.
  session.defaultSession.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!['backyard:','devtools:','data:','blob:'].some(s=>details.url.startsWith(s))}));
+ // Reused offline URLs must never mix assets from different installed builds.
+ // clearCache leaves Local Storage (calibration, bindings and progress) intact.
+ await session.defaultSession.clearCache();
  Menu.setApplicationMenu(null);
- const win=new BrowserWindow({width:1280,height:800,fullscreen:!smoke&&!process.argv.includes('--windowed'),show:!smoke,backgroundColor:'#173f3d',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+ const win=new BrowserWindow({width:1280,height:800,fullscreen:!smoke&&!process.argv.includes('--windowed'),show:!smoke,backgroundColor:'#173f3d',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),backgroundThrottling:!smoke,nodeIntegration:false,contextIsolation:true,sandbox:true}});
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  win.webContents.on('will-navigate',(e,url)=>{if(!url.startsWith('backyard://game/'))e.preventDefault();});
  win.webContents.on('before-input-event',(e,input)=>{
@@ -46,7 +49,7 @@ app.whenReady().then(async()=>{
   let result;
   for(let i=0;i<100;i++){result=await win.webContents.executeJavaScript('Boolean(window.__arcade)');if(result)break;await new Promise(r=>setTimeout(r,100));}
   if(!result)throw new Error('Arcade controller failed to initialize');
-  const report=await win.webContents.executeJavaScript(`(async()=>{__arcade.start('practice',false);await new Promise(r=>setTimeout(r,1200));return {title:document.title,phase:__game.state.phase,canvas:!!document.querySelector('canvas'),offline:performance.getEntriesByType('resource').every(r=>!r.name.startsWith('http')),settings:__arcade.config};})()`);
+  const report=await win.webContents.executeJavaScript(`(async()=>{__arcade.start('practice',false);for(let i=0;i<120&&__game.state.phase!=='aim';i++)await new Promise(r=>setTimeout(r,50));return {title:document.title,phase:__game.state.phase,canvas:!!document.querySelector('canvas'),offline:performance.getEntriesByType('resource').every(r=>!r.name.startsWith('http')),settings:__arcade.config};})()`);
   console.log('ARCADE_SMOKE '+JSON.stringify(report));if(report.phase!=='aim'||!report.offline)throw new Error('Offline startup failed');app.quit();
  }
 }).catch(error=>{console.error(error);app.exit(1);});

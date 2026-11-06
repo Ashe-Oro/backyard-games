@@ -111,14 +111,15 @@ window.addEventListener('keydown',e=>{
  if(['summary','over'].includes(host.state.phase)){if([config.shotKey,config.confirmKey,'Space','Enter'].includes(e.code)){host.advance();machine.reset(performance.now());}return;}
  if(host.state.phase==='aim'&&[config.shotKey,config.surfaceKey].includes(e.code)){if(e.code===config.shotKey)host.height();else host.surface();host.hideArrow();machine.reset(performance.now());}
 },true);
-const padState=new Map();
+const padState=new Map(),padArmAt=performance.now()+700;
 function pollPads(){
  if(nativeStatus?.pads.length)return;
  let pads;try{pads=navigator.getGamepads?.()||[];}catch{return;}
  const connected=new Set();
  for(const pad of pads){if(!pad)continue;for(let i=0;i<pad.buttons.length;i++){
   const code=`Pad${pad.index}Button${i}`,pressed=pad.buttons[i].pressed;connected.add(code);
-  if(pressed&&!padState.get(code)){
+  // A held launch button must be released before it can select anything.
+  if(pressed&&padState.get(code)===false&&performance.now()>=padArmAt){
    let action=code;
    if(!binding&&![config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey].includes(code)){
     action=({0:menuOpen?config.confirmKey:config.shotKey,1:menuOpen?config.menuKey:config.surfaceKey,8:config.menuKey,9:menuOpen?'Digit2':config.menuKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[i];

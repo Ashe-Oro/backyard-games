@@ -138,3 +138,7 @@ Run `npm test --prefix arcade` before publishing a change. Isolation regression 
 - A hole score or a knocked-in bag triggers one of three dog celebrations: hops, a victory spin, or a playful bow. Poses return to idle without drift, and pausing freezes the animation with the game.
 
 Verification note: the 0.2.4 native input-bridge and scoreboard/celebration tests pass in Electron. The separate macOS pointer-lock smoke test currently fails to acquire capture on this host; Batocera uses direct evdev input and does not depend on that path. Physical stroke feel still needs cabinet playtesting.
+
+Offline updates reuse the same app origin. Each launch clears only Chromium's asset cache, and packaged responses use `Cache-Control: no-store`, preventing mixed files from earlier installs. Local Storage and saved cabinet settings are retained. The smoke test waits for the first playable turn and disables background throttling only for that hidden test window.
+
+Cabinet startup troubleshooting: a latched Alt+F4 on Batocera's virtual `batocera hotkeys` device caused the 0.2.4 launch to close before navigation finished. Releasing those confirmed stuck virtual keys restored normal startup; no physical control or global mapping was changed. The startup gamepad guard additionally requires a fresh button release/press, so the button used to launch a game cannot immediately activate a menu action.

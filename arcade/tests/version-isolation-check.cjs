@@ -19,6 +19,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   app=await _electron.launch({executablePath:process.env.ELECTRON_PATH,args:['--windowed'],env:{...process.env,ARCADE_TEST_DATA:fs.mkdtempSync('/tmp/cornhole-isolation-')}});
   const cabinet=await app.firstWindow();await cabinet.waitForFunction(()=>window.__arcade);
   assert.equal(await cabinet.evaluate(()=>location.origin),'backyard://game');
+  assert.equal(await cabinet.evaluate(async()=>(await fetch('/arcade/controller.js')).headers.get('cache-control')),'no-store');
   assert.equal(await cabinet.evaluate(()=>localStorage.getItem('backyard-arcade-v3')),null);
   assert(await cabinet.evaluate(()=>document.documentElement.hasAttribute('data-backyard-arcade')));
   await cabinet.evaluate(()=>{__arcade.setConfig({sensitivity:2});__arcade.start('practice',false)});await cabinet.waitForFunction(()=>__game.state.phase==='aim');
