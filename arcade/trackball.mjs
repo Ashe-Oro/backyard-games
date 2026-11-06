@@ -1,5 +1,5 @@
 // Hardware counts, never cursor position or render-frame distance.
-export const DEFAULTS=Object.freeze({sensitivity:1,pullRange:240,releaseGate:48,mode:'hybrid',spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter'});
+export const DEFAULTS=Object.freeze({sensitivity:1,pullRange:320,releaseGate:80,mode:'hybrid',spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter'});
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 export function settings(value={}){
  const out={...DEFAULTS};
@@ -10,6 +10,8 @@ export function settings(value={}){
  if(new Set([out.shotKey,out.surfaceKey,out.menuKey,out.confirmKey,'F2']).size!==5){out.shotKey=DEFAULTS.shotKey;out.surfaceKey=DEFAULTS.surfaceKey;out.menuKey=DEFAULTS.menuKey;out.confirmKey=DEFAULTS.confirmKey;}
  return out;
 }
+// Upgrade factory values only; retain the cabinet's measured sensitivity/range and bindings.
+export function legacySettings(value={}){return settings({...value,pullRange:value.pullRange===240?320:value.pullRange,releaseGate:value.releaseGate===48?80:value.releaseGate});}
 export class Trackball {
  constructor(config={}){this.config=settings(config);this.reset(0);}
  reset(now=0){this.phase='settling';this.lastMotion=now;this.lastEvent=now;this.backX=this.backY=this.forwardX=this.forwardY=0;this.forwardStart=null;this.lastForwardAngle=0;this.pendingX=this.pendingY=0;this.preview=null;}
@@ -36,8 +38,8 @@ export class Trackball {
   const distance=clamp(this.backY/this.config.pullRange,0,1);
   // A bounded speed contribution rewards a deliberate stroke; a single peak is never sampled.
   const seconds=Math.max(.016,(now-(this.forwardStart??now))/1000);
-  const speed=clamp(this.forwardY/seconds/1800,0,1);
-  const power=this.config.mode==='distance'?distance:clamp(distance*.8+speed*.2,0,1);
+  const speed=clamp(this.forwardY/seconds/2000,0,1);
+  const power=this.config.mode==='distance'?distance:clamp(distance*.65+speed*.35,0,1);
   const angle=Math.atan2(this.forwardX,Math.max(1,this.forwardY));
   const aim=clamp(angle*.18,-.12,.12);
   // Optional wrist-finish approximation: straight strokes never add spin.

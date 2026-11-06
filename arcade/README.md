@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.3
+Backyard Cornhole Arcade — trackball prototype 0.2.4
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -39,7 +39,7 @@ Calibrate Trackball: make one comfortable back-and-forward stroke. This sets
 that backswing to approximately 70% of the distance power range. Sensitivity
 and pull range can also be adjusted manually. Settings save on this machine.
 
-STROKE: 80% backswing distance + up to 20% averaged forward speed.
+STROKE: 65% backswing distance + up to 35% averaged forward speed.
 DISTANCE: backswing distance alone. Try both with the same physical strokes.
 Finish rotation is OFF by default. If enabled, a curved forward finish adds
 a small landing effect. A straight diagonal stroke simply aims diagonally.
@@ -129,3 +129,12 @@ The root `.vercelignore` excludes the entire `arcade` directory, including its d
 Desktop storage is under Electron's existing Backyard Cornhole Arcade profile and the `backyard://game` origin; browser saves remain on their HTTPS website origin. The app's offline protocol and network block keep web deployments out of the installed cabinet game. Packaging uses read-only copies of shared assets, so a website deployment cannot change an installed arcade build; a new arcade package must be built and installed separately.
 
 Run `npm test --prefix arcade` before publishing a change. Isolation regression checks hash the web sources before/after a real arcade build, reject arcade imports in web sources, verify stale generated files are removed and check that the deployment exclusion remains present. Existing control tests also run.
+
+## Cabinet playtest pass (0.2.4)
+
+- Centered match scoreboard stays visible through throws, pauses, setup and round results. It shows match totals, live round points and remaining bags. Practice shows points on the current board.
+- Arcade target moves back two feet (29 ft). Its geometry, aiming and simulation-derived power windows all use the same new distance.
+- Factory stroke calibration is now 320 counts back / 80 counts forward. Stroke power uses 65% pull distance plus 35% sustained forward speed, so a deliberate forward roll has more effect than a soft reversal. Custom measured sensitivity/range and button bindings survive the settings migration; only old factory values upgrade. The v2 save is retained for rollback, and new settings use v3.
+- A hole score or a knocked-in bag triggers one of three dog celebrations: hops, a victory spin, or a playful bow. Poses return to idle without drift, and pausing freezes the animation with the game.
+
+Verification note: the 0.2.4 native input-bridge and scoreboard/celebration tests pass in Electron. The separate macOS pointer-lock smoke test currently fails to acquire capture on this host; Batocera uses direct evdev input and does not depend on that path. Physical stroke feel still needs cabinet playtesting.

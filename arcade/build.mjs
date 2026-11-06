@@ -13,7 +13,7 @@ await fs.mkdir(site,{recursive:true});
 for(const [folder,files] of Object.entries({'cornhole':['index.html','controls.mjs','wind-streaks.js'],'yard-games':['backyard.js','power-arrow.js','ui.css']})){
  await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(repo,folder,file),path.join(site,folder,file));
 }
-await fs.mkdir(path.join(site,'arcade'),{recursive:true});for(const file of ['controller.js','trackball.mjs','arcade.css'])await fs.copyFile(path.join(here,file),path.join(site,'arcade',file));
+await fs.mkdir(path.join(site,'arcade'),{recursive:true});for(const file of ['controller.js','trackball.mjs','dog-celebration.mjs','arcade.css'])await fs.copyFile(path.join(here,file),path.join(site,'arcade',file));
 await fs.mkdir(path.join(site,'vendor'),{recursive:true});
 await fs.copyFile(path.join(here,'node_modules/three/build/three.module.min.js'),path.join(site,'vendor/three.module.min.js'));
 await fs.copyFile(path.join(here,'node_modules/@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2'),path.join(site,'vendor/pixel.woff2'));
@@ -27,6 +27,12 @@ html=html.replace('</head>','<link rel="stylesheet" href="/arcade/arcade.css">\n
 const replace=(from,to)=>{if(!html.includes(from))throw new Error('Game integration anchor changed: '+from);html=html.replace(from,to);};
 replace("isHuman(team) ? 0 : M.spin",'M.spin');
 replace("arcNames = ['PUSH', 'NORMAL', 'KOBE']","arcNames = ['SLIDER', 'NORMAL', 'KOBE']");
+// Cabinet playtest tuning; these replacements never touch the website source.
+replace('const BOARD_Z = -27 * FT;', 'const BOARD_Z = -29 * FT;');
+replace('const dog = {};', "const {DogCelebration}=await import('/arcade/dog-celebration.mjs');\nlet dogParty;\nconst dog = {};");
+replace('scene.add(g); Object.assign(dog, { g, head, tail });','scene.add(g); Object.assign(dog, { g, head, tail }); dogParty=new DogCelebration(dog);');
+replace("if (b.state === 'in') { say(b.swish", "if (b.state === 'in' || knockedIn.length) dogParty.celebrate();\n  if (b.state === 'in') { say(b.swish");
+replace('dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;', 'dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008; dogParty.update(dt);');
 // Cornhole announcements: identify the starting player and name a made bag.
 replace("say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);", "say(TEAM[M.first] + ' THROWS FIRST', '', 1500);");
 replace("say(b.swish ? 'SWISH!' : 'CORNHOLE!', '3 POINTS')", "say('CORNHOLE!', '3 POINTS')");
@@ -37,7 +43,10 @@ replace("b.state = 'slide';\n        return 'land';", "b.state = 'slide';b.curl=
 const bridge=`
 window.__arcadeHost={
  get state(){return window.__game.state;},
- start(mode){startMatch({practice:mode==='practice',vs:'2p',first:0});},
+ round(){return lie();},
+ get celebration(){return dogParty.state;},
+ get boardZ(){return BOARD_Z;},
+ start(mode){dogParty.reset();startMatch({practice:mode==='practice',vs:'2p',first:0});},
  pause(value){M.paused=value;cancelPull();},
  hideArrow(){cancelPull();},
  wind(enabled){if(!enabled)Object.assign(wind,{mph:0,angle:0,x:0,z:0});else if(!wind.mph)Object.assign(wind,roundWind({practice:false,previousX:wind.x}));renderHud();},
@@ -68,7 +77,7 @@ if(platform==='win32'){
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
  await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));
- const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.3-Windows-x64.zip'),archive=new yazl.ZipFile();
+ const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.4-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));

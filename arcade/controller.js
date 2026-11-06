@@ -1,12 +1,13 @@
-import {Trackball,settings} from './trackball.mjs';
+import {Trackball,settings,legacySettings} from './trackball.mjs';
 const host=window.__arcadeHost;
 if(!host||!document.documentElement.hasAttribute('data-backyard-arcade'))throw new Error('Arcade controls require the standalone Cornhole build.');
-let config;try{const saved=localStorage.getItem('backyard-arcade-v2');config=settings(saved?JSON.parse(saved):{...JSON.parse(localStorage.getItem('backyard-arcade-v1')||'{}'),spin:0});}catch{config=settings();}
+let config;try{const saved=localStorage.getItem('backyard-arcade-v3');config=saved?settings(JSON.parse(saved)):legacySettings(JSON.parse(localStorage.getItem('backyard-arcade-v2')||localStorage.getItem('backyard-arcade-v1')||'{}'));}catch{config=settings();}
 const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.3</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><strong id="arcade-red-score">0</strong><small id="arcade-red-round">ROUND 0</small><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><strong id="arcade-blue-score">0</strong><small id="arcade-blue-round">ROUND 0</small><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.4</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options"><label>Power</label><div><button data-power="hybrid">STROKE</button><button data-power="distance">DISTANCE</button></div>
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
@@ -21,7 +22,7 @@ const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <div id="arcade-error" class="arcade-card" hidden><h2>TRACKBALL NOT CAPTURED</h2><p id="arcade-error-copy"></p><button id="arcade-error-back">BACK</button></div>`;
 document.body.append(root);
 let windy=false,capturing=false,nativeInput=false,nativeStatus=null;
-function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v2',JSON.stringify(config));renderSettings();}
+function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v3',JSON.stringify(config));renderSettings();}
 function renderSettings(){
  $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=Math.round(config.pullRange);$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
  for(const b of root.querySelectorAll('[data-power]'))b.setAttribute('aria-pressed',String(b.dataset.power===config.mode));
@@ -159,10 +160,25 @@ for(const type of ['pointerdown','pointermove','pointerup'])window.addEventListe
 window.addEventListener('click',e=>{if(nativeInput&&!menuOpen&&!e.target.closest('#arcade-ui')){e.preventDefault();e.stopImmediatePropagation();}},true);
 document.addEventListener('contextmenu',e=>{if(nativeInput)e.preventDefault();});
 window.cabinetInput?.subscribe(nativeEvent);
+function renderScoreboard(s){
+ const round=host.round();
+ for(const [t,name] of ['red','blue'].entries()){
+  const thrown=s.bags.filter(b=>b.team===t).length;
+  const score=s.practice?round.pts[t]:s.scores[t];
+  $(`arcade-${name}-score`).textContent=score;
+  $(`arcade-${name}-round`).textContent=s.practice?'':`ROUND ${round.pts[t]}`;
+  $(`arcade-${name}-team`).classList.toggle('current',!menuOpen&&s.phase==='aim'&&s.thrower===t);
+  $(`arcade-${name}-team`).classList.toggle('inactive',s.practice&&t===1);
+  const pips=s.practice?'':Array.from({length:4},(_,i)=>`<i class="${i<thrown?'used':''}"></i>`).join('');
+  if($(`arcade-${name}-pips`).innerHTML!==pips)$(`arcade-${name}-pips`).innerHTML=pips;
+ }
+ $('arcade-score-round').textContent=s.practice?'PRACTICE':`ROUND ${s.inning}`;
+ $('arcade-score-target').textContent=s.practice?'POINTS':s.phase==='over'?'FINAL':'TO 21';
+}
 function frame(now){
  pollPads();
  fps=fps*.95+1000/Math.max(1,now-lastFrame)*.05;lastFrame=now;
- const s=host.state,key=`${s.phase}:${s.inning}:${s.k}:${s.thrower}`;
+ const s=host.state;renderScoreboard(s);const key=`${s.phase}:${s.inning}:${s.k}:${s.thrower}`;
  if(key!==lastTurn){lastTurn=key;machine.reset(now);if(s.phase==='wait')host.wind(windy);}
  if(!menuOpen&&inputReady())machine.tick(now);
  document.body.classList.toggle('arcade-native-playing',nativeInput&&!menuOpen);
