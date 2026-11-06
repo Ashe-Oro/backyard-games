@@ -5,7 +5,7 @@ const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.2</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.3</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options"><label>Power</label><div><button data-power="hybrid">STROKE</button><button data-power="distance">DISTANCE</button></div>
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
@@ -137,6 +137,14 @@ function nativeEvent(data){
  if(data.kind==='error'){nativeInput=false;diag.locked=false;showMenu();return;}
  if(data.kind==='reset'){machine.reset(performance.now());return;}
  if(data.kind==='motion'&&nativeInput){feed(data.x,data.y,Number.isFinite(data.at)?Math.min(performance.now(),data.at-performance.timeOrigin):performance.now());return;}
+ // Golden Tee accepts trackball mouse buttons as well as the RetroPad pair.
+ // Keep ordinary left-click menu selection; in play use the pair for bag options.
+ if(data.kind==='mouse-button'&&data.pressed){
+  if(calibration||binding)return;
+  if(data.button===0&&menuOpen)return;
+  const code=data.button===0?config.shotKey:(menuOpen?config.menuKey:config.surfaceKey);
+  window.dispatchEvent(new KeyboardEvent('keydown',{code,bubbles:true}));return;
+ }
  if(data.kind==='nav'&&menuOpen){window.dispatchEvent(new KeyboardEvent('keydown',{code:data.code,bubbles:true}));return;}
  if(data.kind!=='button'||!data.pressed)return;
  const code=`Pad${data.pad}Button${data.button}`;
@@ -146,6 +154,9 @@ function nativeEvent(data){
  }
  if(action)window.dispatchEvent(new KeyboardEvent('keydown',{code:action,bubbles:true}));
 }
+for(const type of ['pointerdown','pointermove','pointerup'])window.addEventListener(type,e=>{if(nativeInput&&!menuOpen&&!e.target.closest('#arcade-ui')){e.preventDefault();e.stopImmediatePropagation();}},true);
+window.addEventListener('click',e=>{if(nativeInput&&!menuOpen&&!e.target.closest('#arcade-ui')){e.preventDefault();e.stopImmediatePropagation();}},true);
+document.addEventListener('contextmenu',e=>{if(nativeInput)e.preventDefault();});
 window.cabinetInput?.subscribe(nativeEvent);
 function frame(now){
  pollPads();

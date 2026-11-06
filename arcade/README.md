@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.2
+Backyard Cornhole Arcade — trackball prototype 0.2.3
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -115,3 +115,7 @@ Linux builds use the cabinet's existing Python `evdev` package to read relative 
 On this cabinet, B (button 3) confirms menu selections and cycles SLIDER / NORMAL / KOBE in play. A (button 4) goes back in menus and flips SLICK / STICKY in play. Start confirms in menus and pauses in play; Select pauses. Either player's panel works. Use the joystick to navigate menus, or hover a button with the trackball and press B. Bindings can be changed in Cabinet Setup.
 
 Cabinet Setup displays connected mice, controller count, and movement totals. Roll back then forward in Calibrate Trackball to set the pull range. Existing sensitivity and calibration settings are retained. Keyboard controls remain available. Windows/macOS continue to use relative pointer capture and the browser Gamepad API.
+
+### Golden Tee reference
+
+The cabinet's Golden Tee '98 config inherits the MAME 2003-Plus default action pair with no per-game input remap. RetroPad B/A correspond to raw cabinet buttons 3/4; its global RetroArch mouse index 1 selects the trackball instead of the mini-keyboard touchpad. Golden Tee's default action sequences also include mouse buttons 1/2. Cornhole therefore supports both paths: in play, left mouse button cycles throw style and right mouse button flips bag surface. In menus, normal left-click selects the hovered item and right-click goes back. Dedicated trackball-panel button wiring still needs a physical press test; the configuration alone cannot identify which blue button sends which event.

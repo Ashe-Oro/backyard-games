@@ -66,6 +66,8 @@ def main():
                     elif e.code == E.SYN_REPORT and (state['x'] or state['y']):
                         emit(dict(kind='motion', x=state['x'], y=state['y'], at=e.timestamp()*1000))
                         state['x'] = state['y'] = 0
+                elif state['mouse'] and e.type == E.EV_KEY and e.code in (E.BTN_LEFT, E.BTN_RIGHT) and e.value in (0, 1):
+                    emit(dict(kind='mouse-button', button=0 if e.code == E.BTN_LEFT else 1, pressed=bool(e.value)))
                 elif state['keys'] and e.type == E.EV_KEY and e.code in state['keys'] and e.value in (0, 1):
                     emit(dict(kind='button', pad=pads.index(device.path), button=state['keys'].index(e.code), pressed=bool(e.value)))
                 elif state['keys'] and e.type == E.EV_ABS and e.code in (E.ABS_X, E.ABS_Y, E.ABS_HAT0X, E.ABS_HAT0Y):
