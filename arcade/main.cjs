@@ -49,8 +49,8 @@ app.whenReady().then(async()=>{
   let result;
   for(let i=0;i<100;i++){result=await win.webContents.executeJavaScript('Boolean(window.__arcade)');if(result)break;await new Promise(r=>setTimeout(r,100));}
   if(!result)throw new Error('Arcade controller failed to initialize');
-  const report=await win.webContents.executeJavaScript(`(async()=>{__arcade.start('practice',false);for(let i=0;i<120&&__game.state.phase!=='aim';i++)await new Promise(r=>setTimeout(r,50));return {title:document.title,phase:__game.state.phase,canvas:!!document.querySelector('canvas'),offline:performance.getEntriesByType('resource').every(r=>!r.name.startsWith('http')),settings:__arcade.config};})()`);
-  console.log('ARCADE_SMOKE '+JSON.stringify(report));if(report.phase!=='aim'||!report.offline)throw new Error('Offline startup failed');app.quit();
+  const report=await win.webContents.executeJavaScript(`(async()=>{__arcade.start('practice',false);await new Promise(r=>setTimeout(r,200));return {title:document.title,phase:__game.state.phase,canvas:!!document.querySelector('canvas'),scoreboard:!!document.getElementById('arcade-scoreboard'),offline:performance.getEntriesByType('resource').every(r=>!r.name.startsWith('http')),settings:__arcade.config};})()`);
+  console.log('ARCADE_SMOKE '+JSON.stringify(report));if(!['wait','aim'].includes(report.phase)||!report.canvas||!report.scoreboard||!report.offline)throw new Error('Offline startup failed');app.quit();
  }
 }).catch(error=>{console.error(error);app.exit(1);});
 app.on('window-all-closed',()=>app.quit());
