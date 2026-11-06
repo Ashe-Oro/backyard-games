@@ -1,0 +1,39 @@
+@font-face{font-family:'Press Start 2P';src:url('/vendor/pixel.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+html[data-backyard-arcade] #bag-drawer,html[data-backyard-arcade] #title{display:none!important}#arcade-ui{position:fixed;inset:0;pointer-events:none;font:10px/1.7 'Press Start 2P',monospace;color:#fff1cf;z-index:20}#arcade-ui [hidden]{display:none!important}.arcade-card{pointer-events:auto;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(510px,94vw);max-height:94vh;overflow:auto;background:#173f3d;border:3px solid #172c32;box-shadow:6px 6px #172c3266;padding:26px}.arcade-kicker{color:#a7efb1;font-size:8px;margin:0 0 20px}.arcade-card h1{font-size:28px;line-height:1.6;letter-spacing:-.06em;margin:0 0 24px}.arcade-card h1 span,.arcade-card h2{color:#ffe16b}.arcade-card h2{font-size:16px;line-height:1.7;margin:0 0 18px}.arcade-actions{display:grid;gap:10px}.arcade-card button{font:10px/1.5 'Press Start 2P',monospace;cursor:pointer;min-height:48px;padding:12px;background:#ffe16b;color:#172c32;border:3px solid #172c32;touch-action:manipulation}.arcade-card button.secondary{background:#2d5a51;color:#fff1cf;border-color:#769184}.arcade-card button:focus-visible,.arcade-card button:hover{outline:3px solid #fff1cf;outline-offset:2px}.arcade-options{display:grid;grid-template-columns:1fr 1.6fr;gap:10px 12px;align-items:center;margin-bottom:18px}.arcade-options label{font:14px/1.4 system-ui,sans-serif}.arcade-options>div{display:flex;align-items:center;justify-content:space-between;gap:8px}.arcade-options button{font-size:8px;padding:8px;min-width:44px}.arcade-options [data-power]{background:#2d5a51;color:#fff1cf}.arcade-options [aria-pressed=true]{background:#ffe16b;color:#172c32}.arcade-options output{font:13px/1.4 system-ui,sans-serif}#arcade-diagnostics{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;color:#a7efb1;margin:18px 0 0}#arcade-prompt{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:12px;align-items:center;background:#173f3ded;border:2px solid #172c32;padding:9px 14px;color:#ffe16b}#arcade-state{font:24px/1 monospace}.arcade-card p:not(.arcade-kicker){font:16px/1.6 system-ui,sans-serif}body:has(#arcade-menu:not([hidden])) #hud,body:has(#arcade-settings:not([hidden])) #hud{visibility:hidden}@media(max-height:650px){.arcade-card{padding:18px 24px}.arcade-card h1{font-size:24px;margin-bottom:16px}#arcade-menu .arcade-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.arcade-card h2{font-size:14px}.arcade-options{gap:6px 10px}.arcade-card button{font-size:9px;padding:8px}.arcade-kicker{margin-bottom:10px}}
+#arcade-settings .arcade-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#arcade-settings .arcade-actions button{font-size:8px}#arcade-diagnostics{max-height:76px;overflow:auto}
+@media(max-height:800px) and (min-width:600px){#arcade-settings{width:min(720px,94vw)}#arcade-settings .arcade-options{grid-template-columns:repeat(2,minmax(65px,.9fr) minmax(110px,1.5fr));gap:6px 10px}#arcade-settings .arcade-options button{font-size:7px;padding:5px}#arcade-settings .arcade-options>div{gap:4px}#arcade-settings .arcade-options label{font-size:12px}#arcade-diagnostics{font-size:10px;line-height:1.4;margin-top:10px;max-height:58px}}
+
+#arcade-surface{border-left:2px solid #769184;padding-left:12px;color:#fff1cf}
+
+body.arcade-native-playing,body.arcade-native-playing *{cursor:none!important}
+/* Center the scores inside the cabinet's bezel-safe area, including menus. */
+html[data-backyard-arcade] #sb{display:none!important}
+#arcade-scoreboard{position:fixed;left:50%;top:clamp(12px,4vh,40px);transform:translateX(-50%);width:min(540px,88vw);display:grid;grid-template-columns:1fr 1.1fr 1fr;align-items:center;padding:10px 18px;background:#173f3df2;border:3px solid #172c32;box-shadow:5px 5px #172c3266;z-index:45;pointer-events:none;text-align:center;line-height:1.4}
+.arcade-team{position:relative;display:grid;justify-items:center;gap:3px}.arcade-team>span{font-size:10px}.arcade-red{color:#ff8a80}.arcade-blue{color:#8ecbff}.arcade-team strong{font-size:30px;color:#fff1cf}.arcade-team small{font-size:7px;color:#fff1cf}.arcade-team.current:before{content:'▶';position:absolute;left:0;top:25px;color:#ffe16b;font-size:12px}.arcade-team.inactive{opacity:.35}.arcade-score-center{display:grid;gap:8px;color:#fff1cf;font-size:9px}.arcade-score-center b{color:#ffe16b;font-size:10px}.arcade-pips{display:flex;gap:5px;min-height:7px}.arcade-pips i{width:7px;height:7px;background:currentColor}.arcade-pips i.used{opacity:.22}
+#arcade-ui .arcade-card{top:calc(50% + 55px);max-height:calc(100vh - 180px)}
+@media(max-width:600px),(max-height:600px){#arcade-scoreboard{padding:6px 12px;top:10px;width:min(460px,88vw)}.arcade-team strong{font-size:23px}.arcade-team>span,.arcade-score-center{font-size:8px}.arcade-team.current:before{font-size:9px;left:-2px;top:20px}.arcade-team small{font-size:6px}.arcade-score-center b{font-size:8px}#arcade-ui .arcade-card{top:calc(50% + 45px);max-height:calc(100vh - 120px)}}
+html[data-backyard-arcade] #panel{top:calc(50% + 55px);max-height:calc(100vh - 150px)}
+@media(max-height:600px){html[data-backyard-arcade] #panel{top:calc(50% + 45px);max-height:calc(100vh - 120px)}}
+
+/* Upper-left live camera; leave the center scoreboard and aiming area clear. */
+#arcade-board-view{position:absolute;left:clamp(16px,4vw,78px);top:90px;width:clamp(180px,18vw,250px);border:3px solid #172c32;box-shadow:5px 5px #172c3266;pointer-events:none}
+#arcade-board-view>span{display:block;background:#173f3d;color:#ffe16b;padding:8px;font-size:8px;line-height:1.4;text-align:center}
+#arcade-board-viewport{height:clamp(220px,37vh,340px)}
+@media(max-width:1100px){#arcade-board-view{top:140px;width:clamp(150px,22vw,220px)}#arcade-board-viewport{height:clamp(130px,24vh,200px)}}
+@media(max-height:600px){#arcade-board-view{top:110px;width:150px}#arcade-board-viewport{height:130px}}
+/* Compact 4:3 cabinets need separate rows for the score, pause and close-up. */
+@media(max-width:740px){
+ html[data-backyard-arcade] #game #pause-button{left:4vw;top:110px}
+ #arcade-board-view{top:166px}
+ html[data-backyard-arcade] #turn{left:200px;right:16px;top:112px;font-size:10px}
+ html[data-backyard-arcade] #msg{left:200px;right:16px;top:156px;font-size:16px}
+}
+
+#arcade-audio .arcade-actions{grid-template-columns:1fr 1fr}#music-now{overflow-wrap:anywhere;min-height:48px}#arcade-audio button{font:10px/1.5 'Press Start 2P',monospace;min-height:44px;padding:10px;border:3px solid #172c32;background:#ffe16b;color:#172c32}.music-volume{display:flex;justify-content:center;align-items:center;gap:24px;margin:16px 0}#arcade-audio-back{width:100%}
+@media(max-height:600px){#arcade-prompt{bottom:6px;padding:4px 8px;font-size:8px;gap:8px}#arcade-state{font-size:16px}#arcade-surface{padding-left:8px}}
+
+/* Match totals and the uncancelled current round deserve equal legibility. */
+.arcade-score-values{display:flex;justify-content:center;gap:16px}.arcade-score-values>div{display:grid;gap:2px;justify-items:center}.arcade-score-values small{font-size:7px;letter-spacing:.02em}.arcade-score-values .arcade-round-metric strong{color:inherit}
+#arcade-round-edge{font-size:9px;line-height:1.4;color:#fff1cf}#arcade-round-edge[data-team=red]{color:#ff8a80}#arcade-round-edge[data-team=blue]{color:#8ecbff}
+.arcade-team.current:before{left:-14px;top:36px}
+@media(max-width:600px),(max-height:600px){.arcade-score-values{gap:12px}.arcade-score-values small{font-size:6px}#arcade-round-edge{font-size:8px}.arcade-team.current:before{left:-10px;top:28px}}
