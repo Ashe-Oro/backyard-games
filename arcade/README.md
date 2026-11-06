@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.5
+Backyard Cornhole Arcade — trackball prototype 0.2.6
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -134,7 +134,7 @@ Run `npm test --prefix arcade` before publishing a change. Isolation regression 
 ## Cabinet playtest pass (0.2.5)
 
 - Centered match scoreboard stays visible through throws, pauses, setup and round results. It shows match totals, live round points and remaining bags. Practice shows points on the current board.
-- Arcade target moves back two feet (29 ft). Its geometry, aiming and simulation-derived power windows all use the same new distance.
+- Arcade target uses the regulation 27 ft distance. The wider main camera frames the full throw; a live upper-left board camera shows every resting and incoming bag. Toggle BOARD VIEW from the pause menu; its preference is saved independently from trackball calibration.
 - Back direction sets aim; forward speed sets power, with an 80-count forward release gate. Existing sensitivity and button mappings survive migration. Old pull-range calibration converts to a forward-speed scale; recalibrate for the new feel. Previous saves remain for rollback; new settings use v4.
 - A hole score or a knocked-in bag triggers one of three dog celebrations: hops, a victory spin, or a playful bow. Poses return to idle without drift, and pausing freezes the animation with the game.
 
@@ -143,3 +143,6 @@ Verification note: the 0.2.4 native input-bridge and scoreboard/celebration test
 Offline updates reuse the same app origin. Each launch clears only Chromium's asset cache, and packaged responses use `Cache-Control: no-store`, preventing mixed files from earlier installs. Local Storage and saved cabinet settings are retained. The hidden smoke test verifies initialization, canvas, scoreboard and offline resources. It accepts the initial wait phase because hidden-window animation timers can be suspended; visible gameplay is tested separately. Background throttling is disabled only for that test window.
 
 Cabinet startup troubleshooting: a latched Alt+F4 on Batocera's virtual `batocera hotkeys` device caused the 0.2.4 launch to close before navigation finished. Releasing those confirmed stuck virtual keys restored normal startup; no physical control or global mapping was changed. The startup gamepad guard additionally requires a fresh button release/press, so the button used to launch a game cannot immediately activate a menu action.
+
+Board camera (0.2.6): always on during play by default; pause-menu toggle.
+The close-up shares the live scene and renderer and is hidden in menus/setup.

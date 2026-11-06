@@ -2,12 +2,14 @@ import {Trackball,settings,legacySettings} from './trackball.mjs';
 const host=window.__arcadeHost;
 if(!host||!document.documentElement.hasAttribute('data-backyard-arcade'))throw new Error('Arcade controls require the standalone Cornhole build.');
 let config;try{const saved=localStorage.getItem('backyard-arcade-v4');config=saved?settings(JSON.parse(saved)):legacySettings(JSON.parse(localStorage.getItem('backyard-arcade-v3')||localStorage.getItem('backyard-arcade-v2')||localStorage.getItem('backyard-arcade-v1')||'{}'));}catch{config=settings();}
+let boardViewEnabled=localStorage.getItem('backyard-arcade-board-view')!=='off';
 const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><strong id="arcade-red-score">0</strong><small id="arcade-red-round">ROUND 0</small><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><strong id="arcade-blue-score">0</strong><small id="arcade-blue-round">ROUND 0</small><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.5</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<aside id="arcade-board-view" aria-label="Live board close-up" hidden><span>BOARD · 27 FT</span><div id="arcade-board-viewport"></div></aside>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.6</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-view-toggle" class="secondary">BOARD VIEW: ON</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options">
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
@@ -24,6 +26,7 @@ document.body.append(root);
 let windy=false,capturing=false,nativeInput=false,nativeStatus=null;
 function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v4',JSON.stringify(config));renderSettings();}
 function renderSettings(){
+ $('arcade-view-toggle').textContent='BOARD VIEW: '+(boardViewEnabled?'ON':'OFF');
  $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=Math.round(config.powerSpeed);$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
  for(const b of root.querySelectorAll('[data-bind]'))b.textContent=binding===b.dataset.bind?'PRESS BUTTON…':config[b.dataset.bind];
  $('arcade-wind').textContent=windy?'WIND':'CALM';
@@ -63,6 +66,7 @@ $('arcade-wind').onclick=()=>{windy=!windy;host.wind(windy);renderSettings();};
 $('arcade-reset').onclick=()=>{config=settings();save();};
 for(const b of root.querySelectorAll('[data-adjust]'))b.onclick=()=>{config[b.dataset.adjust]+=Number(b.dataset.by);save();};
 for(const b of root.querySelectorAll('[data-bind]'))b.onclick=()=>{binding=b.dataset.bind;renderSettings();};
+$('arcade-view-toggle').onclick=()=>{boardViewEnabled=!boardViewEnabled;localStorage.setItem('backyard-arcade-board-view',boardViewEnabled?'on':'off');renderSettings();};
 $('arcade-calibrate').onclick=()=>{
  calibration={back:0,forward:0,start:null,last:performance.now()};settingsOpen=false;menuOpen=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=false;capture();
 };
@@ -185,6 +189,7 @@ function frame(now){
  if(key!==lastTurn){lastTurn=key;machine.reset(now);if(s.phase==='wait')host.wind(windy);}
  if(!menuOpen&&inputReady())machine.tick(now);
  document.body.classList.toggle('arcade-native-playing',nativeInput&&!menuOpen);
+ $('arcade-board-view').hidden=!boardViewEnabled||menuOpen||!!calibration||['menu','intro','champion'].includes(s.phase);
  $('arcade-prompt').hidden=menuOpen||s.phase!=='aim'||!!calibration;
  $('arcade-state').textContent=machine.phase==='settling'?'·':machine.phase==='ready'?'↓':machine.phase==='back'?'↑':'↗';
  $('arcade-height').textContent=['SLIDER','NORMAL','KOBE'][s.arc];
