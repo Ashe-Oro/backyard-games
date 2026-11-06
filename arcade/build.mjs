@@ -56,7 +56,8 @@ const platform=process.argv.includes('--mac')?'darwin':'win32',arch=platform==='
 const zip=await downloadArtifact({version:pkg.devDependencies.electron,artifactName:'electron',platform,arch,cacheRoot:path.join(here,'.cache')});
 const target=path.join(dist,platform==='win32'?'BackyardCornhole.pc':'mac-smoke');await fs.rm(target,{recursive:true,force:true});await fs.mkdir(target,{recursive:true});await extract(zip,{dir:target});
 const app=path.join(target,platform==='darwin'?'Electron.app/Contents/Resources/app':'resources/app');await fs.mkdir(app,{recursive:true});
-await fs.writeFile(path.join(app,'package.json'),JSON.stringify({name:pkg.name,version:pkg.version,main:'main.cjs'}));await fs.copyFile(path.join(here,'main.cjs'),path.join(app,'main.cjs'));await fs.mkdir(path.join(app,'dist'),{recursive:true});await fs.cp(site,path.join(app,'dist/site'),{recursive:true});
+await fs.writeFile(path.join(app,'package.json'),JSON.stringify({name:pkg.name,version:pkg.version,main:'main.cjs'}));await fs.copyFile(path.join(here,'main.cjs'),path.join(app,'main.cjs'));
+for(const file of ['preload.cjs','cabinet-input.py'])await fs.copyFile(path.join(here,file),path.join(app,file));await fs.mkdir(path.join(app,'dist'),{recursive:true});await fs.cp(site,path.join(app,'dist/site'),{recursive:true});
 if(platform==='win32'){
  await fs.rename(path.join(target,'electron.exe'),path.join(target,'BackyardCornhole.exe'));
  try{await fs.rename(path.join(target,'electron_wer.dll'),path.join(target,'BackyardCornhole_wer.dll'));}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -64,7 +65,7 @@ if(platform==='win32'){
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
  await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));
- const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.1-Windows-x64.zip'),archive=new yazl.ZipFile();
+ const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.2-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));

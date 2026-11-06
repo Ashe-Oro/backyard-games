@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.1
+Backyard Cornhole Arcade — trackball prototype 0.2.2
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -107,3 +107,11 @@ Cabinet validation: native process and GPU renderer started; screenshot confirme
 the Cornhole menu and backyard rendered on screen. Physical trackball feel and
 button calibration still need the player test. The Windows version remains
 available for Windows PCs; its Wine compatibility is not established.
+
+## Batocera input
+
+Linux builds use the cabinet's existing Python `evdev` package to read relative mouse counts and gamepad buttons directly. No browser pointer lock is needed. Devices are rediscovered every two seconds; no input devices are grabbed and no system controller mappings are changed. The mini-keyboard mouse remains usable in menus. Calibration uses raw device counts rather than accelerated cursor pixels.
+
+On this cabinet, B (button 3) confirms menu selections and cycles SLIDER / NORMAL / KOBE in play. A (button 4) goes back in menus and flips SLICK / STICKY in play. Start confirms in menus and pauses in play; Select pauses. Either player's panel works. Use the joystick to navigate menus, or hover a button with the trackball and press B. Bindings can be changed in Cabinet Setup.
+
+Cabinet Setup displays connected mice, controller count, and movement totals. Roll back then forward in Calibrate Trackball to set the pull range. Existing sensitivity and calibration settings are retained. Keyboard controls remain available. Windows/macOS continue to use relative pointer capture and the browser Gamepad API.

@@ -21,13 +21,26 @@ app.whenReady().then(async()=>{
  // The cabinet build has no remote resources, update checks, login, or external navigation.
  session.defaultSession.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!['backyard:','devtools:','data:','blob:'].some(s=>details.url.startsWith(s))}));
  Menu.setApplicationMenu(null);
- const win=new BrowserWindow({width:1280,height:800,fullscreen:!smoke&&!process.argv.includes('--windowed'),show:!smoke,backgroundColor:'#173f3d',autoHideMenuBar:true,webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});
+ const win=new BrowserWindow({width:1280,height:800,fullscreen:!smoke&&!process.argv.includes('--windowed'),show:!smoke,backgroundColor:'#173f3d',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  win.webContents.on('will-navigate',(e,url)=>{if(!url.startsWith('backyard://game/'))e.preventDefault();});
  win.webContents.on('before-input-event',(e,input)=>{
   if(input.type==='keyDown'&&input.alt&&input.key==='F4'){e.preventDefault();app.quit();}
  });
  win.webContents.on('render-process-gone',(_e,details)=>{console.error('Game renderer stopped:',details.reason);app.exit(1);});
+ let input,lastInputStatus;
+ if(process.platform==='linux'&&!process.argv.includes('--no-cabinet-input')){
+  const {spawn}=require('node:child_process'),readline=require('node:readline');
+  input=spawn('python3',['-u',path.join(__dirname,'cabinet-input.py')],{stdio:['ignore','pipe','pipe']});
+  const send=data=>{if(!win.isDestroyed())win.webContents.send('cabinet-input',data);};
+  readline.createInterface({input:input.stdout}).on('line',line=>{try{const data=JSON.parse(line);if(data.kind==='status'){lastInputStatus=data;console.info('Cabinet devices:',line);}if(win.isFocused())send(data);}catch{}});
+  win.webContents.on('did-finish-load',()=>{if(lastInputStatus)send(lastInputStatus);});
+  input.stderr.on('data',data=>console.error('Cabinet input:',String(data).trim()));
+  input.on('error',error=>{console.error(error);send({kind:'error'});});
+  input.on('exit',()=>send({kind:'error'}));
+  win.on('closed',()=>input.kill());
+  app.on('before-quit',()=>input.kill());
+ }
  await win.loadURL('backyard://game/cornhole/index.html');
  if(smoke){
   let result;

@@ -17,6 +17,7 @@ const runtime=await downloadArtifact({version:pkg.devDependencies.electron,artif
 await fs.rm(target,{recursive:true,force:true});await fs.mkdir(target,{recursive:true});await extract(runtime,{dir:target});
 const app=path.join(target,'resources/app');await fs.mkdir(path.join(app,'dist'),{recursive:true});
 await fs.copyFile(path.join(root,'main.cjs'),path.join(app,'main.cjs'));
+for(const file of ['preload.cjs','cabinet-input.py'])await fs.copyFile(path.join(root,file),path.join(app,file));
 await fs.writeFile(path.join(app,'package.json'),JSON.stringify({name:pkg.name,version:pkg.version,main:'main.cjs'}));
 await fs.cp(path.join(dist,'site'),path.join(app,'dist/site'),{recursive:true});
 // Batocera 42 has GTK/NSS/OpenGL, but does not ship this Electron-linked library.

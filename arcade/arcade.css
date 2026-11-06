@@ -4,3 +4,5 @@
 @media(max-height:800px) and (min-width:600px){#arcade-settings{width:min(720px,94vw)}#arcade-settings .arcade-options{grid-template-columns:repeat(2,minmax(65px,.9fr) minmax(110px,1.5fr));gap:6px 10px}#arcade-settings .arcade-options button{font-size:7px;padding:5px}#arcade-settings .arcade-options>div{gap:4px}#arcade-settings .arcade-options label{font-size:12px}#arcade-diagnostics{font-size:10px;line-height:1.4;margin-top:10px;max-height:58px}}
 
 #arcade-surface{border-left:2px solid #769184;padding-left:12px;color:#fff1cf}
+
+body.arcade-native-playing,body.arcade-native-playing *{cursor:none!important}
