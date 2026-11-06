@@ -87,3 +87,23 @@ For a local Electron host, install its binary (npm rebuild electron) and npm sta
 The build patches a COPY of the existing Cornhole game. Production web controls,
 physics, and assets remain untouched. Only the cabinet copy enables human spin.
 Electron, Three.js, and the font licenses are included with the portable build.
+
+NATIVE BATOCERA COMPANION (VERIFIED ON CABINET)
+--------------------------------------------
+The Windows/Electron wrapper encountered Wine graphics failures on Batocera 42.
+The same offline game runs using its native Linux companion instead. From the
+Linux ZIP, put BackyardCornhole-linux/ in /userdata/system/backyard-games/ and
+BackyardCornhole.sh in /userdata/roms/ports/. Make both shell launchers and the
+electron binary executable. Refresh the game list and launch from Ports.
+
+The companion privately bundles the missing libcups.so.2 and its license. It
+uses the cabinet's existing GTK, NSS and Intel OpenGL libraries; it does not
+replace system libraries or change other games' settings. The launcher uses
+--no-sandbox because Batocera runs games as root. Content stays local/offline.
+Logs: /userdata/system/logs/cornhole-native.log.
+Build: npm run build:linux. Requires tar with xz support, Node, and npm dependencies.
+
+Cabinet validation: native process and GPU renderer started; screenshot confirmed
+the Cornhole menu and backyard rendered on screen. Physical trackball feel and
+button calibration still need the player test. The Windows version remains
+available for Windows PCs; its Wine compatibility is not established.
