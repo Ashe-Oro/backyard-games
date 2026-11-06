@@ -23,6 +23,11 @@ html=html.replace('</head>','<link rel="stylesheet" href="/arcade/arcade.css">\n
 // Transform only the bundled copy. The website's input and physics are untouched.
 const replace=(from,to)=>{if(!html.includes(from))throw new Error('Game integration anchor changed: '+from);html=html.replace(from,to);};
 replace("isHuman(team) ? 0 : M.spin",'M.spin');
+replace("arcNames = ['PUSH', 'NORMAL', 'KOBE']","arcNames = ['SLIDER', 'NORMAL', 'KOBE']");
+// Bag rotation changes the landing, never creates a golf-like curved flight.
+replace('b.curl = drift * 0.12 + spin * 0.10;', 'b.curl = 0;');
+replace('b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt;', 'b.v.x += wind.x * dt;');
+replace("b.state = 'slide';\n        return 'land';", "b.state = 'slide';b.curl=clamp(b.english,-1,1)*.12;\n        return 'land';");
 const bridge=`
 window.__arcadeHost={
  get state(){return window.__game.state;},
@@ -31,6 +36,7 @@ window.__arcadeHost={
  hideArrow(){cancelPull();},
  wind(enabled){if(!enabled)Object.assign(wind,{mph:0,angle:0,x:0,z:0});else if(!wind.mph)Object.assign(wind,roundWind({practice:false,previousX:wind.x}));renderHud();},
  position(dx){if(!humanTurn())return;M.position[thrower()]=clamp(M.position[thrower()]+dx,-.45,.45);positionHeldBag(baseYaw(releaseX(thrower())));},
+ surface(){flipSide();},
  height(){if(!humanTurn())return;M.arc=(M.arc+1)%3;M.heights[thrower()]=M.arc;renderHud();},
  preview(shot){if(!humanTurn())return;M.aim=shot.aim;setMeter(shot.power);const origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+shot.aim,length=powerArrowLength(physicalPower(shot.power));showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},false,physicalPower(shot.power));},
  throw(shot){if(!humanTurn())return false;M.aim=clamp(shot.aim,-AIM_MAX,AIM_MAX);M.spin=clamp(shot.spin,-1,1);return throwBag(clamp(shot.power,0,1));},
@@ -55,7 +61,7 @@ if(platform==='win32'){
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
  await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));
- const output=path.join(dist,'BackyardCornhole-Trackball-Windows-x64.zip'),archive=new yazl.ZipFile();
+ const output=path.join(dist,'BackyardCornhole-Trackball-v0.2-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));

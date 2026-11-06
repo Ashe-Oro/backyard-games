@@ -1,26 +1,26 @@
 import {Trackball,settings} from './trackball.mjs';
 const host=window.__arcadeHost;
-let config;try{config=settings(JSON.parse(localStorage.getItem('backyard-arcade-v1')||'{}'));}catch{config=settings();}
+let config;try{const saved=localStorage.getItem('backyard-arcade-v2');config=settings(saved?JSON.parse(saved):{...JSON.parse(localStorage.getItem('backyard-arcade-v1')||'{}'),spin:0});}catch{config=settings();}
 const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.1</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options"><label>Power</label><div><button data-power="hybrid">STROKE</button><button data-power="distance">DISTANCE</button></div>
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
 <label>Pull range</label><div><button data-adjust="pullRange" data-by="-40">−</button><output id="range-value"></output><button data-adjust="pullRange" data-by="40">+</button></div>
-<label>Gesture spin</label><div><button data-adjust="spin" data-by="-.15">−</button><output id="spin-value"></output><button data-adjust="spin" data-by=".15">+</button></div>
+<label>Finish rotation</label><div><button data-adjust="spin" data-by="-.15">−</button><output id="spin-value"></output><button data-adjust="spin" data-by=".15">+</button></div>
 <label>Wind</label><div><button id="arcade-wind">CALM</button></div>
-<label>Shot / height</label><button data-bind="shotKey"></button><label>Confirm</label><button data-bind="confirmKey"></button><label>Pause / menu</label><button data-bind="menuKey"></button></div>
+<label>Throw style</label><button data-bind="shotKey"></button><label>Bag surface</label><button data-bind="surfaceKey"></button><label>Confirm</label><button data-bind="confirmKey"></button><label>Pause / menu</label><button data-bind="menuKey"></button></div>
 <div class="arcade-actions"><button id="arcade-calibrate">CALIBRATE TRACKBALL</button><button id="arcade-reset" class="secondary">RESET SETTINGS</button><button id="arcade-settings-back" class="secondary">BACK</button></div>
 <pre id="arcade-diagnostics" aria-live="off"></pre></section>
-<div id="arcade-prompt" hidden><span id="arcade-state">↓</span><span id="arcade-height">NORMAL</span></div>
+<div id="arcade-prompt" hidden><span id="arcade-state">↓</span><span id="arcade-height">NORMAL</span><span id="arcade-surface">SLICK</span></div>
 <div id="arcade-calibration" class="arcade-card" hidden><h2>↓ &nbsp; ↑</h2><p>Roll back, then forward.</p><button id="arcade-calibration-cancel" class="secondary">CANCEL</button></div>
 <div id="arcade-error" class="arcade-card" hidden><h2>TRACKBALL NOT CAPTURED</h2><p id="arcade-error-copy"></p><button id="arcade-error-back">BACK</button></div>`;
 document.body.append(root);
 let windy=false,capturing=false;
-function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v1',JSON.stringify(config));renderSettings();}
+function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v2',JSON.stringify(config));renderSettings();}
 function renderSettings(){
  $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=Math.round(config.pullRange);$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
  for(const b of root.querySelectorAll('[data-power]'))b.setAttribute('aria-pressed',String(b.dataset.power===config.mode));
@@ -94,7 +94,7 @@ document.addEventListener('pointerlockerror',()=>{if(!capturing)showError('Selec
 window.addEventListener('blur',()=>{if(!menuOpen)showMenu();});
 window.addEventListener('keydown',e=>{
  if(e.altKey&&e.code==='F4')return;
- const handled=['F2','Digit1','Digit2','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab',config.shotKey,config.menuKey,config.confirmKey,'Escape','Space','Enter'];
+ const handled=['F2','Digit1','Digit2','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab',config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey,'Escape','Space','Enter'];
  if(!handled.includes(e.code)&&!binding)return;e.preventDefault();e.stopImmediatePropagation();if(e.repeat)return;
  if(binding){config[binding]=e.code;binding=null;save();return;}
  if(e.code==='F2'){showMenu();showSettings();return;}
@@ -105,7 +105,7 @@ window.addEventListener('keydown',e=>{
   else if([config.shotKey,config.confirmKey,'Space','Enter'].includes(e.code))(document.activeElement?.matches('#arcade-ui button')?document.activeElement:list[0])?.click();return;
  }
  if(['summary','over'].includes(host.state.phase)){if([config.shotKey,config.confirmKey,'Space','Enter'].includes(e.code)){host.advance();machine.reset(performance.now());}return;}
- if(e.code===config.shotKey&&host.state.phase==='aim'){host.height();machine.reset(performance.now());}
+ if(host.state.phase==='aim'&&[config.shotKey,config.surfaceKey].includes(e.code)){if(e.code===config.shotKey)host.height();else host.surface();host.hideArrow();machine.reset(performance.now());}
 },true);
 const padState=new Map();
 function pollPads(){
@@ -115,8 +115,8 @@ function pollPads(){
   const code=`Pad${pad.index}Button${i}`,pressed=pad.buttons[i].pressed;connected.add(code);
   if(pressed&&!padState.get(code)){
    let action=code;
-   if(!binding&&![config.shotKey,config.menuKey,config.confirmKey].includes(code)){
-    action=({0:menuOpen?config.confirmKey:config.shotKey,1:config.menuKey,9:menuOpen?'Digit2':config.menuKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[i];
+   if(!binding&&![config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey].includes(code)){
+    action=({0:menuOpen?config.confirmKey:config.shotKey,1:menuOpen?config.menuKey:config.surfaceKey,8:config.menuKey,9:menuOpen?'Digit2':config.menuKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[i];
    }
    if(action)window.dispatchEvent(new KeyboardEvent('keydown',{code:action,bubbles:true}));
   }
@@ -132,7 +132,8 @@ function frame(now){
  if(!menuOpen&&document.pointerLockElement)machine.tick(now);
  $('arcade-prompt').hidden=menuOpen||s.phase!=='aim'||!!calibration;
  $('arcade-state').textContent=machine.phase==='settling'?'·':machine.phase==='ready'?'↓':machine.phase==='back'?'↑':'↗';
- $('arcade-height').textContent=['PUSH','NORMAL','LOB'][s.arc];
+ $('arcade-height').textContent=['SLIDER','NORMAL','KOBE'][s.arc];
+ $('arcade-surface').textContent=s.side[s.thrower].toUpperCase();
  if(settingsOpen)$('arcade-diagnostics').textContent=`${Math.round(fps)} FPS · ${diag.events} events\nΔ ${diag.lastX}, ${diag.lastY} · total ${Math.round(diag.x)}, ${Math.round(diag.y)}\n${lastShot?`${lastShot.mode} · power ${lastShot.power.toFixed(3)} · aim ${lastShot.aim.toFixed(3)} · spin ${lastShot.spin.toFixed(2)}`:'No throw recorded'}\nF2 setup · 1 practice · 2 players · Alt+F4 exit`;
  // Existing score/round panels remain functional; only replace the main lobby.
  const panel=$('panel');if(s.phase==='menu'){panel.hidden=true;if(!menuOpen)showMenu();}

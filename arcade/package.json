@@ -1,5 +1,5 @@
 {
-  "name":"backyard-cornhole-arcade", "productName":"Backyard Cornhole Arcade", "version":"0.1.0", "private":true,
+  "name":"backyard-cornhole-arcade", "productName":"Backyard Cornhole Arcade", "version":"0.2.0", "private":true,
   "description":"Offline shared-trackball cabinet control prototype", "main":"main.cjs",
   "scripts":{"build:site":"node build.mjs --site","build:windows":"node build.mjs --windows","test":"node --test tests/*.test.mjs","start":"electron ."},
   "devDependencies":{"@electron/get":"3.1.0","@fontsource/press-start-2p":"5.2.7","electron":"45.2.3","extract-zip":"2.0.1","three":"0.170.0","yazl":"3.3.1"}

@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.1
+Backyard Cornhole Arcade — trackball prototype 0.2
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -9,12 +9,14 @@ Unzip the whole folder. Run BackyardCornhole.exe. Keep the DLLs, resources,
 and other files beside it. No Node.js, browser, account, or internet is needed.
 
 Roll sideways to position the bag. Roll back, then forward to throw.
-Forward direction aims. Differing back/forward angles add modest gesture spin,
-inspired by the cabinet's A/B/C and 1/2/3 diagram. This is an approximation for
-cornhole, not a reproduction of Golden Tee's ball physics.
+Backswing distance sets power; the forward stroke sets release direction.
+Backswing angle never creates a hook or slice. Wind can move the bag in flight.
+Optional curved-finish rotation is off by default; it affects the bag on the
+board, not its airborne trajectory. Throw style and bag surface use buttons.
 
 Default buttons:
-  H       cycle Push / Normal / Lob (also selects a highlighted menu item)
+  H       cycle Slider / Normal / Kobe (also selects a highlighted menu item)
+  F       flip Slick / Sticky bag surface
   Enter   confirm / next round
   Escape  pause / menu
   1       start practice from menu
@@ -23,10 +25,11 @@ Default buttons:
   Alt+F4  exit
 
 Menu choices follow the trackball cursor; press the mapped button to select.
-The three main buttons can be remapped in Cabinet Setup. For keyboard-encoded
+The four main buttons can be remapped in Cabinet Setup. For keyboard-encoded
 arcade buttons, select a binding and press the physical button. USB gamepad
-buttons are supported too: button 1 selects / changes height, button 2 pauses,
-and Start begins a two-player game from the menu. These can be remapped in
+buttons are supported too: button 1 selects / changes throw style; button 2
+flips bag surface during play. Select / Back pauses; Start starts two-player
+from the menu and pauses during play. These can be remapped in
 Cabinet Setup; no external keyboard mapper is required. Mouse clicks work for menus.
 A short quiet period between turns prevents residual ball motion from throwing.
 
@@ -38,7 +41,11 @@ and pull range can also be adjusted manually. Settings save on this machine.
 
 STROKE: 80% backswing distance + up to 20% averaged forward speed.
 DISTANCE: backswing distance alone. Try both with the same physical strokes.
-Gesture Spin: turn down to 0 to isolate direction and power during testing.
+Finish rotation is OFF by default. If enabled, a curved forward finish adds
+a small landing effect. A straight diagonal stroke simply aims diagonally.
+Slider travels low and slides more; Normal is the standard arc; Kobe is high
+and lands with less slide. Slick slides farther; Sticky grips the board.
+Each player keeps their own throw style and surface between turns.
 Calm is the default. Wind can be enabled after calibrating the controls.
 Diagnostics show device counts, FPS, and the last shot. These are setup-only.
 
@@ -65,9 +72,10 @@ Wine/Chromium compatibility is a feasibility gate, not a promised final engine.
 TRY THIS
 --------
 Start in Practice with calm air. Make five short, five medium, and five long
-strokes. Compare STROKE vs DISTANCE. Try A→3, B→2, C→1 for straight stroke
-pairs; A→1 / C→3 to feel the opposite-direction spin. Then play a two-player
-round and check that carrying over ball motion never throws for the next player.
+strokes. Compare STROKE vs DISTANCE. Test each throw style on Slick and Sticky,
+then angle the forward stroke to aim left/right. Play a two-player round and
+check that each player retains their settings and leftover motion never throws
+for the next player.
 Report Batocera version, CPU/GPU, screen resolution, power mode, settings, and
 whether aim/power feel repeatable. Cabinet Setup shows counts to help diagnose.
 
