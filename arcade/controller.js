@@ -1,5 +1,6 @@
 import {Trackball,settings} from './trackball.mjs';
 const host=window.__arcadeHost;
+if(!host||!document.documentElement.hasAttribute('data-backyard-arcade'))throw new Error('Arcade controls require the standalone Cornhole build.');
 let config;try{const saved=localStorage.getItem('backyard-arcade-v2');config=settings(saved?JSON.parse(saved):{...JSON.parse(localStorage.getItem('backyard-arcade-v1')||'{}'),spin:0});}catch{config=settings();}
 const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;

@@ -119,3 +119,13 @@ Cabinet Setup displays connected mice, controller count, and movement totals. Ro
 ### Golden Tee reference
 
 The cabinet's Golden Tee '98 config inherits the MAME 2003-Plus default action pair with no per-game input remap. RetroPad B/A correspond to raw cabinet buttons 3/4; its global RetroArch mouse index 1 selects the trackball instead of the mini-keyboard touchpad. Golden Tee's default action sequences also include mouse buttons 1/2. Cornhole therefore supports both paths: in play, left mouse button cycles throw style and right mouse button flips bag surface. In menus, normal left-click selects the hovered item and right-click goes back. Dedicated trackball-panel button wiring still needs a physical press test; the configuration alone cannot identify which blue button sends which event.
+
+## Web / arcade boundary
+
+The web game in `cornhole/` is the canonical input for packaging. Desktop-only input, physics adjustments, UI and dependencies live in `arcade/`. The builder copies web files into `arcade/dist/site`, applies the arcade adaptations there, and starts from a clean generated tree on each build. Never apply cabinet changes directly to the web files or point a web server/Vercel output directory at the arcade build.
+
+The root `.vercelignore` excludes the entire `arcade` directory, including its dependencies and generated binaries, from web deployments. The website does not import arcade scripts/styles or expose an arcade-mode switch. The controller requires both the generated-page marker and arcade host bridge before it touches settings, DOM or input listeners.
+
+Desktop storage is under Electron's existing Backyard Cornhole Arcade profile and the `backyard://game` origin; browser saves remain on their HTTPS website origin. The app's offline protocol and network block keep web deployments out of the installed cabinet game. Packaging uses read-only copies of shared assets, so a website deployment cannot change an installed arcade build; a new arcade package must be built and installed separately.
+
+Run `npm test --prefix arcade` before publishing a change. Isolation regression checks hash the web sources before/after a real arcade build, reject arcade imports in web sources, verify stale generated files are removed and check that the deployment exclusion remains present. Existing control tests also run.

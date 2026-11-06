@@ -7,6 +7,8 @@ import extract from 'extract-zip';
 import yazl from 'yazl';
 const here=path.dirname(fileURLToPath(import.meta.url)),repo=path.dirname(here),dist=path.join(here,'dist'),site=path.join(dist,'site');
 const pkg=JSON.parse(await fs.readFile(path.join(here,'package.json')));
+// Rebuild only this generated tree; never write into the canonical web sources.
+await fs.rm(site,{recursive:true,force:true});
 await fs.mkdir(site,{recursive:true});
 for(const [folder,files] of Object.entries({'cornhole':['index.html','controls.mjs','wind-streaks.js'],'yard-games':['backyard.js','power-arrow.js','ui.css']})){
  await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(repo,folder,file),path.join(site,folder,file));
@@ -19,6 +21,7 @@ await fs.copyFile(path.join(here,'node_modules/three/LICENSE'),path.join(site,'v
 await fs.copyFile(path.join(here,'node_modules/@fontsource/press-start-2p/LICENSE'),path.join(site,'vendor/FONT-LICENSE.txt'));
 let html=await fs.readFile(path.join(site,'cornhole/index.html'),'utf8');
 html=html.replace(/<link[^>]+https:\/\/fonts\.[^>]+>\n?/g,'').replace('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js','/vendor/three.module.min.js');
+html=html.replace('<html lang="en">','<html lang="en" data-backyard-arcade>');
 html=html.replace('</head>','<link rel="stylesheet" href="/arcade/arcade.css">\n</head>');
 // Transform only the bundled copy. The website's input and physics are untouched.
 const replace=(from,to)=>{if(!html.includes(from))throw new Error('Game integration anchor changed: '+from);html=html.replace(from,to);};
