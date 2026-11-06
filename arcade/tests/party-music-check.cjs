@@ -9,12 +9,13 @@ const {_electron}=require('playwright-core'),assert=require('node:assert/strict'
  const first=await p.evaluate(()=>{const h=__arcadeHost.party;return {time:h.time,x:h.guest.g.position.x,people:h.chessPlayers.length,keg:h.keg.name}});assert.equal(first.people,2);assert.equal(first.keg,'keg');await p.waitForTimeout(700);assert(await p.evaluate(x=>__arcadeHost.party.time>x,first.time));
  // Keep all decorative actors and their movement left of the playing corridor.
  await p.evaluate(()=>{const h=__arcadeHost.party;for(let i=0;i<100;i++){h.update(.25);if(h.guest.g.position.x>-1.4)throw Error('Guest entered throwing lane');}});
- await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-party-028.png'});
- await p.evaluate(()=>{const h=__arcadeHost.party;h.update(50-h.time%65);});assert(await p.evaluate(()=>__arcadeHost.party.kegStand));assert((await p.evaluate(()=>__arcadeHost.party.guest.g.rotation.z))>3);await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-keg-stand-028.png'});
+ await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-party-pump.png'});
+ await p.evaluate(()=>{const h=__arcadeHost.party;h.update((6-h.time%20+20)%20);});assert(await p.evaluate(()=>__arcadeHost.party.stream.visible));await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-pump-pouring.png'});
+ await p.evaluate(()=>{const h=__arcadeHost.party;h.update(50-h.time%65);});assert(await p.evaluate(()=>__arcadeHost.party.kegStand));assert((await p.evaluate(()=>__arcadeHost.party.guest.g.rotation.z))>3);await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-keg-stand-pump.png'});
  await p.evaluate(()=>__arcade.showMenu());const stopped=await p.evaluate(()=>__arcadeHost.party.time);await p.waitForTimeout(300);assert.equal(await p.evaluate(()=>__arcadeHost.party.time),stopped);
  await p.locator('#arcade-audio-open').click();assert(await p.locator('#arcade-audio').isVisible());await p.locator('#music-toggle').click();await p.waitForFunction(()=>!__arcade.music.audio.paused);assert.equal(await p.evaluate(()=>__arcade.music.audio.error),null);
  await p.locator('#music-next').click();await p.waitForFunction(()=>__arcade.music.audio.src.endsWith('/1'));await p.locator('[data-music-volume=".1"]').click();assert.equal(await p.evaluate(()=>__arcade.music.audio.volume),.35);
- await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-music-028.png'});
+ await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-music.png'});
  await p.locator('#music-toggle').click();assert(await p.evaluate(()=>__arcade.music.audio.paused));await p.reload();await p.waitForFunction(()=>window.__arcade?.music.tracks.length===2);assert.equal(await p.evaluate(()=>__arcade.music.audio.volume),.35);assert.equal(await p.evaluate(()=>__arcade.music.enabled),false);assert.deepEqual(errors,[]);
  console.log('Party animation, pause freeze and clear throwing lane; offline audio decoding/play/pause/next, folder scan and volume persistence passed.');
  }finally{await app.close();fs.rmSync(profile,{recursive:true,force:true});}})().catch(e=>{console.error(e);process.exitCode=1});

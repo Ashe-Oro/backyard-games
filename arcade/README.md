@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.9
+Backyard Cornhole Arcade — trackball prototype 0.2.10
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -165,3 +165,8 @@ it pauses with the game and remains outside the throwing corridor.
 Ready bag: lower underhand release places the centered bag near 87% of screen
 height in the 16:9 cabinet view, leaving room for the bottom style/surface HUD.
 The physical release uses the same location so the bag never jumps on launch.
+
+Party keg reference: top-mounted vertical pump with black plunger handle,
+upper coupler and looped beer hose ending in a handheld picnic tap. The tap
+serves the cup during filling and moves to the guest during a keg stand.
+Reference: https://tmcraftus.com/products/tmcraft-4-beer-keg-party-pump

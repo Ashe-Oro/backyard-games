@@ -9,9 +9,25 @@ export function createParty(scene){
  cube(.68,.13,.62,'#7a5338',0,.13,0,keg);for(const x of [-.23,.23])cube(.09,.24,.48,'#624730',x,.12,0,keg);
  const shell=new THREE.Mesh(new THREE.CylinderGeometry(.29,.29,.65,8),mat('#aebcb5'));shell.position.y=.585;shell.castShadow=shell.receiveShadow=true;keg.add(shell);
  for(const y of [.35,.83]){const band=new THREE.Mesh(new THREE.CylinderGeometry(.31,.31,.07,8),mat('#647b78'));band.position.y=y;keg.add(band);}
- cube(.3,.035,.3,'#d8decb',0,.93,0,keg);cube(.08,.1,.16,'#d8decb',0,.8,.34,keg);cube(.04,.13,.04,'#263c39',0,.92,.4,keg);
- cube(.09,.025,.1,'#3c5149',0,.77,.43,keg);cube(.38,.03,.28,'#596e64',0,.32,.41,keg);
- const stream=cube(.018,.17,.018,'#e9be59',0,.67,.43,keg);stream.visible=false;
+ // Party-pump reference: top coupler, upright pump and black push handle.
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(.255,.025,4,8),mat('#d8decb'));rim.rotation.x=Math.PI/2;rim.position.y=.93;keg.add(rim);
+ cube(.16,.065,.15,'#647b78',0,.965,0,keg);
+ const pump=new THREE.Mesh(new THREE.CylinderGeometry(.043,.043,.23,6),mat('#d8decb'));pump.position.y=1.11;keg.add(pump);pump.name='top-party-pump';
+ const plunger=new THREE.Group();plunger.position.y=1.27;keg.add(plunger);
+ cube(.024,.15,.024,'#b7c8c2',0,-.045,0,plunger);cube(.18,.045,.075,'#263c39',0,.035,0,plunger);
+ cube(.13,.04,.06,'#647b78',.105,.98,.015,keg);
+ // A flexible loop leads from the top coupler to a separate handheld picnic tap.
+ const tap=new THREE.Group();tap.name='hose-picnic-tap';tap.position.set(0,.79,.5);keg.add(tap);
+ cube(.06,.055,.14,'#263c39',0,0,0,tap);cube(.035,.07,.035,'#263c39',0,-.04,.08,tap);
+ const squeeze=cube(.025,.08,.065,'#445750',0,.06,-.015,tap);squeeze.rotation.x=-.35;
+ const hose=new THREE.InstancedMesh(new THREE.CylinderGeometry(.014,.014,1,5),mat('#374d48'),18);hose.name='flexible-beer-hose';hose.frustumCulled=false;keg.add(hose);
+ const hosePose=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),delta=new THREE.Vector3();
+ function shapeHose(){
+  const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(.12,.98,.015),new THREE.Vector3(.37,1.02,.13),new THREE.Vector3(.43,.55,.34),new THREE.Vector3(.18,.48,.52),tap.position.clone().add(new THREE.Vector3(0,0,-.07))]);
+  for(let i=0;i<18;i++){const a=curve.getPoint(i/18),b=curve.getPoint((i+1)/18);delta.subVectors(b,a);hosePose.position.copy(a).add(b).multiplyScalar(.5);hosePose.scale.set(1,delta.length()+.003,1);hosePose.quaternion.setFromUnitVectors(up,delta.normalize());hosePose.updateMatrix();hose.setMatrixAt(i,hosePose.matrix);}
+  hose.instanceMatrix.needsUpdate=true;
+ }
+ const stream=cube(.018,.13,.018,'#e9be59',0,.655,.58,keg);stream.visible=false;shapeHose();
  function person(name,shirt,skin,hair,x,z,seated=false,angle=0){
   const g=new THREE.Group();g.name=name;g.position.set(x,0,z);g.rotation.y=angle;root.add(g);
   const offset=seated?-.1:0;
@@ -36,7 +52,7 @@ export function createParty(scene){
   const pawn=cube(.034,.055,.034,color,x,.767,z);cube(.046,.014,.046,color,x,.746,z);if(col===4)pawns.push({m:pawn,z,side});
   const height=[.065,.075,.085,.11,.125,.085,.075,.065][col];cube(.042,height,.042,color,x,.746+height/2,-7.9+side*.2625);
  }
- const servingCup=cube(.09,.11,.09,'#d15a49',0,.53,.43,keg),servingRim=cube(.095,.015,.095,'#fff1d1',0,.59,.43,keg);servingCup.visible=servingRim.visible=false;
+ const servingCup=cube(.09,.11,.09,'#d15a49',0,.53,.58,keg),servingRim=cube(.095,.015,.095,'#fff1d1',0,.59,.58,keg);servingCup.visible=servingRim.visible=false;
  let time=0,kegStand=false;
  const update=dt=>{
   time+=dt;const t=time%20,occasion=time%65;const stand=occasion>=48&&occasion<57?Math.min(1,(occasion-48)/1.5,(57-occasion)/1.5):0;kegStand=stand>0;
@@ -48,6 +64,7 @@ export function createParty(scene){
   guest.arm.rotation.x=fill?-1.05:drink?-2.4:-.15;
   guest.arm.rotation.z=fill?-.65:drink?-.15:0;
   stream.visible=servingCup.visible=servingRim.visible=fill;guest.cup.visible=guest.rim.visible=!fill;friend.g.rotation.y=.8+Math.sin(time*.3)*.13;friend.arm.rotation.x=-.3-Math.max(0,Math.sin(time*.45))*.5;
+  plunger.position.y=1.27+(fill?.045*Math.sin(time*8):.025);tap.position.set(-.05*stand,.79+.17*stand,.5+.08*stand);squeeze.rotation.x=fill||stand>0?-.7:-.35;shapeHose();
   a.arm.rotation.x=-.8-Math.max(0,Math.sin(time*.4))*.5;b.arm.rotation.x=-.85-Math.max(0,Math.sin(time*.4+Math.PI))*.5;
   // One short gag per 65-second cycle; blend into/out of an inverted pose.
   guest.g.rotation.z=Math.PI*stand;
@@ -59,5 +76,5 @@ export function createParty(scene){
   }else{friend.g.position.set(-3.65,0,-6.65);friend.arm.rotation.z=0;friend.arm.scale.y=1;}
   for(const p of pawns)p.m.position.z=p.z-p.side*.15*Math.min(1,Math.max(0,Math.sin(time*.14)));
  };
- return {root,keg,guest,chessPlayers:[a,b],stream,update,get time(){return time;},get kegStand(){return kegStand;}};
+ return {root,keg,pump,plunger,hose,tap,guest,chessPlayers:[a,b],stream,update,get time(){return time;},get kegStand(){return kegStand;}};
 }
