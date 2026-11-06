@@ -21,3 +21,10 @@ html[data-backyard-arcade] #panel{top:calc(50% + 55px);max-height:calc(100vh - 1
 #arcade-board-viewport{height:clamp(220px,37vh,340px)}
 @media(max-width:1100px){#arcade-board-view{top:140px;width:clamp(150px,22vw,220px)}#arcade-board-viewport{height:clamp(130px,24vh,200px)}}
 @media(max-height:600px){#arcade-board-view{top:110px;width:150px}#arcade-board-viewport{height:130px}}
+/* Compact 4:3 cabinets need separate rows for the score, pause and close-up. */
+@media(max-width:740px){
+ html[data-backyard-arcade] #game #pause-button{left:4vw;top:110px}
+ #arcade-board-view{top:166px}
+ html[data-backyard-arcade] #turn{left:200px;right:16px;top:112px;font-size:10px}
+ html[data-backyard-arcade] #msg{left:200px;right:16px;top:156px;font-size:16px}
+}

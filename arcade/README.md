@@ -146,3 +146,7 @@ Cabinet startup troubleshooting: a latched Alt+F4 on Batocera's virtual `batocer
 
 Board camera (0.2.6): always on during play by default; pause-menu toggle.
 The close-up shares the live scene and renderer and is hidden in menus/setup.
+
+Screen audit: 640×480, 800×600, 1024×768, 1280×720, 1280×1024 and
+1920×1080 checked in packaged Electron. Compact 4:3 uses separate rows for
+scores, pause and close-up; the inset clears aim arrows and the main bag/board.
