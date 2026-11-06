@@ -28,6 +28,8 @@ const replace=(from,to)=>{if(!html.includes(from))throw new Error('Game integrat
 replace("isHuman(team) ? 0 : M.spin",'M.spin');
 replace("arcNames = ['PUSH', 'NORMAL', 'KOBE']","arcNames = ['SLIDER', 'NORMAL', 'KOBE']");
 // Cabinet playtest tuning; these replacements never touch the website source.
+// Render at display resolution up to Full HD; keep nearest-filtered voxel textures.
+replace('const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));', 'const scale = Math.max(1, w / 1920, h / 1080);');
 // Regulation distance stays 27 ft; a wider main lens gives the cabinet a distant view.
 replace('camera.fov = 14 + 8 * portrait;', 'camera.fov = 18 + 6 * portrait;');
 replace('const dog = {};', "const {DogCelebration}=await import('/arcade/dog-celebration.mjs');\nlet dogParty;\nconst dog = {};");
@@ -85,7 +87,7 @@ if(platform==='win32'){
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
  await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));
- const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.6-Windows-x64.zip'),archive=new yazl.ZipFile();
+ const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.7-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));

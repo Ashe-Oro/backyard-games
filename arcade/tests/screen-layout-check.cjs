@@ -5,6 +5,7 @@ const overlap=(a,b)=>a&&b&&a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a
  const p=await app.firstWindow(),errors=[],findings=[];p.on('pageerror',e=>errors.push(e.message));await p.waitForFunction(()=>window.__arcadeHost?.boardView);
  for(const [w,h] of [[640,480],[800,600],[1024,768],[1280,720],[1280,1024],[1920,1080]]){
   await p.setViewportSize({width:w,height:h});await p.evaluate(mode=>__arcade.start(mode,false),w===1920?'two':'practice');await p.waitForFunction(()=>__game.state.phase==='aim');await p.waitForTimeout(1700);
+  const render=await p.evaluate(()=>{const c=document.querySelector('canvas');return [c.width,c.height];});const scale=Math.max(1,w/1920,h/1080);assert.deepEqual(render,[Math.ceil(w/scale),Math.ceil(h/scale)]);
   await p.evaluate(()=>{__game._place(0,.15,-.3);__game._place(1,-.15,-.7);__arcadeHost.preview({power:.7,aim:-.12,spin:0});});await p.waitForTimeout(100);
   const arrow=await p.evaluate(()=>({shown:document.getElementById('swipe-feedback').classList.contains('shown'),paused:__game.state.paused,phase:__game.state.phase,help:document.getElementById('help-dialog').open}));assert.equal(arrow.shown,true);assert.equal(arrow.paused,false);
   const boxes={};for(const id of ['arcade-board-view','arcade-scoreboard','pause-button','arcade-prompt','reset-bags'])boxes[id]=await p.locator('#'+id).boundingBox().catch(()=>null);
