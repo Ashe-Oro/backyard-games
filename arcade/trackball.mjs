@@ -1,20 +1,20 @@
 // Hardware counts, never cursor position or render-frame distance.
-export const DEFAULTS=Object.freeze({sensitivity:1,pullRange:320,releaseGate:80,mode:'hybrid',spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter'});
+export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:2000,releaseGate:80,spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter'});
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 export function settings(value={}){
  const out={...DEFAULTS};
- for(const [key,lo,hi] of [['sensitivity',.25,4],['pullRange',80,1200],['releaseGate',20,140],['spin',0,1],['quietMs',200,1200],['timeoutMs',1000,5000]]){const n=Number(value[key]);if(Number.isFinite(n))out[key]=clamp(n,lo,hi);}
- if(['distance','hybrid'].includes(value.mode))out.mode=value.mode;
+ for(const [key,lo,hi] of [['sensitivity',.25,4],['powerSpeed',400,10000],['releaseGate',20,140],['spin',0,1],['quietMs',200,1200],['timeoutMs',1000,5000]]){const n=Number(value[key]);if(Number.isFinite(n))out[key]=clamp(n,lo,hi);}
  for(const key of ['shotKey','surfaceKey','menuKey','confirmKey'])if(typeof value[key]==='string'&&/^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Enter|Escape|Space|Tab|F[1-9]|F1[0-2]|Pad[0-7]Button(?:[0-9]|[1-5][0-9]|6[0-3]))$/.test(value[key]))out[key]=value[key];
  // Never allow a cabinet mapping to shadow another action or the settings key.
  if(new Set([out.shotKey,out.surfaceKey,out.menuKey,out.confirmKey,'F2']).size!==5){out.shotKey=DEFAULTS.shotKey;out.surfaceKey=DEFAULTS.surfaceKey;out.menuKey=DEFAULTS.menuKey;out.confirmKey=DEFAULTS.confirmKey;}
  return out;
 }
-// Upgrade factory values only; retain the cabinet's measured sensitivity/range and bindings.
-export function legacySettings(value={}){return settings({...value,pullRange:value.pullRange===240?320:value.pullRange,releaseGate:value.releaseGate===48?80:value.releaseGate});}
+// Convert old device-scale calibration; retain sensitivity, bindings and the old save for rollback.
+export function legacySettings(value={}){return settings({...value,powerSpeed:value.powerSpeed??(value.pullRange&&value.pullRange!==240?2000*value.pullRange/320:2000),releaseGate:value.releaseGate===48?80:value.releaseGate});}
 export class Trackball {
  constructor(config={}){this.config=settings(config);this.reset(0);}
- reset(now=0){this.phase='settling';this.lastMotion=now;this.lastEvent=now;this.backX=this.backY=this.forwardX=this.forwardY=0;this.forwardStart=null;this.lastForwardAngle=0;this.pendingX=this.pendingY=0;this.preview=null;}
+ reset(now=0){this.phase='settling';this.lastMotion=now;this.lastEvent=now;this.backX=this.backY=this.forwardX=this.forwardY=0;this.forwardStart=null;this.lockedAim=null;this.lastForwardAngle=0;this.pendingX=this.pendingY=0;this.preview=null;}
+ aimPreview(){return {power:0,aim:clamp(Math.atan2(-this.backX,Math.max(10,this.backY))*.18,-.12,.12)||0,spin:0};}
  tick(now){
   if(this.phase==='settling'&&now-this.lastMotion>=this.config.quietMs)this.phase='ready';
   if(['back','forward'].includes(this.phase)&&now-this.lastMotion>this.config.timeoutMs)this.reset(now);
@@ -27,25 +27,22 @@ export class Trackball {
   if(this.phase==='settling'||this.phase==='spent')return null;
   if(this.phase==='ready'){
    if(dy>0){this.pendingY+=dy;this.pendingX+=dx;}else if(dy<0){this.pendingX=this.pendingY=0;}
-   if(this.pendingY>=10){this.phase='back';this.backX=this.pendingX;this.backY=this.pendingY;return {kind:'backswing'};}
+   if(this.pendingY>=10){this.phase='back';this.backX=this.pendingX;this.backY=this.pendingY;this.preview=this.aimPreview();return {kind:'backswing',...this.preview};}
    return {kind:'position',dx};
   }
-  if(this.phase==='back'&&dy>=0){this.backX+=dx;this.backY=clamp(this.backY+dy,0,this.config.pullRange*1.5);}
+  if(this.phase==='back'&&dy>=0){this.backX+=dx;this.backY=this.backY+dy;}
   else if(dy<0){
-   if(this.forwardStart===null)this.forwardStart=Math.max(previousMotion,now-50);
+   if(this.forwardStart===null){this.forwardStart=now-clamp(now-previousMotion,1,16);this.lockedAim=this.aimPreview().aim;}
    this.phase='forward';this.forwardX+=dx;this.forwardY-=dy;this.lastForwardAngle=Math.atan2(dx,-dy);
-  }else if(dy>6){this.phase='back';this.backX+=dx;this.backY=clamp(this.backY+dy,0,this.config.pullRange*1.5);this.forwardX=this.forwardY=0;this.forwardStart=null;}
-  const distance=clamp(this.backY/this.config.pullRange,0,1);
-  // A bounded speed contribution rewards a deliberate stroke; a single peak is never sampled.
-  const seconds=Math.max(.016,(now-(this.forwardStart??now))/1000);
-  const speed=clamp(this.forwardY/seconds/2000,0,1);
-  const power=this.config.mode==='distance'?distance:clamp(distance*.65+speed*.35,0,1);
+  }else if(dy>6){this.phase='back';this.backX+=dx;this.backY=this.backY+dy;this.forwardX=this.forwardY=0;this.forwardStart=null;this.lockedAim=null;}
+  // Only forward velocity supplies power. A pause while aiming contributes no power.
+  const seconds=Math.max(.001,(now-(this.forwardStart??now))/1000);
+  const power=this.phase==='forward'?clamp(this.forwardY/seconds/this.config.powerSpeed,0,1):0;
   const angle=Math.atan2(this.forwardX,Math.max(1,this.forwardY));
-  const aim=clamp(angle*.18,-.12,.12);
-  // Optional wrist-finish approximation: straight strokes never add spin.
-  // Backswing angle is deliberately irrelevant; this is not a golf hook/slice model.
-  const spin=clamp((this.lastForwardAngle-angle)*this.config.spin,-1,1)||0;
-  this.preview={power,aim,spin,distance,backswing:{x:this.backX,y:this.backY},forward:{x:this.forwardX,y:-this.forwardY}};
+  const aim=this.lockedAim??this.aimPreview().aim;
+  // Optional curved finish rotates the landing bag without changing release direction.
+  const spin=this.phase==='forward'?(clamp((this.lastForwardAngle-angle)*this.config.spin,-1,1)||0):0;
+  this.preview={power,aim,spin,backswing:{x:this.backX,y:this.backY},forward:{x:this.forwardX,y:-this.forwardY}};
   if(this.phase==='forward'&&this.forwardY>=this.config.releaseGate){this.phase='spent';return {kind:'throw',...this.preview};}
   return {kind:'preview',...this.preview};
  }

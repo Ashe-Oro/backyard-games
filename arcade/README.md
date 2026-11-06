@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.4
+Backyard Cornhole Arcade — trackball prototype 0.2.5
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -9,8 +9,9 @@ Unzip the whole folder. Run BackyardCornhole.exe. Keep the DLLs, resources,
 and other files beside it. No Node.js, browser, account, or internet is needed.
 
 Roll sideways to position the bag. Roll back, then forward to throw.
-Backswing distance sets power; the forward stroke sets release direction.
-Backswing angle never creates a hook or slice. Wind can move the bag in flight.
+Pull back to aim: back-left aims right, back-right aims left.
+Roll forward to launch: faster means stronger. Aim locks at the reversal.
+Forward sideways movement does not steer. Wind can move the bag in flight.
 Optional curved-finish rotation is off by default; it affects the bag on the
 board, not its airborne trajectory. Throw style and bag surface use buttons.
 
@@ -36,13 +37,13 @@ A short quiet period between turns prevents residual ball motion from throwing.
 CABINET SETUP
 -------------
 Calibrate Trackball: make one comfortable back-and-forward stroke. This sets
-that backswing to approximately 70% of the distance power range. Sensitivity
-and pull range can also be adjusted manually. Settings save on this machine.
+the forward stroke to approximately 70% power. Sensitivity and full-power
+speed can also be adjusted manually. Settings save on this machine.
 
-STROKE: 65% backswing distance + up to 35% averaged forward speed.
-DISTANCE: backswing distance alone. Try both with the same physical strokes.
+Power comes only from averaged forward speed, never backswing distance.
+Full-power speed is measured in sensitivity-scaled trackball counts/second.
 Finish rotation is OFF by default. If enabled, a curved forward finish adds
-a small landing effect. A straight diagonal stroke simply aims diagonally.
+a small landing effect. Aim always comes from the backswing.
 Slider travels low and slides more; Normal is the standard arc; Kobe is high
 and lands with less slide. Slick slides farther; Sticky grips the board.
 Each player keeps their own throw style and surface between turns.
@@ -114,7 +115,7 @@ Linux builds use the cabinet's existing Python `evdev` package to read relative 
 
 On this cabinet, B (button 3) confirms menu selections and cycles SLIDER / NORMAL / KOBE in play. A (button 4) goes back in menus and flips SLICK / STICKY in play. Start confirms in menus and pauses in play; Select pauses. Either player's panel works. Use the joystick to navigate menus, or hover a button with the trackball and press B. Bindings can be changed in Cabinet Setup.
 
-Cabinet Setup displays connected mice, controller count, and movement totals. Roll back then forward in Calibrate Trackball to set the pull range. Existing sensitivity and calibration settings are retained. Keyboard controls remain available. Windows/macOS continue to use relative pointer capture and the browser Gamepad API.
+Cabinet Setup displays connected mice, controller count, and movement totals. Roll back then forward in Calibrate Trackball to set the forward-speed range. Existing sensitivity and calibration settings are retained. Keyboard controls remain available. Windows/macOS continue to use relative pointer capture and the browser Gamepad API.
 
 ### Golden Tee reference
 
@@ -130,11 +131,11 @@ Desktop storage is under Electron's existing Backyard Cornhole Arcade profile an
 
 Run `npm test --prefix arcade` before publishing a change. Isolation regression checks hash the web sources before/after a real arcade build, reject arcade imports in web sources, verify stale generated files are removed and check that the deployment exclusion remains present. Existing control tests also run.
 
-## Cabinet playtest pass (0.2.4)
+## Cabinet playtest pass (0.2.5)
 
 - Centered match scoreboard stays visible through throws, pauses, setup and round results. It shows match totals, live round points and remaining bags. Practice shows points on the current board.
 - Arcade target moves back two feet (29 ft). Its geometry, aiming and simulation-derived power windows all use the same new distance.
-- Factory stroke calibration is now 320 counts back / 80 counts forward. Stroke power uses 65% pull distance plus 35% sustained forward speed, so a deliberate forward roll has more effect than a soft reversal. Custom measured sensitivity/range and button bindings survive the settings migration; only old factory values upgrade. The v2 save is retained for rollback, and new settings use v3.
+- Back direction sets aim; forward speed sets power, with an 80-count forward release gate. Existing sensitivity and button mappings survive migration. Old pull-range calibration converts to a forward-speed scale; recalibrate for the new feel. Previous saves remain for rollback; new settings use v4.
 - A hole score or a knocked-in bag triggers one of three dog celebrations: hops, a victory spin, or a playful bow. Poses return to idle without drift, and pausing freezes the animation with the game.
 
 Verification note: the 0.2.4 native input-bridge and scoreboard/celebration tests pass in Electron. The separate macOS pointer-lock smoke test currently fails to acquire capture on this host; Batocera uses direct evdev input and does not depend on that path. Physical stroke feel still needs cabinet playtesting.
