@@ -9,7 +9,8 @@ const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><strong id="arcade-red-score">0</strong><small id="arcade-red-round">ROUND 0</small><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><strong id="arcade-blue-score">0</strong><small id="arcade-blue-round">ROUND 0</small><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
 <aside id="arcade-board-view" aria-label="Live board close-up" hidden><span>BOARD · 27 FT</span><div id="arcade-board-viewport"></div></aside>
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.7</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-view-toggle" class="secondary">BOARD VIEW: ON</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.8</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-view-toggle" class="secondary">BOARD VIEW: ON</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-audio" class="arcade-card" hidden><h2>MUSIC</h2><p id="music-now"></p><div class="arcade-actions"><button id="music-toggle">PLAY MUSIC</button><button id="music-next">NEXT TRACK</button><button id="music-folder" class="secondary">CHOOSE FOLDER</button><button id="music-refresh" class="secondary">REFRESH</button></div><div class="music-volume"><button data-music-volume="-.1" aria-label="Lower music volume">−</button><output id="music-volume"></output><button data-music-volume=".1" aria-label="Raise music volume">+</button></div><button id="arcade-audio-back" class="secondary">BACK</button></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options">
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
@@ -37,7 +38,7 @@ function inputReady(){return nativeInput||!!document.pointerLockElement;}
 function unlock(){if(document.pointerLockElement)document.exitPointerLock();}
 function showMenu(){
  menuOpen=true;settingsOpen=false;calibration=null;machine.reset(performance.now());host.pause(true);host.hideArrow();unlock();
- $('arcade-menu').hidden=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=true;$('arcade-error').hidden=true;
+ $('arcade-audio').hidden=true;$('arcade-menu').hidden=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=true;$('arcade-error').hidden=true;
  $('arcade-resume').hidden=['menu','intro','champion'].includes(host.state.phase);focusFirst();
 }
 function showSettings(){settingsOpen=true;menuOpen=true;$('arcade-menu').hidden=true;$('arcade-settings').hidden=false;binding=null;renderSettings();focusFirst();}
@@ -59,6 +60,7 @@ async function resume(){
  settingsOpen=false;menuOpen=false;root.querySelectorAll('.arcade-card').forEach(el=>el.hidden=true);host.pause(false);machine.reset(performance.now());await capture();
 }
 function start(mode,lock=true){host.start(mode);host.wind(windy);lastTurn='';lastShot=null;machine.reset(performance.now());if(lock)resume();else{menuOpen=false;settingsOpen=false;root.querySelectorAll('.arcade-card').forEach(el=>el.hidden=true);host.pause(false);}}
+$('arcade-audio-open').onclick=()=>{$('arcade-menu').hidden=true;$('arcade-audio').hidden=false;focusFirst();};$('arcade-audio-back').onclick=showMenu;
 $('arcade-two').onclick=()=>start('two');$('arcade-practice').onclick=()=>start('practice');$('arcade-resume').onclick=resume;
 $('arcade-config').onclick=showSettings;$('arcade-settings-back').onclick=showMenu;$('arcade-error-back').onclick=showMenu;
 $('arcade-exit').onclick=()=>window.close();$('pause-button').onclick=showMenu;
@@ -200,4 +202,5 @@ function frame(now){
  requestAnimationFrame(frame);
 }
 renderSettings();showMenu();requestAnimationFrame(frame);
-window.__arcade={start,showMenu,showSettings,feed,get config(){return {...config};},setConfig(value){config=settings({...config,...value});save();machine.reset(performance.now());},get diagnostics(){return {...diag};},get machine(){return machine;}};
+const {setupMusic}=await import('./music-player.mjs');const music=setupMusic(root);
+window.__arcade={music,start,showMenu,showSettings,feed,get config(){return {...config};},setConfig(value){config=settings({...config,...value});save();machine.reset(performance.now());},get diagnostics(){return {...diag};},get machine(){return machine;}};

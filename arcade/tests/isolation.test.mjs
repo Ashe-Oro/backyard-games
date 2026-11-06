@@ -28,7 +28,8 @@ test('arcade packaging cannot mutate web sources or retain stale web output',asy
  assert.doesNotMatch(web,/data-backyard-arcade/);
  assert.match(generated,/data-backyard-arcade/);assert.match(generated,/window\.__arcadeHost=/);assert.match(generated,/import\('\/arcade\/controller.js'\)/);
  assert.match(web,/\['PUSH', 'NORMAL', 'KOBE'\]/);assert.match(generated,/\['SLIDER', 'NORMAL', 'KOBE'\]/);
- for(const file of ['backyard.js','power-arrow.js','ui.css'])assert.equal(await fs.readFile(path.join(site,'yard-games',file),'utf8'),before.get(path.join('yard-games',file)));
+ const yard=await fs.readFile(path.join(site,'yard-games/backyard.js'),'utf8');assert.match(yard,/Arcade chess board supplied/);assert.doesNotMatch(yard,/\[-1\.5,propZ\+\.24/);assert.match(before.get('yard-games/backyard.js'),/\[-1\.5,propZ\+\.24/);
+ for(const file of ['power-arrow.js','ui.css'])assert.equal(await fs.readFile(path.join(site,'yard-games',file),'utf8'),before.get(path.join('yard-games',file)));
 });
 test('web deployment excludes the entire arcade tree',async()=>{
  const rules=(await fs.readFile(path.join(repo,'.vercelignore'),'utf8')).split(/\r?\n/).map(s=>s.trim()).filter(s=>s&&!s.startsWith('#'));

@@ -1,4 +1,4 @@
-const {app,BrowserWindow,Menu,protocol,session}=require('electron');
+const {app,BrowserWindow,Menu,protocol,session,ipcMain,dialog}=require('electron');
 const fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'dist','site');
 protocol.registerSchemesAsPrivileged([{scheme:'backyard',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true}}]);
@@ -8,8 +8,13 @@ const smoke=process.argv.includes('--smoke-test');
 if(process.env.ARCADE_TEST_DATA)app.setPath('userData',process.env.ARCADE_TEST_DATA);
 app.setName('Backyard Cornhole Arcade');
 app.whenReady().then(async()=>{
+ const {MusicLibrary}=require('./music-library.cjs');
+ const music=new MusicLibrary(app.getPath('userData'),process.platform==='linux'?'/userdata/music/backyard-cornhole':path.join(app.getPath('music'),'Backyard Cornhole'));await music.load();
+ const trusted=e=>e.senderFrame?.url.startsWith('backyard://game/cornhole/');
+ ipcMain.handle('music:list',e=>trusted(e)?music.scan():[]);
+ ipcMain.handle('music:choose',async e=>{if(!trusted(e))return [];const selected=await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender),{title:'Cornhole music folder',properties:['openDirectory']});return selected.canceled?music.scan():music.select(selected.filePaths[0]);});
  protocol.handle('backyard',async request=>{
-  const url=new URL(request.url);if(url.host!=='game')return new Response('Not found',{status:404});
+  const url=new URL(request.url);if(url.pathname.startsWith('/local-music/')){if(url.host!=='game')return new Response('Not found',{status:404});return music.response(url.pathname,request.headers.get('range'));}if(url.host!=='game')return new Response('Not found',{status:404});
   let pathname;try{pathname=decodeURIComponent(url.pathname);}catch{return new Response('Bad path',{status:400});}
   const file=path.resolve(root,'.'+pathname);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return new Response('Not found',{status:404});

@@ -13,12 +13,18 @@ await fs.mkdir(site,{recursive:true});
 for(const [folder,files] of Object.entries({'cornhole':['index.html','controls.mjs','wind-streaks.js'],'yard-games':['backyard.js','power-arrow.js','ui.css']})){
  await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(repo,folder,file),path.join(site,folder,file));
 }
-await fs.mkdir(path.join(site,'arcade'),{recursive:true});for(const file of ['controller.js','trackball.mjs','board-view.mjs','dog-celebration.mjs','arcade.css'])await fs.copyFile(path.join(here,file),path.join(site,'arcade',file));
+await fs.mkdir(path.join(site,'arcade'),{recursive:true});for(const file of ['controller.js','trackball.mjs','party.mjs','music-player.mjs','board-view.mjs','dog-celebration.mjs','arcade.css'])await fs.copyFile(path.join(here,file),path.join(site,'arcade',file));
 await fs.mkdir(path.join(site,'vendor'),{recursive:true});
 await fs.copyFile(path.join(here,'node_modules/three/build/three.module.min.js'),path.join(site,'vendor/three.module.min.js'));
 await fs.copyFile(path.join(here,'node_modules/@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2'),path.join(site,'vendor/pixel.woff2'));
 await fs.copyFile(path.join(here,'node_modules/three/LICENSE'),path.join(site,'vendor/THREE-LICENSE.txt'));
 await fs.copyFile(path.join(here,'node_modules/@fontsource/press-start-2p/LICENSE'),path.join(site,'vendor/FONT-LICENSE.txt'));
+// Adjust only the generated scenery; shared website props stay unchanged.
+const yardFile=path.join(site,'yard-games/backyard.js');
+let yard=await fs.readFile(yardFile,'utf8');
+for(const [from,to] of [["[-1.5,propZ+.24,flowers[0]]","[-5.5,farZ+.6,flowers[0]]"],["[-1.05,propZ-1.65,flowers[0]]","[-5.8,farZ+1.2,flowers[0]]"]]){if(!yard.includes(from))throw Error('Scenery anchor changed');yard=yard.replace(from,to);}
+const runner='for(let x=0;x<4;x++)for(let z=0;z<4;z++)voxel(.105,.012,.105,(x+z)%2?cloth:clothRed,-2.82+x*.105,.701,picnicZ-.155+z*.105);';
+if(!yard.includes(runner))throw Error('Picnic anchor changed');yard=yard.replace(runner,'// Arcade chess board supplied by party.mjs.');await fs.writeFile(yardFile,yard);
 let html=await fs.readFile(path.join(site,'cornhole/index.html'),'utf8');
 html=html.replace(/<link[^>]+https:\/\/fonts\.[^>]+>\n?/g,'').replace('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js','/vendor/three.module.min.js');
 html=html.replace('<html lang="en">','<html lang="en" data-backyard-arcade>');
@@ -32,10 +38,11 @@ replace("arcNames = ['PUSH', 'NORMAL', 'KOBE']","arcNames = ['SLIDER', 'NORMAL',
 replace('const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));', 'const scale = Math.max(1, w / 1920, h / 1080);');
 // Regulation distance stays 27 ft; a wider main lens gives the cabinet a distant view.
 replace('camera.fov = 14 + 8 * portrait;', 'camera.fov = 18 + 6 * portrait;');
+replace('const windStreaks=createWindStreaks(scene);', "const windStreaks=createWindStreaks(scene);\nconst {createParty}=await import('/arcade/party.mjs');const party=createParty(scene);");
 replace('const dog = {};', "const {DogCelebration}=await import('/arcade/dog-celebration.mjs');\nlet dogParty;\nconst dog = {};");
 replace('scene.add(g); Object.assign(dog, { g, head, tail });','scene.add(g); Object.assign(dog, { g, head, tail }); dogParty=new DogCelebration(dog);');
 replace("if (b.state === 'in') { say(b.swish", "if (b.state === 'in' || knockedIn.length) dogParty.celebrate();\n  if (b.state === 'in') { say(b.swish");
-replace('dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;', 'dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008; dogParty.update(dt);');
+replace('dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;', 'dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008; dogParty.update(dt);party.update(dt);');
 // Cornhole announcements: identify the starting player and name a made bag.
 replace("say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);", "say(TEAM[M.first] + ' THROWS FIRST', '', 1500);");
 replace("say(b.swish ? 'SWISH!' : 'CORNHOLE!', '3 POINTS')", "say('CORNHOLE!', '3 POINTS')");
@@ -52,6 +59,7 @@ window.__arcadeHost={
  get state(){return window.__game.state;},
  round(){return lie();},
  get celebration(){return dogParty.state;},
+ get party(){return party;},
  get boardZ(){return BOARD_Z;},
  start(mode){dogParty.reset();startMatch({practice:mode==='practice',vs:'2p',first:0});},
  pause(value){M.paused=value;cancelPull();},
@@ -79,15 +87,15 @@ const zip=await downloadArtifact({version:pkg.devDependencies.electron,artifactN
 const target=path.join(dist,platform==='win32'?'BackyardCornhole.pc':'mac-smoke');await fs.rm(target,{recursive:true,force:true});await fs.mkdir(target,{recursive:true});await extract(zip,{dir:target});
 const app=path.join(target,platform==='darwin'?'Electron.app/Contents/Resources/app':'resources/app');await fs.mkdir(app,{recursive:true});
 await fs.writeFile(path.join(app,'package.json'),JSON.stringify({name:pkg.name,version:pkg.version,main:'main.cjs'}));await fs.copyFile(path.join(here,'main.cjs'),path.join(app,'main.cjs'));
-for(const file of ['preload.cjs','cabinet-input.py'])await fs.copyFile(path.join(here,file),path.join(app,file));await fs.mkdir(path.join(app,'dist'),{recursive:true});await fs.cp(site,path.join(app,'dist/site'),{recursive:true});
+for(const file of ['preload.cjs','cabinet-input.py','music-library.cjs'])await fs.copyFile(path.join(here,file),path.join(app,file));await fs.mkdir(path.join(app,'dist'),{recursive:true});await fs.cp(site,path.join(app,'dist/site'),{recursive:true});
 if(platform==='win32'){
  await fs.rename(path.join(target,'electron.exe'),path.join(target,'BackyardCornhole.exe'));
  try{await fs.rename(path.join(target,'electron_wer.dll'),path.join(target,'BackyardCornhole_wer.dll'));}catch(error){if(error.code!=='ENOENT')throw error;}
  await fs.writeFile(path.join(target,'autorun.cmd'),'CMD=BackyardCornhole.exe\n');
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
- await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));
- const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.7-Windows-x64.zip'),archive=new yazl.ZipFile();
+ await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));await fs.copyFile(path.join(here,'AUDIO.md'),path.join(target,'AUDIO.md'));
+ const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.8-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));

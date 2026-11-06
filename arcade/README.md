@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.7
+Backyard Cornhole Arcade — trackball prototype 0.2.8
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -144,7 +144,7 @@ Offline updates reuse the same app origin. Each launch clears only Chromium's as
 
 Cabinet startup troubleshooting: a latched Alt+F4 on Batocera's virtual `batocera hotkeys` device caused the 0.2.4 launch to close before navigation finished. Releasing those confirmed stuck virtual keys restored normal startup; no physical control or global mapping was changed. The startup gamepad guard additionally requires a fresh button release/press, so the button used to launch a game cannot immediately activate a menu action.
 
-Board camera (0.2.7): always on during play by default; pause-menu toggle.
+Board camera (0.2.8): always on during play by default; pause-menu toggle.
 The close-up shares the live scene and renderer and is hidden in menus/setup.
 
 Screen audit: 640×480, 800×600, 1024×768, 1280×720, 1280×1024 and
@@ -154,3 +154,10 @@ scores, pause and close-up; the inset clears aim arrows and the main bag/board.
 Display target: widescreen 1920×1080. Arcade rendering uses native window
 resolution up to Full HD, retaining nearest-filtered voxel textures. Smaller
 sizes are fallback regression coverage, not a cabinet display requirement.
+
+Arcade hangout (0.2.8): left planters relocated behind the fence-side greenery,
+with a keg, cup-filling guests and two chess players at the picnic table. Slow
+ambient animation uses the paused game clock and never changes bag collisions.
+Pause menu MUSIC loads a local MP3/OGG/WAV/M4A folder playlist; see AUDIO.md.
+A short assisted keg stand happens about once a minute, with eased entry/exit;
+it pauses with the game and remains outside the throwing corridor.

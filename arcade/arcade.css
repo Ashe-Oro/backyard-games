@@ -28,3 +28,5 @@ html[data-backyard-arcade] #panel{top:calc(50% + 55px);max-height:calc(100vh - 1
  html[data-backyard-arcade] #turn{left:200px;right:16px;top:112px;font-size:10px}
  html[data-backyard-arcade] #msg{left:200px;right:16px;top:156px;font-size:16px}
 }
+
+#arcade-audio .arcade-actions{grid-template-columns:1fr 1fr}#music-now{overflow-wrap:anywhere;min-height:48px}#arcade-audio button{font:10px/1.5 'Press Start 2P',monospace;min-height:44px;padding:10px;border:3px solid #172c32;background:#ffe16b;color:#172c32}.music-volume{display:flex;justify-content:center;align-items:center;gap:24px;margin:16px 0}#arcade-audio-back{width:100%}
