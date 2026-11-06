@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.8
+Backyard Cornhole Arcade — trackball prototype 0.2.9
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -161,3 +161,7 @@ ambient animation uses the paused game clock and never changes bag collisions.
 Pause menu MUSIC loads a local MP3/OGG/WAV/M4A folder playlist; see AUDIO.md.
 A short assisted keg stand happens about once a minute, with eased entry/exit;
 it pauses with the game and remains outside the throwing corridor.
+
+Ready bag: lower underhand release places the centered bag near 87% of screen
+height in the 16:9 cabinet view, leaving room for the bottom style/surface HUD.
+The physical release uses the same location so the bag never jumps on launch.

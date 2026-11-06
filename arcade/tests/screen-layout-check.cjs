@@ -13,6 +13,7 @@ const overlap=(a,b)=>a&&b&&a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a
   if(overlap(boxes['pause-button'],boxes['arcade-scoreboard']))findings.push(`${w}x${h}: pause overlaps scoreboard`);
   for(const id of ['turn','msg']){const text=await p.locator('#'+id).evaluate(el=>{const range=document.createRange();range.selectNodeContents(el);const r=range.getBoundingClientRect();return r.width?{x:r.x,y:r.y,width:r.width,height:r.height}:null;});if(overlap(inset,text))findings.push(`${w}x${h}: inset overlaps ${id} text`);}
   const points=await p.evaluate(()=>({board:__game._screenPoint(0,__arcadeHost.boardZ),bag:__game._bagScreen()}));
+  assert(points.bag.y>h*.84&&points.bag.y<h*.91,'Ready bag should sit near the bottom');assert(points.bag.y+24<boxes['arcade-prompt'].y,'Ready bag overlaps bottom controls');
   for(const [name,v] of Object.entries(points))if(v.x>=inset.x-30&&v.x<=inset.x+inset.width+30&&v.y>=inset.y-30&&v.y<=inset.y+inset.height+30)findings.push(`${w}x${h}: inset crowds ${name}`);
   await p.screenshot({path:`${out}/${w}x${h}-aim.png`});
   // Real airborne shot and landing remain visible alongside the live close-up.
