@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.10
+Backyard Cornhole Arcade — trackball prototype 0.2.11
 ================================================
 
 One shared trackball. Offline. Windows x64 portable build.
@@ -170,3 +170,8 @@ Party keg reference: top-mounted vertical pump with black plunger handle,
 upper coupler and looped beer hose ending in a handheld picnic tap. The tap
 serves the cup during filling and moves to the guest during a keg stand.
 Reference: https://tmcraftus.com/products/tmcraft-4-beer-keg-party-pump
+
+Scoreboard: TOTAL is the match score; ROUND is each player’s uncancelled bag
+points. Totals recount once all bags settle after every throw, including knock-
+ins and knock-offs. The center previews cancellation (e.g. 6–4 → RED +2).
+Only the completed round changes the match score.

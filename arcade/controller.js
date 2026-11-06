@@ -7,9 +7,9 @@ const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
-<div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><strong id="arcade-red-score">0</strong><small id="arcade-red-round">ROUND 0</small><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><strong id="arcade-blue-score">0</strong><small id="arcade-blue-round">ROUND 0</small><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
+<div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><div class="arcade-score-values"><div><small id="arcade-red-total-label">TOTAL</small><strong id="arcade-red-score">0</strong></div><div class="arcade-round-metric" id="arcade-red-round-metric"><small>ROUND</small><strong id="arcade-red-round">0</strong></div></div><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b><small id="arcade-round-edge">EVEN</small></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><div class="arcade-score-values"><div><small id="arcade-blue-total-label">TOTAL</small><strong id="arcade-blue-score">0</strong></div><div class="arcade-round-metric" id="arcade-blue-round-metric"><small>ROUND</small><strong id="arcade-blue-round">0</strong></div></div><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
 <aside id="arcade-board-view" aria-label="Live board close-up" hidden><span>BOARD · 27 FT</span><div id="arcade-board-viewport"></div></aside>
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.10</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-view-toggle" class="secondary">BOARD VIEW: ON</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">TRACKBALL PROTOTYPE · 0.2.11</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-view-toggle" class="secondary">BOARD VIEW: ON</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-audio" class="arcade-card" hidden><h2>MUSIC</h2><p id="music-now"></p><div class="arcade-actions"><button id="music-toggle">PLAY MUSIC</button><button id="music-next">NEXT TRACK</button><button id="music-folder" class="secondary">CHOOSE FOLDER</button><button id="music-refresh" class="secondary">REFRESH</button></div><div class="music-volume"><button data-music-volume="-.1" aria-label="Lower music volume">−</button><output id="music-volume"></output><button data-music-volume=".1" aria-label="Raise music volume">+</button></div><button id="arcade-audio-back" class="secondary">BACK</button></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options">
@@ -169,13 +169,19 @@ for(const type of ['pointerdown','pointermove','pointerup'])window.addEventListe
 window.addEventListener('click',e=>{if(nativeInput&&!menuOpen&&!e.target.closest('#arcade-ui')){e.preventDefault();e.stopImmediatePropagation();}},true);
 document.addEventListener('contextmenu',e=>{if(nativeInput)e.preventDefault();});
 window.cabinetInput?.subscribe(nativeEvent);
+let liveRound={pts:[0,0]};
 function renderScoreboard(s){
- const round=host.round();
+ // Keep settled totals visible through a throw; recount every bag after all motion ends.
+ if(!s.bags.length)liveRound={pts:[0,0]};
+ else if(s.bags.every(b=>['board','in','grass','removed'].includes(b.state)&&!(b.state==='grass'&&b.dead)))liveRound=host.round();
+ const round=liveRound;
  for(const [t,name] of ['red','blue'].entries()){
   const thrown=s.bags.filter(b=>b.team===t).length;
   const score=s.practice?round.pts[t]:s.scores[t];
   $(`arcade-${name}-score`).textContent=score;
-  $(`arcade-${name}-round`).textContent=s.practice?'':`ROUND ${round.pts[t]}`;
+  $(`arcade-${name}-round`).textContent=round.pts[t];
+  $(`arcade-${name}-round-metric`).hidden=s.practice;
+  $(`arcade-${name}-total-label`).textContent=s.practice?'POINTS':'TOTAL';
   $(`arcade-${name}-team`).classList.toggle('current',!menuOpen&&s.phase==='aim'&&s.thrower===t);
   $(`arcade-${name}-team`).classList.toggle('inactive',s.practice&&t===1);
   const pips=s.practice?'':Array.from({length:4},(_,i)=>`<i class="${i<thrown?'used':''}"></i>`).join('');
@@ -183,6 +189,10 @@ function renderScoreboard(s){
  }
  $('arcade-score-round').textContent=s.practice?'PRACTICE':`ROUND ${s.inning}`;
  $('arcade-score-target').textContent=s.practice?'POINTS':s.phase==='over'?'FINAL':'TO 21';
+ const difference=round.pts[0]-round.pts[1],edge=$('arcade-round-edge');
+ edge.hidden=s.practice||['menu','intro','champion'].includes(s.phase);
+ edge.textContent=difference===0?'EVEN':`${difference>0?'RED':'BLUE'} +${Math.abs(difference)}`;
+ edge.dataset.team=difference>0?'red':difference<0?'blue':'even';
 }
 function frame(now){
  pollPads();

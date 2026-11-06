@@ -31,3 +31,9 @@ html[data-backyard-arcade] #panel{top:calc(50% + 55px);max-height:calc(100vh - 1
 
 #arcade-audio .arcade-actions{grid-template-columns:1fr 1fr}#music-now{overflow-wrap:anywhere;min-height:48px}#arcade-audio button{font:10px/1.5 'Press Start 2P',monospace;min-height:44px;padding:10px;border:3px solid #172c32;background:#ffe16b;color:#172c32}.music-volume{display:flex;justify-content:center;align-items:center;gap:24px;margin:16px 0}#arcade-audio-back{width:100%}
 @media(max-height:600px){#arcade-prompt{bottom:6px;padding:4px 8px;font-size:8px;gap:8px}#arcade-state{font-size:16px}#arcade-surface{padding-left:8px}}
+
+/* Match totals and the uncancelled current round deserve equal legibility. */
+.arcade-score-values{display:flex;justify-content:center;gap:16px}.arcade-score-values>div{display:grid;gap:2px;justify-items:center}.arcade-score-values small{font-size:7px;letter-spacing:.02em}.arcade-score-values .arcade-round-metric strong{color:inherit}
+#arcade-round-edge{font-size:9px;line-height:1.4;color:#fff1cf}#arcade-round-edge[data-team=red]{color:#ff8a80}#arcade-round-edge[data-team=blue]{color:#8ecbff}
+.arcade-team.current:before{left:-14px;top:36px}
+@media(max-width:600px),(max-height:600px){.arcade-score-values{gap:12px}.arcade-score-values small{font-size:6px}#arcade-round-edge{font-size:8px}.arcade-team.current:before{left:-10px;top:28px}}
