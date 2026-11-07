@@ -1,19 +1,19 @@
 // Hardware counts, never cursor position or render-frame distance.
-export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:2000,releaseGate:80,spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter'});
+export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:4000,releaseGate:220,spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 export function settings(value={}){
  const out={...DEFAULTS};
- for(const [key,lo,hi] of [['sensitivity',.25,4],['powerSpeed',400,10000],['releaseGate',20,140],['spin',0,1],['quietMs',200,1200],['timeoutMs',1000,5000]]){const n=Number(value[key]);if(Number.isFinite(n))out[key]=clamp(n,lo,hi);}
- for(const key of ['shotKey','surfaceKey','menuKey','confirmKey'])if(typeof value[key]==='string'&&/^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Enter|Escape|Space|Tab|F[1-9]|F1[0-2]|Pad[0-7]Button(?:[0-9]|[1-5][0-9]|6[0-3]))$/.test(value[key]))out[key]=value[key];
+ for(const [key,lo,hi] of [['sensitivity',.25,4],['powerSpeed',400,10000],['releaseGate',20,400],['spin',0,1],['quietMs',200,1200],['timeoutMs',1000,5000]]){const n=Number(value[key]);if(Number.isFinite(n))out[key]=clamp(n,lo,hi);}
+ for(const key of ['shotKey','surfaceKey','menuKey','confirmKey','resetKey'])if(typeof value[key]==='string'&&/^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Enter|Escape|Space|Tab|F[1-9]|F1[0-2]|Pad[0-7]Button(?:[0-9]|[1-5][0-9]|6[0-3]))$/.test(value[key]))out[key]=value[key];
  // Never allow a cabinet mapping to shadow another action or the settings key.
- if(new Set([out.shotKey,out.surfaceKey,out.menuKey,out.confirmKey,'F2']).size!==5){out.shotKey=DEFAULTS.shotKey;out.surfaceKey=DEFAULTS.surfaceKey;out.menuKey=DEFAULTS.menuKey;out.confirmKey=DEFAULTS.confirmKey;}
+ if(new Set([out.shotKey,out.surfaceKey,out.menuKey,out.confirmKey,out.resetKey,'F2']).size!==6){out.shotKey=DEFAULTS.shotKey;out.surfaceKey=DEFAULTS.surfaceKey;out.menuKey=DEFAULTS.menuKey;out.confirmKey=DEFAULTS.confirmKey;out.resetKey=DEFAULTS.resetKey;}
  return out;
 }
 // Convert old device-scale calibration; retain sensitivity, bindings and the old save for rollback.
 export function legacySettings(value={}){return settings({...value,powerSpeed:value.powerSpeed??(value.pullRange&&value.pullRange!==240?2000*value.pullRange/320:2000),releaseGate:value.releaseGate===48?80:value.releaseGate});}
 export class Trackball {
  constructor(config={}){this.config=settings(config);this.reset(0);}
- reset(now=0){this.phase='settling';this.lastMotion=now;this.lastEvent=now;this.backX=this.backY=this.forwardX=this.forwardY=0;this.forwardStart=null;this.lockedAim=null;this.lastForwardAngle=0;this.pendingX=this.pendingY=0;this.preview=null;}
+ reset(now=0){this.phase='settling';this.lastMotion=now;this.lastEvent=now;this.backX=this.backY=this.forwardX=this.forwardY=0;this.forwardStart=null;this.lockedAim=null;this.lastForwardAngle=0;this.pendingX=this.pendingY=0;this.placementX=0;this.pendingAt=0;this.preview=null;}
  aimPreview(){return {power:0,aim:clamp(Math.atan2(-this.backX,Math.max(10,this.backY))*.18,-.12,.12)||0,spin:0};}
  tick(now){
   if(this.phase==='settling'&&now-this.lastMotion>=this.config.quietMs)this.phase='ready';
@@ -26,8 +26,10 @@ export class Trackball {
   const previousMotion=this.lastMotion;this.lastMotion=now;const dx=x*this.config.sensitivity,dy=y*this.config.sensitivity;
   if(this.phase==='settling'||this.phase==='spent')return null;
   if(this.phase==='ready'){
+   if(now-this.pendingAt>160){this.pendingX=this.pendingY=this.placementX=0;this.pendingAt=now;}
+   this.placementX+=Math.abs(dx);
    if(dy>0){this.pendingY+=dy;this.pendingX+=dx;}else if(dy<0){this.pendingX=this.pendingY=0;}
-   if(this.pendingY>=10){this.phase='back';this.backX=this.pendingX;this.backY=this.pendingY;this.preview=this.aimPreview();return {kind:'backswing',...this.preview};}
+   if(this.pendingY>=18&&this.pendingY>this.placementX*.65){this.phase='back';this.backX=this.pendingX;this.backY=this.pendingY;this.preview=this.aimPreview();return {kind:'backswing',...this.preview};}
    return {kind:'position',dx};
   }
   if(this.phase==='back'&&dy>=0){this.backX+=dx;this.backY=this.backY+dy;}

@@ -1,177 +1,77 @@
-Backyard Cornhole Arcade — trackball prototype 0.2.11
+Backyard Cornhole Arcade — local candidate 0.2.12
 ================================================
 
-One shared trackball. Offline. Windows x64 portable build.
+Offline Cornhole for one shared trackball. Practice, two players, or the
+standard eight-rival tournament. The Batocera cabinet uses the native Linux
+build under Ports. The website and its saves are separate.
 
 PLAY
 ----
-Unzip the whole folder. Run BackyardCornhole.exe. Keep the DLLs, resources,
-and other files beside it. No Node.js, browser, account, or internet is needed.
+Roll sideways to place the ready bag. Pull back to aim, then roll forward to
+throw. Faster forward movement supplies more power. Back-left aims right;
+back-right aims left. Direction locks when the forward roll starts. Bag
+rotation affects landing, not airborne curvature.
 
-Roll sideways to position the bag. Roll back, then forward to throw.
-Pull back to aim: back-left aims right, back-right aims left.
-Roll forward to launch: faster means stronger. Aim locks at the reversal.
-Forward sideways movement does not steer. Wind can move the bag in flight.
-Optional curved-finish rotation is off by default; it affects the bag on the
-board, not its airborne trajectory. Throw style and bag surface use buttons.
+B / raw button 3: select in menus; cycle Slider / Normal / Kobe in play.
+A / raw button 4: back in menus; flip Slick / Sticky in play.
+Raw 2 or 5: Reset Bag in play. This is remappable; confirm the physical label.
+Start: select in menus; pause in play. Select: pause. Either player panel works.
+Keyboard fallback: H height, F surface, R reset, Enter select, Escape pause.
+F2 opens Cabinet Setup. Alt+F4 exits.
 
-Default buttons:
-  H       cycle Slider / Normal / Kobe (also selects a highlighted menu item)
-  F       flip Slick / Sticky bag surface
-  Enter   confirm / next round
-  Escape  pause / menu
-  1       start practice from menu
-  2       start a two-player match from menu
-  F2      cabinet setup
-  Alt+F4  exit
+Reset Bag centers the unthrown bag and clears its windup without consuming a
+throw, clearing the board, or changing scores. The gauge beside the bag shows
+actual throw power and keeps the previous shot visible for five seconds.
+The live board close-up is always on in play. Match and round points remain
+visible; round totals recount as bags settle.
 
-Menu choices follow the trackball cursor; press the mapped button to select.
-The four main buttons can be remapped in Cabinet Setup. For keyboard-encoded
-arcade buttons, select a binding and press the physical button. USB gamepad
-buttons are supported too: button 1 selects / changes throw style; button 2
-flips bag surface during play. Select / Back pauses; Start starts two-player
-from the menu and pauses during play. These can be remapped in
-Cabinet Setup; no external keyboard mapper is required. Mouse clicks work for menus.
-A short quiet period between turns prevents residual ball motion from throwing.
-
-CABINET SETUP
--------------
-Calibrate Trackball: make one comfortable back-and-forward stroke. This sets
-the forward stroke to approximately 70% power. Sensitivity and full-power
-speed can also be adjusted manually. Settings save on this machine.
-
-Power comes only from averaged forward speed, never backswing distance.
-Full-power speed is measured in sensitivity-scaled trackball counts/second.
-Finish rotation is OFF by default. If enabled, a curved forward finish adds
-a small landing effect. Aim always comes from the backswing.
-Slider travels low and slides more; Normal is the standard arc; Kobe is high
-and lands with less slide. Slick slides farther; Sticky grips the board.
-Each player keeps their own throw style and surface between turns.
-Calm is the default. Wind can be enabled after calibrating the controls.
-Diagnostics show device counts, FPS, and the last shot. These are setup-only.
-
-BATOCERA / WINE
----------------
-Copy the extracted BackyardCornhole.pc folder into:
-  /userdata/roms/windows/
-Refresh the game list. Launch from the Windows collection.
-The included autorun.cmd uses Linux line endings and starts the executable.
-This is a Windows game for Wine, not a MAME ROM.
-
-If the screen is black, try the software renderer: replace autorun.cmd with
-  CMD=BackyardCornhole.exe --software
-The autorun-software.example.cmd file has that content. On Windows, run the
-Software renderer.bat launcher instead. Software rendering may be slower.
-Use Batocera's existing exit shortcut, or map an accessible key to pause and
-choose Exit Game. Do not remap away your cabinet's global exit shortcut.
-
-This package was built on macOS. The offline game, relative-input controller,
-and Electron runtime are tested locally; Windows/Wine and your physical
-trackball still require on-cabinet validation. Unsigned prototype, no installer.
-Wine/Chromium compatibility is a feasibility gate, not a promised final engine.
-
-TRY THIS
---------
-Start in Practice with calm air. Make five short, five medium, and five long
-strokes. Compare STROKE vs DISTANCE. Test each throw style on Slick and Sticky,
-then angle the forward stroke to aim left/right. Play a two-player round and
-check that each player retains their settings and leftover motion never throws
-for the next player.
-Report Batocera version, CPU/GPU, screen resolution, power mode, settings, and
-whether aim/power feel repeatable. Cabinet Setup shows counts to help diagnose.
-
-DEVELOPMENT
+CALIBRATION
 -----------
-From arcade/: npm ci --ignore-scripts; npm test; npm run build:windows.
-Offline browser test: npm run build:site, serve dist/site, open /cornhole/.
-For a local Electron host, install its binary (npm rebuild electron) and npm start.
-The build patches a COPY of the existing Cornhole game. Production web controls,
-physics, and assets remain untouched. Only the cabinet copy enables human spin.
-Electron, Three.js, and the font licenses are included with the portable build.
+Existing calibration and mappings are retained. Fresh settings use a proposed
+220-count forward stroke and 4,000 scaled counts/sec full-power speed. Both
+stroke length and full-power speed can be adjusted in Cabinet Setup without
+resetting bindings. Calibrate Trackball measures a comfortable full stroke as
+approximately 70% power. The longer-stroke candidate still needs a physical
+cabinet comparison; see CONTROLS-AUDIT.md.
 
-NATIVE BATOCERA COMPANION (VERIFIED ON CABINET)
---------------------------------------------
-The Windows/Electron wrapper encountered Wine graphics failures on Batocera 42.
-The same offline game runs using its native Linux companion instead. From the
-Linux ZIP, put BackyardCornhole-linux/ in /userdata/system/backyard-games/ and
-BackyardCornhole.sh in /userdata/roms/ports/. Make both shell launchers and the
-electron binary executable. Refresh the game list and launch from Ports.
+Slow sideways motion tolerates small downward sensor noise and eases into its
+position. A quiet period after each turn prevents residual motion launching
+the next bag. No device is grabbed and no global controller mapping is edited.
 
-The companion privately bundles the missing libcups.so.2 and its license. It
-uses the cabinet's existing GTK, NSS and Intel OpenGL libraries; it does not
-replace system libraries or change other games' settings. The launcher uses
---no-sandbox because Batocera runs games as root. Content stays local/offline.
-Logs: /userdata/system/logs/cornhole-native.log.
-Build: npm run build:linux. Requires tar with xz support, Node, and npm dependencies.
+NATIVE BATOCERA PACKAGE
+----------------------
+Back up the existing package and metadata. Stage and verify the Linux ZIP
+outside the ROM collection before replacing its files while Cornhole is closed.
+Runtime: /userdata/system/backyard-games/BackyardCornhole-linux
+Ports launcher: /userdata/roms/ports/BackyardCornhole.sh
+Log: /userdata/system/logs/cornhole-native.log
+Music: /userdata/music/backyard-cornhole (or choose a local folder in Music).
+The runtime uses a private bundled libcups; it does not replace system libraries.
 
-Cabinet validation: native process and GPU renderer started; screenshot confirmed
-the Cornhole menu and backyard rendered on screen. Physical trackball feel and
-button calibration still need the player test. The Windows version remains
-available for Windows PCs; its Wine compatibility is not established.
+The launcher releases only Cornhole's stranded virtual exit keys before handing
+back to Batocera. Batocera-Support contains the separately reviewed gameStop
+hook for /userdata/system/scripts/90-release-virtual-hotkeys.sh. It releases
+hotkeygen's virtual keys at game exit, never physical keys or input mappings.
+Keep the existing installed hook when updating Cornhole. Backups and successful
+Cornhole/Sega exit tests were preserved in the cabinet's es-diagnosis cache.
 
-## Batocera input
+The obsolete Windows/Wine package is not the cabinet's supported launcher.
+Prepare a recoverable backup outside scanned ROM folders before removing it.
+Do not remove other Windows games or Wine prefixes. Artwork and metadata are
+prepared in media/; their installation and Favorites verification remain pending.
 
-Linux builds use the cabinet's existing Python `evdev` package to read relative mouse counts and gamepad buttons directly. No browser pointer lock is needed. Devices are rediscovered every two seconds; no input devices are grabbed and no system controller mappings are changed. The mini-keyboard mouse remains usable in menus. Calibration uses raw device counts rather than accelerated cursor pixels.
+DEVELOPMENT AND QA
+------------------
+From arcade/: npm ci; npm test; npm run build:linux.
+Optional local Mac package: node build.mjs --mac.
+Browser/Electron regression scripts live in tests/. They accept NODE_PATH for
+the test driver, ELECTRON_PATH for the packaged app, CHROME_PATH for Chromium,
+and BASE_URL for the generated site. No test fixture is included in the game.
 
-On this cabinet, B (button 3) confirms menu selections and cycles SLIDER / NORMAL / KOBE in play. A (button 4) goes back in menus and flips SLICK / STICKY in play. Start confirms in menus and pauses in play; Select pauses. Either player's panel works. Use the joystick to navigate menus, or hover a button with the trackball and press B. Bindings can be changed in Cabinet Setup.
+The build generates an isolated offline copy under arcade/dist/site. Canonical
+web files are never edited. Vercel excludes the whole arcade directory. Cabinet
+preferences use the standalone app's own profile. Preserve that profile during
+updates so calibration, mappings, music choice and tournament progress survive.
 
-Cabinet Setup displays connected mice, controller count, and movement totals. Roll back then forward in Calibrate Trackball to set the forward-speed range. Existing sensitivity and calibration settings are retained. Keyboard controls remain available. Windows/macOS continue to use relative pointer capture and the browser Gamepad API.
-
-### Golden Tee reference
-
-The cabinet's Golden Tee '98 config inherits the MAME 2003-Plus default action pair with no per-game input remap. RetroPad B/A correspond to raw cabinet buttons 3/4; its global RetroArch mouse index 1 selects the trackball instead of the mini-keyboard touchpad. Golden Tee's default action sequences also include mouse buttons 1/2. Cornhole therefore supports both paths: in play, left mouse button cycles throw style and right mouse button flips bag surface. In menus, normal left-click selects the hovered item and right-click goes back. Dedicated trackball-panel button wiring still needs a physical press test; the configuration alone cannot identify which blue button sends which event.
-
-## Web / arcade boundary
-
-The web game in `cornhole/` is the canonical input for packaging. Desktop-only input, physics adjustments, UI and dependencies live in `arcade/`. The builder copies web files into `arcade/dist/site`, applies the arcade adaptations there, and starts from a clean generated tree on each build. Never apply cabinet changes directly to the web files or point a web server/Vercel output directory at the arcade build.
-
-The root `.vercelignore` excludes the entire `arcade` directory, including its dependencies and generated binaries, from web deployments. The website does not import arcade scripts/styles or expose an arcade-mode switch. The controller requires both the generated-page marker and arcade host bridge before it touches settings, DOM or input listeners.
-
-Desktop storage is under Electron's existing Backyard Cornhole Arcade profile and the `backyard://game` origin; browser saves remain on their HTTPS website origin. The app's offline protocol and network block keep web deployments out of the installed cabinet game. Packaging uses read-only copies of shared assets, so a website deployment cannot change an installed arcade build; a new arcade package must be built and installed separately.
-
-Run `npm test --prefix arcade` before publishing a change. Isolation regression checks hash the web sources before/after a real arcade build, reject arcade imports in web sources, verify stale generated files are removed and check that the deployment exclusion remains present. Existing control tests also run.
-
-## Cabinet playtest pass (0.2.5)
-
-- Centered match scoreboard stays visible through throws, pauses, setup and round results. It shows match totals, live round points and remaining bags. Practice shows points on the current board.
-- Arcade target uses the regulation 27 ft distance. The wider main camera frames the full throw; a live upper-left board camera shows every resting and incoming bag. Toggle BOARD VIEW from the pause menu; its preference is saved independently from trackball calibration.
-- Back direction sets aim; forward speed sets power, with an 80-count forward release gate. Existing sensitivity and button mappings survive migration. Old pull-range calibration converts to a forward-speed scale; recalibrate for the new feel. Previous saves remain for rollback; new settings use v4.
-- A hole score or a knocked-in bag triggers one of three dog celebrations: hops, a victory spin, or a playful bow. Poses return to idle without drift, and pausing freezes the animation with the game.
-
-Verification note: the 0.2.4 native input-bridge and scoreboard/celebration tests pass in Electron. The separate macOS pointer-lock smoke test currently fails to acquire capture on this host; Batocera uses direct evdev input and does not depend on that path. Physical stroke feel still needs cabinet playtesting.
-
-Offline updates reuse the same app origin. Each launch clears only Chromium's asset cache, and packaged responses use `Cache-Control: no-store`, preventing mixed files from earlier installs. Local Storage and saved cabinet settings are retained. The hidden smoke test verifies initialization, canvas, scoreboard and offline resources. It accepts the initial wait phase because hidden-window animation timers can be suspended; visible gameplay is tested separately. Background throttling is disabled only for that test window.
-
-Cabinet startup troubleshooting: a latched Alt+F4 on Batocera's virtual `batocera hotkeys` device caused the 0.2.4 launch to close before navigation finished. Releasing those confirmed stuck virtual keys restored normal startup; no physical control or global mapping was changed. The startup gamepad guard additionally requires a fresh button release/press, so the button used to launch a game cannot immediately activate a menu action.
-
-Board camera (0.2.8): always on during play by default; pause-menu toggle.
-The close-up shares the live scene and renderer and is hidden in menus/setup.
-
-Screen audit: 640×480, 800×600, 1024×768, 1280×720, 1280×1024 and
-1920×1080 checked in packaged Electron. Compact 4:3 uses separate rows for
-scores, pause and close-up; the inset clears aim arrows and the main bag/board.
-
-Display target: widescreen 1920×1080. Arcade rendering uses native window
-resolution up to Full HD, retaining nearest-filtered voxel textures. Smaller
-sizes are fallback regression coverage, not a cabinet display requirement.
-
-Arcade hangout (0.2.8): left planters relocated behind the fence-side greenery,
-with a keg, cup-filling guests and two chess players at the picnic table. Slow
-ambient animation uses the paused game clock and never changes bag collisions.
-Pause menu MUSIC loads a local MP3/OGG/WAV/M4A folder playlist; see AUDIO.md.
-A short assisted keg stand happens about once a minute, with eased entry/exit;
-it pauses with the game and remains outside the throwing corridor.
-
-Ready bag: lower underhand release places the centered bag near 87% of screen
-height in the 16:9 cabinet view, leaving room for the bottom style/surface HUD.
-The physical release uses the same location so the bag never jumps on launch.
-
-Party keg reference: top-mounted vertical pump with black plunger handle,
-upper coupler and looped beer hose ending in a handheld picnic tap. The tap
-serves the cup during filling and moves to the guest during a keg stand.
-Reference: https://tmcraftus.com/products/tmcraft-4-beer-keg-party-pump
-
-Scoreboard: TOTAL is the match score; ROUND is each player’s uncancelled bag
-points. Totals recount once all bags settle after every throw, including knock-
-ins and knock-offs. The center previews cancellation (e.g. 6–4 → RED +2).
-Only the completed round changes the match score.
+Read BACKLOG.md for implemented work, verification and the remaining physical
+playtest/installation tasks. Do not report the cabinet updated from a local build.

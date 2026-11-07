@@ -1,7 +1,7 @@
 const {chromium,_electron}=require('playwright-core');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 (async()=>{
- const browser=await chromium.launch();let app;
+ const browser=await chromium.launch({executablePath:process.env.CHROME_PATH});let app;
  try{
   const web=await browser.newPage({viewport:{width:1280,height:800}}),requests=[],errors=[];
   web.on('request',r=>requests.push(r.url()));web.on('pageerror',e=>errors.push(e.message));

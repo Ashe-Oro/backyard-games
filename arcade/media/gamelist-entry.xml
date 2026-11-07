@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!-- Prepared metadata only. Merge the native entry; never replace the full gamelist. -->
+<gameList>
+  <game>
+    <path>./BackyardCornhole.sh</path>
+    <name>Backyard Cornhole</name>
+    <desc>One shared trackball. Two players, practice, or an eight-rival tournament.</desc>
+    <developer>Backyard Games</developer>
+    <publisher>Backyard Games</publisher>
+    <genre>Sports</genre>
+    <players>1-2</players>
+    <favorite>true</favorite>
+    <image>./images/backyard-cornhole-gameplay.png</image>
+    <thumbnail>./images/backyard-cornhole-cover.png</thumbnail>
+    <boxart>./images/backyard-cornhole-cover.png</boxart>
+    <marquee>./images/backyard-cornhole-marquee.png</marquee>
+    <fanart>./images/backyard-cornhole-gameplay.png</fanart>
+  </game>
+</gameList>

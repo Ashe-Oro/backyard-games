@@ -24,7 +24,10 @@ const yardFile=path.join(site,'yard-games/backyard.js');
 let yard=await fs.readFile(yardFile,'utf8');
 for(const [from,to] of [["[-1.5,propZ+.24,flowers[0]]","[-5.5,farZ+.6,flowers[0]]"],["[-1.05,propZ-1.65,flowers[0]]","[-5.8,farZ+1.2,flowers[0]]"]]){if(!yard.includes(from))throw Error('Scenery anchor changed');yard=yard.replace(from,to);}
 const runner='for(let x=0;x<4;x++)for(let z=0;z<4;z++)voxel(.105,.012,.105,(x+z)%2?cloth:clothRed,-2.82+x*.105,.701,picnicZ-.155+z*.105);';
-if(!yard.includes(runner))throw Error('Picnic anchor changed');yard=yard.replace(runner,'// Arcade chess board supplied by party.mjs.');await fs.writeFile(yardFile,yard);
+if(!yard.includes(runner))throw Error('Picnic anchor changed');yard=yard.replace(runner,'// Arcade chess board supplied by party.mjs.');yard=yard.replace(/  for\(let i=0;i<24;i\+\+\)\{[^\n]+/,'  // Cabinet play area stays clear of flowers.');
+yard=yard.replace(/ for\(const \[x,z,c\]of \[\[.*?\n/,' // Planters replaced by perimeter cacti in the arcade party scene.\n');
+yard=yard.replace("voxel(.18,.055,.035,cream,grillX,.74,grillZ+.04);",'');
+await fs.writeFile(yardFile,yard);
 let html=await fs.readFile(path.join(site,'cornhole/index.html'),'utf8');
 html=html.replace(/<link[^>]+https:\/\/fonts\.[^>]+>\n?/g,'').replace('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js','/vendor/three.module.min.js');
 html=html.replace('<html lang="en">','<html lang="en" data-backyard-arcade>');
@@ -34,6 +37,7 @@ const replace=(from,to)=>{if(!html.includes(from))throw new Error('Game integrat
 replace("isHuman(team) ? 0 : M.spin",'M.spin');
 replace("arcNames = ['PUSH', 'NORMAL', 'KOBE']","arcNames = ['SLIDER', 'NORMAL', 'KOBE']");
 // Cabinet playtest tuning; these replacements never touch the website source.
+replace("slick: { mu: 0.30, ms: 0.5, keep: 0.42 }","slick: { mu: 0.43, ms: 0.60, keep: 0.32 }");
 // Render at display resolution up to Full HD; keep nearest-filtered voxel textures.
 replace('const scale = Math.max(1, Math.round(Math.min(h, w * 0.85) / 310));', 'const scale = Math.max(1, w / 1920, h / 1080);');
 // Lower the ready bag and its actual release together, avoiding a launch-position jump.
@@ -44,7 +48,7 @@ replace('const windStreaks=createWindStreaks(scene);', "const windStreaks=create
 replace('const dog = {};', "const {DogCelebration}=await import('/arcade/dog-celebration.mjs');\nlet dogParty;\nconst dog = {};");
 replace('scene.add(g); Object.assign(dog, { g, head, tail });','scene.add(g); Object.assign(dog, { g, head, tail }); dogParty=new DogCelebration(dog);');
 replace("if (b.state === 'in') { say(b.swish", "if (b.state === 'in' || knockedIn.length) dogParty.celebrate();\n  if (b.state === 'in') { say(b.swish");
-replace('dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;', 'dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008; dogParty.update(dt);party.update(dt);');
+replace('dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;', 'dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008; dogParty.update(dt);party.update(dt,dog);');
 // Cornhole announcements: identify the starting player and name a made bag.
 replace("say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);", "say(TEAM[M.first] + ' THROWS FIRST', '', 1500);");
 replace("say(b.swish ? 'SWISH!' : 'CORNHOLE!', '3 POINTS')", "say('CORNHOLE!', '3 POINTS')");
@@ -56,13 +60,17 @@ replace("b.state = 'slide';\n        return 'land';", "b.state = 'slide';b.curl=
 replace('const clock = new THREE.Clock();', "let boardView;\nfunction renderArcadeScene(){renderer.render(scene,camera);boardView?.render();}\nconst clock = new THREE.Clock();");
 replace('if(M.paused){renderer.render(scene,camera);', 'if(M.paused){renderArcadeScene();');
 replace('  renderer.render(scene, camera);', '  renderArcadeScene();');
+replace("function showMenu() {","function showMenu() { if(window.__arcade){window.__arcade.showMenu();return;}");
 const bridge=`
 window.__arcadeHost={
- get state(){return window.__game.state;},
+ get state(){return {...window.__game.state,career:M.career,rival:M.career?roster[career.fight]?.name:'BLUE'};},
  round(){return lie();},
  get celebration(){return dogParty.state;},
  get party(){return party;},
  get boardZ(){return BOARD_Z;},
+ tournament(){careerMap();},
+ resetBag(){if(!humanTurn())return;M.position[thrower()]=0;M.aim=0;M.spin=0;cancelPull();setMeter(0);positionHeldBag(baseYaw(releaseX(thrower())));},
+ power(p){return physicalPower(p);},
  start(mode){dogParty.reset();startMatch({practice:mode==='practice',vs:'2p',first:0});},
  pause(value){M.paused=value;cancelPull();},
  hideArrow(){cancelPull();},
@@ -97,7 +105,7 @@ if(platform==='win32'){
  await fs.writeFile(path.join(target,'Software renderer.bat'),'@echo off\r\ncd /d "%~dp0"\r\nBackyardCornhole.exe --software\r\n');
  await fs.writeFile(path.join(target,'autorun-software.example.cmd'),'CMD=BackyardCornhole.exe --software\n');
  await fs.copyFile(path.join(here,'README.md'),path.join(target,'READ-ME.txt'));await fs.copyFile(path.join(here,'AUDIO.md'),path.join(target,'AUDIO.md'));
- const output=path.join(dist,'BackyardCornhole-Trackball-v0.2.11-Windows-x64.zip'),archive=new yazl.ZipFile();
+ const output=path.join(dist,'BackyardCornhole-Trackball-v'+pkg.version+'-Windows-x64.zip'),archive=new yazl.ZipFile();
  async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,path.posix.join('BackyardCornhole.pc',path.relative(target,file).split(path.sep).join('/')));}}
  await add(target);const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});console.log('Windows ZIP: '+output);
 }else console.log('Mac smoke executable: '+path.join(target,'Electron.app/Contents/MacOS/Electron'));

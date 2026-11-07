@@ -32,8 +32,15 @@ app.whenReady().then(async()=>{
  const win=new BrowserWindow({width:1280,height:800,fullscreen:!smoke&&!process.argv.includes('--windowed'),show:!smoke,backgroundColor:'#173f3d',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),backgroundThrottling:!smoke,nodeIntegration:false,contextIsolation:true,sandbox:true}});
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  win.webContents.on('will-navigate',(e,url)=>{if(!url.startsWith('backyard://game/'))e.preventDefault();});
+ // Keep Batocera's game context alive until its exit chord is released.
+ // Quitting on keyDown can strand Alt+F4 when hotkeygen switches to ES.
+ let exitChord=false;
  win.webContents.on('before-input-event',(e,input)=>{
-  if(input.type==='keyDown'&&input.alt&&input.key==='F4'){e.preventDefault();app.quit();}
+  if(input.key==='F4'&&(input.alt||exitChord)){
+   e.preventDefault();
+   if(input.type==='keyDown')exitChord=true;
+   else if(input.type==='keyUp'&&exitChord)setTimeout(()=>app.quit(),100);
+  }
  });
  win.webContents.on('render-process-gone',(_e,details)=>{console.error('Game renderer stopped:',details.reason);app.exit(1);});
  let input,lastInputStatus;

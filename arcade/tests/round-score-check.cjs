@@ -1,5 +1,5 @@
 const {chromium}=require('playwright-core'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-(async()=>{const b=await chromium.launch();try{const p=await b.newPage({viewport:{width:1920,height:1080}}),url=(process.env.BASE_URL||'http://127.0.0.1:8025')+'/cornhole/';
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROME_PATH});try{const p=await b.newPage({viewport:{width:1920,height:1080}}),url=(process.env.BASE_URL||'http://127.0.0.1:8025')+'/cornhole/';
  const source=fs.readFileSync(path.join(__dirname,'../dist/site/cornhole/index.html'),'utf8');
  // Test-only fixture hooks enter settled bag outcomes; real lie()/scoreInning() resolve them.
  const fixture=`window.__roundFixture={add(team,state){const n=bags.filter(b=>b.team===team).length,b=newBody(team);b.mesh=makeBagMesh(team,'slick');b.lp.set(n%2?.16:-.16,BAG_H,n<2?-.25:-.65);toWorld(b.lp,b.p);b.state=state;b.touched=true;if(state==='grass')b.p.set(-1,0,0);bags.push(b);M.k=bags.length;},change(i,state,dead=false){bags[i].state=state;bags[i].dead=dead;},resolve(){M.k=8;M.phase='settle';}};\n`;

@@ -17,7 +17,7 @@ const runtime=await downloadArtifact({version:pkg.devDependencies.electron,artif
 await fs.rm(target,{recursive:true,force:true});await fs.mkdir(target,{recursive:true});await extract(runtime,{dir:target});
 const app=path.join(target,'resources/app');await fs.mkdir(path.join(app,'dist'),{recursive:true});
 await fs.copyFile(path.join(root,'main.cjs'),path.join(app,'main.cjs'));
-for(const file of ['preload.cjs','cabinet-input.py','music-library.cjs'])await fs.copyFile(path.join(root,file),path.join(app,file));
+for(const file of ['preload.cjs','cabinet-input.py','music-library.cjs','release-exit-keys.py'])await fs.copyFile(path.join(root,file),path.join(app,file));
 await fs.writeFile(path.join(app,'package.json'),JSON.stringify({name:pkg.name,version:pkg.version,main:'main.cjs'}));
 await fs.cp(path.join(dist,'site'),path.join(app,'dist/site'),{recursive:true});
 // Batocera 42 has GTK/NSS/OpenGL, but does not ship this Electron-linked library.
@@ -42,13 +42,13 @@ export LD_LIBRARY_PATH="$ARCADE_DIR\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 cd "$ARCADE_DIR" || exit 1
 exec ./electron --no-sandbox --ozone-platform=x11 --disable-dev-shm-usage "$@"
 `;
-const port=`#!/bin/sh
-exec /userdata/system/backyard-games/BackyardCornhole-linux/run-cornhole.sh > /userdata/system/logs/cornhole-native.log 2>&1
-`;
+const port=await fs.readFile(path.join(root,'batocera-port.sh'),'utf8');
 await fs.writeFile(path.join(target,'run-cornhole.sh'),run,{mode:0o755});await fs.chmod(path.join(target,'electron'),0o755);
 await fs.copyFile(path.join(root,'README.md'),path.join(target,'READ-ME.txt'));await fs.copyFile(path.join(root,'AUDIO.md'),path.join(target,'AUDIO.md'));
 const output=path.join(dist,'BackyardCornhole-Trackball-v'+pkg.version+'-Linux-x64.zip'),archive=new yazl.ZipFile();
 async function add(directory){for(const entry of await fs.readdir(directory,{withFileTypes:true})){const file=path.join(directory,entry.name);if(entry.isDirectory())await add(file);else archive.addFile(file,'BackyardCornhole-linux/'+path.relative(target,file));}}
 await add(target);archive.addBuffer(Buffer.from(port),'BackyardCornhole.sh',{mode:0o100755});
+archive.addBuffer(await fs.readFile(path.join(root,'batocera-hotkey-release.sh')),'Batocera-Support/90-release-virtual-hotkeys.sh',{mode:0o100755});
+for(const file of await fs.readdir(path.join(root,'media')))archive.addFile(path.join(root,'media',file),'Batocera-Media/'+file);
 const stream=createWriteStream(output);archive.outputStream.pipe(stream);archive.end();await new Promise((resolve,reject)=>{stream.on('close',resolve);stream.on('error',reject);archive.outputStream.on('error',reject);});
 console.log('Native Linux ZIP: '+output);

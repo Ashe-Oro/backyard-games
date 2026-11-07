@@ -1,5 +1,5 @@
 const {chromium}=require('playwright-core'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-(async()=>{const browser=await chromium.launch();try{const p=await browser.newPage();const url=(process.env.BASE_URL||'http://127.0.0.1:8025')+'/cornhole/';
+(async()=>{const browser=await chromium.launch({executablePath:process.env.CHROME_PATH});try{const p=await browser.newPage();const url=(process.env.BASE_URL||'http://127.0.0.1:8025')+'/cornhole/';
 const source=fs.readFileSync(path.join(__dirname,'../dist/site/cornhole/index.html'),'utf8');
 const probe=`window.__motionProbe=(spin,side='slick',arc=1)=>{const b=newBody(0,side);launch(b,0,WIN['0'+side+arc].mid,.018,0,arc,spin);const flight=[];let landing=null;for(let i=0;i<2400;i++){if(!b.touched)flight.push(b.p.toArray());step(b,1/240);if(b.touched&&!landing)landing=b.lp.toArray();if(['board','grass','in','removed'].includes(b.state))break;}return {flight,landing,final:b.lp.toArray(),state:b.state};};\n`;
 await p.route(url,r=>r.fulfill({contentType:'text/html',body:source.replace('window.__arcadeHost={',probe+'window.__arcadeHost={')}));await p.goto(url);await p.waitForFunction(()=>window.__arcade);const result=await p.evaluate(()=>{__game._setWind(0,0);return [-1,0,1].map(s=>__motionProbe(s));});

@@ -37,3 +37,18 @@ html[data-backyard-arcade] #panel{top:calc(50% + 55px);max-height:calc(100vh - 1
 #arcade-round-edge{font-size:9px;line-height:1.4;color:#fff1cf}#arcade-round-edge[data-team=red]{color:#ff8a80}#arcade-round-edge[data-team=blue]{color:#8ecbff}
 .arcade-team.current:before{left:-14px;top:36px}
 @media(max-width:600px),(max-height:600px){.arcade-score-values{gap:12px}.arcade-score-values small{font-size:6px}#arcade-round-edge{font-size:8px}.arcade-team.current:before{left:-10px;top:28px}}
+
+/* Power feedback belongs near the ready bag, away from the board close-up. */
+#arcade-power{position:absolute;left:calc(50% + 70px);bottom:10vh;width:180px;text-align:center;color:#fff1cf;background:#173f3deb;border:2px solid #172c32;padding:8px 12px;font-size:8px}
+#arcade-power-track{height:15px;margin-top:7px;background:#172c32;border:2px solid #769184;position:relative;overflow:hidden}
+#arcade-power-track:after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(20% - 2px),#173f3d 20%);pointer-events:none}
+#arcade-power-fill{display:block;height:100%;width:0}
+#arcade-reset-bag{pointer-events:auto;background:transparent;color:#a7efb1;font:8px 'Press Start 2P',monospace;border:0;border-left:2px solid #769184;padding:5px 0 5px 12px;cursor:pointer}
+.arcade-blue>span{font-size:8px;max-width:160px;overflow-wrap:anywhere}
+@media(max-height:600px){#arcade-power{bottom:12vh;width:160px;padding:5px 8px}#arcade-power-track{height:11px}#arcade-reset-bag{font-size:7px}}
+
+html[data-backyard-arcade] #panel{background:#173f3df7;border-color:#172c32;color:#fff1cf}
+html[data-backyard-arcade] #panel .pt{color:#ffe16b}
+html[data-backyard-arcade] #panel .go{background:#ffe16b;color:#172c32;border-color:#172c32}
+html[data-backyard-arcade] #panel .hb{background:#2d5a51;color:#fff1cf;border-color:#769184}
+html[data-backyard-arcade] #panel .game-link{display:none}
