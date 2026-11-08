@@ -23,8 +23,11 @@ await fs.copyFile(path.join(here,'node_modules/@fontsource/press-start-2p/LICENS
 const yardFile=path.join(site,'yard-games/backyard.js');
 let yard=await fs.readFile(yardFile,'utf8');
 for(const [from,to] of [["[-1.5,propZ+.24,flowers[0]]","[-5.5,farZ+.6,flowers[0]]"],["[-1.05,propZ-1.65,flowers[0]]","[-5.8,farZ+1.2,flowers[0]]"]]){if(!yard.includes(from))throw Error('Scenery anchor changed');yard=yard.replace(from,to);}
-const runner='for(let x=0;x<4;x++)for(let z=0;z<4;z++)voxel(.105,.012,.105,(x+z)%2?cloth:clothRed,-2.82+x*.105,.701,picnicZ-.155+z*.105);';
-if(!yard.includes(runner))throw Error('Picnic anchor changed');yard=yard.replace(runner,'// Arcade chess board supplied by party.mjs.');yard=yard.replace(/  for\(let i=0;i<24;i\+\+\)\{[^\n]+/,'  // Cabinet play area stays clear of flowers.');
+const picnicStart=yard.indexOf(' // A miniature picnic corner:');
+const picnicEnd=yard.indexOf(' // Cooler details',picnicStart);
+if(picnicStart<0||picnicEnd<0)throw Error('Picnic anchors changed');
+yard=yard.slice(0,picnicStart)+" const metal=material('#414f49'),cloth=material('#eee0ba');\n // Arcade beer pong table supplied by party.mjs.\n"+yard.slice(picnicEnd);
+yard=yard.replace(/  for\(let i=0;i<24;i\+\+\)\{[^\n]+/,'  // Cabinet play area stays clear of flowers.');
 yard=yard.replace(/ for\(const \[x,z,c\]of \[\[.*?\n/,' // Planters replaced by perimeter cacti in the arcade party scene.\n');
 yard=yard.replace("voxel(.18,.055,.035,cream,grillX,.74,grillZ+.04);",'');
 await fs.writeFile(yardFile,yard);

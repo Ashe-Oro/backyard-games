@@ -3,10 +3,26 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {createParty} from '../party.mjs';
 
-test('chess players move complete pieces on alternating turns',()=>{
- const p=createParty(new THREE.Scene()),white=p.pieces.find(x=>x.side===1&&x.col===4&&x.rank===1),black=p.pieces.find(x=>x.side===-1&&x.col===4&&x.rank===1);
- p.update(2);assert.equal(p.chessTurn,0);assert(white.g.position.z<white.start.z);assert(white.g.position.y>white.start.y);assert.equal(black.g.position.z,black.start.z);
- p.update(6);assert.equal(p.chessTurn,1);assert(black.g.position.z>black.start.z);assert.equal(white.g.position.y,white.start.y);
+test('beer pong alternates full-length throws, sinks ten cups, celebrates and resets',()=>{
+ const p=createParty(new THREE.Scene());
+ assert.equal(p.pongTable.rotation.y,Math.PI/2);
+ assert(p.pongPlayers[0].g.position.x<-1&&p.pongPlayers[1].g.position.x>1);
+ assert.deepEqual(p.pongState.remaining,[10,10]);
+ p.update(1);
+ assert(p.pongBall.visible&&p.pongBall.position.y>1.1);
+ p.update(.75);
+ assert.deepEqual(p.pongState.remaining,[10,9]);
+ p.update(2.45);
+ assert.deepEqual(p.pongState.remaining,[9,9]);
+ p.update(4.9);
+ assert.deepEqual(p.pongState.remaining,[9,8],'a miss leaves its target rack intact');
+ p.update(p.pongLoopSeconds-p.time-.8);
+ assert.equal(p.pongState.winner,0);
+ assert.deepEqual(p.pongState.remaining,[3,0]);
+ assert(p.pongPlayers[0].arm.rotation.x<-2);
+ p.update(1);
+ assert.deepEqual(p.pongState.remaining,[10,10]);
+ assert.equal(p.pongState.winner,null);
 });
 test('keg stand faces the keg with tap at the mouth, guests stay outside play',()=>{
  const p=createParty(new THREE.Scene());for(let i=0;i<100;i++){p.update(.5);for(const person of [p.guest,p.friend,p.cook])assert(person.g.position.x>2.5);}

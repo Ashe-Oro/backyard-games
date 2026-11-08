@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — local candidate 0.2.12
+Backyard Cornhole Arcade — 0.2.14
 ================================================
 
 Offline Cornhole for one shared trackball. Practice, two players, or the
@@ -7,9 +7,8 @@ build under Ports. The website and its saves are separate.
 
 PLAY
 ----
-Roll sideways to place the ready bag. Pull back to aim, then roll forward to
-throw. Faster forward movement supplies more power. Back-left aims right;
-back-right aims left. Direction locks when the forward roll starts. Bag
+Roll sideways to place the ready bag. Roll forward to throw, angling left or
+right to steer the bag. Faster forward movement supplies more power. Bag
 rotation affects landing, not airborne curvature.
 
 B / raw button 3: select in menus; cycle Slider / Normal / Kobe in play.
@@ -27,12 +26,11 @@ visible; round totals recount as bags settle.
 
 CALIBRATION
 -----------
-Existing calibration and mappings are retained. Fresh settings use a proposed
-220-count forward stroke and 4,000 scaled counts/sec full-power speed. Both
+Bindings and sensitivity carry over. Older profiles get the wider power range,
+with a default 220-count stroke and 6,500 counts/sec for full power. Both
 stroke length and full-power speed can be adjusted in Cabinet Setup without
 resetting bindings. Calibrate Trackball measures a comfortable full stroke as
-approximately 70% power. The longer-stroke candidate still needs a physical
-cabinet comparison; see CONTROLS-AUDIT.md.
+approximately 70% power.
 
 Slow sideways motion tolerates small downward sensor noise and eases into its
 position. A quiet period after each turn prevents residual motion launching

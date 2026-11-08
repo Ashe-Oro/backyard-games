@@ -1,7 +1,7 @@
 {
   "name": "backyard-cornhole-arcade",
   "productName": "Backyard Cornhole Arcade",
-  "version": "0.2.12",
+  "version": "0.2.14",
   "private": true,
   "description": "Offline shared-trackball cabinet control prototype",
   "main": "main.cjs",

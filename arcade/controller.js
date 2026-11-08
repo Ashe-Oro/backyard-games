@@ -4,8 +4,8 @@ if(!host||!document.documentElement.hasAttribute('data-backyard-arcade'))throw n
 const {shotPowerColor}=await import('/yard-games/power-arrow.js');
 let config;
 try{
- const saved=localStorage.getItem('backyard-arcade-v4');
- const legacy=localStorage.getItem('backyard-arcade-v3')||localStorage.getItem('backyard-arcade-v2')||localStorage.getItem('backyard-arcade-v1');
+ const saved=localStorage.getItem('backyard-arcade-v5');
+ const legacy=localStorage.getItem('backyard-arcade-v4')||localStorage.getItem('backyard-arcade-v3')||localStorage.getItem('backyard-arcade-v2')||localStorage.getItem('backyard-arcade-v1');
  config=saved?settings(JSON.parse(saved)):legacy?legacySettings(JSON.parse(legacy)):settings();
 }catch{config=settings();}
 
@@ -17,7 +17,7 @@ const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><div class="arcade-score-values"><div><small id="arcade-red-total-label">TOTAL</small><strong id="arcade-red-score">0</strong></div><div class="arcade-round-metric" id="arcade-red-round-metric"><small>ROUND</small><strong id="arcade-red-round">0</strong></div></div><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b><small id="arcade-round-edge">EVEN</small></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><div class="arcade-score-values"><div><small id="arcade-blue-total-label">TOTAL</small><strong id="arcade-blue-score">0</strong></div><div class="arcade-round-metric" id="arcade-blue-round-metric"><small>ROUND</small><strong id="arcade-blue-round">0</strong></div></div><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
 <aside id="arcade-board-view" aria-label="Live board close-up" hidden><span>BOARD · 27 FT</span><div id="arcade-board-viewport"></div></aside>
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">ARCADE · 0.2.12</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-tournament">TOURNAMENT</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">ARCADE · 0.2.14</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-tournament">TOURNAMENT</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-audio" class="arcade-card" hidden><h2>MUSIC</h2><p id="music-now"></p><div class="arcade-actions"><button id="music-toggle">PLAY MUSIC</button><button id="music-next">NEXT TRACK</button><button id="music-folder" class="secondary">CHOOSE FOLDER</button><button id="music-refresh" class="secondary">REFRESH</button></div><div class="music-volume"><button data-music-volume="-.1" aria-label="Lower music volume">−</button><output id="music-volume"></output><button data-music-volume=".1" aria-label="Raise music volume">+</button></div><button id="arcade-audio-back" class="secondary">BACK</button></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options">
@@ -31,11 +31,11 @@ const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <pre id="arcade-diagnostics" aria-live="off"></pre></section>
 <div id="arcade-power" hidden><span id="arcade-power-label">POWER</span><div role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="arcade-power-track"><i id="arcade-power-fill"></i></div></div>
 <div id="arcade-prompt" hidden><span id="arcade-state">↓</span><span id="arcade-height">NORMAL</span><span id="arcade-surface">SLICK</span><button id="arcade-reset-bag">RESET BAG</button></div>
-<div id="arcade-calibration" class="arcade-card" hidden><h2>↓ &nbsp; ↑</h2><p>Roll back, then forward.</p><button id="arcade-calibration-cancel" class="secondary">CANCEL</button></div>
+<div id="arcade-calibration" class="arcade-card" hidden><h2>↑</h2><p>Roll forward firmly.</p><button id="arcade-calibration-cancel" class="secondary">CANCEL</button></div>
 <div id="arcade-error" class="arcade-card" hidden><h2>TRACKBALL NOT CAPTURED</h2><p id="arcade-error-copy"></p><button id="arcade-error-back">BACK</button></div>`;
 document.body.append(root);
 let windy=false,capturing=false,nativeInput=false,nativeStatus=null;
-function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v4',JSON.stringify(config));renderSettings();}
+function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v5',JSON.stringify(config));renderSettings();}
 function renderSettings(){
  $('gate-value').textContent=Math.round(config.releaseGate);
  $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=Math.round(config.powerSpeed);$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
@@ -86,25 +86,31 @@ for(const b of root.querySelectorAll('[data-bind]'))b.onclick=()=>{binding=b.dat
 function resetBag(){if(menuOpen||host.state.phase!=='aim'||host.state.vs==='cpu'&&host.state.thrower===1)return;machine.reset(performance.now());placementTarget=0;host.resetBag();}
 $('arcade-reset-bag').onclick=resetBag;
 $('arcade-calibrate').onclick=()=>{
- calibration={back:0,forward:0,start:null,last:performance.now()};settingsOpen=false;menuOpen=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=false;capture();
+ calibration=new Trackball(config);calibration.reset(performance.now());settingsOpen=false;menuOpen=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=false;capture();
 };
 $('arcade-calibration-cancel').onclick=()=>{calibration=null;unlock();showSettings();};
 function feed(dx,dy,now=performance.now()){
  diag.x+=dx;diag.y+=dy;diag.lastX=dx;diag.lastY=dy;diag.events++;
  if(calibration){
-  if(dy>0&&calibration.forward===0)calibration.back+=dy;
-  if(dy<0&&calibration.back*config.sensitivity>=25){
-   if(calibration.start===null)calibration.start=now-Math.max(1,Math.min(16,now-calibration.last));
-   calibration.forward-=dy*config.sensitivity;
+  const stroke=calibration.feed(dx,dy,now);
+  if(stroke?.kind==='throw'){
+   config.powerSpeed=stroke.speed/.7;
+   save();
+   calibration=null;
+   menuOpen=true;
+   unlock();
+   $('arcade-calibration').hidden=true;
+   showSettings();
   }
-  calibration.last=now;
-  if(calibration.forward>=config.releaseGate){config.powerSpeed=calibration.forward/Math.max(.001,(now-calibration.start)/1000)/.7;save();calibration=null;menuOpen=true;unlock();$('arcade-calibration').hidden=true;showSettings();}
   return;
  }
  if(menuOpen||host.state.paused||host.state.phase!=='aim')return;
- const result=machine.feed(dx,dy,now);if(!result)return;
+ const wasForward=machine.phase==='forward';
+ const result=machine.feed(dx,dy,now);
+ if(wasForward&&machine.phase==='ready')host.hideArrow();
+ if(!result)return;
  if(result.kind==='position'){if(placementTarget===null)placementTarget=host.state.position[host.state.thrower];placementTarget=Math.max(-.45,Math.min(.45,placementTarget+result.dx*.0008));}
- if(result.kind==='preview'||result.kind==='backswing')host.preview(machine.preview||{power:0,aim:0,spin:0});
+ if(result.kind==='preview')host.preview(result);
  if(result.kind==='throw'){
   lastShot={...result,power:host.power(result.power),at:now};diag.lastShot=lastShot;
   if(!host.throw(result))machine.reset(now);
@@ -219,13 +225,17 @@ function frame(now){
  const frameDt=Math.min(.1,(now-lastFrame)/1000);fps=fps*.95+1000/Math.max(1,now-lastFrame)*.05;lastFrame=now;
  const s=host.state;renderScoreboard(s);const key=`${s.phase}:${s.inning}:${s.k}:${s.thrower}`;
  if(key!==lastTurn){lastTurn=key;machine.reset(now);placementTarget=null;if(s.phase==='wait'&&!s.career)host.wind(windy);}
- if(!menuOpen&&inputReady())machine.tick(now);
+ if(!menuOpen&&inputReady()){
+  const wasForward=machine.phase==='forward';
+  machine.tick(now);
+  if(wasForward&&machine.phase!=='forward')host.hideArrow();
+ }
  if(!menuOpen&&s.phase==='aim'&&placementTarget!==null){const delta=(placementTarget-s.position[s.thrower])*(1-Math.exp(-frameDt/0.07));if(Math.abs(delta)>1e-6)host.position(delta);}
  const live=['forward'].includes(machine.phase)&&s.phase==='aim'&&machine.preview;const power=live?host.power(machine.preview.power):(lastShot?.power??0);$('arcade-power').hidden=menuOpen||!live&&(!lastShot||now-lastShot.at>5000);$('arcade-power-label').textContent=live?'POWER':'LAST SHOT';$('arcade-power-fill').style.width=(power*100)+'%';$('arcade-power-fill').style.background=shotPowerColor(power);$('arcade-power-track').setAttribute('aria-valuenow',Math.round(power*100));
  document.body.classList.toggle('arcade-native-playing',nativeInput&&!menuOpen);
  $('arcade-board-view').hidden=!boardViewEnabled||menuOpen||!!calibration||['menu','intro','champion'].includes(s.phase);
  $('arcade-prompt').hidden=menuOpen||s.phase!=='aim'||!!calibration;
- $('arcade-state').textContent=machine.phase==='settling'?'·':machine.phase==='ready'?'↓':machine.phase==='back'?'↑':'↗';
+ $('arcade-state').textContent=machine.phase==='settling'?'·':machine.phase==='ready'?'↑':'↗';
  $('arcade-height').textContent=['SLIDER','NORMAL','KOBE'][s.arc];
  $('arcade-surface').textContent=s.side[s.thrower].toUpperCase();
  if(settingsOpen)$('arcade-diagnostics').textContent=`${nativeStatus?`TRACKBALL: ${nativeStatus.mice.join(", ")||"NOT FOUND"} · ${nativeStatus.pads.length} controllers\n`:""}${Math.round(fps)} FPS · ${diag.events} events\nΔ ${diag.lastX}, ${diag.lastY} · total ${Math.round(diag.x)}, ${Math.round(diag.y)}\n${lastShot?`power ${lastShot.power.toFixed(3)} · aim ${lastShot.aim.toFixed(3)} · spin ${lastShot.spin.toFixed(2)}`:'No throw recorded'}\nF2 setup · 1 practice · 2 players · Alt+F4 exit`;
