@@ -1,5 +1,5 @@
 // Hardware counts, never cursor position or render-frame distance.
-export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:4000,releaseGate:220,spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
+export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:6500,releaseGate:220,spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 export function settings(value={}){
  const out={...DEFAULTS};
@@ -9,43 +9,86 @@ export function settings(value={}){
  if(new Set([out.shotKey,out.surfaceKey,out.menuKey,out.confirmKey,out.resetKey,'F2']).size!==6){out.shotKey=DEFAULTS.shotKey;out.surfaceKey=DEFAULTS.surfaceKey;out.menuKey=DEFAULTS.menuKey;out.confirmKey=DEFAULTS.confirmKey;out.resetKey=DEFAULTS.resetKey;}
  return out;
 }
-// Convert old device-scale calibration; retain sensitivity, bindings and the old save for rollback.
-export function legacySettings(value={}){return settings({...value,powerSpeed:value.powerSpeed??(value.pullRange&&value.pullRange!==240?2000*value.pullRange/320:2000),releaseGate:value.releaseGate===48?80:value.releaseGate});}
+// Distance calibration cannot measure forward speed. Keep bindings and sensitivity.
+export function legacySettings(value = {}) {
+ const releaseGate = value.releaseGate === 48 || value.releaseGate === 80
+  ? DEFAULTS.releaseGate : value.releaseGate;
+ const powerSpeed = Math.max(DEFAULTS.powerSpeed, settings(value).powerSpeed);
+ return settings({...value, powerSpeed, releaseGate});
+}
+
 export class Trackball {
- constructor(config={}){this.config=settings(config);this.reset(0);}
- reset(now=0){this.phase='settling';this.lastMotion=now;this.lastEvent=now;this.backX=this.backY=this.forwardX=this.forwardY=0;this.forwardStart=null;this.lockedAim=null;this.lastForwardAngle=0;this.pendingX=this.pendingY=0;this.placementX=0;this.pendingAt=0;this.preview=null;}
- aimPreview(){return {power:0,aim:clamp(Math.atan2(-this.backX,Math.max(10,this.backY))*.18,-.12,.12)||0,spin:0};}
- tick(now){
-  if(this.phase==='settling'&&now-this.lastMotion>=this.config.quietMs)this.phase='ready';
-  if(['back','forward'].includes(this.phase)&&now-this.lastMotion>this.config.timeoutMs)this.reset(now);
+ constructor(config = {}) {
+  this.config = settings(config);
+  this.reset();
+ }
+
+ reset(now = 0) {
+  this.phase = 'settling';
+  this.lastMotion = now;
+  this.lastEvent = now;
+  this.forwardX = 0;
+  this.forwardY = 0;
+  this.forwardStart = null;
+  this.firstInterval = null;
+  this.preview = null;
+ }
+
+ tick(now) {
+  if (this.phase === 'forward' &&
+      (now - this.lastMotion > 160 || now - this.forwardStart > this.config.timeoutMs)) {
+   this.reset(this.lastMotion);
+  }
+  if (this.phase === 'settling' && now - this.lastMotion >= this.config.quietMs) {
+   this.phase = 'ready';
+  }
   return this.phase;
  }
- feed(x,y,now){
-  if(![x,y,now].every(Number.isFinite)||now<this.lastEvent||Math.abs(x)>3000||Math.abs(y)>3000)return null;
-  this.lastEvent=now;this.tick(now);if(x===0&&y===0)return null;
-  const previousMotion=this.lastMotion;this.lastMotion=now;const dx=x*this.config.sensitivity,dy=y*this.config.sensitivity;
-  if(this.phase==='settling'||this.phase==='spent')return null;
-  if(this.phase==='ready'){
-   if(now-this.pendingAt>160){this.pendingX=this.pendingY=this.placementX=0;this.pendingAt=now;}
-   this.placementX+=Math.abs(dx);
-   if(dy>0){this.pendingY+=dy;this.pendingX+=dx;}else if(dy<0){this.pendingX=this.pendingY=0;}
-   if(this.pendingY>=18&&this.pendingY>this.placementX*.65){this.phase='back';this.backX=this.pendingX;this.backY=this.pendingY;this.preview=this.aimPreview();return {kind:'backswing',...this.preview};}
-   return {kind:'position',dx};
+
+ feed(x, y, now) {
+  if (![x, y, now].every(Number.isFinite) || now < this.lastEvent ||
+      Math.abs(x) > 3000 || Math.abs(y) > 3000) return null;
+  this.tick(now);
+  this.lastEvent = now;
+  if (x === 0 && y === 0) return null;
+  this.lastMotion = now;
+  if (this.phase === 'settling' || this.phase === 'spent') return null;
+
+  const dx = x * this.config.sensitivity;
+  const dy = y * this.config.sensitivity;
+  const forward = -dy > 0 && -dy >= Math.abs(dx) * .65;
+  if (!forward) {
+   const sideways = Math.abs(dx) > Math.abs(dy);
+   if (!sideways && Math.abs(dy) <= 2) return null;
+   if (this.phase === 'forward') {
+    this.reset(now);
+    this.phase = 'ready';
+    return sideways ? {kind: 'position', dx} : {kind: 'cancel'};
+   }
+   return sideways ? {kind: 'position', dx} : null;
   }
-  if(this.phase==='back'&&dy>=0){this.backX+=dx;this.backY=this.backY+dy;}
-  else if(dy<0){
-   if(this.forwardStart===null){this.forwardStart=now-clamp(now-previousMotion,1,16);this.lockedAim=this.aimPreview().aim;}
-   this.phase='forward';this.forwardX+=dx;this.forwardY-=dy;this.lastForwardAngle=Math.atan2(dx,-dy);
-  }else if(dy>6){this.phase='back';this.backX+=dx;this.backY=this.backY+dy;this.forwardX=this.forwardY=0;this.forwardStart=null;this.lockedAim=null;}
-  // Only forward velocity supplies power. A pause while aiming contributes no power.
-  const seconds=Math.max(.001,(now-(this.forwardStart??now))/1000);
-  const power=this.phase==='forward'?clamp(this.forwardY/seconds/this.config.powerSpeed,0,1):0;
-  const angle=Math.atan2(this.forwardX,Math.max(1,this.forwardY));
-  const aim=this.lockedAim??this.aimPreview().aim;
-  // Optional curved finish rotates the landing bag without changing release direction.
-  const spin=this.phase==='forward'?(clamp((this.lastForwardAngle-angle)*this.config.spin,-1,1)||0):0;
-  this.preview={power,aim,spin,backswing:{x:this.backX,y:this.backY},forward:{x:this.forwardX,y:-this.forwardY}};
-  if(this.phase==='forward'&&this.forwardY>=this.config.releaseGate){this.phase='spent';return {kind:'throw',...this.preview};}
-  return {kind:'preview',...this.preview};
+
+  if (this.phase === 'ready') {
+   this.phase = 'forward';
+   this.forwardStart = now;
+  }
+  this.forwardX += dx;
+  this.forwardY -= dy;
+
+  // Estimate the first report's duration from the following report, not from idle time.
+  const elapsed = now - this.forwardStart;
+  if (this.firstInterval === null && elapsed > 0) this.firstInterval = clamp(elapsed, 1, 16);
+  const speed = this.firstInterval === null ? 0 : this.forwardY * 1000 / (elapsed + this.firstInterval);
+  const power = clamp(speed / this.config.powerSpeed, 0, 1);
+  const angle = Math.atan2(this.forwardX, this.forwardY);
+  const aim = clamp(angle * .10, -.10, .10);
+  const finishAngle = Math.atan2(dx, -dy);
+  const spin = clamp((finishAngle - angle) * this.config.spin, -1, 1);
+  this.preview = {power, aim, spin, speed, forward: {x: this.forwardX, y: -this.forwardY}};
+  if (this.firstInterval !== null && this.forwardY >= this.config.releaseGate) {
+   this.phase = 'spent';
+   return {kind: 'throw', ...this.preview};
+  }
+  return {kind: 'preview', ...this.preview};
  }
 }
