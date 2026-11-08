@@ -6,7 +6,7 @@ const {_electron}=require('playwright-core'),assert=require('node:assert/strict'
  const app=await _electron.launch({executablePath:process.env.ELECTRON_PATH,args:['--windowed'],env:{...process.env,ARCADE_TEST_DATA:profile}});try{
  const p=await app.firstWindow(),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.waitForFunction(()=>window.__arcade?.music.tracks.length===2);await p.setViewportSize({width:1920,height:1080});
  await p.evaluate(()=>__arcade.start('two',false));await p.waitForFunction(()=>__game.state.phase==='aim');await p.waitForTimeout(1700);
- const first=await p.evaluate(()=>{const h=__arcadeHost.party;return {time:h.time,x:h.guest.g.position.x,people:h.chessPlayers.length,keg:h.keg.name}});assert.equal(first.people,2);assert.equal(first.keg,'keg');await p.waitForTimeout(700);assert(await p.evaluate(x=>__arcadeHost.party.time>x,first.time));
+ const first=await p.evaluate(()=>{const h=__arcadeHost.party;return {time:h.time,x:h.guest.g.position.x,people:h.pongPlayers.length,keg:h.keg.name}});assert.equal(first.people,2);assert.equal(first.keg,'keg');await p.waitForTimeout(700);assert(await p.evaluate(x=>__arcadeHost.party.time>x,first.time));
  // Keep all decorative actors and their movement left of the playing corridor.
  await p.evaluate(()=>{const h=__arcadeHost.party;for(let i=0;i<100;i++){h.update(.25);if(h.guest.g.position.x<2.5)throw Error('Guest entered throwing lane');}});
  await p.screenshot({path:'/Users/ashe/Documents/Codex/2026-11-03/pleas/outputs/cornhole-party-pump.png'});

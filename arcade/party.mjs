@@ -42,22 +42,106 @@ export function createParty(scene){
  const KEG_X=5.4,KEG_Z=-.45;
  const guest=person('cup-filling-guest','#d7a349','#bd835c','#49392c',-2.05+KEG_X,-5.9+KEG_Z);
  const friend=person('chatting-guest','#72a0a0','#e3b085','#523c30',-3.65+KEG_X,-6.65+KEG_Z,false,.9);
- const a=person('chess-white','#af6f66','#e8be96','#72503c',-3.0,-7.9+.6,true,Math.PI);
- const b=person('chess-black','#637b9b','#95674e','#303c35',-2.3,-7.9-.6,true,0);
- // Replace the runner with a real 8x8 board, oriented across the picnic table.
- cube(.64,.025,.64,'#6e4c33',-2.66,.713,-7.9);
- for(let row=0;row<8;row++)for(let col=0;col<8;col++)cube(.075,.012,.075,(row+col)%2?'#49604a':'#e5d9ac',-2.66+(col-3.5)*.075,.734,-7.9+(row-3.5)*.075);
- const pieces=[];
- for(const [side,color] of [[1,'#fff0c9'],[-1,'#2c3b37']])for(let col=0;col<8;col++){
-  for(const rank of [0,1]){
-   const g=new THREE.Group();g.position.set(-2.66+(col-3.5)*.075,.746,-7.9+side*(rank===0?.2625:.1875));root.add(g);
-   cube(.046,.014,.046,color,0,0,0,g);cube(.032,rank===0?.085:.05,.032,color,0,rank===0?.05:.035,0,g);cube(.04,.02,.04,color,0,rank===0?.10:.07,0,g);
-   pieces.push({g,start:g.position.clone(),side,col,rank});
+ const pongTable = new THREE.Group();
+ pongTable.name = 'beer-pong-table';
+ pongTable.position.set(-2.77, 0, -7.65);
+ pongTable.rotation.y = Math.PI / 2;
+ root.add(pongTable);
+ cube(2.12,.09,.88,'#705039',0,.725,0,pongTable);
+ cube(2.05,.025,.81,'#336b53',0,.782,0,pongTable);
+ for (const end of [-1,1]) {
+  cube(.023,.004,.76,'#e4d8aa',end*.97,.798,0,pongTable);
+  for (const edge of [-1,1]) cube(.09,.69,.09,'#5b4032',end*.88,.345,edge*.33,pongTable);
+ }
+ for (const edge of [-1,1]) cube(1.95,.004,.022,'#e4d8aa',0,.798,edge*.38,pongTable);
+
+ const pongPlayers = [
+  person('pong-red','#a95549','#e8be96','#72503c',-1.29,-.22,false,Math.PI/2),
+  person('pong-blue','#52749a','#95674e','#303c35',1.29,.12,false,-Math.PI/2)
+ ];
+ for (const player of pongPlayers) {
+  pongTable.add(player.g);
+  player.cup.visible = player.rim.visible = false;
+ }
+ const rack = [-1,1].map((end, side) => {
+  const cups = [];
+  const wall = new THREE.CylinderGeometry(.068,.048,.13,8,1,true);
+  const lip = new THREE.TorusGeometry(.063,.008,4,8);
+  const inside = new THREE.CylinderGeometry(.055,.055,.008,8);
+  const plastic = new THREE.MeshLambertMaterial({color:side ? '#387dce' : '#dd493c',side:THREE.DoubleSide,flatShading:true});
+  for (let row=0;row<4;row++) for (let slot=0;slot<=row;slot++) {
+   const cup = new THREE.Group();
+   cup.position.set(end*(.45+row*.146),.799,(slot-row/2)*.146);
+   const sides = new THREE.Mesh(wall,plastic);
+   sides.position.y=.065;
+   const rim = new THREE.Mesh(lip,mat('#fff2ce'));
+   rim.rotation.x=Math.PI/2;
+   rim.position.y=.13;
+   const liquid = new THREE.Mesh(inside,mat('#4b3528'));
+   liquid.position.y=.085;
+   cup.add(sides,rim,liquid);
+   pongTable.add(cup);
+   cups.push(cup);
+  }
+  return cups;
+ });
+ const pongBall = new THREE.Mesh(new THREE.SphereGeometry(.032,8,6),new THREE.MeshBasicMaterial({color:'#fff8d9'}));
+ pongTable.add(pongBall);
+ const pongTurns = [];
+ const hits = [0,0];
+ // The red player takes the last cup after a few misses on both sides.
+ for (let round=0;round<11;round++) {
+  for (const side of [0,1]) {
+   const miss = side===0 ? round===2 : [1,5,8].includes(round);
+   const target = rack[1-side][hits[side]].position.clone();
+   if (miss) target.z += target.z<0 ? -.22 : .22;
+   target.y += miss ? .025 : .105;
+   pongTurns.push({side,miss,target,before:[...hits]});
+   if (!miss && ++hits[side]===10) break;
   }
  }
- // A short opening, one complete lifted piece per turn, then reset the board.
- const moves=[[1,4,1,0,-2],[-1,4,1,0,2],[1,6,0,-1,-2],[-1,1,0,1,2],[1,5,0,-3,-3],[-1,6,0,-1,2]];
- let chessTurn=-1;
+ const turnSeconds=2.45, releaseAt=.65, impactAt=1.65;
+ const matchSeconds=pongTurns.length*turnSeconds;
+ const pongLoopSeconds=matchSeconds+3.5;
+ const handPoint=new THREE.Vector3(0,-.30,.02);
+ const launchPoints=pongPlayers.map(({arm})=>{
+  arm.rotation.x=-1.44;
+  const point=pongTable.worldToLocal(arm.localToWorld(handPoint.clone()));
+  arm.rotation.x=0;
+  return point;
+ });
+ const pongState={turn:0,winner:null,remaining:[10,10]};
+ function updatePong() {
+  const elapsed=time%pongLoopSeconds;
+  const finished=elapsed>=matchSeconds;
+  const turn=Math.min(pongTurns.length-1,Math.floor(elapsed/turnSeconds));
+  const shot=pongTurns[turn];
+  const phase=elapsed-turn*turnSeconds;
+  const landed=phase>=impactAt;
+  const sunk=[...shot.before];
+  if (landed&&!shot.miss) sunk[shot.side]++;
+  pongState.turn=turn;
+  pongState.remaining=[10-sunk[1],10-sunk[0]];
+  pongState.winner=sunk[shot.side]===10?shot.side:null;
+  rack.forEach((cups,side)=>cups.forEach((cup,index)=>{cup.visible=index>=sunk[1-side];}));
+  for (const [side,player] of pongPlayers.entries()) {
+   const tossing=!finished&&side===shot.side&&phase<1.1;
+   const cheering=pongState.winner===side;
+   const cheer=cheering?Math.abs(Math.sin((phase-impactAt)*5)):0;
+   player.g.position.y=cheer*.13;
+   player.arm.rotation.x=cheering?-2.8+cheer*.28:tossing
+    ? -.45-.99*Math.max(0,1-Math.abs(phase-releaseAt)/.45) : -.2;
+  }
+  pongBall.visible=!finished&&phase<impactAt;
+  if (!pongBall.visible) return;
+  if (phase<releaseAt) {
+   pongBall.position.copy(pongTable.worldToLocal(pongPlayers[shot.side].arm.localToWorld(handPoint.clone())));
+  } else {
+   const flight=(phase-releaseAt)/(impactAt-releaseAt);
+   pongBall.position.copy(launchPoints[shot.side]).lerp(shot.target,flight);
+   pongBall.position.y+=.58*4*flight*(1-flight);
+  }
+ }
  const servingCup=cube(.09,.11,.09,'#d15a49',0,.53,.58,keg),servingRim=cube(.095,.015,.095,'#fff1d1',0,.59,.58,keg);servingCup.visible=servingRim.visible=false;
  let time=0,kegStand=false;
  // Perimeter landscaping: no flowers or hazards in the throwing corridor.
@@ -116,20 +200,9 @@ export function createParty(scene){
    friend.arm.rotation.z=2.45*stand;friend.arm.scale.y=1+.6*stand;
    guest.cup.visible=guest.rim.visible=servingCup.visible=servingRim.visible=stream.visible=false;
   }else{friend.g.position.set(keg.position.x-.65,0,keg.position.z-.55);friend.arm.rotation.z=0;friend.arm.scale.y=1;}
-  const chessTime=time%48;chessTurn=Math.min(5,Math.floor(chessTime/6));
-  for(const p of pieces)p.g.position.copy(p.start);
-  for(let i=0;i<moves.length;i++){
-   const [side,col,rank,dx,dz]=moves[i],p=pieces.find(p=>p.side===side&&p.col===col&&p.rank===rank);
-   const progress=Math.max(0,Math.min(1,(chessTime-i*6-1)/2));
-   p.g.position.x+=dx*.075*progress;p.g.position.z+=dz*.075*progress;p.g.position.y+=Math.sin(progress*Math.PI)*.14;
-  }
-  for(const [i,player] of [a,b].entries()){
-   const phase=chessTime-chessTurn*6,reach=phase>0&&phase<4?Math.sin(phase/4*Math.PI):0;
-   player.arm.rotation.x=-.5-(chessTurn%2===i?reach*1.1:0);player.arm.rotation.z=(i===0?1:-1)*.45*reach;
-   player.cup.visible=player.rim.visible=false;
-  }
+  updatePong();
   updateCook(dt,dog);
 
  };
- return {root,keg,pump,plunger,hose,tap,guest,friend,cook,foods,snack,pieces,chessPlayers:[a,b],stream,update,get catches(){return catches;},get chessTurn(){return chessTurn;},get time(){return time;},get kegStand(){return kegStand;}};
+ return {root,keg,pump,plunger,hose,tap,guest,friend,cook,foods,snack,pongTable,pongPlayers,pongBall,pongLoopSeconds,pongState,stream,update,get catches(){return catches;},get time(){return time;},get kegStand(){return kegStand;}};
 }
