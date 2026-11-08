@@ -13,7 +13,8 @@
     <image>./images/backyard-cornhole-gameplay.png</image>
     <thumbnail>./images/backyard-cornhole-cover.png</thumbnail>
     <boxart>./images/backyard-cornhole-cover.png</boxart>
-    <marquee>./images/backyard-cornhole-marquee.png</marquee>
+    <marquee>./images/backyard-cornhole-wheel.png</marquee>
+    <video>./videos/backyard-cornhole-preview.mp4</video>
     <fanart>./images/backyard-cornhole-gameplay.png</fanart>
   </game>
 </gameList>
