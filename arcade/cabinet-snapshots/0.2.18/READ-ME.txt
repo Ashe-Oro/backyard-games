@@ -1,0 +1,96 @@
+Backyard Cornhole Arcade — 0.2.18
+================================================
+
+Offline Cornhole for one shared trackball. Practice, two players, or the
+standard eight-rival tournament. The Batocera cabinet uses the native Linux
+build under Ports. The website and its saves are separate.
+
+PLAY
+----
+Roll sideways to place the ready bag. Roll forward to throw, angling left or
+right to aim: forward-left (1) aims left; forward-right (3) aims right.
+Power is linear in accumulated forward counts after sensitivity: 200 = 50%,
+400 = 100%, capped at 100%. Forward speed no longer governs throw power.
+The default release gate is 400 counts; a custom shorter gate releases earlier
+at proportionally lower power. Stroke length remains adjustable (20–1200).
+
+Backswing is optional. Back-left (A) adds clockwise landing spin and curl right;
+back-right (C) adds counterclockwise landing spin and curl left. Lean scales spin.
+Straight back (B) or no backswing gives zero spin. Stale backswing expires.
+Rotation affects landing, not airborne curvature; forward X still aims.
+
+Player 1 / Pad 0, bottom row first:
+  Bottom 1 / button 0: cycle Kobe / Slider / Normal height.
+  Bottom 2 / button 1: flip Slick / Sticky.
+  Bottom 3 / button 2: nudge position left by 0.1.
+  Bottom 4 / button 3: nudge position right by 0.1.
+  Top 2 / button 5: Reset Bag.
+  Top 1, 3, 4 / buttons 4, 6, 7: unused in play.
+Nudges clamp to [-0.45, 0.45], cancel windup and never throw. Each press acts once.
+Menus: 0/3 confirm, 1/4 back, 2/5 retain reset-key aliases, 6/7 unused.
+Button 8 pauses/backs; button 9 confirms in menus and pauses in play.
+Other pads retain their 0.2.17 mappings. Explicit saved bindings still apply.
+Keyboard fallback: H height, F surface, R reset, Enter select, Escape pause.
+F2 opens Cabinet Setup. Alt+F4 exits.
+
+Reset Bag centers the unthrown bag and clears its windup without consuming a
+throw, clearing the board, or changing scores. The gauge beside the bag shows
+actual throw power and keeps the previous shot visible for five seconds.
+The live board close-up is always on in play. Match and round points remain
+visible; round totals recount as bags settle.
+
+CALIBRATION
+-----------
+Bindings and sensitivity carry over into backyard-arcade-v8. Load v8 directly;
+v7, v6 and v5 migrate through previousSettings, and v4–v1 through legacySettings.
+Only factory release gates 220, 48 and 80 migrate to 400. Other calibrated gates
+are preserved. Old factory spin 0 becomes 1; nonzero custom spin is preserved.
+Older v6/v7 factory-speed migrations (2100/6500 to 1050) are superseded by v8's
+count-based power; powerSpeed and the adjustable Full-power speed control retire.
+The Full-power counts readout is fixed at 400. Calibrate Trackball scales
+sensitivity so its measured reference stroke represents 400 counts (100% power),
+within the existing sensitivity limits. Roll at least 400 current counts to
+complete calibration. Wind, Stroke length, Backswing spin, bindings, Reset
+Settings and F2 remain available.
+
+Slow sideways motion tolerates small downward sensor noise and eases into its
+position. A quiet period after each turn prevents residual motion launching
+the next bag. No device is grabbed and no global controller mapping is edited.
+
+NATIVE BATOCERA PACKAGE
+----------------------
+Back up the existing package and metadata. Stage and verify the Linux ZIP
+outside the ROM collection before replacing its files while Cornhole is closed.
+Runtime: /userdata/system/backyard-games/BackyardCornhole-linux
+Ports launcher: /userdata/roms/ports/BackyardCornhole.sh
+Log: /userdata/system/logs/cornhole-native.log
+Music: /userdata/music/backyard-cornhole (or choose a local folder in Music).
+The runtime uses a private bundled libcups; it does not replace system libraries.
+
+The launcher releases only Cornhole's stranded virtual exit keys before handing
+back to Batocera. Batocera-Support contains the separately reviewed gameStop
+hook for /userdata/system/scripts/90-release-virtual-hotkeys.sh. It releases
+hotkeygen's virtual keys at game exit, never physical keys or input mappings.
+Keep the existing installed hook when updating Cornhole. Backups and successful
+Cornhole/Sega exit tests were preserved in the cabinet's es-diagnosis cache.
+
+The obsolete Windows/Wine package is not the cabinet's supported launcher.
+Prepare a recoverable backup outside scanned ROM folders before removing it.
+Do not remove other Windows games or Wine prefixes. Artwork and metadata are
+prepared in media/; their installation and Favorites verification remain pending.
+
+DEVELOPMENT AND QA
+------------------
+From arcade/: npm ci; npm test; npm run build:linux.
+Optional local Mac package: node build.mjs --mac.
+Browser/Electron regression scripts live in tests/. They accept NODE_PATH for
+the test driver, ELECTRON_PATH for the packaged app, CHROME_PATH for Chromium,
+and BASE_URL for the generated site. No test fixture is included in the game.
+
+The build generates an isolated offline copy under arcade/dist/site. Canonical
+web files are never edited. Vercel excludes the whole arcade directory. Cabinet
+preferences use the standalone app's own profile. Preserve that profile during
+updates so calibration, mappings, music choice and tournament progress survive.
+
+Read BACKLOG.md for implemented work, verification and the remaining physical
+playtest/installation tasks. Do not report the cabinet updated from a local build.
