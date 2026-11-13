@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {Trackball,settings,legacySettings} from '../trackball.mjs';
+import {Trackball,settings,legacySettings,p1Action,PLACEMENT_STEP} from '../trackball.mjs';
 function ready(config={}){const m=new Trackball({releaseGate:80,powerSpeed:2000,...config});m.tick(500);return m;}
 function stroke(m, dx=0, interval=10, start=510, dy=8) {
  let shot;
@@ -14,7 +14,7 @@ test('sideways placement and backward rolls cannot throw',()=>{
  const m=ready();
  for(let i=0;i<100;i++)assert.equal(m.feed(15,-2,510+i*10)?.kind,'position');
  for(let i=0;i<20;i++)assert.equal(m.feed(0,20,1510+i*10),null);
- assert.equal(m.phase,'ready');
+ assert.equal(m.phase,'backswing');
 });
 test('forward-only throws aim left, straight, and right in the direction rolled',()=>{
  const [left,straight,right]=[-4,0,4].map(dx=>stroke(ready(),dx));
@@ -43,16 +43,15 @@ test('forward speed alone controls bounded power',()=>{
 test('idle before the forward roll does not reduce power',()=>{
  assert.equal(stroke(ready()).power,stroke(ready(),0,10,1600).power);
 });
-test('optional finish rotation does not change the aim of a forward stroke',()=>{
- function curved(spin){
-  const m=ready({spin});
-  let shot;
-  for(let i=0;i<10;i++)shot=m.feed(i,-8,510+i*10);
-  return shot;
+test('optional backswing sets proportional landing spin; forward stroke still aims',()=>{
+ for(const [x,spin] of [[-20,1],[20,-1],[0,0],[-5,.25]]){
+  const m=ready();m.feed(x,20,510);
+  const shot=stroke(m,4,10,520);
+  assert.equal(shot.spin,spin);assert(shot.aim>0);
  }
- assert.equal(curved(0).spin,0);
- assert(curved(1).spin>0);
- assert.equal(curved(0).aim,curved(1).aim);
+ for(const dx of [-4,0,4])assert.equal(stroke(ready(),dx).spin,0);
+ const off=ready({spin:0});off.feed(-20,20,510);assert.equal(stroke(off,0,10,520).spin,0);
+ const stale=ready();stale.feed(-20,20,510);stale.tick(4000);stale.tick(4500);assert.equal(stroke(stale,0,10,4510).spin,0);
 });
 test('one gesture makes exactly one shot; residual motion cannot throw',()=>{const m=ready();assert(stroke(m));for(let i=0;i<100;i++)assert.equal(m.feed(10,i%2?30:-30,1000+i*10),null);m.reset(2100);for(let t=2110;t<=2500;t+=10)assert.equal(m.feed(0,10,t),null);assert.equal(m.tick(2900),'settling');assert.equal(m.tick(2960),'ready');});
 test('stale forward stroke, reset and malformed events cannot launch',()=>{const m=ready();m.feed(0,-40,510);m.tick(700);assert.equal(m.phase,'settling');assert.equal(m.feed(0,-200,710),null);for(const args of [[NaN,1,5000],[1,1,-1],[4000,0,5000]])assert.equal(m.feed(...args),null);m.reset(6000);assert.equal(m.preview,null);});
@@ -87,4 +86,14 @@ test('stronger forward rolls have headroom before full power',()=>{
  assert(shots[2]<.55);
  assert(shots[3]>.75&&shots[3]<1);
  assert.equal(shots[4],1);
+});
+
+test('P1 eight-button play map, menu aliases and Start/Select',()=>{
+ const c=settings();
+ assert.deepEqual(Array.from({length:8},(_,i)=>p1Action(i,c)),['KeyH','KeyF','NudgeLeft','NudgeRight',undefined,'KeyR',undefined,undefined]);
+ assert.deepEqual(Array.from({length:8},(_,i)=>p1Action(i,c,true)),['Enter','Escape','KeyR','Enter','Escape','KeyR',undefined,undefined]);
+ assert.equal(PLACEMENT_STEP,.1);
+ assert.deepEqual([8,9].map(i=>p1Action(i,c)),['Escape','Escape']);
+ assert.deepEqual([8,9].map(i=>p1Action(i,c,true)),['Escape','Enter']);
+ assert.equal(settings().spin,1);assert.equal(legacySettings({spin:0}).spin,1);
 });

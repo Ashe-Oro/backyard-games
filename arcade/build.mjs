@@ -55,6 +55,8 @@ replace('dog.head.position.y = 0.55 + Math.abs(Math.sin(time * 1.5)) * 0.008;', 
 // Cornhole announcements: identify the starting player and name a made bag.
 replace("say('COIN TOSS', TEAM[M.first] + ' THROWS FIRST', 1500);", "say(TEAM[M.first] + ' THROWS FIRST', '', 1500);");
 replace("say(b.swish ? 'SWISH!' : 'CORNHOLE!', '3 POINTS')", "say('CORNHOLE!', '3 POINTS')");
+// Enable human english only in the standalone build.
+replace('b.spin * dt * 0.3', 'b.spin * dt * (isHuman(b.team)?1:.3)');
 // Bag rotation changes the landing, never creates a golf-like curved flight.
 replace('b.curl = drift * 0.12 + spin * 0.10;', 'b.curl = 0;');
 replace('b.v.x += (wind.x + b.curl * Math.sin(b.t * 5)) * dt;', 'b.v.x += wind.x * dt;');

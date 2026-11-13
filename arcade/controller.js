@@ -1,41 +1,47 @@
-import {Trackball,settings,legacySettings} from './trackball.mjs';
+import {Trackball,settings,legacySettings,p1Action,PLACEMENT_STEP} from './trackball.mjs';
 const host=window.__arcadeHost;
 if(!host||!document.documentElement.hasAttribute('data-backyard-arcade'))throw new Error('Arcade controls require the standalone Cornhole build.');
 const {shotPowerColor}=await import('/yard-games/power-arrow.js');
 let config;
 try{
- const saved=localStorage.getItem('backyard-arcade-v5');
+ const saved=localStorage.getItem('backyard-arcade-v6');
+ const prior=localStorage.getItem('backyard-arcade-v5');
  const legacy=localStorage.getItem('backyard-arcade-v4')||localStorage.getItem('backyard-arcade-v3')||localStorage.getItem('backyard-arcade-v2')||localStorage.getItem('backyard-arcade-v1');
- config=saved?settings(JSON.parse(saved)):legacy?legacySettings(JSON.parse(legacy)):settings();
+ config=saved?settings(JSON.parse(saved)):prior?settings({...JSON.parse(prior),spin:1}):legacy?legacySettings(JSON.parse(legacy)):settings();
 }catch{config=settings();}
 
 const boardViewEnabled=true;
 let tournament=false,placementTarget=null;
+function nudgePosition(direction){
+ if(menuOpen||host.state.paused||host.state.phase!=='aim'||host.state.vs==='cpu'&&host.state.thrower===1)return;
+ placementTarget=Math.max(-.45,Math.min(.45,(placementTarget??host.state.position[host.state.thrower])+direction*PLACEMENT_STEP));
+ machine.reset(performance.now());host.hideArrow();
+}
 const machine=new Trackball(config),$=id=>document.getElementById(id);
 let menuOpen=true,settingsOpen=false,navIndex=0,lastTurn='',lastShot=null,calibration=null,binding=null,lastFrame=performance.now(),fps=60;
 const diag={x:0,y:0,events:0,lastX:0,lastY:0,locked:false,lastShot:null};
 const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <div id="arcade-scoreboard" aria-label="Cornhole scoreboard"><div class="arcade-team arcade-red" id="arcade-red-team"><span id="arcade-red-name">RED</span><div class="arcade-score-values"><div><small id="arcade-red-total-label">TOTAL</small><strong id="arcade-red-score">0</strong></div><div class="arcade-round-metric" id="arcade-red-round-metric"><small>ROUND</small><strong id="arcade-red-round">0</strong></div></div><div id="arcade-red-pips" class="arcade-pips" aria-hidden="true"></div></div><div class="arcade-score-center"><span id="arcade-score-round">ROUND 1</span><b id="arcade-score-target">TO 21</b><small id="arcade-round-edge">EVEN</small></div><div class="arcade-team arcade-blue" id="arcade-blue-team"><span id="arcade-blue-name">BLUE</span><div class="arcade-score-values"><div><small id="arcade-blue-total-label">TOTAL</small><strong id="arcade-blue-score">0</strong></div><div class="arcade-round-metric" id="arcade-blue-round-metric"><small>ROUND</small><strong id="arcade-blue-round">0</strong></div></div><div id="arcade-blue-pips" class="arcade-pips" aria-hidden="true"></div></div></div>
 <aside id="arcade-board-view" aria-label="Live board close-up" hidden><span>BOARD · 27 FT</span><div id="arcade-board-viewport"></div></aside>
-<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">ARCADE · 0.2.14</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-tournament">TOURNAMENT</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
+<section id="arcade-menu" class="arcade-card"><p class="arcade-kicker">ARCADE · 0.2.15</p><h1>BACKYARD<br><span>CORNHOLE</span></h1><div class="arcade-actions"><button id="arcade-resume" hidden>RESUME</button><button id="arcade-two">2 PLAYER</button><button id="arcade-practice">PRACTICE</button><button id="arcade-tournament">TOURNAMENT</button><button id="arcade-audio-open" class="secondary">MUSIC</button><button id="arcade-config" class="secondary">CABINET SETUP</button><button id="arcade-exit" class="secondary">EXIT GAME</button></div></section>
 <section id="arcade-audio" class="arcade-card" hidden><h2>MUSIC</h2><p id="music-now"></p><div class="arcade-actions"><button id="music-toggle">PLAY MUSIC</button><button id="music-next">NEXT TRACK</button><button id="music-folder" class="secondary">CHOOSE FOLDER</button><button id="music-refresh" class="secondary">REFRESH</button></div><div class="music-volume"><button data-music-volume="-.1" aria-label="Lower music volume">−</button><output id="music-volume"></output><button data-music-volume=".1" aria-label="Raise music volume">+</button></div><button id="arcade-audio-back" class="secondary">BACK</button></section>
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options">
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
 <label>Full-power speed</label><div><button data-adjust="powerSpeed" data-by="-200">−</button><output id="range-value"></output><button data-adjust="powerSpeed" data-by="200">+</button></div>
 <label>Stroke length</label><div><button data-adjust="releaseGate" data-by="-20">−</button><output id="gate-value"></output><button data-adjust="releaseGate" data-by="20">+</button></div>
-<label>Finish rotation</label><div><button data-adjust="spin" data-by="-.15">−</button><output id="spin-value"></output><button data-adjust="spin" data-by=".15">+</button></div>
+<label>Backswing spin</label><div><button data-adjust="spin" data-by="-.15">−</button><output id="spin-value"></output><button data-adjust="spin" data-by=".15">+</button></div>
 <label>Wind</label><div><button id="arcade-wind">CALM</button></div>
 <label>Throw style</label><button data-bind="shotKey"></button><label>Bag surface</label><button data-bind="surfaceKey"></button><label>Reset bag</label><button data-bind="resetKey"></button><label>Confirm</label><button data-bind="confirmKey"></button><label>Pause / menu</label><button data-bind="menuKey"></button></div>
 <div class="arcade-actions"><button id="arcade-calibrate">CALIBRATE TRACKBALL</button><button id="arcade-reset" class="secondary">RESET SETTINGS</button><button id="arcade-settings-back" class="secondary">BACK</button></div>
 <pre id="arcade-diagnostics" aria-live="off"></pre></section>
 <div id="arcade-power" hidden><span id="arcade-power-label">POWER</span><div role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="arcade-power-track"><i id="arcade-power-fill"></i></div></div>
-<div id="arcade-prompt" hidden><span id="arcade-state">↓</span><span id="arcade-height">NORMAL</span><span id="arcade-surface">SLICK</span><button id="arcade-reset-bag">RESET BAG</button></div>
+<div id="arcade-prompt" hidden><span id="arcade-state">↓</span><small>A ↙ spin right · B ↓ no spin · C ↘ spin left<br>1 ↖ aim left · 3 ↗ aim right<br>P1 bottom: HEIGHT · SURFACE · LEFT · RIGHT; top 2: RESET</small><span id="arcade-height">NORMAL</span><span id="arcade-surface">SLICK</span><button id="arcade-reset-bag">RESET BAG</button></div>
 <div id="arcade-calibration" class="arcade-card" hidden><h2>↑</h2><p>Roll forward firmly.</p><button id="arcade-calibration-cancel" class="secondary">CANCEL</button></div>
 <div id="arcade-error" class="arcade-card" hidden><h2>TRACKBALL NOT CAPTURED</h2><p id="arcade-error-copy"></p><button id="arcade-error-back">BACK</button></div>`;
 document.body.append(root);
 let windy=false,capturing=false,nativeInput=false,nativeStatus=null;
-function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v5',JSON.stringify(config));renderSettings();}
+function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v6',JSON.stringify(config));renderSettings();}
 function renderSettings(){
  $('gate-value').textContent=Math.round(config.releaseGate);
  $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=Math.round(config.powerSpeed);$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
@@ -128,7 +134,7 @@ document.addEventListener('pointerlockerror',()=>{if(!nativeInput&&!capturing)sh
 window.addEventListener('blur',()=>{if(!menuOpen)showMenu();});
 window.addEventListener('keydown',e=>{
  if(e.altKey&&e.code==='F4')return;
- const handled=['F2','Digit1','Digit2','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab',config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey,config.resetKey,'Escape','Space','Enter'];
+ const handled=['F2','Digit1','Digit2','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab','NudgeLeft','NudgeRight',config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey,config.resetKey,'Escape','Space','Enter'];
  if(!handled.includes(e.code)&&!binding)return;e.preventDefault();e.stopImmediatePropagation();if(e.repeat)return;
  if(binding){config[binding]=e.code;binding=null;save();return;}
  if(e.code==='F2'){showMenu();showSettings();return;}
@@ -141,6 +147,7 @@ window.addEventListener('keydown',e=>{
   else if([config.shotKey,config.confirmKey,'Space','Enter'].includes(e.code))(document.activeElement?.matches('#arcade-ui button')?document.activeElement:list[0])?.click();return;
  }
  if(['summary','over'].includes(host.state.phase)){if([config.shotKey,config.confirmKey,'Space','Enter'].includes(e.code)){host.advance();machine.reset(performance.now());}return;}
+ if(e.code==='NudgeLeft'||e.code==='NudgeRight'){nudgePosition(e.code==='NudgeLeft'?-1:1);return;}
  if(e.code===config.resetKey){resetBag();return;}
  if(host.state.phase==='aim'&&[config.shotKey,config.surfaceKey].includes(e.code)){if(e.code===config.shotKey)host.height();else host.surface();host.hideArrow();placementTarget=host.state.position[host.state.thrower];machine.reset(performance.now());}
 },true);
@@ -155,7 +162,7 @@ function pollPads(){
   if(pressed&&padState.get(code)===false&&performance.now()>=padArmAt){
    let action=code;
    if(!binding&&![config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey,config.resetKey].includes(code)){
-    action=({0:inMenu()?config.confirmKey:config.shotKey,1:inMenu()?config.menuKey:config.surfaceKey,2:config.resetKey,5:config.resetKey,8:config.menuKey,9:inMenu()?config.confirmKey:config.menuKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[i];
+    action=pad.index===0?p1Action(i,config,inMenu()):({0:inMenu()?config.confirmKey:config.shotKey,1:inMenu()?config.menuKey:config.surfaceKey,2:config.resetKey,5:config.resetKey,8:config.menuKey,9:inMenu()?config.confirmKey:config.menuKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[i];
    }
    if(action)window.dispatchEvent(new KeyboardEvent('keydown',{code:action,bubbles:true}));
   }
@@ -163,6 +170,7 @@ function pollPads(){
  }}
  for(const key of padState.keys())if(!connected.has(key))padState.delete(key);
 }
+const nativeHeld=new Set();
 function nativeEvent(data){
  if(data.kind==='status'){
   nativeStatus=data;nativeInput=data.mice.length>0;diag.locked=inputReady();
@@ -182,11 +190,15 @@ function nativeEvent(data){
   window.dispatchEvent(new KeyboardEvent('keydown',{code,bubbles:true}));return;
  }
  if(data.kind==='nav'&&(menuOpen||tournament&&!$('panel').hidden)){window.dispatchEvent(new KeyboardEvent('keydown',{code:data.code,bubbles:true}));return;}
- if(data.kind!=='button'||!data.pressed)return;
+ if(data.kind!=='button')return;
+ const nativeCode=`Pad${data.pad}Button${data.button}`;
+ if(!data.pressed){nativeHeld.delete(nativeCode);return;}
+ if(nativeHeld.has(nativeCode))return;
+ nativeHeld.add(nativeCode);
  const code=`Pad${data.pad}Button${data.button}`;
  let action=code;
  if(!binding&&![config.shotKey,config.surfaceKey,config.menuKey,config.confirmKey,config.resetKey].includes(code)){
-  action=({0:inMenu()?config.confirmKey:config.shotKey,3:inMenu()?config.confirmKey:config.shotKey,1:inMenu()?config.menuKey:config.surfaceKey,4:inMenu()?config.menuKey:config.surfaceKey,2:config.resetKey,5:config.resetKey,8:config.menuKey,9:inMenu()?config.confirmKey:config.menuKey})[data.button];
+  action=data.pad===0?p1Action(data.button,config,inMenu()):({0:inMenu()?config.confirmKey:config.shotKey,3:inMenu()?config.confirmKey:config.shotKey,1:inMenu()?config.menuKey:config.surfaceKey,4:inMenu()?config.menuKey:config.surfaceKey,2:config.resetKey,5:config.resetKey,8:config.menuKey,9:inMenu()?config.confirmKey:config.menuKey})[data.button];
  }
  if(action)window.dispatchEvent(new KeyboardEvent('keydown',{code:action,bubbles:true}));
 }

@@ -188,7 +188,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rend
 <script type="module">
 import * as THREE from 'three';
 import {createBackyard} from '/yard-games/backyard.js';
-import {throwPower,pullPower,roundWind} from '/cornhole/controls.mjs';
+import {throwPower,pullPower,powerFromPull,roundWind} from '/cornhole/controls.mjs';
 import {createWindStreaks} from '/cornhole/wind-streaks.js';
 import {powerArrowLength,paintPowerArrow} from '/yard-games/power-arrow.js';
 
@@ -967,9 +967,8 @@ function showAim(from,to,pulling=false,power=physicalPower(M.power)){
  paintPowerArrow(overlay,power,from,to,r);
  overlay.classList.add('shown');overlay.classList.toggle('pulling',pulling);if(!pulling)swipeTimer=setTimeout(()=>overlay.classList.remove('shown'),2400);
 }
-function pullAt(point){const r=wrap.getBoundingClientRect(),dy=Math.max(0,point.y-drag.anchor.y),dx=point.x-drag.anchor.x;
- const max=Math.max(36,Math.min(150,Math.min(r.width,r.height)*.22,r.bottom-drag.anchor.y-24));
- return {power:clamp((dy-10)/(max-10),0,1),aim:clamp(Math.atan(-dx/Math.max(24,dy))*.65,-AIM_MAX,AIM_MAX)};
+function pullAt(point){const dy=Math.max(0,point.y-drag.anchor.y),dx=point.x-drag.anchor.x;
+ return {power:powerFromPull(dy),aim:clamp(Math.atan(-dx/Math.max(24,dy))*.65,-AIM_MAX,AIM_MAX)};
 }
 function cancelPull(){drag=null;wrap.classList.remove('drag');$('swipe-feedback').classList.remove('shown','pulling');}
 function updatePull(point){const pull=pullAt(point),origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+pull.aim,length=powerArrowLength(physicalPower(pull.power));M.aim=pull.aim;setMeter(pull.power);

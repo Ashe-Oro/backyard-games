@@ -52,3 +52,5 @@ html[data-backyard-arcade] #panel .pt{color:#ffe16b}
 html[data-backyard-arcade] #panel .go{background:#ffe16b;color:#172c32;border-color:#172c32}
 html[data-backyard-arcade] #panel .hb{background:#2d5a51;color:#fff1cf;border-color:#769184}
 html[data-backyard-arcade] #panel .game-link{display:none}
+
+#arcade-prompt{max-width:95vw;flex-wrap:wrap;justify-content:center}#arcade-prompt small{font:12px/1.4 system-ui,sans-serif;text-align:center}

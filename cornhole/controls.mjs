@@ -1,7 +1,9 @@
-// Spread the useful throwing range over fewer pull pixels without losing either endpoint.
-const GAIN=4,EDGE=Math.tanh(GAIN/2),clamp=value=>Math.max(0,Math.min(1,value));
-export function throwPower(pull){return (Math.tanh((clamp(pull)-.5)*GAIN)/EDGE+1)/2;}
-export function pullPower(power){return Math.atanh((clamp(power)*2-1)*EDGE)/GAIN+.5;}
+// Human pull distance and normalized power share a linear scale.
+export const FULL_POWER_PULL=400;
+const clamp=value=>Math.max(0,Math.min(1,value));
+export function throwPower(pull){return clamp(pull);}
+export function pullPower(power){return clamp(power);}
+export function powerFromPull(distance){return throwPower(distance/FULL_POWER_PULL);}
 
 // A round has one shared, readable crosswind; later rounds switch sides.
 export function roundWind({practice=false,circuit=null,previousX=0}={},random=Math.random){

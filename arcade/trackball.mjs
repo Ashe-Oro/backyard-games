@@ -1,5 +1,5 @@
 // Hardware counts, never cursor position or render-frame distance.
-export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:6500,releaseGate:220,spin:0,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
+export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:6500,releaseGate:220,spin:1,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 export function settings(value={}){
  const out={...DEFAULTS};
@@ -14,7 +14,7 @@ export function legacySettings(value = {}) {
  const releaseGate = value.releaseGate === 48 || value.releaseGate === 80
   ? DEFAULTS.releaseGate : value.releaseGate;
  const powerSpeed = Math.max(DEFAULTS.powerSpeed, settings(value).powerSpeed);
- return settings({...value, powerSpeed, releaseGate});
+ return settings({...value, powerSpeed, releaseGate, spin:1});
 }
 
 export class Trackball {
@@ -27,6 +27,8 @@ export class Trackball {
   this.phase = 'settling';
   this.lastMotion = now;
   this.lastEvent = now;
+  this.backX = 0;
+  this.backY = 0;
   this.forwardX = 0;
   this.forwardY = 0;
   this.forwardStart = null;
@@ -35,7 +37,7 @@ export class Trackball {
  }
 
  tick(now) {
-  if (this.phase === 'forward' &&
+  if ((this.phase === 'backswing' && now - this.lastMotion > this.config.timeoutMs) || this.phase === 'forward' &&
       (now - this.lastMotion > 160 || now - this.forwardStart > this.config.timeoutMs)) {
    this.reset(this.lastMotion);
   }
@@ -58,6 +60,12 @@ export class Trackball {
   const dy = y * this.config.sensitivity;
   const forward = -dy > 0 && -dy >= Math.abs(dx) * .65;
   if (!forward) {
+   if (dy > 2 && dy >= Math.abs(dx) * .65 && this.phase !== 'forward') {
+    this.phase = 'backswing';
+    this.backX += dx;
+    this.backY += dy;
+    return null;
+   }
    const sideways = Math.abs(dx) > Math.abs(dy);
    if (!sideways && Math.abs(dy) <= 2) return null;
    if (this.phase === 'forward') {
@@ -68,7 +76,7 @@ export class Trackball {
    return sideways ? {kind: 'position', dx} : null;
   }
 
-  if (this.phase === 'ready') {
+  if (this.phase === 'ready' || this.phase === 'backswing') {
    this.phase = 'forward';
    this.forwardStart = now;
   }
@@ -82,8 +90,8 @@ export class Trackball {
   const power = clamp(speed / this.config.powerSpeed, 0, 1);
   const angle = Math.atan2(this.forwardX, this.forwardY);
   const aim = clamp(angle * .10, -.10, .10);
-  const finishAngle = Math.atan2(dx, -dy);
-  const spin = clamp((finishAngle - angle) * this.config.spin, -1, 1);
+  // Negative back X (A) gives positive english: clockwise, curling right.
+  const spin = this.backY && this.backX ? clamp(-this.backX / this.backY, -1, 1) * this.config.spin : 0;
   this.preview = {power, aim, spin, speed, forward: {x: this.forwardX, y: -this.forwardY}};
   if (this.firstInterval !== null && this.forwardY >= this.config.releaseGate) {
    this.phase = 'spent';
@@ -91,4 +99,12 @@ export class Trackball {
   }
   return {kind: 'preview', ...this.preview};
  }
+}
+
+// Pad 0 panel: bottom row first. Explicit bindings are handled by the controller.
+export const P1_LAYOUT=Object.freeze({0:'shotKey',1:'surfaceKey',2:'NudgeLeft',3:'NudgeRight',5:'resetKey',8:'menuKey',9:'menuKey'});
+export const PLACEMENT_STEP=.1;
+export function p1Action(index,config,menu=false){
+ if(menu)return ({0:config.confirmKey,1:config.menuKey,2:config.resetKey,3:config.confirmKey,4:config.menuKey,5:config.resetKey,8:config.menuKey,9:config.confirmKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[index];
+ const action=P1_LAYOUT[index];return config[action]||action;
 }

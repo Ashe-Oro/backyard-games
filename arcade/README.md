@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — 0.2.14
+Backyard Cornhole Arcade — 0.2.15
 ================================================
 
 Offline Cornhole for one shared trackball. Practice, two players, or the
@@ -7,14 +7,30 @@ build under Ports. The website and its saves are separate.
 
 PLAY
 ----
-Roll sideways to place the ready bag. Roll forward to throw, angling left or
-right to steer the bag. Faster forward movement supplies more power. Bag
-rotation affects landing, not airborne curvature.
+Optional backswing: A (back-left) sets clockwise spin and slides right;
+C (back-right) sets counterclockwise spin and slides left. B (straight back)
+or no backswing gives zero spin. Lean scales spin continuously to maximum at
+a diagonal. Forward 1 (left) and 3 (right) still aim left and right; forward
+speed sets power. Spin rotates the bag and curls its landing slide, not its
+flight. Sideways rolls can still place the bag. Backspin intent expires after
+2.5 seconds idle or on reset/turn change. Back-to-forward can pause briefly.
 
-B / raw button 3: select in menus; cycle Slider / Normal / Kobe in play.
-A / raw button 4: back in menus; flip Slick / Sticky in play.
-Raw 2 or 5: Reset Bag in play. This is remappable; confirm the physical label.
-Start: select in menus; pause in play. Select: pause. Either player panel works.
+| P1 button | Index | In play | In menus |
+|---|---:|---|---|
+| Bottom 1 | 0 | Cycle Slider / Normal / Kobe | Confirm |
+| Bottom 2 | 1 | Cycle Slick / Sticky | Back / menu |
+| Bottom 3 | 2 | Position left, 0.10 step | No action |
+| Bottom 4 | 3 | Position right, 0.10 step | Confirm |
+| Top 1 | 4 | Unbound | Back / menu |
+| Top 2 | 5 | Reset ready bag and stroke to center | No action |
+| Top 3 | 6 | Unbound | No action |
+| Top 4 | 7 | Unbound | No action |
+
+Start/Select indices 8/9 retain pause/confirm behavior. Explicit Cabinet Setup
+bindings override defaults. Other pads retain their prior maps. One action per
+press; holding a button does not repeat. Position clamps to [-0.45, 0.45] with
+70 ms easing. Reset leaves thrown bags and scores alone.
+
 Keyboard fallback: H height, F surface, R reset, Enter select, Escape pause.
 F2 opens Cabinet Setup. Alt+F4 exits.
 
@@ -26,7 +42,8 @@ visible; round totals recount as bags settle.
 
 CALIBRATION
 -----------
-Bindings and sensitivity carry over. Older profiles get the wider power range,
+Bindings and sensitivity carry over. Legacy spin OFF settings enable backswing
+spin on load; Cabinet Setup now labels this Backswing spin. Older profiles get the wider power range,
 with a default 220-count stroke and 6,500 counts/sec for full power. Both
 stroke length and full-power speed can be adjusted in Cabinet Setup without
 resetting bindings. Calibrate Trackball measures a comfortable full stroke as
@@ -66,8 +83,8 @@ Browser/Electron regression scripts live in tests/. They accept NODE_PATH for
 the test driver, ELECTRON_PATH for the packaged app, CHROME_PATH for Chromium,
 and BASE_URL for the generated site. No test fixture is included in the game.
 
-The build generates an isolated offline copy under arcade/dist/site. Canonical
-web files are never edited. Vercel excludes the whole arcade directory. Cabinet
+The build generates an isolated offline copy under arcade/dist/site. The build never edits canonical
+web files. Vercel excludes the whole arcade directory. Cabinet
 preferences use the standalone app's own profile. Preserve that profile during
 updates so calibration, mappings, music choice and tournament progress survive.
 
