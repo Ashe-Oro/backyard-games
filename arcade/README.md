@@ -43,11 +43,16 @@ visible; round totals recount as bags settle.
 CALIBRATION
 -----------
 Bindings and sensitivity carry over. Legacy spin OFF settings enable backswing
-spin on load; Cabinet Setup now labels this Backswing spin. Older profiles get the wider power range,
-with a default 220-count stroke and 6,500 counts/sec for full power. Both
-stroke length and full-power speed can be adjusted in Cabinet Setup without
-resetting bindings. Calibrate Trackball measures a comfortable full stroke as
-approximately 70% power.
+spin on load; Cabinet Setup labels this Backswing spin. Human throw power is
+linear in accumulated forward trackball counts after sensitivity: 0 = 0%,
+200 = 50%, and 400 = 100%, regardless of report speed. Full-power counts are
+fixed at 400; Release counts defaults to 400 and is adjustable from 400–1200.
+A throw requires multiple reports at distinct timestamps, then one shot per gesture.
+Old speed-based powerSpeed values are discarded and release gates below 400
+are raised to 400 without resetting button bindings or sensitivity.
+Calibrate Trackball records a reference stroke through 400 current counts and
+adjusts sensitivity so its measured distance (including the final report) maps
+to 400 counts / full power. It does not measure counts per second.
 
 Slow sideways motion tolerates small downward sensor noise and eases into its
 position. A quiet period after each turn prevents residual motion launching

@@ -1,4 +1,4 @@
-import {Trackball,settings,legacySettings,p1Action,PLACEMENT_STEP} from './trackball.mjs';
+import {Trackball,FULL_POWER_COUNTS,settings,legacySettings,p1Action,PLACEMENT_STEP} from './trackball.mjs';
 const host=window.__arcadeHost;
 if(!host||!document.documentElement.hasAttribute('data-backyard-arcade'))throw new Error('Arcade controls require the standalone Cornhole build.');
 const {shotPowerColor}=await import('/yard-games/power-arrow.js');
@@ -28,8 +28,8 @@ const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <section id="arcade-settings" class="arcade-card" hidden><h2>CABINET SETUP</h2>
 <div class="arcade-options">
 <label>Sensitivity</label><div><button data-adjust="sensitivity" data-by="-.25">−</button><output id="sensitivity-value"></output><button data-adjust="sensitivity" data-by=".25">+</button></div>
-<label>Full-power speed</label><div><button data-adjust="powerSpeed" data-by="-200">−</button><output id="range-value"></output><button data-adjust="powerSpeed" data-by="200">+</button></div>
-<label>Stroke length</label><div><button data-adjust="releaseGate" data-by="-20">−</button><output id="gate-value"></output><button data-adjust="releaseGate" data-by="20">+</button></div>
+<label>Full-power counts</label><output id="range-value"></output>
+<label>Release counts (minimum 400)</label><div><button data-adjust="releaseGate" data-by="-20">−</button><output id="gate-value"></output><button data-adjust="releaseGate" data-by="20">+</button></div>
 <label>Backswing spin</label><div><button data-adjust="spin" data-by="-.15">−</button><output id="spin-value"></output><button data-adjust="spin" data-by=".15">+</button></div>
 <label>Wind</label><div><button id="arcade-wind">CALM</button></div>
 <label>Throw style</label><button data-bind="shotKey"></button><label>Bag surface</label><button data-bind="surfaceKey"></button><label>Reset bag</label><button data-bind="resetKey"></button><label>Confirm</label><button data-bind="confirmKey"></button><label>Pause / menu</label><button data-bind="menuKey"></button></div>
@@ -37,14 +37,14 @@ const root=document.createElement('div');root.id='arcade-ui';root.innerHTML=`
 <pre id="arcade-diagnostics" aria-live="off"></pre></section>
 <div id="arcade-power" hidden><span id="arcade-power-label">POWER</span><div role="meter" aria-label="Throw power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="arcade-power-track"><i id="arcade-power-fill"></i></div></div>
 <div id="arcade-prompt" hidden><span id="arcade-state">↓</span><small>A ↙ spin right · B ↓ no spin · C ↘ spin left<br>1 ↖ aim left · 3 ↗ aim right<br>P1 bottom: HEIGHT · SURFACE · LEFT · RIGHT; top 2: RESET</small><span id="arcade-height">NORMAL</span><span id="arcade-surface">SLICK</span><button id="arcade-reset-bag">RESET BAG</button></div>
-<div id="arcade-calibration" class="arcade-card" hidden><h2>↑</h2><p>Roll forward firmly.</p><button id="arcade-calibration-cancel" class="secondary">CANCEL</button></div>
+<div id="arcade-calibration" class="arcade-card" hidden><h2>↑</h2><p>Roll a full-power reference stroke (at least 400 current counts).</p><button id="arcade-calibration-cancel" class="secondary">CANCEL</button></div>
 <div id="arcade-error" class="arcade-card" hidden><h2>TRACKBALL NOT CAPTURED</h2><p id="arcade-error-copy"></p><button id="arcade-error-back">BACK</button></div>`;
 document.body.append(root);
 let windy=false,capturing=false,nativeInput=false,nativeStatus=null;
 function save(){config=settings(config);machine.config=config;localStorage.setItem('backyard-arcade-v6',JSON.stringify(config));renderSettings();}
 function renderSettings(){
  $('gate-value').textContent=Math.round(config.releaseGate);
- $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=Math.round(config.powerSpeed);$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
+ $('sensitivity-value').textContent=config.sensitivity.toFixed(2)+'×';$('range-value').textContent=FULL_POWER_COUNTS+' counts';$('spin-value').textContent=config.spin===0?'OFF':config.spin.toFixed(2);
  for(const b of root.querySelectorAll('[data-bind]'))b.textContent=binding===b.dataset.bind?'PRESS BUTTON…':config[b.dataset.bind];
  $('arcade-wind').textContent=windy?'WIND':'CALM';
 }
@@ -92,7 +92,7 @@ for(const b of root.querySelectorAll('[data-bind]'))b.onclick=()=>{binding=b.dat
 function resetBag(){if(menuOpen||host.state.phase!=='aim'||host.state.vs==='cpu'&&host.state.thrower===1)return;machine.reset(performance.now());placementTarget=0;host.resetBag();}
 $('arcade-reset-bag').onclick=resetBag;
 $('arcade-calibrate').onclick=()=>{
- calibration=new Trackball(config);calibration.reset(performance.now());settingsOpen=false;menuOpen=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=false;capture();
+ calibration=new Trackball({...config,releaseGate:FULL_POWER_COUNTS});calibration.reset(performance.now());settingsOpen=false;menuOpen=false;$('arcade-settings').hidden=true;$('arcade-calibration').hidden=false;capture();
 };
 $('arcade-calibration-cancel').onclick=()=>{calibration=null;unlock();showSettings();};
 function feed(dx,dy,now=performance.now()){
@@ -100,7 +100,8 @@ function feed(dx,dy,now=performance.now()){
  if(calibration){
   const stroke=calibration.feed(dx,dy,now);
   if(stroke?.kind==='throw'){
-   config.powerSpeed=stroke.speed/.7;
+   // Convert the measured post-sensitivity distance into a 400-count reference.
+   config.sensitivity*=FULL_POWER_COUNTS / -stroke.forward.y;
    save();
    calibration=null;
    menuOpen=true;

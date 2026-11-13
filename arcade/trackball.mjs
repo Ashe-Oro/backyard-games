@@ -1,20 +1,18 @@
 // Hardware counts, never cursor position or render-frame distance.
-export const DEFAULTS=Object.freeze({sensitivity:1,powerSpeed:6500,releaseGate:220,spin:1,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
+export const FULL_POWER_COUNTS = 400;
+export const DEFAULTS=Object.freeze({sensitivity:1,releaseGate:FULL_POWER_COUNTS,spin:1,quietMs:450,timeoutMs:2500,shotKey:'KeyH',surfaceKey:'KeyF',menuKey:'Escape',confirmKey:'Enter',resetKey:'KeyR'});
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 export function settings(value={}){
  const out={...DEFAULTS};
- for(const [key,lo,hi] of [['sensitivity',.25,4],['powerSpeed',400,10000],['releaseGate',20,400],['spin',0,1],['quietMs',200,1200],['timeoutMs',1000,5000]]){const n=Number(value[key]);if(Number.isFinite(n))out[key]=clamp(n,lo,hi);}
+ for(const [key,lo,hi] of [['sensitivity',.25,4],['releaseGate',FULL_POWER_COUNTS,1200],['spin',0,1],['quietMs',200,1200],['timeoutMs',1000,5000]]){const n=Number(value[key]);if(Number.isFinite(n))out[key]=clamp(n,lo,hi);}
  for(const key of ['shotKey','surfaceKey','menuKey','confirmKey','resetKey'])if(typeof value[key]==='string'&&/^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Enter|Escape|Space|Tab|F[1-9]|F1[0-2]|Pad[0-7]Button(?:[0-9]|[1-5][0-9]|6[0-3]))$/.test(value[key]))out[key]=value[key];
  // Never allow a cabinet mapping to shadow another action or the settings key.
  if(new Set([out.shotKey,out.surfaceKey,out.menuKey,out.confirmKey,out.resetKey,'F2']).size!==6){out.shotKey=DEFAULTS.shotKey;out.surfaceKey=DEFAULTS.surfaceKey;out.menuKey=DEFAULTS.menuKey;out.confirmKey=DEFAULTS.confirmKey;out.resetKey=DEFAULTS.resetKey;}
  return out;
 }
-// Distance calibration cannot measure forward speed. Keep bindings and sensitivity.
+// Retire speed calibration; settings raises old release gates and preserves bindings.
 export function legacySettings(value = {}) {
- const releaseGate = value.releaseGate === 48 || value.releaseGate === 80
-  ? DEFAULTS.releaseGate : value.releaseGate;
- const powerSpeed = Math.max(DEFAULTS.powerSpeed, settings(value).powerSpeed);
- return settings({...value, powerSpeed, releaseGate, spin:1});
+ return settings({...value, spin:1});
 }
 
 export class Trackball {
@@ -87,7 +85,7 @@ export class Trackball {
   const elapsed = now - this.forwardStart;
   if (this.firstInterval === null && elapsed > 0) this.firstInterval = clamp(elapsed, 1, 16);
   const speed = this.firstInterval === null ? 0 : this.forwardY * 1000 / (elapsed + this.firstInterval);
-  const power = clamp(speed / this.config.powerSpeed, 0, 1);
+  const power = clamp(this.forwardY / FULL_POWER_COUNTS, 0, 1);
   const angle = Math.atan2(this.forwardX, this.forwardY);
   const aim = clamp(angle * .10, -.10, .10);
   // Negative back X (A) gives positive english: clockwise, curling right.

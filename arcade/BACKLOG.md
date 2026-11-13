@@ -9,7 +9,7 @@ Working candidate: **0.2.12**. Installed cabinet gameplay remains **0.2.11**, wi
 - Reset Bag action, keyboard R and remappable cabinet binding; raw buttons 2/5 are fallback candidates. Resets only the ready bag and aim.
 - Live and five-second last-shot power gauge beside the bag; same physical power conversion and color scale as the arrow.
 - Slow lateral placement tolerates downward sensor noise; lower placement gain and short easing.
-- Longer drive-style stroke candidate: 220 counts instead of 80, fresh full-power speed 4,000 counts/sec. Existing calibration retained. Stroke length adjustable in setup.
+- Count-based stroke: 400 counts for full power, default release at 400 counts (adjustable 400–1200). Old speed calibration retired; bindings and sensitivity retained. Physical cabinet playtest pending.
 - Slick landing retention .32 and friction .43; all six arc/surface combinations retain usable windows. Sticky unchanged.
 - Keg and guests relocated right of grill, top pump/hose/tap, corrected face-to-tap inverted pose.
 - Chess opening with alternating lifted pieces and reaching players.
