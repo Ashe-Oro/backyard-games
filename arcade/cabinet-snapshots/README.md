@@ -10,3 +10,5 @@ These are not the git 0.2.14 arcade sources. They came from the live Batocera in
 - `0.2.21/` adds five randomly selected background beer pong matches, with no immediate variation repeat and a coin-flipped comeback winner. Cornhole gameplay and controls are unchanged. Installed on the cabinet 2026-11-14 1:12 PM ET over 0.2.20. Rollback: `/userdata/system/backyard-games/.backup-v0.2.20-20261114-131236`.
 
 Do not push licensed or packaged Electron binaries; these snapshots contain only the app resources (including the already-bundled vendor three.js and font).
+
+- `0.2.22/` removes the long bottom-center controls bar, adds a compact bottom-right P1 button legend (KEYS tucks or pops it and remembers the choice; top/bottom 4 no longer reset), hides diagnostics, shortens last-shot power from five to three seconds, and raises default full-power speed from 3300 to 4000 with factory-profile migration. Install: pending cabinet install.
