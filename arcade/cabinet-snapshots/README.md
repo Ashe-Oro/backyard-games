@@ -18,3 +18,5 @@ Do not push licensed or packaged Electron binaries; these snapshots contain only
 - `1.0.1/` raises default full-power speed from 5600 to 7560 (+35%) with factory-profile migration including 5600; removes the blue cooler prop. Install timestamp: pending. Rollback path: pending.
 
 - `1.0.2/` lowers default full-power speed from 7560 to 6048 (−20%) with factory-profile migration including 7560 and 5600. All other gameplay stays as in 1.0.1, including the removed blue cooler. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.3/` adds a small upper-right running-version label (`v` + installed package version), visible during gameplay. Install timestamp: pending. Rollback path: pending.
