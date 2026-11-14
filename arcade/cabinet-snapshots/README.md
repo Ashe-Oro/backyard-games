@@ -16,3 +16,5 @@ Do not push licensed or packaged Electron binaries; these snapshots contain only
 - `0.2.23/` raises default full-power speed from 4000 to 5600 (+40%) with factory-profile migration including 4000; adds on-board spin curl (A clockwise/right, C counterclockwise/left) and a left spinner legend; and replaces the sideline 10–2 beer pong script with a steady 10–7 blue win plus rim-ricochet misses. Installed on the cabinet 2026-11-14 2:03 PM ET over 0.2.22. Rollback: `/userdata/system/backyard-games/.backup-v0.2.22-20261114-140357`.
 
 - `1.0.1/` raises default full-power speed from 5600 to 7560 (+35%) with factory-profile migration including 5600; removes the blue cooler prop. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.2/` lowers default full-power speed from 7560 to 6048 (−20%) with factory-profile migration including 7560 and 5600. All other gameplay stays as in 1.0.1, including the removed blue cooler. Install timestamp: pending. Rollback path: pending.
