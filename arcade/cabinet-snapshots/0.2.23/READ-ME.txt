@@ -1,0 +1,35 @@
+Backyard Cornhole Arcade — 0.2.23
+================================
+
+PLAY
+Roll forward to throw. Roll faster for more power; a long slow roll stays soft.
+Aim where you roll: 1 left, 3 right.
+Backswing is optional: back-left spins right, back-right spins left.
+
+BUTTONS
+TOP     HEIGHT · SURFACE · RESET · KEYS
+BOTTOM  LEFT · RIGHT · RESET · KEYS
+The bottom-right red-button legend matches the panel. KEYS (top or bottom
+right) tucks or pops the legend; your choice is remembered. SURFACE switches
+SLICK / STICKY. The tiny readout shows your current height and surface.
+Height cycles Kobe / Slider / Normal. Use the bottom buttons to line up;
+sideways rolls do not move the bag. RESET centers your bag and clears windup.
+
+PICK A GAME
+Practice, share the trackball in 2 PLAYER, or take on eight tournament rivals.
+Pause to resume, change music, or open CABINET SETUP.
+Keyboard: H height, F surface, R reset, Enter select, Escape pause, F2 setup.
+
+SETUP
+Adjust FULL POWER or choose CALIBRATE TRACKBALL.
+Roll forward hard, like a full-power throw.
+RESET SETTINGS restores the starting setup.
+
+NEW THIS ROUND
+Last-shot power fades sooner, after three seconds.
+A full-power roll now needs a little more speed.
+
+SPINNER
+Pull back toward A for clockwise spin and a right hook; C spins left.
+Roll forward toward 1 to aim left or 3 to aim right. Straight back: no spin.
+SLICK carries a longer hook; STICKY stops sooner. See the small left legend.

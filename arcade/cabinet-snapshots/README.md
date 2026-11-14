@@ -12,3 +12,5 @@ These are not the git 0.2.14 arcade sources. They came from the live Batocera in
 Do not push licensed or packaged Electron binaries; these snapshots contain only the app resources (including the already-bundled vendor three.js and font).
 
 - `0.2.22/` removes the long bottom-center controls bar, adds a compact bottom-right P1 button legend (KEYS tucks or pops it and remembers the choice; top/bottom 4 no longer reset), hides diagnostics, shortens last-shot power from five to three seconds, and raises default full-power speed from 3300 to 4000 with factory-profile migration. Installed on the cabinet 2026-11-14 1:30 PM ET over 0.2.21. Rollback: `/userdata/system/backyard-games/.backup-v0.2.21-20261114-133056`.
+
+- `0.2.23/` raises default full-power speed from 4000 to 5600 (+40%) with factory-profile migration including 4000; adds on-board spin curl (A clockwise/right, C counterclockwise/left) and a left spinner legend; and replaces the sideline 10–2 beer pong script with a steady 10–7 blue win plus rim-ricochet misses. Installed on the cabinet 2026-11-14 2:03 PM ET over 0.2.22. Rollback: `/userdata/system/backyard-games/.backup-v0.2.22-20261114-140357`.
