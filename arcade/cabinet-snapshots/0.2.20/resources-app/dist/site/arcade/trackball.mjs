@@ -97,9 +97,9 @@ export class Trackball {
    if (this.phase === 'forward') {
     this.reset(now);
     this.phase = 'ready';
-    return sideways ? {kind: 'position', dx} : {kind: 'cancel'};
+    return sideways ? null : {kind: 'cancel'};
    }
-   return sideways ? {kind: 'position', dx} : null;
+   return null;
   }
 
   if (this.phase === 'ready' || this.phase === 'backswing') {
@@ -142,7 +142,7 @@ export class Trackball {
 
 // Pad 0 Twin USB grid: top 0/1/2/6, bottom 3/4/5/7 (4/6/7 inferred).
 export const P1_LAYOUT=Object.freeze({0:'shotKey',1:'surfaceKey',2:'resetKey',3:'NudgeLeft',4:'NudgeRight',5:'resetKey',6:'resetKey',7:'resetKey',8:'menuKey',9:'menuKey'});
-export const PLACEMENT_STEP=.1;
+export const PLACEMENT_STEP=.05;
 export function p1Action(index,config,menu=false){
  if(menu)return ({0:config.confirmKey,1:config.menuKey,2:config.resetKey,3:config.confirmKey,4:config.menuKey,5:config.resetKey,8:config.menuKey,9:config.confirmKey,12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'})[index];
  const action=P1_LAYOUT[index];return config[action]||action;

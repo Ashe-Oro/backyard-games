@@ -7,7 +7,8 @@ build under Ports. The website and its saves are separate.
 
 PLAY
 ----
-Roll sideways to place the ready bag. Roll forward to throw, angling left or
+The spinner no longer slides the bag; use bottom 1/2 to nudge.
+Roll forward to throw, angling left or
 right to aim: forward-left (1) aims left; forward-right (3) aims right.
 Power is linear in peak forward speed: sensitivity-adjusted hardware counts/sec
 measured over a sliding 80 ms window, capped at 100%. The opening report has no
@@ -34,8 +35,8 @@ Player 1 / Pad 0, Twin USB Gamepad (0810:e001, /dev/input/event8):
   Top 2 / index 1: flip Slick / Sticky.
   Top 3 / index 2: Reset Bag.
   Top 4 / index 6: Reset Bag.
-  Bottom 1 / index 3: nudge position left by 0.1.
-  Bottom 2 / index 4: nudge position right by 0.1.
+  Bottom 1 / index 3: nudge position left by 0.05.
+  Bottom 2 / index 4: nudge position right by 0.05.
   Bottom 3 / index 5: Reset Bag.
   Bottom 4 / index 7: Reset Bag.
 Indices 0, 1, 2, 3, 5 are confirmed by Ashe's live presses. Top 4 = index 6,
@@ -76,8 +77,7 @@ Sensitivity, Wind, Stroke length, Backswing spin, bindings, Reset Settings and
 F2 remain available. Reset Settings restores speed 3300 counts/sec, stroke
 length 400 counts, spin 1 and the other factory settings.
 
-Slow sideways motion tolerates small downward sensor noise and eases into its
-position. A quiet period after each turn prevents residual motion launching
+Sideways spinner rolls are ignored for placement. A quiet period after each turn prevents residual motion launching
 the next bag. No device is grabbed and no global controller mapping is edited.
 
 NATIVE BATOCERA PACKAGE

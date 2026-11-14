@@ -116,7 +116,6 @@ function feed(dx,dy,now=performance.now()){
 }
 function handleStroke(result,now){
  if(!result)return;
- if(result.kind==='position'){if(placementTarget===null)placementTarget=host.state.position[host.state.thrower];placementTarget=Math.max(-.45,Math.min(.45,placementTarget+result.dx*.0008));}
  if(result.kind==='preview')host.preview(result);
  if(result.kind==='throw'){
   lastShot={...result,power:host.power(result.power),at:now};diag.lastShot=lastShot;

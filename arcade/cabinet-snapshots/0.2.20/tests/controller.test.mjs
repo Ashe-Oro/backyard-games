@@ -52,7 +52,7 @@ test('polled Pad 0 uses the new map and rising edges; other pads keep their tabl
 
 test('position nudges cancel windup, clamp placement and cannot throw',()=>{
  const h=harness();h.context.machine.tick(500);h.context.machine.feed(0,-100,510);
- h.api.nudgePosition(-1);assert.equal(h.api.target,-.1);assert.equal(h.context.machine.phase,'settling');
+ h.api.nudgePosition(-1);assert.equal(h.api.target,-.05);assert.equal(h.context.machine.phase,'settling');
  for(let i=0;i<10;i++)h.api.nudgePosition(-1);assert.equal(h.api.target,-.45);
  for(let i=0;i<20;i++)h.api.nudgePosition(1);assert.equal(h.api.target,.45);
  assert(h.actions.every(a=>a==='hide'));
@@ -103,4 +103,23 @@ test('idle throw events reach the host through the same handler as input release
  context.result=machine.tick(690);runInNewContext('handleStroke(result,690);',context);
  assert.equal(shots.length,1);assert.equal(shots[0].power,.5);assert.equal(context.lastShot.at,690);
  context.result=machine.tick(700);runInNewContext('handleStroke(result,700);',context);assert.equal(shots.length,1);
+});
+
+test('sideways spinner feeds leave controller placement unchanged',()=>{
+ const h=harness();
+ h.context.calibration=null;
+ h.context.host.throw=()=>assert.fail('sideways roll must not throw');
+ h.context.host.preview=()=>assert.fail('sideways roll must not preview');
+ const input=source.slice(source.indexOf('function feed('),source.indexOf("document.addEventListener('mousemove'"));
+ runInNewContext(input+'\nglobalThis.spinner={feed,handleStroke,get target(){return placementTarget;},set target(value){placementTarget=value;}};',h.context);
+ h.context.machine.tick(500);
+ for(const target of [null,-.2,.15]){
+  h.context.spinner.target=target;
+  for(let i=0;i<100;i++)h.context.spinner.feed(i%2?20:-20,-2,510+i*10);
+  assert.equal(h.context.spinner.target,target);
+  assert.deepEqual(h.position,[0,0]);
+  h.context.machine.reset(0);h.context.machine.tick(500);
+ }
+ h.context.spinner.handleStroke({kind:'position',dx:100},1600);
+ assert.equal(h.context.spinner.target,.15);
 });

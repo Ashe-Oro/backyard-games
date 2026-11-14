@@ -10,9 +10,9 @@ function stroke(m, dx=0, interval=10, start=510, dy=8) {
  return shot;
 }
 test('settings bound speed and counts and reject conflicting or malformed mappings',()=>{const c=settings({sensitivity:Infinity,powerSpeed:-100,releaseGate:9999,shotKey:'../../file',menuKey:'F2'});assert.equal(c.sensitivity,1);assert.equal(c.powerSpeed,400);assert.equal(settings({powerSpeed:99999}).powerSpeed,10000);assert.equal(settings().powerSpeed,3300);assert.equal(DEFAULTS.powerSpeed,3300);assert.equal(c.releaseGate,1200);assert.equal(c.shotKey,'KeyH');assert.equal(c.menuKey,'Escape');assert.equal(settings({releaseGate:20}).releaseGate,20);assert(!('mode' in settings()));});
-test('sideways placement and backward rolls cannot throw',()=>{
+test('sideways and backward rolls cannot place or throw',()=>{
  const m=ready();
- for(let i=0;i<100;i++)assert.equal(m.feed(15,-2,510+i*10)?.kind,'position');
+ for(let i=0;i<100;i++)assert.equal(m.feed(15,-2,510+i*10),null);
  for(let i=0;i<20;i++)assert.equal(m.feed(0,20,1510+i*10),null);
  assert.equal(m.phase,'backswing');
 });
@@ -126,7 +126,7 @@ test('P1 eight-button play map, menu aliases and Start/Select',()=>{
  const c=settings();
  assert.deepEqual(Array.from({length:8},(_,i)=>p1Action(i,c)),['KeyH','KeyF','KeyR','NudgeLeft','NudgeRight','KeyR','KeyR','KeyR']);
  assert.deepEqual(Array.from({length:8},(_,i)=>p1Action(i,c,true)),['Enter','Escape','KeyR','Enter','Escape','KeyR',undefined,undefined]);
- assert.equal(PLACEMENT_STEP,.1);
+ assert.equal(PLACEMENT_STEP,.05);
  assert.deepEqual([8,9].map(i=>p1Action(i,c)),['Escape','Escape']);
  assert.deepEqual([8,9].map(i=>p1Action(i,c,true)),['Escape','Enter']);
  assert.equal(settings().spin,1);assert.equal(legacySettings({spin:0}).spin,1);
@@ -188,4 +188,16 @@ test('idle-release power and one-shot behavior are independent of render cadence
   assert.equal(released.length,1);shots.push(released[0]);
  }
  assert.deepEqual(shots[0],shots[1]);assert.deepEqual(shots[1],shots[2]);
+});
+
+test('sideways rolls preserve backswing spin and abort incomplete forward strokes',()=>{
+ const back=ready();back.feed(-20,20,510);
+ for(let i=0;i<10;i++)assert.equal(back.feed(20,0,520+i*10),null);
+ assert.equal(back.phase,'backswing');
+ const shot=stroke(back,4,10,620);assert.equal(shot.spin,1);assert(shot.aim>0);
+ const m=ready();assert.equal(m.feed(0,-10,510).kind,'preview');
+ assert.equal(m.feed(20,0,520),null);assert.equal(m.phase,'ready');
+ assert.equal(m.preview,null);assert.equal(m.forwardY,0);assert.equal(m.hasSample,false);
+ for(let i=0;i<20;i++)assert.equal(m.feed(-20,0,530+i*10),null);
+ assert.equal(m.tick(1000),'ready');
 });

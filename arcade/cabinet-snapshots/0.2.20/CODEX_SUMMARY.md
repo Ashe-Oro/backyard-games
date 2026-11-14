@@ -1,10 +1,19 @@
 # Backyard Cornhole Arcade 0.2.20
 
 Copied the verified 0.2.19 cabinet snapshot; the older arcade source tree was not used.
-Local snapshot only: cabinet installation pending; no push, cabinet access, purchases,
-licensed binary edits, or Electron runtime edits.
+The first 0.2.20 build (P1 map + 3300 only) was already installed. This commit
+completes the remaining 0.2.20 changes; their cabinet installation is pending.
+First-install rollback: `/userdata/system/backyard-games/.backup-v0.2.19-20261114-130121`.
+No push, cabinet access, purchases, licensed binary edits, or Electron runtime edits.
 
 ## Changes
+
+- Button nudge step halved: 0.1 → 0.05. Clamps remain [-0.45, 0.45];
+  nudges cancel windup, never throw, and retain one action per press.
+- Spinner lateral `{kind:'position'}` events and their controller handler are
+  gone. Sideways rolls in ready/backswing return null; an incomplete forward
+  stroke resets on a sideways abort without sliding. Completed forward strokes
+  retain their release behavior, forward aim, backswing spin and 80 ms power.
 
 - P1 play indices 0–9: height, surface, reset, left, right, reset, reset,
   reset, menu, menu. Menus, other pads, explicit bindings, and keyboard fallback stay intact.
@@ -25,12 +34,13 @@ licensed binary edits, or Electron runtime edits.
 
 ## Validation
 
-All 29 tests passed: controller 6, controls 1, trackball 22. Ran each file with
-`node tests/<name>.test.mjs` and the three-file `node --test tests/*.test.mjs`
-runner. Both edited JavaScript files passed `node --check` (Node v24.22.1).
-Tests cover native/polled rising edges, menus/other pads, placement/reset,
-v1–v9 factory and custom speed loading, calibration, measured speed versus
-power, linear scaling and unchanged gesture behavior.
+All 31 individual tests passed: controller 7, controls 1, trackball 23.
+`node --test tests/*.test.mjs` passed all three snapshot test files. Controller
+and trackball files were also run directly to verify individual test counts.
+Both edited runtime JavaScript files and both edited test files passed
+`node --check`. Tests cover unchanged P1 mapping and 3300 power/migrations,
+0.05 nudges with clamps/cancel/no-throw, sideways feeds leaving controller
+placement unchanged, incomplete-stroke aborts, forward aim and backswing spin.
 
 ## SHA-256 comparison against 0.2.19
 
