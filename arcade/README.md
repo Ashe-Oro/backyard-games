@@ -1,4 +1,4 @@
-Backyard Cornhole Arcade — 0.2.15
+Backyard Cornhole Arcade — 1.0.0
 ================================================
 
 Offline Cornhole for one shared trackball. Practice, two players, or the
