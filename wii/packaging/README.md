@@ -51,7 +51,8 @@ No ADB or hardware operations are part of building or smoke testing.
 
 Verified on this Linux box on 2026-11-15 with devkitPPC GCC 16.2.0, libogc
 3.2.1, WIT 3.01a (Debian 3.01a-5), and Dolphin 2503. The ten-second ISO smoke
-displayed the title, frame counter 563 and approximately 60 FPS. Evidence and
+displayed the title on the requested solid screen. The stub selects NTSC / 60 Hz
+and holds a static framebuffer; its FPS overlay is not a throughput test. Evidence and
 the detailed report are in `/workspace/docs/cornhole/wii-port/pr/smoke/`.
 The supplied-ELF path was also checked using the stub ELF in a separate output
 directory. Android Vulkan and real Wii Remotes remain hardware checks for Retro.
