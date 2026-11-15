@@ -1,0 +1,5 @@
+{
+  "$comment": "Structured drift approvals. A change to common.json or an override value must add an entry here: {field, platform, old, new, baseline, pr}. Changelog text is documentation, not an exception mechanism.",
+  "schema": 1,
+  "approvals": []
+}

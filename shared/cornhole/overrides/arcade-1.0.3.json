@@ -1,0 +1,25 @@
+{
+  "$comment": "Arcade 1.0.3 values that intentionally differ from web. Read from the pinned, released cabinet snapshot (not the older top-level arcade/ sources). This is the Wii baseline.",
+  "schema": 1,
+  "platform": "arcade-1.0.3",
+  "files": {
+    "game": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/cornhole/index.html",
+    "controls": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/cornhole/controls.mjs",
+    "spin": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/cornhole/spin.mjs",
+    "trackball": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/arcade/trackball.mjs"
+  },
+  "overrides": [
+    { "name": "SLICK_MU", "value": 0.43, "snippet": "slick: { mu: 0.43, ms: 0.60, keep: 0.32 }", "file": "game" },
+    { "name": "SLICK_MS", "value": 0.60, "snippet": "slick: { mu: 0.43, ms: 0.60, keep: 0.32 }", "file": "game" },
+    { "name": "SLICK_KEEP", "value": 0.32, "snippet": "slick: { mu: 0.43, ms: 0.60, keep: 0.32 }", "file": "game" },
+    { "name": "REL_Y", "value": 0.98, "unit": "m", "snippet": "const REL_Y = .98, REL_Z = -0.45;", "file": "game" },
+    { "name": "CAMERA_FOV", "value": "18 + 6 * portrait", "unit": "deg", "snippet": "camera.fov = 18 + 6 * portrait;", "file": "game" },
+    { "name": "AIR_SPIN_RATE", "value": 14, "unit": "rad/s at full spin", "snippet": "export const AIR_SPIN_RATE = 14;", "file": "spin" },
+    { "name": "FLIGHT_CURL", "value": 0, "note": "no curve in flight; spin curls only after landing", "snippet": "b.spin = spin * AIR_SPIN_RATE; b.curl = 0;", "file": "game" },
+    { "name": "CURL", "value": { "slick": { "acceleration": 3.2, "decay": 1.4 }, "sticky": { "acceleration": 1.5, "decay": 4.5 } }, "snippet": "export const CURL = Object.freeze({slick: {acceleration: 3.2, decay: 1.4}, sticky: {acceleration: 1.5, decay: 4.5}});", "file": "spin" },
+    { "name": "HUMAN_SPIN", "value": true, "note": "human spin is passed to launch()", "snippet": "launch(b, releaseX(team), actualPower, M.aim, drift, M.arc, M.spin);", "file": "game" },
+    { "name": "POWER_INPUT", "value": "swing-speed", "note": "peak trackball speed over a short window, never stroke distance", "snippet": "export const SPEED_WINDOW_MS = 80;", "file": "trackball" },
+    { "name": "SPEED_WINDOW_MS", "value": 80, "unit": "ms", "snippet": "export const SPEED_WINDOW_MS = 80;", "file": "trackball" },
+    { "name": "POWER_SPEED_FULL", "value": 6048, "unit": "counts/s", "snippet": "powerSpeed:6048", "file": "trackball" }
+  ]
+}
