@@ -1,8 +1,15 @@
-// Drift-check library for shared/cornhole. Dependency-free (node: built-ins only).
+// Drift-check library for shared/cornhole.
 //
 // The JSON files record values; this module reads the *game sources* and extracts the
 // values they actually use, with test-owned locators. Nothing here trusts a JSON `snippet`,
 // `expr` or `value` to describe the source: those are what get checked.
+//
+// Sources are parsed with real parsers, never lexed by hand: an HTML file goes through parse5 (the
+// WHATWG HTML parser, so only actual JavaScript <script> elements count, not "<script>" text in an
+// HTML comment, a <template>, or a comment/string of an already-open script), and every script body
+// and .mjs module through acorn. Extractors match AST nodes against small code templates, so a
+// comment, string, template or regex literal holding an old statement is never code.
+// Dev dependencies (shared/cornhole/package.json): npm ci --prefix shared/cornhole
 //
 //   extractField(key, src)        value the source actually uses for a field (undefined = not found)
 //   checkRecorded(data, sources)  JSON values/expressions vs extracted source values  (review finding 1)
@@ -10,6 +17,16 @@
 //   checkApprovals({...})         drift vs baseline must have exact approvals            (review finding 2)
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+
+const need=async name=>{
+ try{return await import(name);}
+ catch(error){
+  if(error?.code==='ERR_MODULE_NOT_FOUND')throw new Error(`shared/cornhole/lib/drift.mjs needs the ${name} parser: run \`npm ci --prefix shared/cornhole\` from the repo root (${error.message})`);
+  throw error;
+ }
+};
+const acorn=await need('acorn');
+const {parse:parseHtml}=await need('parse5');
 
 export const sha256=text=>createHash('sha256').update(text).digest('hex');
 export const APPROVAL_KEYS=['field','platform','old','new','baseline','pr'];
@@ -29,169 +46,226 @@ export function same(a,b){
 const norm=s=>s.replace(/\s+/g,' ').replace(/\s*([()*/+\-,?:])\s*/g,'$1').trim();
 const show=v=>JSON.stringify(v);
 
-// ---------------------------------------------------------------- executable-code view
-// Extraction must only see code the game runs. codeView(text) lexes the JavaScript (for an HTML
-// file, only the bodies of its <script> elements) and returns:
-//   code  the text with comments and non-script HTML replaced by spaces (newlines kept), so every
-//         offset still lines up with the original
-//   kind  per character: CODE, STR (string/template/regex literal) or GONE (comment, HTML)
-// Matches are only accepted when they start in CODE and none of their capture groups touch a
-// literal, so a commented-out or quoted old statement can neither match nor hide the active one.
-const CODE=0,STR=1,GONE=2;
-const REGEX_AFTER_WORD=new Set(['return','typeof','instanceof','in','of','new','delete','void','throw','case','do','else','yield','await',
- // Statements that are complete on their own: nothing can divide them, so after automatic semicolon
- // insertion (`debugger\n/re/.test(s)`, `break\n/re/`) the next `/` starts a regex statement.
- 'debugger','break','continue','default','extends']);
-// `(` after one of these opens a statement head: the matching `)` is followed by a statement, so a
-// `/` there starts a regex (`if (x) /re/.test(s);`), not a division.
-const CONTROL_HEADS=new Set(['if','while','for','with']);
-function lexJs(text,from,to,kind){
- const braces=[];                     // template nesting: brace depth at each `${`
- const parens=[];                     // per open `(`: does it start a control-flow head?
- const headEnds=new Set();            // offsets of `)` that close a control-flow head
- let i=from,depth=0;
- const prevSignificant=at=>{let j=at-1;while(j>=from&&(kind[j]===GONE||/\s/.test(text[j])))j--;return j;};
- const wordEndingAt=j=>{let k=j;while(k>=from&&/[\w$]/.test(text[k]))k--;return k<j&&kind[j]===CODE?text.slice(k+1,j+1):'';};
- const opensHead=at=>{                // `(` at `at`: `if (`, `while (`, `for (`, `for await (`, `with (`
-  let j=prevSignificant(at),w=wordEndingAt(j);
-  if(w==='await'){j=prevSignificant(j-w.length+1);w=wordEndingAt(j);return w==='for';}
-  return CONTROL_HEADS.has(w)&&!(j-w.length>=from&&text[j-w.length]==='.'); // not `obj.if(`
- };
- const regexAllowed=at=>{
-  const j=prevSignificant(at);if(j<from)return true;
-  const c=text[j];
-  if(kind[j]===STR)return false;      // a literal just ended: `'a' / 2` (also `${...}` closing a template)
-  if(/[\w$]/.test(c)){
-   const w=wordEndingAt(j),start=j-w.length+1,before=prevSignificant(start);
-   if(!w)return false;
-   if(before>=from&&text[before]==='.'&&text[before-1]!=='.')return false; // property `a.return / 2`
-   if(REGEX_AFTER_WORD.has(w))return true;
-   // `break label` / `continue label` (label on the same line) is also a complete statement, so a
-   // `/` after it (only valid after a newline, by ASI) starts a regex: `break outer\n/re/`.
-   const v=wordEndingAt(before);
-   return (v==='break'||v==='continue')&&/^[A-Za-z_$]/.test(w)&&!text.slice(before+1,start).includes('\n')
-    &&!(before-v.length>=from&&text[prevSignificant(before-v.length+1)]==='.');
-  }
-  if(c===')')return headEnds.has(j);  // `(a + b) / 2` divides; `if (x) /re/` is a statement
-  if(c===']')return false;            // `a[i] / 2`, `[1, 2] / 2`: always ends an expression
-  // `}` closing a block (`if (x) {} /re/`, `function f() {} /re/`) is followed by a statement.
-  // Only an object literal or function expression would be divided here, which no game code
-  // does; erring toward "regex" can only hide text from extraction (a loud "not found"), never
-  // expose literal text as code.
-  if(c==='}')return true;
-  return true;
- };
- const quoted=(q,start)=>{            // string literal starting at `start` (the quote)
-  let j=start+1;
-  while(j<to&&text[j]!==q&&text[j]!=='\n'){if(text[j]==='\\')j++;j++;}
-  return Math.min(j+1,to);
- };
- const template=start=>{              // template text from `start` up to the closing ` or `${`
-  let j=start;
-  while(j<to){if(text[j]==='\\'){j+=2;continue;}if(text[j]==='`')return [j+1,false];if(text[j]==='$'&&text[j+1]==='{')return [j+2,true];j++;}
-  return [to,false];
- };
- const mark=(a,b,k)=>{for(let j=a;j<b;j++)kind[j]=k;};
- while(i<to){
-  const c=text[i],n=text[i+1];
-  if(c==='/'&&n==='/'){let j=i;while(j<to&&text[j]!=='\n')j++;mark(i,j,GONE);i=j;continue;}
-  if(c==='/'&&n==='*'){const e=text.indexOf('*/',i+2);const j=e<0||e+2>to?to:e+2;mark(i,j,GONE);i=j;continue;}
-  if(c==='"'||c==="'"){const j=quoted(c,i);mark(i,j,STR);i=j;continue;}
-  if(c==='`'){const [j,open]=template(i+1);mark(i,j,STR);if(open)braces.push(depth);i=j;continue;}
-  if(c==='/'&&regexAllowed(i)){
-   let j=i+1,cls=false;
-   while(j<to&&text[j]!=='\n'){const d=text[j];if(d==='\\'){j+=2;continue;}if(d==='[')cls=true;else if(d===']')cls=false;else if(d==='/'&&!cls)break;j++;}
-   j++;while(j<to&&/[a-z]/i.test(text[j]))j++;
-   mark(i,Math.min(j,to),STR);i=Math.min(j,to);continue;
-  }
-  if(c==='(')parens.push(opensHead(i));
-  else if(c===')'){if(parens.pop())headEnds.add(i);}
-  else if(c==='{')depth++;
-  else if(c==='}'){
-   if(braces.length&&braces[braces.length-1]===depth){braces.pop();const [j,open]=template(i+1);mark(i,j,STR);if(open)braces.push(depth);i=j;continue;}
-   depth--;
-  }
-  kind[i]=CODE;i++;
- }
-}
-const viewCache=new Map();
-export function codeView(text){
- if(viewCache.has(text))return viewCache.get(text);
- const kind=new Uint8Array(text.length);
- const scripts=[...text.matchAll(/<script\b[^>]*>/gi)];
- if(scripts.length){
-  kind.fill(GONE);                    // HTML: only <script> bodies are code
-  for(const m of scripts){
-   const from=m.index+m[0].length,end=text.toLowerCase().indexOf('</script',from);
-   lexJs(text,from,end<0?text.length:end,kind);
-  }
- }else lexJs(text,0,text.length,kind);
- let code='';
- for(let a=0;a<text.length;){let b=a;const gone=kind[a]===GONE;while(b<text.length&&(kind[b]===GONE)===gone)b++;code+=gone?text.slice(a,b).replace(/[^\n]/g,' '):text.slice(a,b);a=b;}
- const view={code,kind};
- if(viewCache.size>64)viewCache.clear();
- viewCache.set(text,view);
- return view;
-}
-const lineAt=(text,at)=>text.slice(0,at).split('\n').length;
-// Every match of `re` in executable code: [{index, groups}] (groups are the capture strings).
-// A match must start in code; unless literalCaptures is set (declarations, whose right-hand side
-// may hold strings), its capture groups must not contain any string/template/regex literal text.
-export function codeMatches(text,re,{literalCaptures=false}={}){
- if(typeof text!=='string')return [];
- const {code,kind}=codeView(text);
- const flags=re.flags.includes('g')?re.flags:re.flags+'g';
+// ---------------------------------------------------------------- parsing
+// parsed(text) parses a source once (cached by text):
+//   html      true when the text is an HTML document (it starts with `<`, which no JavaScript module can)
+//   ranges    [{from, to, module}] executable JavaScript: every <script> element parse5 finds whose type
+//             is classic JavaScript or "module" and that has no src (for a .mjs file, the whole text)
+//   programs  acorn ASTs, one per range; offsets and line numbers are those of the original file
+//   comments  [[start, end]] comment ranges reported by acorn
+//   nodes     every AST node; lists: every statement list (Program/block/static block/switch case bodies)
+// A script that acorn cannot parse throws: extraction then fails loudly instead of guessing.
+const HTML_NS='http://www.w3.org/1999/xhtml';
+// HTML "JavaScript MIME type essence match" strings; an absent or empty type is classic JavaScript.
+const JS_TYPES=new Set(['','application/ecmascript','application/javascript','application/x-ecmascript','application/x-javascript','text/ecmascript','text/javascript',
+ 'text/javascript1.0','text/javascript1.1','text/javascript1.2','text/javascript1.3','text/javascript1.4','text/javascript1.5','text/jscript','text/livescript','text/x-ecmascript','text/x-javascript']);
+function scriptRanges(html){
  const out=[];
- for(const m of code.matchAll(new RegExp(re.source,flags.includes('d')?flags:flags+'d'))){
-  if(kind[m.index]!==CODE)continue;
-  const inLiteral=!literalCaptures&&(m.indices??[]).slice(1).some(r=>{if(!r)return false;for(let j=r[0];j<r[1];j++)if(kind[j]===STR)return true;return false;});
-  if(inLiteral)continue;
-  out.push({index:m.index,groups:m.slice(1)});
- }
+ const visit=node=>{
+  if(node.nodeName==='script'&&node.namespaceURI===HTML_NS){
+   const attr=name=>node.attrs.find(a=>a.name===name)?.value;
+   const type=(attr('type')??(attr('language')?'text/'+attr('language'):'')).trim().toLowerCase();
+   const body=node.childNodes[0]?.sourceCodeLocation;
+   if((type==='module'||JS_TYPES.has(type))&&attr('src')===undefined&&body)out.push({from:body.startOffset,to:body.endOffset,module:type==='module'});
+  }
+  for(const child of node.childNodes??[])visit(child); // <template> content is a separate fragment: inert, not visited
+ };
+ visit(parseHtml(html,{sourceCodeLocationInfo:true}));
  return out;
 }
-const inCode=(text,re)=>codeMatches(text,re).length>0;
+const LINE_END=/[\n\r\u2028\u2029]/;
+const blank=s=>s.replace(/[^\n\r\u2028\u2029]/g,' ');
+function walk(node,visit,parent=null,key=null){
+ visit(node,parent,key);
+ for(const k of Object.keys(node)){
+  if(k==='loc')continue;          // every child node sits under some other key (values that are nodes have a string `type`)
+  const v=node[k];
+  if(Array.isArray(v)){for(const c of v)if(c&&typeof c.type==='string')walk(c,visit,node,k);}
+  else if(v&&typeof v.type==='string')walk(v,visit,node,k);
+ }
+}
+const parseCache=new Map();
+function parsed(text){
+ if(typeof text!=='string')return undefined;
+ if(parseCache.has(text))return parseCache.get(text);
+ const html=/^\s*</.test(text);
+ const ranges=html?scriptRanges(text):[{from:0,to:text.length,module:true}];
+ const programs=[],comments=[],nodes=[],lists=[];
+ for(const {from,to,module} of ranges){
+  // Pad everything outside the script with blanks (line ends kept) so acorn's offsets and lines are the file's.
+  const input=html?blank(text.slice(0,from))+text.slice(from,to)+blank(text.slice(to)):text;
+  let program;
+  try{program=acorn.parse(input,{ecmaVersion:'latest',sourceType:module?'module':'script',locations:true,allowHashBang:true,onComment:(block,t,start,end)=>comments.push([start,end])});}
+  catch(error){throw new Error(`${html?`<script> at line ${text.slice(0,from).split(LINE_END).length}`:'module'} does not parse as JavaScript: ${error.message}`);}
+  programs.push(program);
+  walk(program,node=>{
+   nodes.push(node);
+   if(node.type==='Program'||node.type==='BlockStatement'||node.type==='StaticBlock')lists.push(node.body);
+   else if(node.type==='SwitchCase')lists.push(node.consequent);
+  });
+ }
+ let code='',at=0;                    // comments blanked, offsets unchanged
+ for(const [a,b] of [...comments].sort((x,y)=>x[0]-y[0])){code+=text.slice(at,a)+blank(text.slice(a,b));at=b;}
+ code+=text.slice(at);
+ const p={text,html,ranges,programs,comments,nodes,lists,code};
+ if(parseCache.size>=8)parseCache.delete(parseCache.keys().next().value);
+ parseCache.set(text,p);
+ return p;
+}
+// Source text of a node with any comments inside it blanked.
+const textOf=(p,node)=>p.code.slice(node.start,node.end).trim();
+
+// Per-character view, for tests and debugging: kind is CODE, STR (string/template/regex literal text)
+// or GONE (comment, HTML outside executable scripts); code is the text with GONE blanked. Derived
+// from the acorn AST and comment list, so it shows exactly what the extractors can and cannot see.
+const CODE=0,STR=1,GONE=2;
+export function codeView(text){
+ const p=parsed(text);
+ if(p.view)return p.view;
+ const kind=new Uint8Array(text.length).fill(p.html?GONE:CODE);
+ for(const {from,to} of p.ranges)kind.fill(CODE,from,to);
+ for(const node of p.nodes){
+  if(node.type==='Literal'&&(typeof node.value==='string'||node.regex))kind.fill(STR,node.start,node.end);
+  else if(node.type==='TemplateLiteral')node.quasis.forEach((q,i)=>kind.fill(STR,i?q.start-1:node.start,q.end+(q.tail?1:2)));
+ }
+ for(const [a,b] of p.comments)kind.fill(GONE,a,b);
+ let code='';
+ for(let a=0;a<text.length;){let b=a;const gone=kind[a]===GONE;while(b<text.length&&(kind[b]===GONE)===gone)b++;code+=gone?blank(text.slice(a,b)):text.slice(a,b);a=b;}
+ return p.view={code,kind};
+}
+
+// ---------------------------------------------------------------- AST templates
+// A pattern is JavaScript parsed by acorn. In a template:
+//   $NAME        (identifier) matches any node and captures it as caps.$NAME; `$NAME;` matches any statement
+//   ...$$ / $$;  matches zero or more list items: arguments, array elements, object properties, statements
+//   if (…) …     without an else accepts any else branch
+// Literals compare by value (`.025` matches `0.025`), parentheses and whitespace don't matter, and
+// everything else must be structurally identical. E(code) is an expression, S(code) one or more
+// statements (several must be consecutive in one statement list), D(code) the declarator of
+// `const x = …;` (matches const/let/var). anyOf(...) accepts any alternative.
+const TEMPLATE={ecmaVersion:'latest',sourceType:'module',allowReturnOutsideFunction:true};
+const pattern=(code,body)=>({code,alts:[body]});
+const E=code=>{
+ const node=acorn.parseExpressionAt(code,0,TEMPLATE);
+ if(code.slice(node.end).trim())throw new Error(`template is not one expression: ${code}`);
+ return pattern(code,[node]);
+};
+const S=code=>pattern(code,acorn.parse(code,TEMPLATE).body);
+const D=code=>pattern(code,[acorn.parse(code,TEMPLATE).body[0].declarations[0]]);
+const anyOf=(...ps)=>({code:ps.map(p=>p.code).join(' | '),alts:ps.flatMap(p=>p.alts)});
+const REST='$$';
+const isHole=n=>n?.type==='Identifier'&&n.name!==REST&&n.name.startsWith('$');
+const isRest=n=>(n?.type==='SpreadElement'||n?.type==='ExpressionStatement')&&(n.argument??n.expression)?.type==='Identifier'&&(n.argument??n.expression).name===REST;
+const IGNORED=new Set(['type','start','end','loc','range','raw','shorthand']);
+function match(t,s,caps){
+ if(t==null||s==null)return t==s;
+ if(t.type==='ExpressionStatement'&&isHole(t.expression)){if(!/Statement|Declaration$/.test(s.type))return false;caps[t.expression.name]=s;return true;}
+ if(isHole(t)){caps[t.name]=s;return true;}
+ if(t.type!==s.type)return false;
+ if(t.type==='Literal')return t.regex?!!s.regex&&t.regex.pattern===s.regex.pattern&&t.regex.flags===s.regex.flags
+  :!s.regex&&(t.bigint!==undefined?t.bigint===s.bigint:t.value===s.value);
+ if(t.type==='TemplateElement')return t.tail===s.tail&&t.value.cooked===s.value.cooked;
+ for(const key of Object.keys(t)){
+  if(IGNORED.has(key)||(key==='alternate'&&t.type==='IfStatement'&&t.alternate===null))continue;
+  const tv=t[key],sv=s[key];
+  if(Array.isArray(tv)){if(!Array.isArray(sv)||!matchList(tv,sv,caps))return false;}
+  else if(tv&&typeof tv==='object'){if(!match(tv,sv,caps))return false;}
+  else if(tv!==sv)return false;
+ }
+ return true;
+}
+function matchList(ts,ss,caps,i=0,j=0){
+ if(i===ts.length)return j===ss.length;
+ const tries=isRest(ts[i])?Array.from({length:ss.length-j+1},(_,k)=>[i+1,j+k,null]):j<ss.length?[[i+1,j+1,ts[i]]]:[];
+ for(const [ni,nj,t] of tries){
+  const c={...caps};
+  if(t&&!match(t,ss[j],c))continue;
+  if(matchList(ts,ss,c,ni,nj)){Object.assign(caps,c);return true;}
+ }
+ return false;
+}
+const TAIL={type:'ExpressionStatement',expression:{type:'Identifier',name:REST}};
+// Every match of a pattern in executable code: [{node, caps, line}]. `within` limits the search to
+// one node's subtree.
+export function findAll(text,pat,within=null){
+ const p=parsed(text);
+ if(!p)return [];
+ const out=[],seen=new Set();
+ const add=(node,caps)=>{if(!seen.has(node)){seen.add(node);out.push({node,caps,line:node.loc.start.line});}};
+ const inside=n=>!within||(n.start>=within.start&&n.end<=within.end);
+ for(const body of pat.alts){
+  if(body.length===1){for(const node of p.nodes){const caps={};if(inside(node)&&match(body[0],node,caps))add(node,caps);}}
+  else for(const list of p.lists)for(let k=0;k<list.length;k++){const caps={};if(inside(list[k])&&matchList([...body,TAIL],list.slice(k),caps))add(list[k],caps);}
+ }
+ return out.sort((a,b)=>a.node.start-b.node.start);
+}
+const has=(text,pat)=>findAll(text,pat).length>0;
+// The captures of the one match of a test-owned pattern, or undefined when there is none. More than
+// one match is ambiguous and throws (extractField turns that into a "not found ... (ambiguous ...)"
+// error) instead of picking the first occurrence.
+function grab(text,pat){
+ const found=findAll(text,pat);
+ if(found.length>1)throw new Error(`ambiguous: ${found.length} executable matches for \`${pat.code}\` (lines ${found.map(m=>m.line).join(', ')})`);
+ return found[0]&&{...found[0].caps,$0:found[0].node};
+}
+const numberOf=node=>node?.type==='Literal'&&typeof node.value==='number'?node.value:undefined;
+// Value of a literal-only expression (numbers, strings, arrays, plain objects, unary +/-), else undefined.
+function literalValue(node){
+ switch(node?.type){
+  case 'Literal':return node.regex||node.bigint!==undefined?undefined:node.value;
+  case 'UnaryExpression':{const v=literalValue(node.argument);return (node.operator==='-'||node.operator==='+')&&typeof v==='number'?(node.operator==='-'?-v:v):undefined;}
+  case 'ArrayExpression':{const out=node.elements.map(literalValue);return out.every(v=>v!==undefined)?out:undefined;}
+  case 'ObjectExpression':{
+   const out={};
+   for(const prop of node.properties){
+    if(prop.type!=='Property'||prop.kind!=='init'||prop.computed||prop.method)return undefined;
+    const v=literalValue(prop.value);if(v===undefined)return undefined;
+    out[prop.key.type==='Identifier'?prop.key.name:String(prop.key.value)]=v;
+   }
+   return out;
+  }
+  default:return undefined;
+ }
+}
 
 // ---------------------------------------------------------------- source declarations
-// Top-level `const` / `export const` statements that end on the same line (the style of every
-// file read here), in executable code only (not in comments or literals). Declarator lists
-// (`const IN = 0.0254, FT = 0.3048;`) are split on top-level commas.
-function splitTop(text){
- const parts=[];let depth=0,quote=null,start=0;
- for(let i=0;i<text.length;i++){
-  const c=text[i];
-  if(quote){if(c==='\\')i++;else if(c===quote)quote=null;continue;}
-  if(c==='"'||c==="'"||c==='`')quote=c;
-  else if('([{'.includes(c))depth++;
-  else if(')]}'.includes(c))depth--;
-  else if(c===','&&depth===0){parts.push(text.slice(start,i));start=i+1;}
- }
- parts.push(text.slice(start));
- return parts;
-}
-const declCache=new Map();
+// Top-level `const` / `export const` declarations (Program body, any script or module of the file).
+// A name declared more than once is ambiguous and is not resolved.
 function declarations(text){
- if(typeof text!=='string')return new Map();
- if(declCache.has(text))return declCache.get(text);
+ const p=parsed(text);
+ if(!p)return new Map();
+ if(p.decls)return p.decls;
  const map=new Map(),dupes=new Set();
- for(const {groups:[list]} of codeMatches(text,/^(?:export\s+)?const\s+([^;\n]*);/m,{literalCaptures:true})){
-  for(const part of splitTop(list)){
-   const d=/^\s*([A-Za-z_$][\w$]*)\s*=\s*([\s\S]*?)\s*$/.exec(part);
-   if(!d)continue;
-   if(map.has(d[1]))dupes.add(d[1]);
-   map.set(d[1],d[2]);
+ for(const program of p.programs)for(let statement of program.body){
+  if(statement.type==='ExportNamedDeclaration'&&statement.declaration)statement=statement.declaration;
+  if(statement.type!=='VariableDeclaration'||statement.kind!=='const')continue;
+  for(const d of statement.declarations){
+   if(d.id.type!=='Identifier'||!d.init)continue;
+   if(map.has(d.id.name))dupes.add(d.id.name);
+   map.set(d.id.name,textOf(p,d.init));
   }
  }
  for(const name of dupes)map.set(name,undefined); // ambiguous: refuse to guess
- if(declCache.size>64)declCache.clear();
- declCache.set(text,map);
- return map;
+ return p.decls=map;
+}
+// Identifiers an expression reads (not property names or object keys), from its acorn AST.
+function freeNames(expr){
+ const node=acorn.parseExpressionAt(expr,0,{ecmaVersion:'latest'});
+ if(expr.slice(node.end).trim())throw new Error(`not one expression: ${show(expr)}`);
+ const names=new Set();
+ walk(node,(n,parent,key)=>{
+  if(n.type!=='Identifier')return;
+  if(key==='property'&&parent.type==='MemberExpression'&&!parent.computed)return;
+  if(key==='key'&&!parent.computed&&/^(Property|PropertyDefinition|MethodDefinition)$/.test(parent.type))return;
+  names.add(n.name);
+ });
+ return names;
 }
 // Evaluate an expression from the source, resolving identifiers from the same file's top-level
 // declarations (recursively). Only Math and Object.freeze are available otherwise.
 function evaluate(expr,text,extra={},seen=new Set()){
  const decls=declarations(text),context={Math,Object:{freeze:Object.freeze},...extra};
- for(const id of new Set(expr.replace(/(['"`])(?:\\.|(?!\1).)*\1/g,'').match(/(?<![.\w$])[A-Za-z_$][\w$]*/g)??[])){
+ for(const id of freeNames(expr)){
   if(id in context||!decls.has(id))continue;
   if(seen.has(id))throw new Error(`circular declaration ${id}`);
   const inner=decls.get(id);
@@ -210,14 +284,6 @@ const literal=text=>{
  const t=text.trim();
  return /^-?(?:\d+\.?\d*|\.\d+)$/.test(t)?Number(t):t;
 };
-// Return the capture groups of the one match of a test-owned pattern in executable code, or
-// undefined when there is none. More than one match is ambiguous and throws (extractField turns
-// that into a "not found ... (ambiguous ...)" error) instead of picking the first occurrence.
-const grab=(text,re)=>{
- const found=codeMatches(text,re);
- if(found.length>1)throw new Error(`ambiguous: ${found.length} executable matches for /${re.source}/ (lines ${found.map(m=>lineAt(text,m.index)).join(', ')})`);
- return found[0]?.groups;
-};
 const sole=values=>new Set(values.map(show)).size===1?values[0]:undefined;
 
 // ---------------------------------------------------------------- field extractors
@@ -230,8 +296,14 @@ const member=(name,pathKeys)=>src=>{
  return v===undefined?undefined:{value:v};
 };
 const index=(name,i)=>src=>{const d=declared(src.game,name);return d&&d.value[i]!==undefined?{value:d.value[i]}:undefined;};
-const num=(file,re,pick=g=>g[0])=>src=>{const g=grab(src[file],re);if(!g)return undefined;const v=pick(g);return v===undefined?undefined:{value:Number(v)};};
+// The numeric literal captured by the one match of `pat` (pick chooses the capture).
+const num=(file,pat,pick=c=>c.$N)=>src=>{const c=grab(src[file],pat);if(!c)return undefined;const v=numberOf(pick(c));return v===undefined?undefined:{value:v};};
+const equalNumbers=(a,b)=>c=>numberOf(c[a])!==undefined&&numberOf(c[a])===numberOf(c[b])?c[a]:undefined;
 
+const LAND_KEEP=E('S.keep * (b.arc === 2 ? $KOBE : b.arc === 0 ? $PUSH : 1)');
+const DT_LOOP=S('while (acc >= $X) { acc -= $Y; $$; }');
+const STEP=E('step(b, $DT)');
+const STEP_LITERAL=E('step(b, $A / $B)');
 const CONSTANTS={
  ...Object.fromEntries(['G','IN','FT','W','L','FRONT_H','BACK_H','TH','BOARD_Z','HOLE_FROM_TOP','HOLE_R','BAG','BAG_H','BAG_R','MU_GROUND','BAG_E','ELEV','V_MIN','AIM_MAX','REL_Z'].map(n=>[n,decl(n)])),
  STICKY_MU:member('SIDES',['sticky','mu']),
@@ -240,72 +312,75 @@ const CONSTANTS={
  ARC_PUSH_DEG:index('arcs',0),
  ARC_NORMAL_DEG:index('arcs',1),
  ARC_KOBE_DEG:index('arcs',2),
- LAND_KEEP_KOBE:num('game',/S\.keep\s*\*\s*\(\s*b\.arc\s*===\s*2\s*\?\s*([\d.]+)\s*:\s*b\.arc\s*===\s*0\s*\?\s*([\d.]+)\s*:\s*1\s*\)/,g=>g[0]),
- LAND_KEEP_PUSH:num('game',/S\.keep\s*\*\s*\(\s*b\.arc\s*===\s*2\s*\?\s*([\d.]+)\s*:\s*b\.arc\s*===\s*0\s*\?\s*([\d.]+)\s*:\s*1\s*\)/,g=>g[1]),
- SWISH_R_FRAC:num('game',/holeDist\(lp\)\s*<\s*HOLE_R\s*\*\s*([\d.]+)/),
- SLIDE_IN_MARGIN:num('game',/holeDist\(lp\)\s*<\s*HOLE_R\s*-\s*([\d.]+)/),
- // The fixed-step loop (`while (acc >= X) { acc -= X; ... step(b, X)`) and every literal
+ LAND_KEEP_KOBE:num('game',LAND_KEEP,c=>c.$KOBE),
+ LAND_KEEP_PUSH:num('game',LAND_KEEP,c=>c.$PUSH),
+ SWISH_R_FRAC:num('game',E('holeDist(lp) < HOLE_R * $N')),
+ SLIDE_IN_MARGIN:num('game',E('holeDist(lp) < HOLE_R - $N')),
+ // The fixed-step loop (`while (acc >= X) { acc -= X; ... step(b, X) ... }`) and every literal
  // step(b, N / M) call (AI previews) must agree on one step.
  PHYSICS_DT:src=>{
-  if(typeof src.game!=='string')return undefined;
-  const loop=grab(src.game,/while\s*\(\s*acc\s*>=\s*([^)]+?)\s*\)\s*\{\s*acc\s*-=\s*([^;]+?)\s*;[^}]*?\bstep\(b,\s*([^)]+?)\s*\)/);
+  const loop=grab(src.game,DT_LOOP);
   if(!loop)return undefined;
-  const literals=codeMatches(src.game,/\bstep\(b,\s*([\d.]+\s*\/\s*[\d.]+)\s*\)/).map(m=>m.groups[0]);
-  const v=sole([...loop,...literals].map(e=>evaluate(e,src.game)));
+  const p=parsed(src.game),steps=findAll(src.game,STEP,loop.$0.body).map(m=>m.caps.$DT);
+  if(!steps.length)return undefined;
+  const literals=findAll(src.game,STEP_LITERAL).filter(m=>numberOf(m.caps.$A)!==undefined&&numberOf(m.caps.$B)!==undefined).map(m=>m.caps.$A.value/m.caps.$B.value);
+  const v=sole([...[loop.$X,loop.$Y,...steps].map(n=>evaluate(textOf(p,n),src.game)),...literals]);
   return v===undefined?undefined:{value:v};
  },
- WIND_MPH_TO_ACCEL:num('controls',/x\s*:\s*Math\.sin\(angle\)\s*\*\s*mph\s*\*\s*([\d.]+)\s*,\s*z\s*:\s*-\s*Math\.cos\(angle\)\s*\*\s*mph\s*\*\s*([\d.]+)/,g=>g[0]===g[1]||Number(g[0])===Number(g[1])?g[0]:undefined),
+ WIND_MPH_TO_ACCEL:num('controls',E('{...$$, x: Math.sin(angle) * mph * $X, z: -Math.cos(angle) * mph * $Z, ...$$}'),equalNumbers('$X','$Z')),
 };
 // Boolean rules: true when every pattern occurs in executable code (comments and literals don't count).
-const flag=(file,...patterns)=>src=>typeof src[file]==='string'?{value:patterns.every(re=>inCode(src[file],re))}:undefined;
+const flag=(file,...patterns)=>src=>typeof src[file]==='string'?{value:patterns.every(pat=>has(src[file],pat))}:undefined;
+const ON_BOARD=S("if (b.state === 'board' && !b.dead) { pts[b.team] += $N; $$; }");
 const RULES={
- 'points-in-hole':num('game',/if\s*\(\s*b\.state\s*===\s*'in'\s*\)\s*\{\s*pts\[b\.team\]\s*\+=\s*(\d+)/),
- 'points-on-board':num('game',/b\.state\s*===\s*'board'\s*&&\s*!b\.dead\s*\)\s*\{\s*pts\[b\.team\]\s*\+=\s*(\d+)/),
+ 'points-in-hole':num('game',S("if (b.state === 'in') { pts[b.team] += $N; $$; }")),
+ 'points-on-board':num('game',ON_BOARD),
  'cancellation-scoring':src=>{
   if(typeof src.game!=='string')return undefined;
-  const ok=inCode(src.game,/const\s+net\s*=\s*Math\.abs\(\s*pts\[0\]\s*-\s*pts\[1\]\s*\)/)&&inCode(src.game,/scorer\s*=\s*pts\[0\]\s*>\s*pts\[1\]\s*\?\s*0\s*:\s*pts\[1\]\s*>\s*pts\[0\]\s*\?\s*1\s*:\s*-1/);
+  const ok=has(src.game,D('const net = Math.abs(pts[0] - pts[1]);'))
+   &&has(src.game,anyOf(D('const scorer = pts[0] > pts[1] ? 0 : pts[1] > pts[0] ? 1 : -1;'),E('scorer = pts[0] > pts[1] ? 0 : pts[1] > pts[0] ? 1 : -1')));
   return {value:ok?'net = |red - blue|, awarded to the higher side; a tie is a wash':null};
  },
- 'target-score':num('game',/M\.exact\s*\?\s*M\.scores\[scorer\]\s*===\s*(\d+)\s*:\s*M\.scores\[scorer\]\s*>=\s*(\d+)/,g=>g[0]===g[1]?g[0]:undefined),
- 'exact-21-bust-to':num('game',/if\s*\(\s*M\.exact\s*&&\s*M\.scores\[scorer\]\s*>\s*\d+\s*\)\s*\{\s*M\.scores\[scorer\]\s*=\s*(\d+)/),
- 'last-scorer-throws-first':flag('game',/\bM\.first\s*=\s*scorer\s*;/),
- 'bags-per-inning':num('game',/M\.k\s*>=\s*(\d+)\s*\)\s*\{\s*M\.phase\s*=\s*'settle'/),
- 'alternating-throws':flag('game',/k\s*%\s*2\s*===\s*0\s*\?\s*M\.first\s*:\s*1\s*-\s*M\.first/),
- 'grounder-is-dead':flag('game',/else\s+if\s*\(\s*b\.dead\s*\)\s*say\('GROUNDER'/,/b\.state\s*===\s*'board'\s*&&\s*!b\.dead\s*\)\s*\{\s*pts/),
+ 'target-score':num('game',E('M.exact ? M.scores[scorer] === $A : M.scores[scorer] >= $B'),equalNumbers('$A','$B')),
+ 'exact-21-bust-to':num('game',S('if (M.exact && M.scores[scorer] > $LIMIT) { M.scores[scorer] = $N; $$; }')),
+ 'last-scorer-throws-first':flag('game',E('M.first = scorer')),
+ 'bags-per-inning':num('game',S("if (!M.practice && M.k >= $N) { M.phase = 'settle'; $$; }")),
+ 'alternating-throws':flag('game',E('k % 2 === 0 ? M.first : 1 - M.first')),
+ 'grounder-is-dead':flag('game',S("if (b.dead) say('GROUNDER', ...$$);"),ON_BOARD),
 };
-const TIERS=/=\s*(\[\s*\[[\d,\s[\]]+\]\s*\])\s*\[circuit\]\s*\?\?\s*(\[[\d,\s]+\])/;
+const TIERS=E('$TIERS[circuit] ?? $DEFAULT');
+const isNumbers=v=>Array.isArray(v)&&v.every(n=>typeof n==='number');
 const WIND={
- tiersByCircuit:src=>{const g=grab(src.controls,TIERS);return g&&{value:JSON.parse(g[0])};},
- defaultTier:src=>{const g=grab(src.controls,TIERS);return g&&{value:JSON.parse(g[1])};},
- practiceIsCalm:flag('controls',/if\s*\(\s*practice\s*\)\s*return\s*\{\s*mph\s*:\s*0\s*,\s*angle\s*:\s*0\s*,\s*x\s*:\s*0\s*,\s*z\s*:\s*0\s*\}/),
- laterRoundsSwitchSides:flag('controls',/side\s*=\s*previousX\s*\?\s*-\s*Math\.sign\(\s*previousX\s*\)/),
+ tiersByCircuit:src=>{const c=grab(src.controls,TIERS);const v=c&&literalValue(c.$TIERS);return Array.isArray(v)&&v.every(isNumbers)?{value:v}:undefined;},
+ defaultTier:src=>{const c=grab(src.controls,TIERS);const v=c&&literalValue(c.$DEFAULT);return isNumbers(v)?{value:v}:undefined;},
+ practiceIsCalm:flag('controls',S('if (practice) return {mph: 0, angle: 0, x: 0, z: 0};')),
+ laterRoundsSwitchSides:flag('controls',anyOf(D('const side = previousX ? -Math.sign(previousX) : $OTHER;'),E('side = previousX ? -Math.sign(previousX) : $OTHER'))),
 };
 // Platform overrides. Same field name, platform-specific source shape.
-const LAUNCH_SPIN=/\bb\.spin\s*=\s*spin\s*\*\s*([^;]+?)\s*;\s*b\.curl\s*=\s*([^;]+?)\s*;/;
+const LAUNCH_SPIN=S('b.spin = spin * $RATE; b.curl = $CURL;');
+const nodeText=(file,pick)=>src=>{const c=grab(src[file],pick.pat);return c&&{value:pick.value(textOf(parsed(src[file]),pick.node(c)))};};
 const OVERRIDES={
  SLICK_MU:member('SIDES',['slick','mu']),
  SLICK_MS:member('SIDES',['slick','ms']),
  SLICK_KEEP:member('SIDES',['slick','keep']),
  REL_Y:decl('REL_Y'),
- CAMERA_FOV:src=>{const g=grab(src.game,/\bcamera\.fov\s*=\s*([^;]+);/);return g&&{value:norm(g[0])};},
+ CAMERA_FOV:nodeText('game',{pat:E('camera.fov = $FOV'),node:c=>c.$FOV,value:norm}),
  // The multiplier actually used in launch(); an identifier is resolved from game or spin module.
  AIR_SPIN_RATE:src=>{
-  const g=grab(src.game,LAUNCH_SPIN);if(!g)return undefined;
-  const v=literal(g[0]);if(typeof v==='number')return {value:v};
-  const d=declared(src.game,v)??declared(src.spin,v);
+  const c=grab(src.game,LAUNCH_SPIN);if(!c)return undefined;
+  if(numberOf(c.$RATE)!==undefined)return {value:c.$RATE.value};
+  if(c.$RATE.type!=='Identifier')return undefined;
+  const d=declared(src.game,c.$RATE.name)??declared(src.spin,c.$RATE.name);
   return d&&{value:d.value};
  },
- FLIGHT_CURL:src=>{const g=grab(src.game,LAUNCH_SPIN);return g&&{value:literal(norm(g[1]))};},
+ FLIGHT_CURL:nodeText('game',{pat:LAUNCH_SPIN,node:c=>c.$CURL,value:t=>literal(norm(t))}),
  CURL:decl('CURL','spin'),
  // Human throw: is the player's spin passed straight to launch(), or zeroed for humans?
- HUMAN_SPIN:src=>{
-  const g=grab(src.game,/\blaunch\(b,\s*releaseX\(team\),[^;\n]*?,\s*([^,;\n]+?)\s*\);/);if(!g)return undefined;
-  const arg=norm(g[0]);
-  return {value:arg==='M.spin'?true:/^isHuman\(team\)\?0:M\.spin$/.test(arg)?false:null};
- },
+ HUMAN_SPIN:nodeText('game',{pat:E('launch(b, releaseX(team), $POWER, ...$$, $SPIN)'),node:c=>c.$SPIN,
+  value:t=>{const arg=norm(t);return arg==='M.spin'?true:/^isHuman\(team\)\?0:M\.spin$/.test(arg)?false:null;}}),
  POWER_INPUT:src=>{
-  if(typeof src.trackball==='string'&&inCode(src.trackball,/peakSpeed\s*\/\s*this\.config\.powerSpeed/)&&declared(src.trackball,'SPEED_WINDOW_MS'))return {value:'swing-speed'};
-  if(typeof src.controls==='string'&&inCode(src.controls,/distance\s*\/\s*FULL_POWER_PULL/)&&declared(src.controls,'FULL_POWER_PULL'))return {value:'pull-distance'};
+  if(typeof src.trackball==='string'&&has(src.trackball,anyOf(E('peakSpeed / this.config.powerSpeed'),E('$OBJ.peakSpeed / this.config.powerSpeed')))&&declared(src.trackball,'SPEED_WINDOW_MS'))return {value:'swing-speed'};
+  if(typeof src.controls==='string'&&has(src.controls,E('distance / FULL_POWER_PULL'))&&declared(src.controls,'FULL_POWER_PULL'))return {value:'pull-distance'};
   return {value:null};
  },
  SPEED_WINDOW_MS:decl('SPEED_WINDOW_MS','trackball'),

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {checkRecorded,checkApprovals,currentValues,sha256,same,codeView} from '../lib/drift.mjs';
+import {checkRecorded,checkApprovals,currentValues,extractField,sha256,same,codeView} from '../lib/drift.mjs';
 import {SPEC,loadShared,loadSources,baselineSources,buildBaseline,commitAvailable,compareBaseline} from '../lib/baseline.mjs';
 
 const shared=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -169,13 +169,15 @@ test('NEGATIVE: an old statement kept only inside a regex literal after if/while
  }
 });
 
+// codeView is derived from the acorn AST, so these probes must be valid JavaScript: the division
+// cases divide by `a+b/ c` (`/a=b;/` after a dividend would assign to an rvalue, which acorn rejects).
 test('regex-vs-division: control-flow heads and blocks end before a regex; other ) and ] still divide',()=>{
  const kinds=t=>{const {kind}=codeView(t);return [...t].map((_,i)=>kind[i]===1?'S':'c').join('');};
  const at=(t,needle)=>kinds(t).slice(t.indexOf(needle),t.indexOf(needle)+needle.length);
  for(const t of ["if (x) /a=b;/.test(s);","while (f(x)) /a=b;/.test(s);","for await (const v of g) /a=b;/.test(v);","if (x) {} /a=b;/.test(s);"])
   assert.match(at(t,'a=b;'),/^S+$/,`${t}: regex body must be a literal`);
- for(const t of ["y = (a + b) /a=b;/ c;","y = obj.if(x) /a=b;/ c;","y = m[i] /a=b;/ c;","y = f(x) /a=b;/ c;"])
-  assert.match(at(t,'a=b;'),/^c+$/,`${t}: division operands must stay code`);
+ for(const t of ["y = (a + b) /a+b/ c;","y = obj.if(x) /a+b/ c;","y = m[i] /a+b/ c;","y = f(x) /a+b/ c;"])
+  assert.match(at(t,'a+b'),/^c+$/,`${t}: division operands must stay code`);
 });
 
 // Review finding (4de43ea): a `/` after a word was division unless the word was in a fixed set, so a
@@ -207,11 +209,105 @@ test('regex-vs-division after a word: complete statements (ASI) start a regex; i
  const kinds=t=>{const {kind}=codeView(t);return [...t].map((_,i)=>kind[i]===1?'S':'c').join('');};
  const at=(t,needle)=>kinds(t).slice(t.indexOf(needle),t.indexOf(needle)+needle.length);
  for(const t of ["debugger\n/a=b;/.test(s);","do { break\n/a=b;/.test(s); } while (0);","l: do { break l\n/a=b;/.test(s); } while (0);",
-  "for (;;) { continue\n/a=b;/.test(s); }","l: for (;;) { continue l\n/a=b;/.test(s); }","return /a=b;/.test(s);"])
+  "for (;;) { continue\n/a=b;/.test(s); }","l: for (;;) { continue l\n/a=b;/.test(s); }","function f(s) { return /a=b;/.test(s); }",
+  "αl: do { break αl\n/a=b;/.test(s); } while (0);","l\\u0061: do { break l\\u0061\n/a=b;/.test(s); } while (0);"])
   assert.match(at(t,'a=b;'),/^S+$/,`${JSON.stringify(t)}: regex body must be a literal`);
- for(const t of ["y = x\n/a=b;/ c;","y = o.debugger /a=b;/ c;","y = o.break /a=b;/ c;","y = o?.return /a=b;/ c;","y = 1.5 /a=b;/ c;",
-  "break\nx\n/a=b;/ c;","y = o.break l /a=b;/ c;"])
-  assert.match(at(t,'a=b;'),/^c+$/,`${JSON.stringify(t)}: division operands must stay code`);
+ for(const t of ["y = x\n/a+b/ c;","y = o.debugger /a+b/ c;","y = o.break /a+b/ c;","y = o.return /a+b/ c;","y = o?.break /a+b/ c;","y = 1.5 /a+b/ c;",
+  "for (;;) { break\nx\n/a+b/ c; }","y = o.break\nl /a+b/ c;","y = αl\n/a+b/ c;"])
+  assert.match(at(t,'a+b'),/^c+$/,`${JSON.stringify(t)}: division operands must stay code`);
+ // acorn 8.19 rejects the valid `o?.return / …` (an expression keyword after `?.` is tokenized as if a
+ // regex may follow). That is a parse error, so extraction fails loudly; it can never read literal text as code.
+ const t="y = o?.return /a+b/ c;";
+ try{assert.match(at(t,'a+b'),/^c+$/,`${JSON.stringify(t)}: division operands must stay code`);}
+ catch(error){assert.match(error.message,/does not parse as JavaScript/,`${JSON.stringify(t)}: must divide or fail to parse`);}
+});
+
+// Review findings on a9a33ac (the homegrown lexer). Extraction now parses HTML with parse5 and
+// JavaScript with acorn and matches AST nodes, so both repros below read the edited line as inert.
+const FIRST='rule:last-scorer-throws-first';
+const ACTIVE_FIRST='    M.first = scorer;';
+const firstRule=(sources,platform)=>extractField('rule',FIRST,sources[platform]);
+const occurrences=(text,needle)=>text.split(needle).length-1;
+const rejectsFirst=(s,platform,label)=>{
+ assert.notDeepEqual(firstRule(s,platform),{value:true},`${label}: extraction must not still return {value: true}`);
+ assert.deepEqual(firstRule(s,platform),{value:false},`${label}: the only remaining M.first = scorer; is not code`);
+ fails(checkRecorded(data(),s),new RegExp(`^${FIRST}: common\\.json value true but ${platform.replace(/\./g,'\\.')} source uses false`),label);
+ fails(approvalsOf(real,s),platform==='web'
+  ?/^web rule:last-scorer-throws-first: changed from baseline a07afaa value true to false with no approval/
+  :/^arcade-1\.0\.3 rule:last-scorer-throws-first: changed from baseline true to false, .*immutable/,label+' baseline');
+};
+test('test setup: the sole active M.first = scorer; is extracted as {value: true} on both platforms',()=>{
+ for(const platform of ['web','arcade-1.0.3']){
+  assert.equal(occurrences(realSources[platform].game,'M.first = scorer;'),1,`${platform}: expected exactly one M.first = scorer;`);
+  assert.deepEqual(firstRule(realSources,platform),{value:true});
+ }
+ assert.match(realSources.web.game.split('\n')[904],/^ {4}M\.first = scorer;/,'web: the active statement is on line 905');
+});
+
+// Repro A: `<script>` text inside a comment or string of the already-open module script was taken as
+// a new <script> element, and the rest of the line was lexed as code.
+test('NEGATIVE: "<script>" inside a comment or string of an open script is not another script element (review repro A)',()=>{
+ for(const [label,platform,keep] of [
+  ['line comment (review repro)','web','// <script>M.first = scorer;'],
+  ['block comment','web','/* <script>M.first = scorer; */'],
+  ['string literal','web','const old = "<script>M.first = scorer;";'],
+  ['arcade line comment','arcade-1.0.3','// <script>M.first = scorer;'],
+ ]){
+  const s=editSource(realSources,platform,'game',ACTIVE_FIRST,'    '+keep);
+  assert.equal(occurrences(s[platform].game,'M.first = scorer;'),1,`${label}: test setup keeps the old text exactly once`);
+  rejectsFirst(s,platform,label);
+ }
+});
+
+test('NEGATIVE: only real JavaScript <script> elements are code (HTML comments, <template>, <noscript>, non-JS types, src)',()=>{
+ const MAIN='<script type="module">\n';
+ for(const [label,html] of [
+  ['HTML comment','<!-- <script type="module">M.first = scorer;</script> -->\n'],
+  ['template content','<template><script type="module">M.first = scorer;</script></template>\n'],
+  ['noscript','<noscript><script>M.first = scorer;</script></noscript>\n'],
+  ['text/plain script','<script type="text/plain">M.first = scorer;</script>\n'],
+  ['inline text of a src script','<script src="x.js">M.first = scorer;</script>\n'],
+  ['attribute value','<div data-x="<script>M.first = scorer;</script>"></div>\n'],
+ ]){
+  let s=editSource(realSources,'web','game',ACTIVE_FIRST,'    // (moved)');
+  s=editSource(s,'web','game',MAIN,html+MAIN);
+  rejectsFirst(s,'web',label);
+ }
+ // Control: a real classic or module script element is parsed and counts.
+ for(const html of ['<script>M.first = scorer;</script>\n','<script type="module">M.first = scorer;</script>\n']){
+  let s=editSource(realSources,'web','game',ACTIVE_FIRST,'    // (moved)');
+  s=editSource(s,'web','game',MAIN,html+MAIN);
+  assert.deepEqual(firstRule(s,'web'),{value:true},`${html.trim()}: a real script element is code`);
+ }
+});
+
+// Repro B: the lexer only knew ASCII identifiers, so after `break αouter` (or an escaped label) the
+// next line's regex literal was lexed as a division and its text as code.
+const LABELLED=label=>[`${label}: do {`,`  break ${label}`,'  /M.first = scorer;/.test("");','} while (false);'].join('\n    ');
+test('NEGATIVE: an old statement kept only inside a regex literal after a Unicode or escaped label fails (review repro B)',()=>{
+ for(const [label,platform,keep] of [
+  ['Unicode label αouter (review repro)','web',LABELLED('αouter')],
+  ['escaped identifier out\\u0065r as label and break target','web',LABELLED('out\\u0065r')],
+  ['escaped label, plain break target','web',['out\\u0065r: do {','  break outer','  /M.first = scorer;/.test("");','} while (false);'].join('\n    ')],
+  ['Unicode labelled continue','web',['αloop: for (;false;) {','  continue αloop','  /M.first = scorer;/.test("");','}'].join('\n    ')],
+  ['arcade Unicode label','arcade-1.0.3',LABELLED('αouter')],
+ ]){
+  assert.doesNotThrow(()=>new Function(keep),`${label}: test setup must be valid JavaScript`);
+  const M={first:'unchanged'};new Function('M','scorer',keep)(M,'scorer');
+  assert.equal(M.first,'unchanged',`${label}: test setup must not assign M.first`);
+  const s=editSource(realSources,platform,'game',ACTIVE_FIRST,'    '+keep);
+  assert.equal(occurrences(s[platform].game,'M.first = scorer;'),1,`${label}: the old statement survives only inside the regex literal`);
+  rejectsFirst(s,platform,label);
+ }
+});
+
+test('real code next to a Unicode label, an escaped label or a "<script>" comment still counts',()=>{
+ for(const keep of [`αouter: do { break αouter } while (false);\n${ACTIVE_FIRST}`,`out\\u0065r: do { break out\\u0065r } while (false);\n${ACTIVE_FIRST}`,`// <script>\n${ACTIVE_FIRST}`]){
+  const s=editSource(realSources,'web','game',ACTIVE_FIRST,keep);
+  assert.deepEqual(firstRule(s,'web'),{value:true},JSON.stringify(keep));
+  assert.deepEqual(checkRecorded(data(),s),[]);
+  assert.deepEqual(approvalsOf(real,s),[]);
+ }
 });
 
 test('NEGATIVE: intentional web/arcade differences must stay different, and unknown fields need an extractor',()=>{
