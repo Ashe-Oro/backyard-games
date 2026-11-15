@@ -1,4 +1,6 @@
-"""Run every Playwright suite with bounded waits (serve the app on port 8000)."""
+"""Run every Playwright suite with bounded waits. Serve the site first: python3 -m http.server 8000 --directory web
+
+Suites run with cwd = web/ (the served root), so Path("index.html") is the home page and screenshots land in web/shots/ (git-ignored, never deployed)."""
 from pathlib import Path
 import runpy
 import subprocess

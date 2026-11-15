@@ -1,2 +1,14 @@
+# Vercel serves only web/ (vercel.json "outputDirectory": "web").
 # Desktop/cabinet source, dependencies and generated runtimes are never web assets.
 arcade
+# Other platforms, shared data, docs and agent history are not web assets either.
+wii
+shared
+docs
+shots
+# Web tests and their output are never deployed.
+web/tests
+web/shots
+node_modules
+dist
+.cache

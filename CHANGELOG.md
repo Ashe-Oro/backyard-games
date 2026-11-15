@@ -1,46 +1,16 @@
-# Changelog
+# Changelog index
 
-All notable changes to this project are documented in this file.
+Each platform keeps its own changelog ([Keep a Changelog](https://keepachangelog.com/) + SemVer):
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/),
-and this project follows [Semantic Versioning](https://semver.org/).
+| Platform | Changelog | Tags |
+|---|---|---|
+| Web (playbackyardgames.vercel.app) | [web/CHANGELOG.md](web/CHANGELOG.md) | `web-vX.Y.Z` (none yet) |
+| Arcade (Electron / Batocera cabinet) | [arcade/CHANGELOG.md](arcade/CHANGELOG.md) | `arcade-vX.Y.Z`; legacy `v1.0.0`–`v1.0.4` |
+| Wii (HBC + Dolphin) | [wii/CHANGELOG.md](wii/CHANGELOG.md) | `wii-vX.Y.Z` (none yet) |
 
-## [1.0.4] - 2026-11-15
+Shared cornhole data (`shared/cornhole/`) has no changelog of its own. A shared change that alters
+gameplay values is logged in **each** affected platform's changelog and gets an entry in
+`shared/cornhole/approvals.json`.
 
-### Changed
-- The LAST SHOT popup and label are gone.
-- The power meter is now a vertical bar that fills with your throw power.
-- It stays on screen about two seconds after you throw, then hides.
-- The CLEAR BOARD popup is gone.
-- The top-right red button clears the board in Practice and keeps your stats.
-- Only the bottom-right button tucks or pops the keys legend.
-
-## [1.0.3] - 2026-11-14
-
-### Added
-- The running version (for example, `v1.0.3`) appears in the upper-right corner during play, read from the installed build so you can confirm which version is running.
-
-## [1.0.2] - 2026-11-14
-
-### Changed
-- Full-power throws are easier: the spinner needs about 20% less speed to fill the meter (threshold 6048).
-
-## [1.0.1] - 2026-11-14
-
-### Changed
-- Full-power throws need 35% more spinner speed.
-
-### Removed
-- The blue cooler is gone from the yard.
-
-## [1.0.0] - 2026-11-14
-
-### Added
-- Backswing adds curl: A hooks right, C hooks left.
-- A P1 red-button key legend you can tuck away or pop open, with your choice remembered.
-- A left spinner legend.
-- More variety among sideline beer pong players, including misses that ricochet off the rim.
-
-### Changed
-- Roll the spinner faster for more power; a long, slow roll stays soft.
-- The last-shot power meter fades after three seconds.
+**Legacy tags:** `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3` and `v1.0.4` are arcade releases 1.0.0–1.0.4. Entries 1.0.0–1.0.3 moved from this file to [arcade/CHANGELOG.md](arcade/CHANGELOG.md) unchanged; the 1.0.4 entry is recorded there too
+(`git log --follow arcade/CHANGELOG.md`). Those tags are never moved or deleted, and no new plain `vX.Y.Z` tags are made.

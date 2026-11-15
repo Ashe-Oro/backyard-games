@@ -1,0 +1,87 @@
+# shared/cornhole — cornhole rules data
+
+Platform-agnostic cornhole **data**: board and bag geometry, physics constants, scoring rules and wind tiers.
+No game imports this yet. The web site stays buildless, and the arcade and web games keep their own inline
+constants. This folder records what they share, what differs on purpose, and checks that the record stays true.
+
+| File | What | Owner |
+|---|---|---|
+| `common.json` | Values verified **identical** in web and arcade 1.0.3. Each entry has the exact source snippet it was verified against | Every platform |
+| `overrides/web.json` | Web values that differ on purpose (slick surface, release height, camera, spin, pull-distance power) | Web |
+| `overrides/arcade-1.0.3.json` | Arcade 1.0.3 values that differ on purpose (read from the pinned cabinet snapshot, not the older top-level `arcade/` sources). **This is the Wii baseline** | Arcade |
+| `overrides/wii.json` | Wii-only differences from that baseline (none yet) | Wii |
+| `baseline.json` | Values every platform used at the baseline commit `a07afaa` (generated from git, never hand-edited) | Generated |
+| `approvals.json` | Structured drift approvals `{field, platform, old, new, baseline, pr}` | Whoever changes a value |
+| `lib/drift.mjs` | Test-owned extractors that read each value out of the parsed game source (parse5 + acorn AST), plus the record and approval checks | — |
+| `package.json`, `package-lock.json` | Dev dependencies of the check only: `acorn` and `parse5`, pinned exactly. Nothing here ships or is imported by a game | — |
+| `lib/baseline.mjs`, `tools/baseline.mjs` | Baseline resolution; regenerates `baseline.json` from git | — |
+| `tests/drift.test.mjs` | The gate: real JSON vs real sources vs baseline vs approvals | — |
+| `tests/guards.test.mjs` | Negative/acceptance tests proving the gate rejects wrong values and wrong approvals | — |
+
+Check it (from the repo root). The parsers are dev dependencies of `shared/cornhole` only (its own
+`package.json`/lockfile; `node_modules/` is git-ignored), so install them once:
+
+```bash
+npm ci --prefix shared/cornhole
+node --test shared/cornhole/tests/*.test.mjs
+```
+
+Without them `lib/drift.mjs` fails at import with the `npm ci` hint. The arcade and web builds don't use
+these packages.
+
+The baseline re-derivation needs the baseline commit in the clone (a full clone; in CI `actions/checkout`
+with `fetch-depth: 0`). Without it that one test fails; `DRIFT_ALLOW_NO_BASELINE_COMMIT=1` skips only it.
+
+### What the check enforces
+
+1. **Recorded = source.** For every constant, scoring rule, wind field and override, `lib/drift.mjs`
+   extracts the value the game actually uses from the platform's source files (top-level `const`
+   declarations evaluated with their dependencies, or a field-specific pattern such as the
+   `pts[b.team] += N` scoring lines, the `[[4,3],…][circuit]??[6,5]` wind tiers or the
+   `b.spin = spin * …` launch multiplier). Extraction reads **executable code only**, through real
+   parsers: `index.html` is parsed by **parse5** (the WHATWG HTML parser), and only actual JavaScript
+   `<script>` elements (no `type`, a JavaScript MIME type or `module`, and no `src`) are read, so
+   `<script>` text in an HTML comment, `<template>`, `<noscript>`, an attribute, or a comment/string of
+   an already-open script is not a script. Each script body and each `.mjs` file is parsed by
+   **acorn**, and every extractor matches **AST nodes** against a small code template (for example
+   `if (b.state === 'in') { pts[b.team] += $N; $$; }` or `M.first = scorer`), with literals compared
+   by value. Comments, strings, template and regex literals are never code, whatever precedes them
+   (`if (false) /M.first = scorer;/.test('')`, `break αouter⏎/M.first = scorer;/.test('')`), and a
+   script acorn cannot parse fails extraction loudly. A pattern that matches more than one active
+   statement is ambiguous and fails instead of taking the first. The JSON `value` must equal it; a constant's `expr` must
+   evaluate to it and match the declared expression. The `snippet` is only a pointer for humans:
+   leaving a stale snippet in place does not hide a wrong value. A field with no extractor fails.
+2. **Common stays common, differences stay different.** A `common.json` field must have the same value
+   in web and arcade 1.0.3. A field listed in two platforms' overrides must actually differ.
+3. **Drift needs an exact approval.** Every extracted value is compared with `baseline.json`. Each
+   difference must have exactly one approval `{field, platform, old, new, baseline, pr}` where `old` is
+   the baseline value, `new` the current value, `baseline` is `"a07afaa"` and `pr` names the PR.
+   Missing, mismatched, wrong-baseline, duplicate and stale approvals (the value is back at the baseline,
+   or has moved on to another value) all fail. Removing a field from tracking counts as drift to `null`.
+
+Field keys used in `baseline.json` and approvals: constants and overrides by name (`G`, `SLICK_MU`),
+scoring rules as `rule:<id>` (`rule:points-in-hole`), wind data as `wind:<key>` (`wind:tiersByCircuit`).
+
+### Baseline resolution
+
+| Platform | Baseline | Sources read at the baseline |
+|---|---|---|
+| `arcade-1.0.3` | `a07afaa` (tag `v1.0.3`), **immutable**. Its snapshot files must stay byte-identical (SHA-256 in `baseline.json`); no approval can cover an arcade-1.0.3 change. A new arcade release gets a new platform file | `arcade/cabinet-snapshots/1.0.3/…` (same paths today) |
+| `web` | `a07afaa`, the last commit before the `web/` move | `cornhole/index.html`, `cornhole/controls.mjs` (the site was at the repo root then; today `web/cornhole/…`) |
+| `wii` | Inherits `arcade-1.0.3` (`overrides/wii.json` `"baseline"`). No sources yet: every Wii override is a drift from the arcade 1.0.3 baseline value and needs an approval with `platform: "wii"` | — |
+
+`baseline.json` is generated by `node shared/cornhole/tools/baseline.mjs --write` from `git show a07afaa:<path>`,
+and the drift test regenerates it in memory and fails if the committed file differs. Regenerate it only when
+a new field is recorded (its baseline value then comes from git, not from you). Moving the baseline to a
+newer release is a deliberate, reviewed change: update `SPEC` in `lib/baseline.mjs`, regenerate, and remove
+the approvals that the new baseline absorbs, in one PR.
+
+### Changing a value on purpose
+
+Edit the game source, update the JSON entry, add the approval the failing test prints to `approvals.json`
+(fill in `pr`), and log it in each affected platform's CHANGELOG.
+
+Rules:
+- Restructuring never changes web physics to match arcade, or the reverse.
+- Only add a field to `common.json` after confirming it is identical in every listed platform.
+- Golden test vectors (`golden/arcade-1.0.3/`) and the Wii constants generator come later (REPO_LAYOUT §6 PR 4, IMPL_PLAN Track C).

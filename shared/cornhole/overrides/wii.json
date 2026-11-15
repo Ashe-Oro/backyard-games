@@ -1,0 +1,8 @@
+{
+  "$comment": "Wii port values. Baseline is arcade 1.0.3 (SPEC.md); only list a field here when the Wii intentionally differs, with an approval in ../approvals.json. Input power on Wii is Wiimote swing speed (accelerometer peak over a short window), never stroke distance.",
+  "schema": 1,
+  "platform": "wii",
+  "baseline": "arcade-1.0.3",
+  "files": {},
+  "overrides": []
+}

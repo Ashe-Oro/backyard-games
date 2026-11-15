@@ -1,0 +1,17 @@
+{
+  "$comment": "Web (touch/mouse) cornhole values that intentionally differ from arcade 1.0.3. Never 'fix' these to match another platform without a structured approval in ../approvals.json and a web CHANGELOG entry.",
+  "schema": 1,
+  "platform": "web",
+  "files": { "game": "web/cornhole/index.html", "controls": "web/cornhole/controls.mjs" },
+  "overrides": [
+    { "name": "SLICK_MU", "value": 0.30, "snippet": "slick: { mu: 0.30, ms: 0.5, keep: 0.42 }", "file": "game" },
+    { "name": "SLICK_MS", "value": 0.5, "snippet": "slick: { mu: 0.30, ms: 0.5, keep: 0.42 }", "file": "game" },
+    { "name": "SLICK_KEEP", "value": 0.42, "snippet": "slick: { mu: 0.30, ms: 0.5, keep: 0.42 }", "file": "game" },
+    { "name": "REL_Y", "value": 1.3, "unit": "m", "snippet": "const REL_Y = 1.3, REL_Z = -0.45;", "file": "game" },
+    { "name": "CAMERA_FOV", "value": "14 + 8 * portrait", "unit": "deg", "snippet": "camera.fov = 14 + 8 * portrait;", "file": "game" },
+    { "name": "AIR_SPIN_RATE", "value": 3, "unit": "rad/s at full spin", "snippet": "b.spin = spin * 3;", "file": "game" },
+    { "name": "FLIGHT_CURL", "value": "drift * 0.12 + spin * 0.10", "note": "older inline curl applied during flight", "snippet": "b.curl = drift * 0.12 + spin * 0.10;", "file": "game" },
+    { "name": "HUMAN_SPIN", "value": false, "note": "human spin is suppressed at throw", "snippet": "isHuman(team) ? 0 : M.spin", "file": "game" },
+    { "name": "POWER_INPUT", "value": "pull-distance", "note": "touch/mouse drag distance; FULL_POWER_PULL px = full power", "snippet": "export const FULL_POWER_PULL=400;", "file": "controls" }
+  ]
+}
