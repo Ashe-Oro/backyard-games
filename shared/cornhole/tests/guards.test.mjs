@@ -92,6 +92,62 @@ test('NEGATIVE: a source change fails even if the old snippet text is still pres
  fails(checkRecorded(data(),c),/^arcade-1\.0\.3 CURL: overrides/,'arcade CURL');
 });
 
+// Review finding (4e10231): extraction took the first textual match, so a commented-out old scoring
+// line hid the active one. Extraction now reads executable code only and rejects ambiguous matches.
+const SCORE_IN="if (b.state === 'in') { pts[b.team] += 3; inC[b.team]++; }";
+test('NEGATIVE: old scoring kept as a comment while the active statement changes fails (review repro)',()=>{
+ const s=editSource(realSources,'web','game',SCORE_IN,`// ${SCORE_IN}\n    if (b.state === 'in') { pts[b.team] += 2; inC[b.team]++; }`);
+ assert.ok(s.web.game.includes(rule(real,'points-in-hole').snippet),'test setup: the old snippet is still in the file');
+ const recorded=checkRecorded(data(),s);
+ fails(recorded,/^rule:points-in-hole: common\.json value 3 but web source uses 2/,'web points-in-hole vs JSON');
+ fails(recorded,/^rule:points-in-hole: no longer identical across web, arcade-1\.0\.3 \(web=2, arcade-1\.0\.3=3\)/,'web vs arcade');
+ const approvals=approvalsOf(real,s);
+ fails(approvals,/^web rule:points-in-hole: changed from baseline a07afaa value 3 to 2 with no approval/,'baseline drift');
+
+ // Same for a block comment, a string literal and a template literal holding the old line,
+ // and for the immutable arcade snapshot.
+ for(const [label,platform,keep] of [
+  ['block comment','web',`/* ${SCORE_IN} */`],
+  ['string literal','web',`const OLD_SCORING = "${SCORE_IN}";`],
+  ['template literal','web',`const OLD_SCORING = \`${SCORE_IN}\`;`],
+  ['arcade comment','arcade-1.0.3',`// ${SCORE_IN}`],
+ ]){
+  const t=editSource(realSources,platform,'game',SCORE_IN,`${keep}\n    if (b.state === 'in') { pts[b.team] += 2; inC[b.team]++; }`);
+  fails(checkRecorded(data(),t),new RegExp(`^rule:points-in-hole: common\\.json value 3 but ${platform.replace(/\./g,'\\.')} source uses 2`),label);
+  fails(approvalsOf(real,t),platform==='web'?/^web rule:points-in-hole: changed from baseline a07afaa value 3 to 2/:/^arcade-1\.0\.3 rule:points-in-hole: changed from baseline 3 to 2, .*immutable/,label+' baseline');
+ }
+});
+
+test('NEGATIVE: two active matches for one field are ambiguous and fail instead of taking the first',()=>{
+ const s=editSource(realSources,'web','game',SCORE_IN,`${SCORE_IN}\n    if (b.state === 'in') { pts[b.team] += 2; inC[b.team]++; }`);
+ fails(checkRecorded(data(),s),/^rule:points-in-hole: not found in web source \(ambiguous: 2 executable matches .*lines 636, 637/,'ambiguous scoring');
+ fails(approvalsOf(real,s),/^web rule:points-in-hole: changed from baseline a07afaa value 3 to null/,'ambiguous baseline');
+ const w=editSource(realSources,'web','controls','const [minimum,steps]=','const [lo,hi]=[[4,3],[6,4],[9,4],[12,9]][circuit]??[6,5];\n const [minimum,steps]=');
+ fails(checkRecorded(data(),w),/^wind:tiersByCircuit: not found in web source \(ambiguous/,'ambiguous wind');
+});
+
+test('NEGATIVE: commented-out old wind, override and rule-flag statements cannot stand in for the active code',()=>{
+ const w=editSource(realSources,'web','controls','const [minimum,steps]=[[4,3],[6,4],[9,4],[12,4]][circuit]??[6,5];','// const [minimum,steps]=[[4,3],[6,4],[9,4],[12,4]][circuit]??[6,5];\n const [minimum,steps]=[[4,3],[6,4],[9,4],[12,6]][circuit]??[6,4];');
+ const ww=checkRecorded(data(),w);
+ fails(ww,/^wind:tiersByCircuit: common\.json value .* but web source uses \[\[4,3\],\[6,4\],\[9,4\],\[12,6\]\]/,'wind tiers');
+ fails(ww,/^wind:defaultTier: common\.json value \[6,5\] but web source uses \[6,4\]/,'wind default');
+ fails(approvalsOf(real,w),/^web wind:tiersByCircuit: changed from baseline a07afaa/,'wind baseline');
+
+ const f=editSource(realSources,'web','game','  camera.fov = 14 + 8 * portrait;','  // camera.fov = 14 + 8 * portrait;\n  camera.fov = 16 + 8 * portrait;');
+ fails(checkRecorded(data(),f),/^web CAMERA_FOV: overrides\/web\.json value "14 \+ 8 \* portrait" but source uses "16\+8\*portrait"/,'override');
+ fails(approvalsOf(real,f),/^web CAMERA_FOV: changed from baseline a07afaa/,'override baseline');
+
+ const g=editSource(realSources,'web','game','    M.first = scorer;','    // M.first = scorer;');
+ fails(checkRecorded(data(),g),/^rule:last-scorer-throws-first: common\.json value true but web source uses false/,'flag only in a comment');
+});
+
+test('comments and literals that repeat the active statement are ignored, not counted as matches',()=>{
+ let s=editSource(realSources,'web','game',SCORE_IN,`// ${SCORE_IN}\n    /* ${SCORE_IN} */ const OLD = '${SCORE_IN.replace(/'/g,"\\'")}';\n    ${SCORE_IN}`);
+ s=editSource(s,'web','controls','const [minimum,steps]=','// const [minimum,steps]=[[4,3],[6,4],[9,4],[12,4]][circuit]??[6,5];\n const [minimum,steps]=');
+ assert.deepEqual(checkRecorded(data(),s),[]);
+ assert.deepEqual(approvalsOf(real,s),[]);
+});
+
 test('NEGATIVE: intentional web/arcade differences must stay different, and unknown fields need an extractor',()=>{
  const d=clone(real);override(d,'web','SLICK_MU').value=0.43;
  const s=editSource(realSources,'web','game','slick: { mu: 0.30,','slick: { mu: 0.43,');

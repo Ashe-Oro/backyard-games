@@ -29,9 +29,101 @@ export function same(a,b){
 const norm=s=>s.replace(/\s+/g,' ').replace(/\s*([()*/+\-,?:])\s*/g,'$1').trim();
 const show=v=>JSON.stringify(v);
 
+// ---------------------------------------------------------------- executable-code view
+// Extraction must only see code the game runs. codeView(text) lexes the JavaScript (for an HTML
+// file, only the bodies of its <script> elements) and returns:
+//   code  the text with comments and non-script HTML replaced by spaces (newlines kept), so every
+//         offset still lines up with the original
+//   kind  per character: CODE, STR (string/template/regex literal) or GONE (comment, HTML)
+// Matches are only accepted when they start in CODE and none of their capture groups touch a
+// literal, so a commented-out or quoted old statement can neither match nor hide the active one.
+const CODE=0,STR=1,GONE=2;
+const REGEX_AFTER_WORD=new Set(['return','typeof','instanceof','in','of','new','delete','void','throw','case','do','else','yield','await']);
+function lexJs(text,from,to,kind){
+ const braces=[];                     // template nesting: brace depth at each `${`
+ let i=from,depth=0;
+ const prevSignificant=at=>{let j=at-1;while(j>=from&&(kind[j]===GONE||/\s/.test(text[j])))j--;return j;};
+ const regexAllowed=at=>{
+  const j=prevSignificant(at);if(j<from)return true;
+  const c=text[j];
+  if(kind[j]===STR)return false;      // a literal just ended: `'a' / 2`
+  if(/[\w$]/.test(c)){let k=j;while(k>=from&&/[\w$]/.test(text[k]))k--;return REGEX_AFTER_WORD.has(text.slice(k+1,j+1));}
+  if(c===')'||c===']'||c==='}')return false;
+  return true;
+ };
+ const quoted=(q,start)=>{            // string literal starting at `start` (the quote)
+  let j=start+1;
+  while(j<to&&text[j]!==q&&text[j]!=='\n'){if(text[j]==='\\')j++;j++;}
+  return Math.min(j+1,to);
+ };
+ const template=start=>{              // template text from `start` up to the closing ` or `${`
+  let j=start;
+  while(j<to){if(text[j]==='\\'){j+=2;continue;}if(text[j]==='`')return [j+1,false];if(text[j]==='$'&&text[j+1]==='{')return [j+2,true];j++;}
+  return [to,false];
+ };
+ const mark=(a,b,k)=>{for(let j=a;j<b;j++)kind[j]=k;};
+ while(i<to){
+  const c=text[i],n=text[i+1];
+  if(c==='/'&&n==='/'){let j=i;while(j<to&&text[j]!=='\n')j++;mark(i,j,GONE);i=j;continue;}
+  if(c==='/'&&n==='*'){const e=text.indexOf('*/',i+2);const j=e<0||e+2>to?to:e+2;mark(i,j,GONE);i=j;continue;}
+  if(c==='"'||c==="'"){const j=quoted(c,i);mark(i,j,STR);i=j;continue;}
+  if(c==='`'){const [j,open]=template(i+1);mark(i,j,STR);if(open)braces.push(depth);i=j;continue;}
+  if(c==='/'&&regexAllowed(i)){
+   let j=i+1,cls=false;
+   while(j<to&&text[j]!=='\n'){const d=text[j];if(d==='\\'){j+=2;continue;}if(d==='[')cls=true;else if(d===']')cls=false;else if(d==='/'&&!cls)break;j++;}
+   j++;while(j<to&&/[a-z]/i.test(text[j]))j++;
+   mark(i,Math.min(j,to),STR);i=Math.min(j,to);continue;
+  }
+  if(c==='{')depth++;
+  else if(c==='}'){
+   if(braces.length&&braces[braces.length-1]===depth){braces.pop();const [j,open]=template(i+1);mark(i,j,STR);if(open)braces.push(depth);i=j;continue;}
+   depth--;
+  }
+  kind[i]=CODE;i++;
+ }
+}
+const viewCache=new Map();
+export function codeView(text){
+ if(viewCache.has(text))return viewCache.get(text);
+ const kind=new Uint8Array(text.length);
+ const scripts=[...text.matchAll(/<script\b[^>]*>/gi)];
+ if(scripts.length){
+  kind.fill(GONE);                    // HTML: only <script> bodies are code
+  for(const m of scripts){
+   const from=m.index+m[0].length,end=text.toLowerCase().indexOf('</script',from);
+   lexJs(text,from,end<0?text.length:end,kind);
+  }
+ }else lexJs(text,0,text.length,kind);
+ let code='';
+ for(let a=0;a<text.length;){let b=a;const gone=kind[a]===GONE;while(b<text.length&&(kind[b]===GONE)===gone)b++;code+=gone?text.slice(a,b).replace(/[^\n]/g,' '):text.slice(a,b);a=b;}
+ const view={code,kind};
+ if(viewCache.size>64)viewCache.clear();
+ viewCache.set(text,view);
+ return view;
+}
+const lineAt=(text,at)=>text.slice(0,at).split('\n').length;
+// Every match of `re` in executable code: [{index, groups}] (groups are the capture strings).
+// A match must start in code; unless literalCaptures is set (declarations, whose right-hand side
+// may hold strings), its capture groups must not contain any string/template/regex literal text.
+export function codeMatches(text,re,{literalCaptures=false}={}){
+ if(typeof text!=='string')return [];
+ const {code,kind}=codeView(text);
+ const flags=re.flags.includes('g')?re.flags:re.flags+'g';
+ const out=[];
+ for(const m of code.matchAll(new RegExp(re.source,flags.includes('d')?flags:flags+'d'))){
+  if(kind[m.index]!==CODE)continue;
+  const inLiteral=!literalCaptures&&(m.indices??[]).slice(1).some(r=>{if(!r)return false;for(let j=r[0];j<r[1];j++)if(kind[j]===STR)return true;return false;});
+  if(inLiteral)continue;
+  out.push({index:m.index,groups:m.slice(1)});
+ }
+ return out;
+}
+const inCode=(text,re)=>codeMatches(text,re).length>0;
+
 // ---------------------------------------------------------------- source declarations
 // Top-level `const` / `export const` statements that end on the same line (the style of every
-// file read here). Declarator lists (`const IN = 0.0254, FT = 0.3048;`) are split on top-level commas.
+// file read here), in executable code only (not in comments or literals). Declarator lists
+// (`const IN = 0.0254, FT = 0.3048;`) are split on top-level commas.
 function splitTop(text){
  const parts=[];let depth=0,quote=null,start=0;
  for(let i=0;i<text.length;i++){
@@ -50,8 +142,8 @@ function declarations(text){
  if(typeof text!=='string')return new Map();
  if(declCache.has(text))return declCache.get(text);
  const map=new Map(),dupes=new Set();
- for(const m of text.matchAll(/^(?:export\s+)?const\s+([^;\n]*);/gm)){
-  for(const part of splitTop(m[1])){
+ for(const {groups:[list]} of codeMatches(text,/^(?:export\s+)?const\s+([^;\n]*);/m,{literalCaptures:true})){
+  for(const part of splitTop(list)){
    const d=/^\s*([A-Za-z_$][\w$]*)\s*=\s*([\s\S]*?)\s*$/.exec(part);
    if(!d)continue;
    if(map.has(d[1]))dupes.add(d[1]);
@@ -86,8 +178,14 @@ const literal=text=>{
  const t=text.trim();
  return /^-?(?:\d+\.?\d*|\.\d+)$/.test(t)?Number(t):t;
 };
-// Return the capture groups of a test-owned pattern, or undefined when it doesn't match.
-const grab=(text,re)=>{const m=typeof text==='string'?re.exec(text):null;return m?m.slice(1):undefined;};
+// Return the capture groups of the one match of a test-owned pattern in executable code, or
+// undefined when there is none. More than one match is ambiguous and throws (extractField turns
+// that into a "not found ... (ambiguous ...)" error) instead of picking the first occurrence.
+const grab=(text,re)=>{
+ const found=codeMatches(text,re);
+ if(found.length>1)throw new Error(`ambiguous: ${found.length} executable matches for /${re.source}/ (lines ${found.map(m=>lineAt(text,m.index)).join(', ')})`);
+ return found[0]?.groups;
+};
 const sole=values=>new Set(values.map(show)).size===1?values[0]:undefined;
 
 // ---------------------------------------------------------------- field extractors
@@ -120,18 +218,20 @@ const CONSTANTS={
   if(typeof src.game!=='string')return undefined;
   const loop=grab(src.game,/while\s*\(\s*acc\s*>=\s*([^)]+?)\s*\)\s*\{\s*acc\s*-=\s*([^;]+?)\s*;[^}]*?\bstep\(b,\s*([^)]+?)\s*\)/);
   if(!loop)return undefined;
-  const literals=[...src.game.matchAll(/\bstep\(b,\s*([\d.]+\s*\/\s*[\d.]+)\s*\)/g)].map(m=>m[1]);
+  const literals=codeMatches(src.game,/\bstep\(b,\s*([\d.]+\s*\/\s*[\d.]+)\s*\)/).map(m=>m.groups[0]);
   const v=sole([...loop,...literals].map(e=>evaluate(e,src.game)));
   return v===undefined?undefined:{value:v};
  },
  WIND_MPH_TO_ACCEL:num('controls',/x\s*:\s*Math\.sin\(angle\)\s*\*\s*mph\s*\*\s*([\d.]+)\s*,\s*z\s*:\s*-\s*Math\.cos\(angle\)\s*\*\s*mph\s*\*\s*([\d.]+)/,g=>g[0]===g[1]||Number(g[0])===Number(g[1])?g[0]:undefined),
 };
-const flag=(file,...patterns)=>src=>typeof src[file]==='string'?{value:patterns.every(re=>re.test(src[file]))}:undefined;
+// Boolean rules: true when every pattern occurs in executable code (comments and literals don't count).
+const flag=(file,...patterns)=>src=>typeof src[file]==='string'?{value:patterns.every(re=>inCode(src[file],re))}:undefined;
 const RULES={
  'points-in-hole':num('game',/if\s*\(\s*b\.state\s*===\s*'in'\s*\)\s*\{\s*pts\[b\.team\]\s*\+=\s*(\d+)/),
  'points-on-board':num('game',/b\.state\s*===\s*'board'\s*&&\s*!b\.dead\s*\)\s*\{\s*pts\[b\.team\]\s*\+=\s*(\d+)/),
  'cancellation-scoring':src=>{
-  const ok=/const\s+net\s*=\s*Math\.abs\(\s*pts\[0\]\s*-\s*pts\[1\]\s*\)/.test(src.game)&&/scorer\s*=\s*pts\[0\]\s*>\s*pts\[1\]\s*\?\s*0\s*:\s*pts\[1\]\s*>\s*pts\[0\]\s*\?\s*1\s*:\s*-1/.test(src.game);
+  if(typeof src.game!=='string')return undefined;
+  const ok=inCode(src.game,/const\s+net\s*=\s*Math\.abs\(\s*pts\[0\]\s*-\s*pts\[1\]\s*\)/)&&inCode(src.game,/scorer\s*=\s*pts\[0\]\s*>\s*pts\[1\]\s*\?\s*0\s*:\s*pts\[1\]\s*>\s*pts\[0\]\s*\?\s*1\s*:\s*-1/);
   return {value:ok?'net = |red - blue|, awarded to the higher side; a tie is a wash':null};
  },
  'target-score':num('game',/M\.exact\s*\?\s*M\.scores\[scorer\]\s*===\s*(\d+)\s*:\s*M\.scores\[scorer\]\s*>=\s*(\d+)/,g=>g[0]===g[1]?g[0]:undefined),
@@ -172,8 +272,8 @@ const OVERRIDES={
   return {value:arg==='M.spin'?true:/^isHuman\(team\)\?0:M\.spin$/.test(arg)?false:null};
  },
  POWER_INPUT:src=>{
-  if(typeof src.trackball==='string'&&/peakSpeed\s*\/\s*this\.config\.powerSpeed/.test(src.trackball)&&declared(src.trackball,'SPEED_WINDOW_MS'))return {value:'swing-speed'};
-  if(typeof src.controls==='string'&&/distance\s*\/\s*FULL_POWER_PULL/.test(src.controls)&&declared(src.controls,'FULL_POWER_PULL'))return {value:'pull-distance'};
+  if(typeof src.trackball==='string'&&inCode(src.trackball,/peakSpeed\s*\/\s*this\.config\.powerSpeed/)&&declared(src.trackball,'SPEED_WINDOW_MS'))return {value:'swing-speed'};
+  if(typeof src.controls==='string'&&inCode(src.controls,/distance\s*\/\s*FULL_POWER_PULL/)&&declared(src.controls,'FULL_POWER_PULL'))return {value:'pull-distance'};
   return {value:null};
  },
  SPEED_WINDOW_MS:decl('SPEED_WINDOW_MS','trackball'),
