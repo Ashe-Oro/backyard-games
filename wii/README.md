@@ -2,7 +2,7 @@
 
 Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, GX, WPAD).
 
-**Status: scaffold only.** Nothing here builds or plays yet. Phase P0 (toolchain + "hello Wiimote" + ISO packaging) is the next step: see [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md).
+**Status: input layer with host tests; the game is not playable yet.** The platform-free swing detector, player-slot routing and WPAD adapter are implemented. See [INPUT.md](INPUT.md) for game integration and provisional tuning. Phase P0 still owns the Wii build and packaging: see [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md).
 
 | Target | Package |
 |---|---|
@@ -22,7 +22,7 @@ Standing rules:
 
 ```
 wii/
-  Makefile                 VERSION source; build targets are P0 deliverables (stubs today)
+  Makefile                 VERSION source; host-test works; platform packaging remains P0
   TOOLCHAIN.md             devkitPPC / libogc / WIT notes and pinning rules
   CHANGELOG.md
   docker/                  pinned build image (P0)
@@ -36,5 +36,7 @@ wii/
 ```
 
 ## Docs
+
+Host input tests: `make -C wii host-test` from the repo root. Without make: `sh wii/tests/run-input-tests.sh` (native C11 compiler and libm only).
 
 [SPEC.md](../docs/wii-port/SPEC.md) · [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md) · [WIIMOTE_ARCADE_MAPPING.md](../docs/wii-port/WIIMOTE_ARCADE_MAPPING.md) · [REPO_LAYOUT.md](../docs/wii-port/REPO_LAYOUT.md)

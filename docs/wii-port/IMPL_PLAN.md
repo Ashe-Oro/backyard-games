@@ -70,8 +70,8 @@ A bare-bones app with no 3D. It shows:
 - live `|gforce|`, `e`, the 80 ms windowed `ē`, `v`, peak, and power bar (using the 1.0.3 color ramp)
 - raw-axis saturation flags, `data_present`/`err`, reports/sec, dropped-event deltas, and estimated-timestamp gaps
 - the detected phase and lobe markers for **each classifier candidate C1–C3** in parallel (SPEC §4.4), so one recorded swing evaluates all of them
-- stability-check state at B press, calm roll, and the resulting curl arrow; IR reticle and validity
-- **A** writes the last swing as a trace with the SPEC §4.4 **schema** (header: detector version, tunables, build, target, channel, slot, extension; rows: drain time, event index, estimated time + method, `gforce`, raw accel + saturation, `data_present`, `err`, dropped delta, IR, B, phase, `ē`, `v`) to `sd:/apps/backyardcornhole/data/swing-traces/`
+- stability-check state at B press, neutral roll, lateral swing direction and release spin
+- **A** writes the last swing as a trace with the SPEC §4.4 **schema** (header: detector version, tunables, build, target, channel, slot, extension; rows: drain time, event index, estimated time + method, `gforce`, raw accel + saturation, `data_present`, `err`, dropped delta, B, phase, `ē`, `v`) to `sd:/apps/backyardcornhole/data/swing-traces/`
 
 **Independent speed labels** (the estimator can't validate itself): each P1 validation swing is filmed at ≥ 120 fps (a phone in slow-mo is enough) with a visible marker on the hand or remote, next to a scale reference. A small offline script measures peak hand speed and joins it to the trace by swing number. A MotionPlus remote can serve as a *secondary* lab reference only.
 
@@ -102,11 +102,11 @@ All `make` targets named here are **new deliverables** of this plan, not existin
 Tasks
 1. `wii/docker/`: pinned `devkitpro/devkitppc` image plus pinned WIT and a **host** C compiler, Node 20+ and `npm ci` in `arcade/` (for `three` and the oracle). `make` builds `boot.elf` → `boot.dol`. Record the libogc version (target v3.2.x).
 2. A minimal app: GX init, clear to the sky color `#c4d3a7`, draw one textured quad, 8×8 bitmap text, frame-time counter.
-3. WPAD acquisition per SPEC §4.4: `WPAD_Init`, `WPAD_SetDataFormat(…BTNS_ACC_IR)`, `WPAD_SetVRes(640,480)`, persistent per-channel `WPAD_SetEventBufs(chan, buf, 64)` with return codes checked, one owner draining `WPAD_ReadEvent` each frame, **re-registration on reconnect**, `err`/`data_present` gating. Show reports/sec, dropped-event deltas, estimated-timestamp gaps, buttons, IR dot, calibrated **`gforce`**, and raw-accel saturation flags. On-screen axis readout confirms the sign conventions. Try `WPAD_SetMotionPlus(chan,1)` and report detection. If buffering misbehaves on any target, choose and document an alternative acquisition path here (`WPAD_ReadPending` drains the same queue, so it doesn't count).
+3. WPAD acquisition per SPEC §4.4: `WPAD_Init`, `WPAD_SetDataFormat(…BTNS_ACC)`, persistent per-channel `WPAD_SetEventBufs(chan, buf, 64)` with return codes checked, one owner draining `WPAD_ReadEvent` each frame, **re-registration on reconnect**, `err`/`data_present` gating. Show reports/sec, dropped-event deltas, estimated-timestamp gaps, buttons, calibrated **`gforce`**, and raw-accel saturation flags. On-screen axis readout confirms the sign conventions. Try `WPAD_SetMotionPlus(chan,1)` and report detection. If buffering misbehaves on any target, choose and document an alternative acquisition path here (`WPAD_ReadPending` drains the same queue, so it doesn't count).
 4. HOME → return to HBC (`exit(0)` / `SYS_ResetSystem` path as appropriate for HBC).
 5. `hbc/apps/backyardcornhole/` with `meta.xml` and a placeholder 128×48 `icon.png`.
 6. Dolphin: boot via File → Open; also install into Dolphin's virtual SD `apps/` and launch through HBC in Dolphin's NAND.
-7. Real Wiimote in Dolphin: a DolphinBar in Mode 4 (same as the Kinhank), which also supplies IR.
+7. Real Wiimote in Dolphin: a DolphinBar in Mode 4 (same as the Kinhank). The game consumes buttons and acceleration only.
 8. **Video: NTSC/60 Hz only.** `TVNtsc480Prog` when progressive output is actually available, else `TVNtsc480IntDf`. No EURGB60/PAL branch. A PAL console setting must not select 50 Hz.
 9. **Dolphin package (SPEC §1.5):** `make iso` builds the **complete** extracted tree in `wii/dolphin/iso-root/`: generated `sys/boot.bin` (ID `BYCEAO`, USA region, title), a redistributable `sys/apploader.img` with `PROVENANCE.md` (source, license; no retail apploader), `sys/main.dol` = `boot.dol`, and `files/`. It then composes `BackyardCornhole-BYCEAO.iso` with the pinned WIT version and exact flags, next to `wii/dolphin/GameSettings/BYCEAO.ini` (`[Controls] WiimoteSource0 = 2`, `WiimoteSource1 = 2`). Check `BYCEAO` against GameTDB for collisions. WAD isn't built unless the ISO fails (then: define its title ID and settings filename, and prove it separately).
 10. `wii/dolphin/INSTALL-KINHANK.md` for Retro: `adb push` the ISO to `/storage/3050BAA350BA6EEA0/Roms/wii/`, the ini into this Dolphin build's `GameSettings/` (path to be recorded by Retro), DolphinBar Mode 4, the bare-DOL + global "Real Wii Remote" fallback, and how to enable the virtual SD and copy traces off (filled in from Retro's P0 findings).
@@ -117,11 +117,11 @@ Acceptance
 - [ ] ISO proof: Dolphin shows ID `BYCEAO` and region USA; the ISO boots; the SHA-256 of the `main.dol` extracted from the ISO (`wit extract`) equals `boot.dol`; `PROVENANCE.md` covers every bundled disc component.
 - [ ] Bare `boot.dol` + global Real-Wiimote fallback also works (kept usable while the ISO is proven).
 - [ ] NTSC check: with the console (or Dolphin) set to a PAL region/50 Hz preference, the game still outputs NTSC 60 Hz.
-- [ ] Boots in Dolphin (emulated Wiimote): IR dot follows the mouse, buttons register, accel changes with Motion Simulation.
-- [ ] Boots in Dolphin with a **real** Wiimote via DolphinBar Mode 4: IR dot tracks, reports/sec shown.
+- [ ] Boots in Dolphin (emulated Wiimote): buttons register, accel changes with Motion Simulation.
+- [ ] Boots in Dolphin with a **real** Wiimote via DolphinBar Mode 4: buttons and acceleration register, reports/sec shown.
 - [ ] Desktop Dolphin shows the ISO's game ID as `BYCEAO`, and the per-game ini switches Wii Remote 1 to Real with no global change.
 - [ ] Boots from HBC on the real Wii; HOME returns to HBC.
-- [ ] 🟢K Retro: the ISO boots on the Kinhank (Dolphin Android 5.0-19870, Vulkan 1×), shows the `BYCEAO` ID, and real Wiimotes via DolphinBar Mode 4 drive the IR dot and buttons. If the ini isn't applied, the global fallback is tried and the result recorded. Retro records the real `GameSettings/` path, confirms the virtual SD is writable (a test file appears under `data/`), and documents trace retrieval.
+- [ ] 🟢K Retro: the ISO boots on the Kinhank (Dolphin Android 5.0-19870, Vulkan 1×), shows the `BYCEAO` ID, and real Wiimotes via DolphinBar Mode 4 drive buttons and acceleration. If the ini isn't applied, the global fallback is tried and the result recorded. Retro records the real `GameSettings/` path, confirms the virtual SD is writable (a test file appears under `data/`), and documents trace retrieval.
 - [ ] Measured report rate, dropped-event counts and timestamp-gap statistics recorded for: Dolphin emulated, Dolphin real (DolphinBar), Wii hardware, Kinhank. Disconnect + reconnect re-registers buffers with no stale events. If acquisition misbehaves anywhere, the alternative path is chosen and documented **before P1**.
 - [ ] Profiling hooks are in: frame time on the Wii, and Dolphin's speed % recorded by Retro on the Kinhank. All later timing budgets are set from these numbers, not assumed.
 
@@ -134,7 +134,7 @@ Acceptance
 Includes
 - Track C core linked into the Wii build (240 Hz fixed step, double precision).
 - Track B board + bag rendering, held bag at the release point, flight with flat spin (`AIR_SPIN_RATE`), hole shrink, board dust and hole confetti.
-- Track A detector (SPEC §4.4 candidate) driving `launch()`: power from the peak windowed speed proxy, aim from IR and curl from calm roll (both lock at a **stable** B press), auto-release at `v ≤ 0.6·peak_v` with follow-through confirmation; action-legality rules (armed inputs ignored).
+- Track A detector (SPEC §4.4 candidate) driving `launch()`: power from the peak windowed speed proxy, aim from lateral forward-swing acceleration and spin from lateral motion/release twist (neutral grip captured at a **stable** B press; both mirrored for LEFT HAND and frozen at release), auto-release at `v ≤ 0.6·peak_v` with follow-through confirmation; action-legality rules (armed inputs ignored).
 - Throw height (D-pad ↑/↓) and SLICK/STICKY (A) to exercise all six WIN combinations; stance step (D-pad ←/→); reset bag (2).
 - Power gauge with the 1.0.3 color ramp and the 3 s last-shot linger; aim arrow.
 - Callouts: CORNHOLE! / HANGER! / ON THE BOARD / GROUNDER / OFF THE BOARD / MISS.
@@ -144,7 +144,7 @@ Acceptance — must pass in **Dolphin (real Wiimote)**, on the **real Wii** and 
 **Speed-proxy validation (plain Wii Remotes; MotionPlus off or absent):**
 - [ ] **Speed, not distance:** within the supported gesture, 10 slow, long, wide swings average power < 0.4 and 10 short, quick swings average > 0.7 (default threshold). Measured against **independent video speed labels**: pairwise ordering of filmed peak hand speed vs estimated speed agrees ≥ 90% across ≥ 30 labeled swings from ≥ 3 players.
 - [ ] **Envelope documented:** the same filmed speed with deliberately shorter vs longer arm radius, and with the remote held at different grip angles, is reported as the estimate's spread. The supported gesture and on-screen coaching art are defined from it. Swings outside the envelope (wrist flicks, shakes) come out soft or are rejected, never full power.
-- [ ] **Zero false throws** on the adversarial trace set: backswing braking, backswing-only release at the back, motion started before B (arming refused), no-backswing toss (allowed), shake, wrist-only rotation, pointer loss mid-gesture, packet gap (cancels), clipping in a rejected phase (ignored), B tap.
+- [ ] **Zero false throws** on the adversarial trace set: backswing braking, backswing-only release at the back, motion started before B (arming refused), no-backswing toss (allowed), shake, wrist-only rotation, both-hand lateral direction and release twist, packet gap (cancels), clipping in a rejected phase (ignored), B tap.
 - [ ] Release and window math as specified: the auto-release fires at a 40% **speed** drop; window validity uses elapsed span ≥ 16 ms; replays on the host reproduce on-device decisions.
 - [ ] Clipping: the per-remote rail is measured; full-power default and calibration cap sit below it with margin; saturation never validates a toss.
 
@@ -237,9 +237,9 @@ Acceptance
 **Goal:** a complete, friendly product loop.
 
 Tasks
-- Main menu: PRACTICE · 2 PLAYER · TOURNAMENT · SETTINGS. Navigation by pointer + A, or D-pad + A; B backs out.
+- Main menu: PRACTICE · 2 PLAYER · TOURNAMENT · SETTINGS. Navigation by D-pad + A; B backs out.
 - Settings (short labels): SET POWER per player slot (TOSS HARD → POWER SET!, capped at the clip ceiling), CURL (strength), HAND (RIGHT/LEFT), WIND (CALM/ON: Practice and 2 Player, SPEC §2.3), RESET.
-- Help legend (button 1, remembered), first-throw hint "HOLD B · SWING · LET GO", "STRAP ON!" boot card, `HOLD STILL`, slot-correct `CONNECT REMOTE 1/2`, low battery, no-pointer "AIM: − +".
+- Help legend (button 1, remembered), first-throw hint "HOLD B · SWING · LET GO", "STRAP ON!" boot card, `HOLD STILL`, slot-correct `CONNECT REMOTE 1/2`, low battery, optional fine trim "AIM: − +", SWING TO AIM, TWIST TO CURL, per-slot LEFT/RIGHT HAND in setup/pause saved with SET POWER.
 - **Screen/action matrix** documented and tested: every screen (menus, pause, practice pause with CLEAR BOARD, round summary/advance, career map/intro/result/champion, NEW CAREER confirm, reconnect prompt) × every button.
 - Glyph-coverage build check (SPEC §2.6 repertoire; typographic characters mapped to ASCII) and 480i readability at ≥ 2× text.
 - SFX via ASND (CC0 set from `arcade/AUDIO.md` candidates, licenses saved alongside), ducking on cheers; rumble on release/board/hole.
@@ -280,7 +280,7 @@ Acceptance
 | Boots | `.dol` directly / via HBC | ISO (`BYCEAO`) | ISO (`BYCEAO`) from `/storage/3050BAA350BA6EEA0/Roms/wii/` | ✔ HBC `boot.dol` |
 | Per-game Real Wiimote ini | n/a | ✔ verify | ✔ verify (fallback: global source = Real) | n/a |
 | Menus, flow, scoring, soak scripts | ✔ primary | ✔ | spot-check | spot-check |
-| IR aim | Mouse "Point" | DolphinBar IR | DolphinBar IR | Sensor bar |
+| Swing-direction aim | Motion Simulation Swing | Accelerometer | Accelerometer | Accelerometer |
 | Swing power feel | Smoke only (Motion Simulation "Swing"; DSU/SDL Motion Input as a middle ground) | ✔ primary for tuning | ✔ feel sign-off | ✔ final sign-off |
 | Wrist-roll curl | "Tilt" mapping | ✔ | ✔ | ✔ |
 | Report rate / dropped events | Record, don't trust | Record | Record | ✔ authoritative |
@@ -303,7 +303,7 @@ Per-phase routine:
 - [ ] 1 remote and 2 remotes; remote disconnect + reconnect mid-turn for **each** slot (game pauses with the slot-correct `CONNECT REMOTE n`; the gesture is discarded; slot 2 can switch to Remote 1).
 - [ ] PAL console setting → still NTSC 60 Hz output.
 - [ ] Long practice session at the measured bag limit holds 60 fps.
-- [ ] Remote without a sensor bar: −/+ aim works, the prompt shows.
+- [ ] Straight swing throws straight from shifted stance with zero trim; left/right swings and release twist mirror for both hands. −/+ fine trim works before grip.
 - [ ] Wii Remote Plus and a plain Wii Remote both play (MotionPlus optional path never required).
 - [ ] 480p component and 480i composite; 4:3 and 16:9 settings.
 - [ ] HOME → QUIT returns to HBC; power button on the console shuts down cleanly.
