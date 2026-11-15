@@ -16,5 +16,18 @@ which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and th
 - Per-slot comfortable-toss SET POWER calibration with median, outlier retry, floor and measured clip-ceiling hooks; trace diagnostics and release-window twist helper; game integration notes.
 - Deterministic host tests for speed-to-power, gesture legality, calibration and both WPAD channels, available through `host-test` or the standalone shell harness. Hardware tuning and P1 validation remain pending for `wii-v0.1.0`.
 
+- Playable game: Practice (live stats, CLEAR BOARD in the pause menu, unlimited bags), 2 Player (two remotes or pass-and-play) and the Tournament (8 rivals, 4 circuits, circuit wind, career save, champion), with round summaries, FINAL and career result screens.
+- Physics, scoring and match flow ported from arcade 1.0.3: 240 Hz bag physics with landing curl, bag-to-bag contact, cancellation scoring to 21, last scorer throws first, knocked in/off callouts, KOBE power remap and the shared-per-round crosswind with the arcade's CALM/ON policy. Golden tests compare the C core with the pinned 1.0.3 page: WIN table, 66 shots, 8 multi-bag scenes, wind and RNG.
+- Tournament CPU: casual and planCareerShot ports as a resumable, frame-budgeted search (budget measured at boot). It matches 1.0.3's choices on 24 seeded rival fixtures.
+- Wiimote integration: swing speed sets power; swing direction aims straight from the stance (no auto-aim at the hole); swing/twist spin feeds landing curl. HAND (LEFT/RIGHT), SET POWER, POWER and CURL per player slot in SETTINGS and the pause menu; CONNECT REMOTE prompts; help legend on 1. No pointer or sensor bar.
+- GX renderer: the 1.0.3 camera (18° FOV) and fog, the backyard voxels (fences, trees, hedges, stones, grill, lanterns), hay bales with the live wind pennant, the board with its sunburst art and a real hole, puffy bags with the down-face surface rule, held bag, the dog with all three celebrations, confetti, board dust, flight trail, grill smoke, and the BOARD · 27 FT close-up inset.
+- HUD: scoreboard with pips and round edge, turn banner, callouts, wind panel, LAST SHOT gauge (3 s linger, 5-stop color ramp), shot arrow, status/help legend, HOLD STILL, menus and panels; rival portraits from the 1.0.3 pixel art.
+- Saves to `sd:/apps/backyardcornhole/data/save.dat` (big-endian fields + CRC-32, crash-safe tmp/bak rename): career, per-slot profiles, help, WIND. Plays on if the SD card is missing.
+- Packaging: NTSC-only video (480p/480i, 16:9 aware), HBC `boot.dol` + `meta.xml` + generated icon, Dolphin ISO with game ID `BYCEAO` (USA region, own apploader, WIT-composed, main.dol identical to boot.dol), `GameSettings/BYCEAO.ini` (`WiimoteSource0 = 2`, `WiimoteSource1 = 2`), release bundle with SHA256SUMS; rumble on release, board and CORNHOLE!.
+
+### Changed
+- HBC description no longer says "point to aim"; swing left/right aims.
+
 ### Fixed
+- A throw is refused while the CONNECT REMOTE prompt has play frozen (found by the Dolphin soak when the remote idled off after 5 minutes).
 - Require two-sided calm apex/finish dwell to prevent backswing braking auto-throws; classify the post-apex forward lobe so bottom-of-arc B releases throw immediately. Add physical pendulum regressions for both hands, held-B backswings and speed ordering.

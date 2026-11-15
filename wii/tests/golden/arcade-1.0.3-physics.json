@@ -1,0 +1,3823 @@
+{
+ "generator": "wii/tools/oracle/golden.mjs",
+ "sources": {
+  "game": {
+   "path": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/cornhole/index.html",
+   "sha256": "fc7631d4324aa1d567747d423903f0f24c89c08e47dbc2bed1f97216a6d3f9e9"
+  },
+  "spin": {
+   "path": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/cornhole/spin.mjs",
+   "sha256": "5c538a131b95fc1895f227f98c755496cd31ac1b104ede3a03891da29c4ea9f7"
+  },
+  "controls": {
+   "path": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/cornhole/controls.mjs",
+   "sha256": "09f16072dafde87c34d33209ecec91a8374536207be1cf10f9de7d7c84a68d44"
+  },
+  "three": {
+   "path": "arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/vendor/three.module.min.js",
+   "sha256": "08fd7545d13d2c7fb65ab691530a802dafefd638596501854f267d0fb13c39e7"
+  }
+ },
+ "timestep": 0.004166666666666667,
+ "holeLocalZ": -0.9906,
+ "baseYaw": {
+  "0": 0,
+  "-0.45": 0.05135667632901562,
+  "0.3": -0.03425451277277646
+ },
+ "win": {
+  "0slick0": {
+   "lo": 0.44500000000000034,
+   "hi": 0.6624999999999969,
+   "olo": 0.4150000000000003,
+   "ohi": 0.6624999999999969,
+   "mid": 0.5537499999999986
+  },
+  "0slick1": {
+   "lo": 0.654999999999997,
+   "hi": 0.7424999999999952,
+   "olo": 0.5125000000000001,
+   "ohi": 0.7424999999999952,
+   "mid": 0.6987499999999961
+  },
+  "0slick2": {
+   "lo": 0.8024999999999939,
+   "hi": 0.8274999999999934,
+   "olo": 0.6224999999999977,
+   "ohi": 0.8574999999999927,
+   "mid": 0.8149999999999936
+  },
+  "0sticky0": {
+   "lo": 0.5000000000000003,
+   "hi": 0.6624999999999969,
+   "olo": 0.4150000000000003,
+   "ohi": 0.6624999999999969,
+   "mid": 0.5812499999999986
+  },
+  "0sticky1": {
+   "lo": 0.6749999999999966,
+   "hi": 0.7424999999999952,
+   "olo": 0.5125000000000001,
+   "ohi": 0.7424999999999952,
+   "mid": 0.7087499999999959
+  },
+  "0sticky2": {
+   "lo": 0.8024999999999939,
+   "hi": 0.8274999999999934,
+   "olo": 0.6224999999999977,
+   "ohi": 0.8574999999999927,
+   "mid": 0.8149999999999936
+  },
+  "1slick0": {
+   "lo": 0.44500000000000034,
+   "hi": 0.6624999999999969,
+   "olo": 0.4150000000000003,
+   "ohi": 0.6624999999999969,
+   "mid": 0.5537499999999986
+  },
+  "1slick1": {
+   "lo": 0.654999999999997,
+   "hi": 0.7424999999999952,
+   "olo": 0.5125000000000001,
+   "ohi": 0.7424999999999952,
+   "mid": 0.6987499999999961
+  },
+  "1slick2": {
+   "lo": 0.8024999999999939,
+   "hi": 0.8274999999999934,
+   "olo": 0.6224999999999977,
+   "ohi": 0.8574999999999927,
+   "mid": 0.8149999999999936
+  },
+  "1sticky0": {
+   "lo": 0.5000000000000003,
+   "hi": 0.6624999999999969,
+   "olo": 0.4150000000000003,
+   "ohi": 0.6624999999999969,
+   "mid": 0.5812499999999986
+  },
+  "1sticky1": {
+   "lo": 0.6749999999999966,
+   "hi": 0.7424999999999952,
+   "olo": 0.5125000000000001,
+   "ohi": 0.7424999999999952,
+   "mid": 0.7087499999999959
+  },
+  "1sticky2": {
+   "lo": 0.8024999999999939,
+   "hi": 0.8274999999999934,
+   "olo": 0.6224999999999977,
+   "ohi": 0.8574999999999927,
+   "mid": 0.8149999999999936
+  }
+ },
+ "shots": [
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.2,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -6.612790377
+   ],
+   "lp": [
+    0,
+    0.222962384,
+    1.742696253
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.025,
+   "transitions": [
+    [
+     206,
+     "ground",
+     "ground"
+    ],
+    [
+     245,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.45,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.173626937,
+    -9.219555202
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.98931354
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.495833333,
+   "transitions": [
+    [
+     226,
+     "land",
+     "slide"
+    ],
+    [
+     321,
+     "hole",
+     "hole"
+    ],
+    [
+     358,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.173646787,
+    -9.219665524
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.989425634
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.3375,
+   "transitions": [
+    [
+     227,
+     "land",
+     "slide"
+    ],
+    [
+     283,
+     "hole",
+     "hole"
+    ],
+    [
+     320,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.55,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.173629259,
+    -9.219568112
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.989326658
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.241666667,
+   "transitions": [
+    [
+     228,
+     "land",
+     "slide"
+    ],
+    [
+     260,
+     "hole",
+     "hole"
+    ],
+    [
+     297,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.62,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.173666902,
+    -9.219777324
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.989539229
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.145833333,
+   "transitions": [
+    [
+     230,
+     "land",
+     "slide"
+    ],
+    [
+     237,
+     "hole",
+     "hole"
+    ],
+    [
+     274,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.8,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -10.718250043
+   ],
+   "lp": [
+    0,
+    -0.469679262,
+    -2.18146267
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.275,
+   "transitions": [
+    [
+     251,
+     "ground",
+     "ground"
+    ],
+    [
+     305,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.2,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -6.060859644
+   ],
+   "lp": [
+    0,
+    0.320723219,
+    2.234301184
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.125,
+   "transitions": [
+    [
+     237,
+     "ground",
+     "ground"
+    ],
+    [
+     269,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.45,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -8.123721851
+   ],
+   "lp": [
+    0,
+    -0.052038964,
+    0.245020637
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.2875,
+   "transitions": [
+    [
+     270,
+     "ground",
+     "ground"
+    ],
+    [
+     308,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -8.194901233
+   ],
+   "lp": [
+    0,
+    -0.101283807,
+    -0.011901914
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.179166667,
+   "transitions": [
+    [
+     274,
+     "ground",
+     "ground"
+    ],
+    [
+     282,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.55,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.181707975,
+    -8.655056329
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.435167104
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.45,
+   "transitions": [
+    [
+     273,
+     "land",
+     "slide"
+    ],
+    [
+     347,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.62,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.243335007,
+    -8.99756778
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.783178576
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.479166667,
+   "transitions": [
+    [
+     277,
+     "land",
+     "slide"
+    ],
+    [
+     354,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.8,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -10.052392727
+   ],
+   "lp": [
+    0,
+    -0.372188602,
+    -1.618892763
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.420833333,
+   "transitions": [
+    [
+     297,
+     "ground",
+     "ground"
+    ],
+    [
+     340,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.2,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -5.446214577
+   ],
+   "lp": [
+    0,
+    0.424804872,
+    2.789707323
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.433333333,
+   "transitions": [
+    [
+     322,
+     "ground",
+     "ground"
+    ],
+    [
+     343,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.45,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.431295744
+   ],
+   "lp": [
+    0,
+    0.070001276,
+    0.853791535
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.670833333,
+   "transitions": [
+    [
+     375,
+     "ground",
+     "ground"
+    ],
+    [
+     400,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.700788886
+   ],
+   "lp": [
+    0,
+    -0.001729114,
+    0.595096711
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.704166667,
+   "transitions": [
+    [
+     382,
+     "ground",
+     "ground"
+    ],
+    [
+     408,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.55,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.956267305
+   ],
+   "lp": [
+    0,
+    -0.03605335,
+    0.343985622
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.729166667,
+   "transitions": [
+    [
+     388,
+     "ground",
+     "ground"
+    ],
+    [
+     414,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.62,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -8.193564433
+   ],
+   "lp": [
+    0,
+    -0.094236021,
+    0.051430605
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.683333333,
+   "transitions": [
+    [
+     397,
+     "ground",
+     "ground"
+    ],
+    [
+     403,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.8,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.268054686,
+    -9.13495511
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.922772061
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.795833333,
+   "transitions": [
+    [
+     413,
+     "land",
+     "slide"
+    ],
+    [
+     430,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.2,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -6.612790377
+   ],
+   "lp": [
+    0,
+    0.222962384,
+    1.742696253
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.025,
+   "transitions": [
+    [
+     206,
+     "ground",
+     "ground"
+    ],
+    [
+     245,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.45,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.229562773,
+    -8.921024298
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.705405965
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.325,
+   "transitions": [
+    [
+     226,
+     "land",
+     "slide"
+    ],
+    [
+     317,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.17362467,
+    -9.219542602
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.989300739
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.475,
+   "transitions": [
+    [
+     227,
+     "land",
+     "slide"
+    ],
+    [
+     316,
+     "hole",
+     "hole"
+    ],
+    [
+     353,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.55,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.173644663,
+    -9.219653724
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.989413645
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.266666667,
+   "transitions": [
+    [
+     228,
+     "land",
+     "slide"
+    ],
+    [
+     266,
+     "hole",
+     "hole"
+    ],
+    [
+     303,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.62,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    0,
+    0.173641551,
+    -9.219636427
+   ],
+   "lp": [
+    0,
+    -0.091916667,
+    -0.98939607
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.145833333,
+   "transitions": [
+    [
+     230,
+     "land",
+     "slide"
+    ],
+    [
+     237,
+     "hole",
+     "hole"
+    ],
+    [
+     274,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.8,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -10.718250043
+   ],
+   "lp": [
+    0,
+    -0.469679262,
+    -2.18146267
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.275,
+   "transitions": [
+    [
+     251,
+     "ground",
+     "ground"
+    ],
+    [
+     305,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 1,
+   "power": 0.2,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -6.060859644
+   ],
+   "lp": [
+    0,
+    0.320723219,
+    2.234301184
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.125,
+   "transitions": [
+    [
+     237,
+     "ground",
+     "ground"
+    ],
+    [
+     269,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 1,
+   "power": 0.45,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -8.123721851
+   ],
+   "lp": [
+    0,
+    -0.052038964,
+    0.245020637
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.2875,
+   "transitions": [
+    [
+     270,
+     "ground",
+     "ground"
+    ],
+    [
+     308,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 1,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -8.194901233
+   ],
+   "lp": [
+    0,
+    -0.101283807,
+    -0.011901914
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.179166667,
+   "transitions": [
+    [
+     274,
+     "ground",
+     "ground"
+    ],
+    [
+     282,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 1,
+   "power": 0.55,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.165136879,
+    -8.562957296
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.341589151
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.3625,
+   "transitions": [
+    [
+     273,
+     "land",
+     "slide"
+    ],
+    [
+     326,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 1,
+   "power": 0.62,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.225734881,
+    -8.899749589
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.683789629
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.3875,
+   "transitions": [
+    [
+     277,
+     "land",
+     "slide"
+    ],
+    [
+     332,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 1,
+   "power": 0.8,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -10.052392727
+   ],
+   "lp": [
+    0,
+    -0.372188602,
+    -1.618892763
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.420833333,
+   "transitions": [
+    [
+     297,
+     "ground",
+     "ground"
+    ],
+    [
+     340,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 2,
+   "power": 0.2,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -5.446214577
+   ],
+   "lp": [
+    0,
+    0.424804872,
+    2.789707323
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.433333333,
+   "transitions": [
+    [
+     322,
+     "ground",
+     "ground"
+    ],
+    [
+     343,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 2,
+   "power": 0.45,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.431295744
+   ],
+   "lp": [
+    0,
+    0.070001276,
+    0.853791535
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.670833333,
+   "transitions": [
+    [
+     375,
+     "ground",
+     "ground"
+    ],
+    [
+     400,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 2,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.700788886
+   ],
+   "lp": [
+    0,
+    -0.001729114,
+    0.595096711
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.704166667,
+   "transitions": [
+    [
+     382,
+     "ground",
+     "ground"
+    ],
+    [
+     408,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 2,
+   "power": 0.55,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.956267305
+   ],
+   "lp": [
+    0,
+    -0.03605335,
+    0.343985622
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.729166667,
+   "transitions": [
+    [
+     388,
+     "ground",
+     "ground"
+    ],
+    [
+     414,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 2,
+   "power": 0.62,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -8.193564433
+   ],
+   "lp": [
+    0,
+    -0.094236021,
+    0.051430605
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.683333333,
+   "transitions": [
+    [
+     397,
+     "ground",
+     "ground"
+    ],
+    [
+     403,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 2,
+   "power": 0.8,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0,
+    0.267136036,
+    -9.129849426
+   ],
+   "lp": [
+    0,
+    0.016,
+    -0.91758439
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.775,
+   "transitions": [
+    [
+     413,
+     "land",
+     "slide"
+    ],
+    [
+     425,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.52,
+   "rx": 0.2,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "in",
+   "p": [
+    -0.00002695,
+    0.173652532,
+    -9.219697456
+   ],
+   "lp": [
+    -0.00002695,
+    -0.091916667,
+    -0.98945808
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.291666667,
+   "transitions": [
+    [
+     228,
+     "land",
+     "slide"
+    ],
+    [
+     272,
+     "hole",
+     "hole"
+    ],
+    [
+     309,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": 0.2,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "board",
+   "p": [
+    0.012670381,
+    0.158180392,
+    -8.524294446
+   ],
+   "lp": [
+    0.012670381,
+    0.016,
+    -0.302305457
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.441666667,
+   "transitions": [
+    [
+     272,
+     "land",
+     "slide"
+    ],
+    [
+     345,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.52,
+   "rx": 0.2,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0.032247745,
+    0.016,
+    -7.792972825
+   ],
+   "lp": [
+    0.033560492,
+    0.000123789,
+    0.502001439
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.7125,
+   "transitions": [
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     410,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.52,
+   "rx": -0.3,
+   "aim": 0.05,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0.430436875,
+    0.016,
+    -9.098885607
+   ],
+   "lp": [
+    0.412717779,
+    -0.211568937,
+    -0.632001975
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.183333333,
+   "transitions": [
+    [
+     235,
+     "ground",
+     "ground"
+    ],
+    [
+     283,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": -0.3,
+   "aim": 0.05,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0.375856579,
+    0.016,
+    -8.452616562
+   ],
+   "lp": [
+    0.364649756,
+    -0.09712594,
+    -0.074294682
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.3125,
+   "transitions": [
+    [
+     275,
+     "ground",
+     "ground"
+    ],
+    [
+     314,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.52,
+   "rx": -0.3,
+   "aim": 0.05,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0.31810811,
+    0.016,
+    -7.768834135
+   ],
+   "lp": [
+    0.313271101,
+    0.004364899,
+    0.525572726
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.7125,
+   "transitions": [
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     410,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.52,
+   "rx": 0.45,
+   "aim": -0.08,
+   "drift": 0.3,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    -0.583519168,
+    0.016,
+    -9.06792309
+   ],
+   "lp": [
+    -0.558447835,
+    -0.206218998,
+    -0.602268019
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.183333333,
+   "transitions": [
+    [
+     235,
+     "ground",
+     "ground"
+    ],
+    [
+     283,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": 0.45,
+   "aim": -0.08,
+   "drift": 0.3,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    -0.506291711,
+    0.016,
+    -8.423967652
+   ],
+   "lp": [
+    -0.490434808,
+    -0.092136818,
+    -0.046566083
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.3125,
+   "transitions": [
+    [
+     275,
+     "ground",
+     "ground"
+    ],
+    [
+     314,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.52,
+   "rx": 0.45,
+   "aim": -0.08,
+   "drift": 0.3,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    -0.424581502,
+    0.016,
+    -7.742633127
+   ],
+   "lp": [
+    -0.417737459,
+    0.008968352,
+    0.551157854
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.7125,
+   "transitions": [
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     410,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.52,
+   "rx": 0,
+   "aim": 0.03,
+   "drift": 0,
+   "spin": -1,
+   "state": "grass",
+   "p": [
+    0.464316967,
+    0.016,
+    -9.739593537
+   ],
+   "lp": [
+    0.461222205,
+    -0.343180229,
+    -1.460351594
+   ],
+   "dead": false,
+   "offBoard": true,
+   "touched": true,
+   "swish": false,
+   "t": 1.466666667,
+   "transitions": [
+    [
+     228,
+     "land",
+     "slide"
+    ],
+    [
+     274,
+     "off",
+     "fly"
+    ],
+    [
+     339,
+     "ground",
+     "ground"
+    ],
+    [
+     351,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": 0,
+   "aim": 0.03,
+   "drift": 0,
+   "spin": -1,
+   "state": "grass",
+   "p": [
+    0.384598312,
+    0.016,
+    -8.587268025
+   ],
+   "lp": [
+    0.384188628,
+    -0.135207341,
+    -0.338691635
+   ],
+   "dead": false,
+   "offBoard": true,
+   "touched": true,
+   "swish": false,
+   "t": 1.5875,
+   "transitions": [
+    [
+     272,
+     "land",
+     "slide"
+    ],
+    [
+     334,
+     "off",
+     "fly"
+    ],
+    [
+     376,
+     "ground",
+     "ground"
+    ],
+    [
+     380,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.52,
+   "rx": 0,
+   "aim": 0.03,
+   "drift": 0,
+   "spin": -1,
+   "state": "grass",
+   "p": [
+    0.220313612,
+    0.016,
+    -7.791583797
+   ],
+   "lp": [
+    0.218589546,
+    0.000367838,
+    0.503357817
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.7125,
+   "transitions": [
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     410,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.52,
+   "rx": 0,
+   "aim": -0.02,
+   "drift": 0,
+   "spin": 1,
+   "state": "grass",
+   "p": [
+    -0.489209274,
+    0.016,
+    -9.757325255
+   ],
+   "lp": [
+    -0.486949214,
+    -0.343180229,
+    -1.485963347
+   ],
+   "dead": false,
+   "offBoard": true,
+   "touched": true,
+   "swish": false,
+   "t": 1.6,
+   "transitions": [
+    [
+     228,
+     "land",
+     "slide"
+    ],
+    [
+     310,
+     "off",
+     "fly"
+    ],
+    [
+     375,
+     "ground",
+     "ground"
+    ],
+    [
+     383,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": 0,
+   "aim": -0.02,
+   "drift": 0,
+   "spin": 1,
+   "state": "board",
+   "p": [
+    -0.276142595,
+    0.160606668,
+    -8.537779235
+   ],
+   "lp": [
+    -0.276142595,
+    0.016,
+    -0.316006783
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.604166667,
+   "transitions": [
+    [
+     272,
+     "land",
+     "slide"
+    ],
+    [
+     384,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.52,
+   "rx": 0,
+   "aim": -0.02,
+   "drift": 0,
+   "spin": 1,
+   "state": "grass",
+   "p": [
+    -0.146887982,
+    0.016,
+    -7.79341982
+   ],
+   "lp": [
+    -0.145738509,
+    0.000045254,
+    0.501564952
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.7125,
+   "transitions": [
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     410,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.52,
+   "rx": 0.1,
+   "aim": 0,
+   "drift": -0.5,
+   "spin": 0.6,
+   "state": "grass",
+   "p": [
+    -0.388875267,
+    0.016,
+    -9.736117513
+   ],
+   "lp": [
+    -0.387703457,
+    -0.343180229,
+    -1.46576673
+   ],
+   "dead": false,
+   "offBoard": true,
+   "touched": true,
+   "swish": false,
+   "t": 1.620833333,
+   "transitions": [
+    [
+     228,
+     "land",
+     "slide"
+    ],
+    [
+     316,
+     "off",
+     "fly"
+    ],
+    [
+     381,
+     "ground",
+     "ground"
+    ],
+    [
+     388,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": 0.1,
+   "aim": 0,
+   "drift": -0.5,
+   "spin": 0.6,
+   "state": "board",
+   "p": [
+    -0.211091575,
+    0.15912848,
+    -8.529563742
+   ],
+   "lp": [
+    -0.211091575,
+    0.016,
+    -0.307659366
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.495833333,
+   "transitions": [
+    [
+     272,
+     "land",
+     "slide"
+    ],
+    [
+     358,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.52,
+   "rx": 0.1,
+   "aim": 0,
+   "drift": -0.5,
+   "spin": 0.6,
+   "state": "grass",
+   "p": [
+    -0.130754162,
+    0.016,
+    -7.791263055
+   ],
+   "lp": [
+    -0.128948393,
+    0.000424192,
+    0.503671019
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.7125,
+   "transitions": [
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     410,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 8,
+   "angle": 1.5707963267948966,
+   "state": "board",
+   "p": [
+    0.116748333,
+    0.320146992,
+    -9.424474348
+   ],
+   "lp": [
+    0.116748333,
+    0.016,
+    -1.216940376
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.495833333,
+   "transitions": [
+    [
+     227,
+     "land",
+     "slide"
+    ],
+    [
+     358,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 8,
+   "angle": 1.5707963267948966,
+   "state": "grass",
+   "p": [
+    0.132087621,
+    0.016,
+    -8.194889423
+   ],
+   "lp": [
+    0.131770833,
+    -0.101283807,
+    -0.011901914
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.179166667,
+   "transitions": [
+    [
+     274,
+     "ground",
+     "ground"
+    ],
+    [
+     282,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 8,
+   "angle": 1.5707963267948966,
+   "state": "grass",
+   "p": [
+    0.259349447,
+    0.016,
+    -7.700940753
+   ],
+   "lp": [
+    0.255333333,
+    -0.001729114,
+    0.595096711
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.704166667,
+   "transitions": [
+    [
+     382,
+     "ground",
+     "ground"
+    ],
+    [
+     408,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 12,
+   "angle": -1.0471975511965976,
+   "state": "grass",
+   "p": [
+    -0.170306974,
+    0.016,
+    -9.718297173
+   ],
+   "lp": [
+    -0.170009902,
+    -0.344169406,
+    -1.447987151
+   ],
+   "dead": false,
+   "offBoard": true,
+   "touched": true,
+   "swish": false,
+   "t": 1.629166667,
+   "transitions": [
+    [
+     227,
+     "land",
+     "slide"
+    ],
+    [
+     319,
+     "off",
+     "fly"
+    ],
+    [
+     384,
+     "ground",
+     "ground"
+    ],
+    [
+     390,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 12,
+   "angle": -1.0471975511965976,
+   "state": "board",
+   "p": [
+    -0.183293164,
+    0.157547639,
+    -8.520777724
+   ],
+   "lp": [
+    -0.183293164,
+    0.016,
+    -0.298732264
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.441666667,
+   "transitions": [
+    [
+     270,
+     "land",
+     "slide"
+    ],
+    [
+     345,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 12,
+   "angle": -1.0471975511965976,
+   "state": "grass",
+   "p": [
+    -0.337201586,
+    0.016,
+    -7.898851034
+   ],
+   "lp": [
+    -0.33168773,
+    -0.035640572,
+    0.406623204
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.708333333,
+   "transitions": [
+    [
+     382,
+     "ground",
+     "ground"
+    ],
+    [
+     409,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 6,
+   "angle": 0.2,
+   "state": "in",
+   "p": [
+    0.000315243,
+    0.173631308,
+    -9.219579495
+   ],
+   "lp": [
+    0.000315243,
+    -0.091916667,
+    -0.989338224
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.295833333,
+   "transitions": [
+    [
+     227,
+     "land",
+     "slide"
+    ],
+    [
+     273,
+     "hole",
+     "hole"
+    ],
+    [
+     310,
+     "rest",
+     "in"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 6,
+   "angle": 0.2,
+   "state": "board",
+   "p": [
+    0.021019593,
+    0.157088991,
+    -8.518228646
+   ],
+   "lp": [
+    0.021019593,
+    0.016,
+    -0.296142253
+   ],
+   "dead": false,
+   "offBoard": false,
+   "touched": true,
+   "swish": false,
+   "t": 1.441666667,
+   "transitions": [
+    [
+     270,
+     "land",
+     "slide"
+    ],
+    [
+     345,
+     "rest",
+     "board"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 2,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "mph": 6,
+   "angle": 0.2,
+   "state": "grass",
+   "p": [
+    0.038674502,
+    0.016,
+    -7.894658771
+   ],
+   "lp": [
+    0.038045177,
+    -0.034964601,
+    0.410380126
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.708333333,
+   "transitions": [
+    [
+     382,
+     "ground",
+     "ground"
+    ],
+    [
+     409,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 1,
+   "power": 0.99,
+   "rx": 0.45,
+   "aim": 0.12,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    1.187297337,
+    0.016,
+    -11.174115739
+   ],
+   "lp": [
+    1.174541497,
+    -0.560497186,
+    -2.70243481
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.495833333,
+   "transitions": [
+    [
+     312,
+     "ground",
+     "ground"
+    ],
+    [
+     358,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "sticky",
+   "arc": 0,
+   "power": 0.05,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -5.376831285
+   ],
+   "lp": [
+    0,
+    0.443744939,
+    2.923747515
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 0.9375,
+   "transitions": [
+    [
+     190,
+     "ground",
+     "ground"
+    ],
+    [
+     224,
+     "rest",
+     "grass"
+    ]
+   ]
+  },
+  {
+   "side": "slick",
+   "arc": 0,
+   "power": 0.3,
+   "rx": 0,
+   "aim": 0,
+   "drift": 0,
+   "spin": 0,
+   "state": "grass",
+   "p": [
+    0,
+    0.016,
+    -7.486900872
+   ],
+   "lp": [
+    0,
+    0.088644767,
+    0.904883556
+   ],
+   "dead": true,
+   "offBoard": false,
+   "touched": false,
+   "swish": false,
+   "t": 1.083333333,
+   "transitions": [
+    [
+     216,
+     "ground",
+     "ground"
+    ],
+    [
+     259,
+     "rest",
+     "grass"
+    ]
+   ]
+  }
+ ],
+ "scenes": [
+  {
+   "resting": [
+    [
+     1,
+     0,
+     -0.6906000000000001
+    ]
+   ],
+   "side": "slick",
+   "arc": 0,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "steps": 329,
+   "bags": [
+    {
+     "team": 1,
+     "state": "in",
+     "lp": [
+      0,
+      -0.091916667,
+      -0.989316017
+     ],
+     "p": [
+      0,
+      0.173627375,
+      -9.219557639
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      0,
+      0.019173274,
+      -0.637355693
+     ],
+     "p": [
+      0,
+      0.220635327,
+      -8.853487568
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0,
+     -0.6906000000000001
+    ]
+   ],
+   "side": "slick",
+   "arc": 0,
+   "power": 0.53,
+   "rx": 0,
+   "aim": 0,
+   "steps": 309,
+   "bags": [
+    {
+     "team": 1,
+     "state": "in",
+     "lp": [
+      0,
+      -0.091916667,
+      -0.989359548
+     ],
+     "p": [
+      0,
+      0.173635084,
+      -9.219600482
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      0,
+      0.018455419,
+      -0.657779093
+     ],
+     "p": [
+      0,
+      0.223545461,
+      -8.873715314
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0,
+     -0.6906000000000001
+    ]
+   ],
+   "side": "slick",
+   "arc": 0,
+   "power": 0.56,
+   "rx": 0,
+   "aim": 0,
+   "steps": 293,
+   "bags": [
+    {
+     "team": 1,
+     "state": "in",
+     "lp": [
+      0,
+      -0.091916667,
+      -0.989371404
+     ],
+     "p": [
+      0,
+      0.173637183,
+      -9.219612151
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      0,
+      0.017140734,
+      -0.773820797
+     ],
+     "p": [
+      0,
+      0.242800605,
+      -8.988155887
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0,
+     -0.6906000000000001
+    ]
+   ],
+   "side": "slick",
+   "arc": 0,
+   "power": 0.6,
+   "rx": 0,
+   "aim": 0,
+   "steps": 275,
+   "bags": [
+    {
+     "team": 1,
+     "state": "board",
+     "lp": [
+      0,
+      0.016,
+      -0.65155547
+     ],
+     "p": [
+      0,
+      0.220026748,
+      -8.868024863
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "in",
+     "lp": [
+      0,
+      -0.091916667,
+      -0.989524365
+     ],
+     "p": [
+      0,
+      0.17366427,
+      -9.219762694
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0.02,
+     -0.8706
+    ],
+    [
+     0,
+     -0.1,
+     -1.1906
+    ]
+   ],
+   "side": "slick",
+   "arc": 1,
+   "power": 0.52,
+   "rx": 0,
+   "aim": 0,
+   "steps": 345,
+   "bags": [
+    {
+     "team": 1,
+     "state": "board",
+     "lp": [
+      0.02,
+      0.016,
+      -0.8706
+     ],
+     "p": [
+      0.02,
+      0.258815884,
+      -9.083607583
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      -0.1,
+      0.016,
+      -1.1906
+     ],
+     "p": [
+      -0.1,
+      0.31548255,
+      -9.398550259
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      0,
+      0.016,
+      -0.304375453
+     ],
+     "p": [
+      0,
+      0.158546954,
+      -8.526331728
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0.02,
+     -0.8706
+    ],
+    [
+     0,
+     -0.1,
+     -1.1906
+    ]
+   ],
+   "side": "slick",
+   "arc": 1,
+   "power": 0.56,
+   "rx": 0,
+   "aim": 0,
+   "steps": 349,
+   "bags": [
+    {
+     "team": 1,
+     "state": "board",
+     "lp": [
+      0.02,
+      0.016,
+      -0.8706
+     ],
+     "p": [
+      0.02,
+      0.258815884,
+      -9.083607583
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      -0.1,
+      0.016,
+      -1.1906
+     ],
+     "p": [
+      -0.1,
+      0.31548255,
+      -9.398550259
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "board",
+     "lp": [
+      0,
+      0.016,
+      -0.494394335
+     ],
+     "p": [
+      0,
+      0.192196131,
+      -8.713347525
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0,
+     -0.5406
+    ]
+   ],
+   "side": "slick",
+   "arc": 2,
+   "power": 0.5,
+   "rx": 0,
+   "aim": 0,
+   "steps": 577,
+   "bags": [
+    {
+     "team": 1,
+     "state": "board",
+     "lp": [
+      0,
+      0.016,
+      -0.5406
+     ],
+     "p": [
+      0,
+      0.200378384,
+      -8.758822949
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "removed",
+     "lp": [
+      0,
+      -0.001729114,
+      0.595096711
+     ],
+     "p": [
+      0,
+      0.016,
+      -7.700788886
+     ],
+     "dead": true,
+     "offBoard": false
+    }
+   ]
+  },
+  {
+   "resting": [
+    [
+     1,
+     0,
+     -1.0706
+    ]
+   ],
+   "side": "slick",
+   "arc": 0,
+   "power": 0.58,
+   "rx": 0,
+   "aim": 0,
+   "steps": 286,
+   "bags": [
+    {
+     "team": 1,
+     "state": "board",
+     "lp": [
+      0,
+      0.016,
+      -1.0706
+     ],
+     "p": [
+      0,
+      0.29423255,
+      -9.280446756
+     ],
+     "dead": false,
+     "offBoard": false
+    },
+    {
+     "team": 0,
+     "state": "in",
+     "lp": [
+      0,
+      -0.091916667,
+      -0.989404838
+     ],
+     "p": [
+      0,
+      0.173643104,
+      -9.219645057
+     ],
+     "dead": false,
+     "offBoard": false
+    }
+   ]
+  }
+ ],
+ "winds": [
+  {
+   "circuit": null,
+   "seed": 1243,
+   "seq": [
+    [
+     7,
+     1.118655306
+    ],
+    [
+     9,
+     -1.422684521
+    ],
+    [
+     7,
+     2.087824658
+    ],
+    [
+     6,
+     -1.094927821
+    ]
+   ]
+  },
+  {
+   "circuit": 0,
+   "seed": 1234,
+   "seq": [
+    [
+     6,
+     -1.357783789
+    ],
+    [
+     4,
+     2.063554471
+    ],
+    [
+     4,
+     -1.971073865
+    ],
+    [
+     5,
+     1.887842735
+    ]
+   ]
+  },
+  {
+   "circuit": 1,
+   "seed": 1235,
+   "seq": [
+    [
+     6,
+     1.600783696
+    ],
+    [
+     8,
+     -1.786520853
+    ],
+    [
+     8,
+     1.055053054
+    ],
+    [
+     7,
+     -2.019475313
+    ]
+   ]
+  },
+  {
+   "circuit": 2,
+   "seed": 1236,
+   "seq": [
+    [
+     10,
+     1.895965851
+    ],
+    [
+     10,
+     -1.843448715
+    ],
+    [
+     10,
+     1.442820789
+    ],
+    [
+     10,
+     -1.181273912
+    ]
+   ]
+  },
+  {
+   "circuit": 3,
+   "seed": 1237,
+   "seq": [
+    [
+     13,
+     1.261165164
+    ],
+    [
+     12,
+     -1.121394866
+    ],
+    [
+     13,
+     1.237268752
+    ],
+    [
+     13,
+     -2.033918409
+    ]
+   ]
+  }
+ ],
+ "plans": [
+  {
+   "style": "slider",
+   "level": 0,
+   "seed": 900,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 1,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.722499999999999,
+   "aim": 0.009999999999999997,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "slider",
+   "level": 0,
+   "seed": 901,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 1,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.6999999999999994,
+   "aim": -0.012000000000000004,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "slider",
+   "level": 0,
+   "seed": 902,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 1,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.7124999999999994,
+   "aim": 0.023999999999999997,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "blocker",
+   "level": 1,
+   "seed": 910,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.5125000000000001,
+   "aim": -3.469446951953614e-18,
+   "goal": "block",
+   "draws": 2
+  },
+  {
+   "style": "blocker",
+   "level": 1,
+   "seed": 911,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.5499999999999999,
+   "aim": -0.024000000000000004,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "blocker",
+   "level": 1,
+   "seed": 912,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 0,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.5000000000000001,
+   "aim": -0.048,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "lobber",
+   "level": 2,
+   "seed": 920,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 2,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.8374999999999989,
+   "aim": 0.036,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "lobber",
+   "level": 2,
+   "seed": 921,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 2,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.8124999999999987,
+   "aim": 0.007999999999999997,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "lobber",
+   "level": 2,
+   "seed": 922,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 2,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.7874999999999991,
+   "aim": 0.036,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "sniper",
+   "level": 3,
+   "seed": 930,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 1,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.7249999999999993,
+   "aim": -0.06,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "sniper",
+   "level": 3,
+   "seed": 931,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.44500000000000006,
+   "aim": -0.0040000000000000036,
+   "goal": "push",
+   "draws": 2
+  },
+  {
+   "style": "sniper",
+   "level": 3,
+   "seed": 932,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 2,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.7974999999999988,
+   "aim": -0.027999999999999983,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "wild",
+   "level": 4,
+   "seed": 940,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 1,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.7324999999999988,
+   "aim": -0.0020000000000000035,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "wild",
+   "level": 4,
+   "seed": 941,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.4625000000000001,
+   "aim": -0.012000000000000004,
+   "goal": "push",
+   "draws": 2
+  },
+  {
+   "style": "wild",
+   "level": 4,
+   "seed": 942,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 2,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.7124999999999994,
+   "aim": 0.036,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "spinner",
+   "level": 5,
+   "seed": 950,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 1,
+   "spin": 0.65,
+   "side": "slick",
+   "power": 0.722499999999999,
+   "aim": 0.009999999999999997,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "spinner",
+   "level": 5,
+   "seed": 951,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0.65,
+   "side": "slick",
+   "power": 0.43000000000000005,
+   "aim": 0.005999999999999997,
+   "goal": "push",
+   "draws": 2
+  },
+  {
+   "style": "spinner",
+   "level": 5,
+   "seed": 952,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 2,
+   "spin": 0.65,
+   "side": "slick",
+   "power": 0.7949999999999988,
+   "aim": -0.041999999999999996,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "bulldozer",
+   "level": 6,
+   "seed": 960,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.6374999999999995,
+   "aim": -0.0040000000000000036,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "bulldozer",
+   "level": 6,
+   "seed": 961,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.44500000000000006,
+   "aim": 0.003999999999999997,
+   "goal": "push",
+   "draws": 2
+  },
+  {
+   "style": "bulldozer",
+   "level": 6,
+   "seed": 962,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 0,
+   "spin": 0,
+   "side": "sticky",
+   "power": 0.6124999999999997,
+   "aim": -0.012000000000000004,
+   "goal": "knock",
+   "draws": 2
+  },
+  {
+   "style": "champion",
+   "level": 7,
+   "seed": 970,
+   "deck": [],
+   "scores": [
+    0,
+    0
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 1,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.7199999999999991,
+   "aim": -3.469446951953614e-18,
+   "goal": "hole",
+   "draws": 2
+  },
+  {
+   "style": "champion",
+   "level": 7,
+   "seed": 971,
+   "deck": [
+    [
+     0,
+     0.05,
+     -0.7906
+    ],
+    [
+     1,
+     -0.03,
+     -0.8906000000000001
+    ]
+   ],
+   "scores": [
+    18,
+    10
+   ],
+   "mph": 0,
+   "angle": 0,
+   "arc": 0,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.45000000000000007,
+   "aim": -0.0020000000000000035,
+   "goal": "push",
+   "draws": 2
+  },
+  {
+   "style": "champion",
+   "level": 7,
+   "seed": 972,
+   "deck": [
+    [
+     0,
+     -0.12,
+     -0.5406
+    ]
+   ],
+   "scores": [
+    3,
+    5
+   ],
+   "mph": 9,
+   "angle": 1.2,
+   "arc": 2,
+   "spin": 0,
+   "side": "slick",
+   "power": 0.7974999999999988,
+   "aim": -0.041999999999999996,
+   "goal": "hole",
+   "draws": 2
+  }
+ ],
+ "rng42": [
+  0.6011037519201636,
+  0.44829055899754167,
+  0.8524657934904099,
+  0.6697340414393693,
+  0.17481389874592423,
+  0.5265925421845168,
+  0.2732279943302274,
+  0.6247446539346129
+ ]
+}

@@ -115,10 +115,10 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 | Top 3 / Bottom 3 — reset bag | **2** — reset bag | Out of the way of the grip, so it's hard to hit by accident |
 | Top 4 / Bottom 4 — KEYS legend | **1** — help on/off (remembered) | Same "tuck/pop" behavior |
 | Bottom 1 / 2 — nudge ±0.05 | **D-pad ← / →** — step left/right on the foul line (0.05, clamp ±0.45, 70 ms ease) | Wii Sports precedent: D-pad positions before the throw (S1) |
-| Start/Select — pause/confirm | **HOME** — pause (RESUME · CLEAR BOARD in practice · MAIN MENU · QUIT); **A** confirm, **B** back in menus | Wii convention; HOME returns to HBC from QUIT. Practice **CLEAR BOARD** (1.0.3's "clear bags; keep stats") is separate from RESET BAG |
+| Start/Select — pause/confirm | **HOME** — pause (RESUME · CLEAR BOARD in practice · HAND per player · SETTINGS · MAIN MENU · QUIT); **A** confirm, **B** back in menus | Wii convention; HOME returns to HBC from QUIT. Practice **CLEAR BOARD** (1.0.3's "clear bags; keep stats") is separate from RESET BAG |
 | CABINET SETUP | SETTINGS (SET POWER, CURL, HAND, WIND, RESET) | Cabinet-only items (sensitivity, bindings, stroke length, diagnostics) are dropped. WIND follows the arcade policy (calm by default in Practice/2 Player) |
 | (no cabinet equivalent) | **− / +** — fine aim trim | 0.01 rad per press, captured at grip |
-| Keyboard fallback, F2 | Dev builds only: hold **1+2** at boot → dev overlay | Never in release builds |
+| Keyboard fallback, F2 | Dev builds only: hold **1+2** at boot → dev overlay (not built yet; the game logs throws and state to the OSReport/USB Gecko UART instead) | Never in release builds |
 
 **Legality while armed** (SPEC §4.3): while B is held, A, D-pad, 2 and −/+ are **ignored** (discrete settings are frozen; swing direction and release twist remain live). 1 toggles help (UI only). HOME pauses and **cancels** the gesture. When not armed, A/D-pad/2 apply and return the detector to `settling`, matching the cabinet's `machine.reset()` on height, surface, nudge and reset.
 

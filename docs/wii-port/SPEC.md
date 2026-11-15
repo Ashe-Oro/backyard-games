@@ -115,7 +115,7 @@ sd:/apps/backyardcornhole/
   <version>0.1.0</version>
   <release_date>20270101000000</release_date>
   <short_description>Toss bags. First to 21.</short_description>
-  <long_description>Backyard cornhole for the Wii Remote. Swing to toss, point to aim, twist to curl. Practice, 2 Player, or take on eight tournament rivals.</long_description>
+  <long_description>Backyard cornhole for the Wii Remote, Wii Sports style. Hold B, swing back, swing through and let go. Swing left or right to aim, twist to curl. Practice, 2 Player, or take on eight tournament rivals.</long_description>
 </app>
 ```
 
@@ -539,7 +539,7 @@ Required fixtures:
 ## 6. Player-facing copy principles
 
 1. **Short.** Prompts are 1–4 words; new callouts 1–2. ALL CAPS pixel font, like 1.0.3. **Exempt:** the established 1.0.3 callouts (ON THE BOARD, OFF THE BOARD, KNOCKED IN!, etc.), rival names and taunts, and the save warning. They're kept verbatim.
-2. **Verb first.** "HOLD B · SWING · LET GO", "TOSS HARD", "POINT AT SCREEN".
+2. **Verb first.** "HOLD B · SWING · LET GO", "TOSS EASY ×3", "HOLD STILL".
 3. **No tech words on screen.** Never show g, counts, IR, accelerometer, MotionPlus, calibration, sensor bar, Bluetooth or version numbers in play (the version can appear in the pause menu footer).
 4. **Reuse the game's voice.** Keep CORNHOLE!, HANGER!, ON THE BOARD, GROUNDER, KNOCKED IN!, WASH, LET'S TOSS, CORNHOLE KING!, and the rival taunts verbatim.
 5. **No coaching boxes.** 1.0.3 removed post-throw strength/direction coaching; the colored power arrow is the feedback. Keep it that way.
@@ -548,13 +548,13 @@ Required fixtures:
 | Situation | Copy |
 |---|---|
 | First throw hint (help shown) | HOLD B · SWING · LET GO |
-| Help legend | B TOSS · A SURFACE · ✚ HEIGHT/STEP · 2 RESET · SWING TO AIM · TWIST TO CURL |
+| Help legend | `input_help_text`, one item per line: B HOLD, SWING, LET GO · SWING LEFT/RIGHT TO AIM · TWIST TO CURL · D-PAD HEIGHT/STEP · -/+ FINE AIM · A SURFACE · 2 RESET · 1 HELP · HOME PAUSE |
 | Fine aim | AIM: − + |
 | Remote missing (slot-correct) | CONNECT REMOTE 1 / CONNECT REMOTE 2 (+ `A: USE REMOTE 1` for slot 2) |
 | B pressed while moving | HOLD STILL |
 | Practice pause | CLEAR BOARD |
 | Low battery | LOW BATTERY |
-| Power setup (settings) | SET POWER → TOSS HARD → POWER SET! |
+| Power setup (settings) | SET POWER → TOSS EASY ×3 → POWER SET! (TRY AGAIN on a rejected set) |
 | Strap reminder (boot) | STRAP ON! |
 | Save problem | Progress won't save on this device. |
 | Quit | QUIT? YES / NO |
@@ -651,6 +651,26 @@ Source: [REVIEW_CODEX.md](REVIEW_CODEX.md). IDs refer to that review.
 **Rejected / not adopted (mentioned for the record)**
 - **R7, partly:** "the claim that all four tags are on GitHub needs a real remote check." That check *was* done on 2026-11-15 with `git ls-remote --tags origin`, which returned all four annotated tags. We still re-check remote state when the migration PR is prepared (see REPO_LAYOUT). Only the `origin/main` position was a cached ref.
 - **R6, partly:** excluding README/CHANGELOG files from the deployed site. Today's site already serves them harmlessly, and they're useful as public docs. Tests, screenshots and tool output *are* excluded (REPO_LAYOUT).
+
+---
+
+## 11. Implementation status (branch `wii/game`, 2026-11-15)
+
+What the first playable build does, and where it intentionally differs from the plan above. Hardware acceptance (P1 exit gate, Kinhank checkpoints) is still open.
+
+| Area | Status |
+|---|---|
+| Shared rules | `wii/source/core/cornhole_constants.h` is generated from `shared/cornhole/{common.json, overrides/arcade-1.0.3.json, overrides/wii.json}` by `wii/tools/gen-constants.mjs`; `make host-test` fails if it is stale. No rules value is restated by hand |
+| Physics / WIN / scoring / CPU | Ported (§2.1–2.4). The oracle (`wii/tools/oracle/golden.mjs`, read-only slices of the pinned snapshot, §5.1.1) checks WIN, 66 shots, 8 multi-bag scenes, roundWind, mulberry32 and 24 seeded `planCareerShot` decisions. The planner is resumable at candidate granularity with a per-frame step budget measured at boot (~4 ms), and the windup holds until it finishes. Step-granular yield is a follow-up |
+| WIN table | Baked at build time by `wii/tools/bake_win.c` from the C core into `build/gen/win_table.c` (hex-float literals: exact, no loader). Not a `win.bin` blob (deviation from §2.2/§2.9; same goal, simpler and endian-free) |
+| Human throw line | `yaw = baseYaw(RX[team]) + aim` (straight down-range from the stance, owner directive). CPU keeps 1.0.3's line. With `RX = [0, 0]` the CPU is unchanged |
+| Rendering | Raw GX, no GRRLIB. The yard is a direct C port of `backyard.js`'s voxel layout (solid colours, CPU-lit, one display list) rather than the `export-scene.mjs` pipeline (§2.9, deferred). Board/bag/hay/grass textures are painted at boot by ports of the 1.0.3 `pixTex` painters, replaying `R = rng(7)` so the board speckle matches pixel for pixel. Party NPCs, wind streaks, blob/baked shadows and clouds are not drawn yet |
+| HUD / text | libogc's 8×16 console font (CP437, so `·` and arrows exist), not a Press Start 2P atlas, so no font license applies to this build |
+| Video | NTSC only: `TVNtsc480Prog` when progressive is available, else `TVNtsc480IntDf`; 16:9 when the console is set to widescreen |
+| Saves | `sd:/apps/backyardcornhole/data/save.dat` per §2.8 (big-endian, CRC-32, tmp → bak → dat) |
+| Audio | None yet: no CC0 SFX are bundled; rumble only. Music remains an owner question (§9 Q12) |
+| SET POWER limits | `target_power` = WIN NORMAL/SLICK mid; floor/ceiling **provisional** (`swing_speed(0.5 g)` / `swing_speed(2.0 g)`) until P1 traces |
+| ISO | Game ID `BYCEAO`, USA, IOS 58, own apploader (`wii/dolphin/apploader/`), WIT 3.05a with `--trunc`; `make iso` checks main.dol == boot.dol. Boots in Dolphin 2609a; real-remote and Kinhank checks remain with Retro |
 
 ---
 

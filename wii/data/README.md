@@ -1,1 +1,1 @@
-Generated assets (scene.bin, textures, font atlas, win.bin). Empty until Track B.
+Generated assets. Not used yet: textures are painted at boot from the 1.0.3 pixTex code, and the WIN table is baked into build/gen/win_table.c by tools/bake_win.c. A scene exporter (scene.bin) remains future work (SPEC §2.9).

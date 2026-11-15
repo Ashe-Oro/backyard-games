@@ -1,1 +1,1 @@
-Node tools (scene exporter, WIN baker, golden oracle). Read the pinned 1.0.3 snapshot directly. Empty until Track B/C.
+Generators and packaging: `gen-constants.mjs` (shared/cornhole → source/core/cornhole_constants.h, `--check`), `oracle/golden.mjs` (read-only 1.0.3 oracle → tests/golden, `--check`), `bake_win.c` (host WIN table → build/gen/win_table.c), `mkdisc.mjs` (Dolphin disc tree), `make-icon.mjs` (HBC icon), `zip.mjs` (HBC bundle).
