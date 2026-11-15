@@ -20,14 +20,16 @@ Every command runs from the repo root.
 ```bash
 # web: serve locally (no build step)
 python3 -m http.server 8000 --directory web
-# web: node checks need playwright-core from arcade/node_modules (see web/README.md)
-BASE_URL=http://127.0.0.1:8000 NODE_PATH=$PWD/arcade/node_modules node web/tests/home_check.cjs
+# web: the manifest runner serves web/ itself and runs web/tests/MANIFEST (24 modern checks must pass;
+# 3 known pre-existing failures are reported separately). Needs playwright-core: npm ci --prefix arcade
+node web/tests/run-manifest.mjs
+node web/tests/run-manifest.mjs --baseline-ref a07afaa   # same checks on v1.0.3, side by side
 
 # arcade: tooling tests, then the released 1.0.3 snapshot's tests
 (cd arcade && npm ci && npm test)
 (cd arcade/cabinet-snapshots/1.0.3 && node --test tests/*.test.mjs)
 
-# shared: drift check (no dependencies)
+# shared: drift check (no dependencies; needs the a07afaa commit in the clone for the baseline re-derivation)
 node --test shared/cornhole/tests/*.test.mjs
 
 # wii: not buildable yet (see wii/README.md and docs/wii-port/IMPL_PLAN.md, phase P0)

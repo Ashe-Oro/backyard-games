@@ -35,6 +35,23 @@ commits and in the Vercel dashboard.
 This integration deploys the game; browser regression tests currently run locally
 and are not an automated release gate.
 
+## Tests
+
+`tests/MANIFEST` classifies every file in `tests/`: **modern** checks must pass, **known-fail** checks are
+accepted pre-existing failures (they already fail at `a07afaa`), **legacy** Python suites are not run, and
+**tool** files are helpers. From anywhere in the repo:
+
+```bash
+npm ci --prefix arcade                                  # provides playwright-core
+node web/tests/run-manifest.mjs                         # serves web/ itself, runs modern + known-fail
+node web/tests/run-manifest.mjs --baseline-ref a07afaa  # also runs them on v1.0.3 and compares
+node web/tests/run-manifest.mjs --list                  # show the classification
+```
+
+The runner header documents each input: served root (`--root`), base URL (`--base-url`/`BASE_URL`),
+browser (`--chrome`/`CHROME_PATH`, else system Chrome/Chromium, else Playwright's Chromium), `NODE_PATH`,
+working directory (the served root) and artifact directory (`--artifacts`/`SHOTS`, with `results.json`).
+
 ## Shared scenery
 
 All five games use `yard-games/backyard.js` for a deterministic voxel backyard: oak/birch trees, fences, plants, lanterns and party props. Static blocks are instanced by material. Scenery stays separate from camera, collision and scoring logic. Cornhole retains its board and bag art, animated dog and wind pennant. Shared grain textures and equipment details tie the lawn games together; target dimensions and scoring geometry are unchanged.
