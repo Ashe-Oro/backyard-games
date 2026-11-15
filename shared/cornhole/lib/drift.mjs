@@ -38,7 +38,10 @@ const show=v=>JSON.stringify(v);
 // Matches are only accepted when they start in CODE and none of their capture groups touch a
 // literal, so a commented-out or quoted old statement can neither match nor hide the active one.
 const CODE=0,STR=1,GONE=2;
-const REGEX_AFTER_WORD=new Set(['return','typeof','instanceof','in','of','new','delete','void','throw','case','do','else','yield','await']);
+const REGEX_AFTER_WORD=new Set(['return','typeof','instanceof','in','of','new','delete','void','throw','case','do','else','yield','await',
+ // Statements that are complete on their own: nothing can divide them, so after automatic semicolon
+ // insertion (`debugger\n/re/.test(s)`, `break\n/re/`) the next `/` starts a regex statement.
+ 'debugger','break','continue','default','extends']);
 // `(` after one of these opens a statement head: the matching `)` is followed by a statement, so a
 // `/` there starts a regex (`if (x) /re/.test(s);`), not a division.
 const CONTROL_HEADS=new Set(['if','while','for','with']);
@@ -58,7 +61,17 @@ function lexJs(text,from,to,kind){
   const j=prevSignificant(at);if(j<from)return true;
   const c=text[j];
   if(kind[j]===STR)return false;      // a literal just ended: `'a' / 2` (also `${...}` closing a template)
-  if(/[\w$]/.test(c))return REGEX_AFTER_WORD.has(wordEndingAt(j));
+  if(/[\w$]/.test(c)){
+   const w=wordEndingAt(j),start=j-w.length+1,before=prevSignificant(start);
+   if(!w)return false;
+   if(before>=from&&text[before]==='.'&&text[before-1]!=='.')return false; // property `a.return / 2`
+   if(REGEX_AFTER_WORD.has(w))return true;
+   // `break label` / `continue label` (label on the same line) is also a complete statement, so a
+   // `/` after it (only valid after a newline, by ASI) starts a regex: `break outer\n/re/`.
+   const v=wordEndingAt(before);
+   return (v==='break'||v==='continue')&&/^[A-Za-z_$]/.test(w)&&!text.slice(before+1,start).includes('\n')
+    &&!(before-v.length>=from&&text[prevSignificant(before-v.length+1)]==='.');
+  }
   if(c===')')return headEnds.has(j);  // `(a + b) / 2` divides; `if (x) /re/` is a statement
   if(c===']')return false;            // `a[i] / 2`, `[1, 2] / 2`: always ends an expression
   // `}` closing a block (`if (x) {} /re/`, `function f() {} /re/`) is followed by a statement.

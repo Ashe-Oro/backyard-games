@@ -178,6 +178,42 @@ test('regex-vs-division: control-flow heads and blocks end before a regex; other
   assert.match(at(t,'a=b;'),/^c+$/,`${t}: division operands must stay code`);
 });
 
+// Review finding (4de43ea): a `/` after a word was division unless the word was in a fixed set, so a
+// regex statement after automatic semicolon insertion (`debugger\n/re/`, `break\n/re/`) was read as
+// code. Each replacement is valid JavaScript that never assigns M.first.
+test('NEGATIVE: an old statement kept only inside a regex literal after ASI (debugger/break/continue) fails (review repro)',()=>{
+ const ACTIVE='    M.first = scorer;';
+ for(const [label,platform,keep] of [
+  ['debugger + newline (review repro)','web',"debugger\n    /M.first = scorer;/.test('');"],
+  ['break + newline in do/while (review repro)','web',"do { break\n/M.first = scorer;/.test(''); } while (false);"],
+  ['labelled break + newline','web',"outer: do { break outer\n/M.first = scorer;/.test(''); } while (false);"],
+  ['continue + newline','web',"for (;false;) { continue\n/M.first = scorer;/.test(''); }"],
+  ['labelled continue + newline','web',"outer: for (;false;) { continue outer\n/M.first = scorer;/.test(''); }"],
+  ['arcade debugger + newline','arcade-1.0.3',"debugger\n    /M.first = scorer;/.test('');"],
+ ]){
+  assert.doesNotThrow(()=>new Function(keep),`${label}: test setup must be valid JavaScript`);
+  const M={first:'unchanged'};new Function('M','scorer',keep)(M,'scorer');
+  assert.equal(M.first,'unchanged',`${label}: test setup must not assign M.first`);
+  const s=editSource(realSources,platform,'game',ACTIVE,'    '+keep);
+  assert.ok(s[platform].game.includes('M.first = scorer;'),`${label}: test setup keeps the old text`);
+  fails(checkRecorded(data(),s),new RegExp(`^rule:last-scorer-throws-first: common\\.json value true but ${platform.replace(/\./g,'\\.')} source uses false`),label);
+  fails(approvalsOf(real,s),platform==='web'
+   ?/^web rule:last-scorer-throws-first: changed from baseline a07afaa value true to false with no approval/
+   :/^arcade-1\.0\.3 rule:last-scorer-throws-first: changed from baseline true to false, .*immutable/,label+' baseline');
+ }
+});
+
+test('regex-vs-division after a word: complete statements (ASI) start a regex; identifiers, properties and numbers divide',()=>{
+ const kinds=t=>{const {kind}=codeView(t);return [...t].map((_,i)=>kind[i]===1?'S':'c').join('');};
+ const at=(t,needle)=>kinds(t).slice(t.indexOf(needle),t.indexOf(needle)+needle.length);
+ for(const t of ["debugger\n/a=b;/.test(s);","do { break\n/a=b;/.test(s); } while (0);","l: do { break l\n/a=b;/.test(s); } while (0);",
+  "for (;;) { continue\n/a=b;/.test(s); }","l: for (;;) { continue l\n/a=b;/.test(s); }","return /a=b;/.test(s);"])
+  assert.match(at(t,'a=b;'),/^S+$/,`${JSON.stringify(t)}: regex body must be a literal`);
+ for(const t of ["y = x\n/a=b;/ c;","y = o.debugger /a=b;/ c;","y = o.break /a=b;/ c;","y = o?.return /a=b;/ c;","y = 1.5 /a=b;/ c;",
+  "break\nx\n/a=b;/ c;","y = o.break l /a=b;/ c;"])
+  assert.match(at(t,'a=b;'),/^c+$/,`${JSON.stringify(t)}: division operands must stay code`);
+});
+
 test('NEGATIVE: intentional web/arcade differences must stay different, and unknown fields need an extractor',()=>{
  const d=clone(real);override(d,'web','SLICK_MU').value=0.43;
  const s=editSource(realSources,'web','game','slick: { mu: 0.30,','slick: { mu: 0.43,');
