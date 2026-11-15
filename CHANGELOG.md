@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2026-11-15
+
+### Changed
+- The LAST SHOT popup and label are gone.
+- The power meter is now a vertical bar that fills with your throw power.
+- It stays on screen about two seconds after you throw, then hides.
+- The CLEAR BOARD popup is gone.
+- The top-right red button clears the board in Practice and keeps your stats.
+- Only the bottom-right button tucks or pops the keys legend.
+
 ## [1.0.3] - 2026-11-14
 
 ### Added
