@@ -64,7 +64,7 @@ EOF
 cat > "$USER_DIR/Config/GFX.ini" <<'EOF'
 [Settings]
 InternalResolution = 1
-ShowFPS = False
+ShowFPS = True
 EOF
 XVFB_PID=
 DOLPHIN_PID=
