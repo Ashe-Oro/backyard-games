@@ -35,7 +35,9 @@ with `fetch-depth: 0`). Without it that one test fails; `DRIFT_ALLOW_NO_BASELINE
    `b.spin = spin * …` launch multiplier). Extraction reads **executable code only**: the source is
    lexed (for `index.html`, only its `<script>` bodies), and matches inside comments, strings,
    template or regex literals are ignored, so a commented-out old statement can't stand in for the
-   active one. A pattern that matches more than one active statement is ambiguous and fails instead
+   active one. A `/` after an `if`/`while`/`for`/`with` head or a block's `}` starts a regex
+   literal (`if (false) /M.first = scorer;/.test('')` is not code); after any other `)` or `]` it
+   divides. A pattern that matches more than one active statement is ambiguous and fails instead
    of taking the first. The JSON `value` must equal it; a constant's `expr` must
    evaluate to it and match the declared expression. The `snippet` is only a pointer for humans:
    leaving a stale snippet in place does not hide a wrong value. A field with no extractor fails.

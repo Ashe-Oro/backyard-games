@@ -39,16 +39,33 @@ const show=v=>JSON.stringify(v);
 // literal, so a commented-out or quoted old statement can neither match nor hide the active one.
 const CODE=0,STR=1,GONE=2;
 const REGEX_AFTER_WORD=new Set(['return','typeof','instanceof','in','of','new','delete','void','throw','case','do','else','yield','await']);
+// `(` after one of these opens a statement head: the matching `)` is followed by a statement, so a
+// `/` there starts a regex (`if (x) /re/.test(s);`), not a division.
+const CONTROL_HEADS=new Set(['if','while','for','with']);
 function lexJs(text,from,to,kind){
  const braces=[];                     // template nesting: brace depth at each `${`
+ const parens=[];                     // per open `(`: does it start a control-flow head?
+ const headEnds=new Set();            // offsets of `)` that close a control-flow head
  let i=from,depth=0;
  const prevSignificant=at=>{let j=at-1;while(j>=from&&(kind[j]===GONE||/\s/.test(text[j])))j--;return j;};
+ const wordEndingAt=j=>{let k=j;while(k>=from&&/[\w$]/.test(text[k]))k--;return k<j&&kind[j]===CODE?text.slice(k+1,j+1):'';};
+ const opensHead=at=>{                // `(` at `at`: `if (`, `while (`, `for (`, `for await (`, `with (`
+  let j=prevSignificant(at),w=wordEndingAt(j);
+  if(w==='await'){j=prevSignificant(j-w.length+1);w=wordEndingAt(j);return w==='for';}
+  return CONTROL_HEADS.has(w)&&!(j-w.length>=from&&text[j-w.length]==='.'); // not `obj.if(`
+ };
  const regexAllowed=at=>{
   const j=prevSignificant(at);if(j<from)return true;
   const c=text[j];
-  if(kind[j]===STR)return false;      // a literal just ended: `'a' / 2`
-  if(/[\w$]/.test(c)){let k=j;while(k>=from&&/[\w$]/.test(text[k]))k--;return REGEX_AFTER_WORD.has(text.slice(k+1,j+1));}
-  if(c===')'||c===']'||c==='}')return false;
+  if(kind[j]===STR)return false;      // a literal just ended: `'a' / 2` (also `${...}` closing a template)
+  if(/[\w$]/.test(c))return REGEX_AFTER_WORD.has(wordEndingAt(j));
+  if(c===')')return headEnds.has(j);  // `(a + b) / 2` divides; `if (x) /re/` is a statement
+  if(c===']')return false;            // `a[i] / 2`, `[1, 2] / 2`: always ends an expression
+  // `}` closing a block (`if (x) {} /re/`, `function f() {} /re/`) is followed by a statement.
+  // Only an object literal or function expression would be divided here, which no game code
+  // does; erring toward "regex" can only hide text from extraction (a loud "not found"), never
+  // expose literal text as code.
+  if(c==='}')return true;
   return true;
  };
  const quoted=(q,start)=>{            // string literal starting at `start` (the quote)
@@ -74,7 +91,9 @@ function lexJs(text,from,to,kind){
    j++;while(j<to&&/[a-z]/i.test(text[j]))j++;
    mark(i,Math.min(j,to),STR);i=Math.min(j,to);continue;
   }
-  if(c==='{')depth++;
+  if(c==='(')parens.push(opensHead(i));
+  else if(c===')'){if(parens.pop())headEnds.add(i);}
+  else if(c==='{')depth++;
   else if(c==='}'){
    if(braces.length&&braces[braces.length-1]===depth){braces.pop();const [j,open]=template(i+1);mark(i,j,STR);if(open)braces.push(depth);i=j;continue;}
    depth--;

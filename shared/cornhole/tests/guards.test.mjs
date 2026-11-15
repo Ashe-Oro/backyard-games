@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {checkRecorded,checkApprovals,currentValues,sha256,same} from '../lib/drift.mjs';
+import {checkRecorded,checkApprovals,currentValues,sha256,same,codeView} from '../lib/drift.mjs';
 import {SPEC,loadShared,loadSources,baselineSources,buildBaseline,commitAvailable,compareBaseline} from '../lib/baseline.mjs';
 
 const shared=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -146,6 +146,36 @@ test('comments and literals that repeat the active statement are ignored, not co
  s=editSource(s,'web','controls','const [minimum,steps]=','// const [minimum,steps]=[[4,3],[6,4],[9,4],[12,4]][circuit]??[6,5];\n const [minimum,steps]=');
  assert.deepEqual(checkRecorded(data(),s),[]);
  assert.deepEqual(approvalsOf(real,s),[]);
+});
+
+// Review finding (7231d40): a `/` after `)` was always lexed as division, so a regex literal used as
+// the statement of `if (...)` was read as code and its text could stand in for a removed statement.
+test('NEGATIVE: an old statement kept only inside a regex literal after if/while/for or a block fails (review repro)',()=>{
+ const ACTIVE='    M.first = scorer;';
+ for(const [label,platform,keep] of [
+  ['if (false) regex (review repro)','web',"if (false) /M.first = scorer;/.test('');"],
+  ['while regex','web',"while (false) /M.first = scorer;/.test('');"],
+  ['for regex','web',"for (;false;) /M.first = scorer;/.test('');"],
+  ['nested-paren condition','web',"if ((0)) /M.first = scorer;/.test('');"],
+  ['regex statement after a block','web',"if (false) {}\n    /M.first = scorer;/.test('');"],
+  ['arcade if (false) regex','arcade-1.0.3',"if (false) /M.first = scorer;/.test('');"],
+ ]){
+  const s=editSource(realSources,platform,'game',ACTIVE,'    '+keep);
+  assert.ok(s[platform].game.includes('M.first = scorer;'),`${label}: test setup keeps the old text`);
+  fails(checkRecorded(data(),s),new RegExp(`^rule:last-scorer-throws-first: common\\.json value true but ${platform.replace(/\./g,'\\.')} source uses false`),label);
+  fails(approvalsOf(real,s),platform==='web'
+   ?/^web rule:last-scorer-throws-first: changed from baseline a07afaa value true to false with no approval/
+   :/^arcade-1\.0\.3 rule:last-scorer-throws-first: changed from baseline true to false, .*immutable/,label+' baseline');
+ }
+});
+
+test('regex-vs-division: control-flow heads and blocks end before a regex; other ) and ] still divide',()=>{
+ const kinds=t=>{const {kind}=codeView(t);return [...t].map((_,i)=>kind[i]===1?'S':'c').join('');};
+ const at=(t,needle)=>kinds(t).slice(t.indexOf(needle),t.indexOf(needle)+needle.length);
+ for(const t of ["if (x) /a=b;/.test(s);","while (f(x)) /a=b;/.test(s);","for await (const v of g) /a=b;/.test(v);","if (x) {} /a=b;/.test(s);"])
+  assert.match(at(t,'a=b;'),/^S+$/,`${t}: regex body must be a literal`);
+ for(const t of ["y = (a + b) /a=b;/ c;","y = obj.if(x) /a=b;/ c;","y = m[i] /a=b;/ c;","y = f(x) /a=b;/ c;"])
+  assert.match(at(t,'a=b;'),/^c+$/,`${t}: division operands must stay code`);
 });
 
 test('NEGATIVE: intentional web/arcade differences must stay different, and unknown fields need an extractor',()=>{
