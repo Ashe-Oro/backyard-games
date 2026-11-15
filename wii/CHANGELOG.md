@@ -10,6 +10,8 @@ which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and th
 ## [Unreleased]
 
 ### Added
+- Packaging: independent NTSC video/WPAD stub and ELF-to-DOL/HBC/USA ISO/release-zip pipeline under `packaging/`, with original generated icon and source-built homebrew apploader, `BYCEAO` real-Wiimote settings, ISO/HBC DOL identity verification and SHA-256 manifest. Outputs stay outside Git under `/workspace/uploads/`.
+- Isolated ten-second headless Dolphin smoke script with screenshot/log capture, plus Retro's Kinhank installation handoff (ADB destination, DolphinBar mode 4, Vulkan 1×).
 - Project scaffold: folder layout, toolchain notes, HBC `meta.xml`, and the Dolphin `GameSettings/BYCEAO.ini` that turns on real Wii Remotes. Not playable yet.
 - Wiimote input for both player slots: buffered WPAD reports, reconnect and disconnect handling, pass-and-play, accelerometer swing-direction aim with minus/plus fine trim, lateral/release-twist spin, setup/pause per-slot handedness, and the documented play/menu button map.
 - Candidate underhand toss detector: retained peak of an 80 ms accelerometer speed proxy, stability-gated grip, lobe/attitude confirmation, manual and automatic release, clipping guards, and cancellation on report loss. Power never uses stroke distance.
