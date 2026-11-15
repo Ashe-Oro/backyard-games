@@ -20,3 +20,5 @@ Do not push licensed or packaged Electron binaries; these snapshots contain only
 - `1.0.2/` lowers default full-power speed from 7560 to 6048 (−20%) with factory-profile migration including 7560 and 5600. All other gameplay stays as in 1.0.1, including the removed blue cooler. Install timestamp: pending. Rollback path: pending.
 
 - `1.0.3/` adds a small upper-right running-version label (`v` + installed package version), visible during gameplay. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.4/` adds a vertical power meter with no LAST SHOT label; it persists about two seconds after the throw. Removes the CLEAR BOARD popup; top-right clears bags in Practice, while only bottom-right toggles KEYS. Install timestamp: pending. Rollback path: pending.
