@@ -15,6 +15,13 @@ Future arcade releases are tagged `arcade-vX.Y.Z`, after the release-source reco
 ### Changed
 - Repo layout only: the arcade build now reads the website's Cornhole files from `web/`. The game, controls and cabinet install are unchanged.
 
+## [1.0.6] - 2026-11-15
+
+### Fixed
+- After you throw, a clear arrow shows the exact direction the bag went.
+- Lean hard right and the arrow points far right; lean hard left and it points far left.
+- The arrow stays about two seconds, then fades.
+
 ## [1.0.5] - 2026-11-15
 
 ### Fixed
