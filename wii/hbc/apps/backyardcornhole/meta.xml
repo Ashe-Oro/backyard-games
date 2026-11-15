@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>Backyard Cornhole</name>
+  <coder>Ashe</coder>
+  <version>0.1.0</version>
+  <release_date>20270101000000</release_date>
+  <short_description>Toss bags. First to 21.</short_description>
+  <long_description>Backyard cornhole for the Wii Remote. Swing to toss, point to aim, twist to curl. Practice, 2 Player, or take on eight tournament rivals.</long_description>
+</app>
