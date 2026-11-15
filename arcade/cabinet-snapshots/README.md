@@ -24,3 +24,5 @@ Do not push licensed or packaged Electron binaries; these snapshots contain only
 - `1.0.4/` adds a vertical power meter with no LAST SHOT label; it persists about two seconds after the throw. Removes the CLEAR BOARD popup; top-right clears bags in Practice, while only bottom-right toggles KEYS. Install timestamp: pending. Rollback path: pending.
 
 - `1.0.5/` fixes straight throws from a left or right stance: the bag flies parallel to the board and stays to that side of the hole, with aim and spin still available. Copied from the verified live 1.0.4 snapshot. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.6/` adds a clear direction arrow from the bag during the forward stroke and after release. Hard left/right leans show clearly; the arrow holds about two seconds, then fades. Copied from 1.0.5 with its straight-path behavior preserved. Install timestamp: pending. Rollback path: pending.

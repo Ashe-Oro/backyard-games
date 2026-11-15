@@ -1,0 +1,231 @@
+Backyard Cornhole Arcade — 1.0.6 developer notes
+
+1.0.6 direction feedback fix:
+Root cause: resources-app/dist/site/arcade/controller.js, frame(), called
+handleStroke(machine.tick(...)), which could throw and draw the shot arrow,
+then immediately called host.hideArrow() on exit from forward. feed() also
+hid on a forward-to-ready transition. hideArrow() calls cancelPull() in
+resources-app/dist/site/cornhole/index.html and removes the shown class.
+finishStroke() now handles both input/feed and idle/frame results, retaining
+feedback after an accepted throw and hiding it after cancellation or rejection.
+Explicit nudge, reset, menu, pause and height/surface hiding remains intact.
+
+The second cause was cornhole/index.html showShotArrow() and host.preview():
+they mapped yaw onto a short screen-space shaft via powerArrowLength(). Its
+145 px maximum in yard-games/power-arrow.js gave only about 14 px lateral
+travel at the 0.10 rad cap. The shared helper is unchanged. showDirectionArrow()
+now projects a nine-metre horizontal bearing from the actual release x at
+release height through the scene camera, toward the board. The clean, thicker
+outlined arrow retains power color; the redundant short track/limit is hidden.
+Length is independent of power, so soft throws also show direction clearly.
+Preview uses shot.aim (already 1/3 scaled); showShotArrow() uses
+atan2(b.v.x, -b.v.z), including launch drift. No hole target or exaggerated yaw.
+Max left/right tips are mirrored and over 5% of screen width from center at
+1280x720, 1920x1080 and 720x1280; capped leans spread about four times as far
+as 0.025 rad leans. Straight follows world -Z from the nudged stance.
+showAim() now holds for ARROW_LINGER_MS=2000, matching POWER_LINGER_MS,
+then uses the existing 0.4-second opacity fade. cancelPull() clears the timer.
+
+Power, 80 ms peak window, 6048 full power, 0.05 m nudge, 1/3 aim, spin/curl,
+vertical meter and 1.0.5 parallel straight flight are unchanged. Runtime label
+and kicker still read app.getVersion(). Install timestamp/rollback: pending.
+
+1.0.5 aiming fix:
+Root cause: resources-app/dist/site/cornhole/index.html, baseYaw(rx), computed
+atan2(HOLE_WORLD.x - rx, -(HOLE_WORLD.z - REL_Z)). launch() added that
+hole-facing angle to aim and drift even when aim === 0. With a shifted release,
+this steered a straight toss back toward the hole. Held-bag rotation and both
+pointer/spinner previews used the same angle. trackball.mjs already produces
+zero aim for a centered forward roll; controller placement only changes x.
+Removed baseYaw and all its uses. launch() now uses aim + drift * 0.04 along
+world -Z, parallel to the board center line, from the actual release x.
+Previews and held-bag rotation use the same unassisted direction. No counter-aim
+or correction is added. Existing hole capture only acts once a bag reaches the
+hole; flight has no target attraction. Spin/curl helpers are unchanged.
+Regression tests run production launch/step to deck contact and rest with no wind,
+65% physical power, normal arc, slick side. Release x is in metres: -0.20 equals
+four completed LEFT nudges. Left, center and right land within 0.001 m of their
+release x. Aim offsets use a -0.10 m stance to keep both directions on the deck;
+A/C spin checks start at -0.20 m and preserve right/left curl after landing.
+The straight regression fails with original 1.0.4 physics: a -0.20 m release
+lands at x = -0.008608 m instead of -0.20 m.
+
+The following technical reference was moved from the 0.2.21 player guide.
+For 1.0.6: default power speed is 6048 counts/sec; factory speeds
+1050, 1650, 2100, 3300, 4000, 5600, 6500, 7560 and missing/null migrate to 6048.
+Custom v9–v5 speeds survive; v4–v1 floor at 6048.
+The speed window remains 80 ms. The vertical meter fills from the bottom via
+style.height; POWER_LINGER_MS is 2000 ms. The same POWER meter holds the thrown
+power through release + 2000 ms, then hides. There is no LAST SHOT label.
+Live forward preview takes priority over the held power; menus hide the meter.
+Calibration remains measured speed / 0.7, with the existing limits.
+Diagnostics (FPS, events, delta totals and raw shot values) are developer-only;
+the on-screen element is empty and hidden.
+
+1.0.1 scene follow-up: removed the blue cooler comment, materials, helper and
+placement call from resources-app/dist/site/yard-games/backyard.js. Shared metal
+and cloth materials and every other prop remain unchanged. Canonical web files,
+build tooling and earlier snapshots remain untouched.
+
+Running version: the small upper-right label reads app.getVersion() from the
+installed package.json via trusted app:version IPC and the arcadeApp preload
+bridge. It displays v{version}, remains visible during play and when legends
+are tucked, and also fills the menu kicker from that same runtime value.
+Without the bridge or on lookup failure the label stays empty and hidden.
+
+CLEAR BOARD follow-up: removed the #reset-bags box and all its DOM references.
+window.__arcadeHost.clearBoard() calls clearBags() and renderHud(), preserving
+stats, only in Practice on a human aim turn. The controller also blocks menus,
+paused play, CPU turns and active swings (backswing/forward/spent). Two-player
+and tournament presses are harmless no-ops. Top/bottom 3 still reset the bag.
+The eight-button legend reads HEIGHT / SURFACE / RESET / CLEAR above
+LEFT / RIGHT / RESET / KEYS. The extra on-legend RESET BAG button is removed.
+Both screenshot fixtures embed the same markup and CSS; tucked storage is unchanged.
+
+Current technical reference:
+
+Backyard Cornhole Arcade — 1.0.5
+================================================
+
+Offline Cornhole for one shared trackball. Practice, two players, or the
+standard eight-rival tournament. The Batocera cabinet uses the native Linux
+build under Ports. The website and its saves are separate.
+
+Background beer pong NPCs play one of five scripted matches at random, with a
+new non-repeating pick after each match.
+
+PLAY
+----
+The spinner no longer slides the bag; use bottom 1/2 to nudge.
+Roll forward to throw, angling left or
+right to aim: forward-left (1) aims left; forward-right (3) aims right.
+Power is linear in peak forward speed: sensitivity-adjusted hardware counts/sec
+measured over a sliding 80 ms window, capped at 100%. The opening report has no
+known duration and is excluded; a valid sample needs at least 16 ms and 8 measured
+forward counts. Default full-power speed is 6048 counts/sec; 3024 gives 50%.
+This requires 20% less speed than the 1.0.1 default of 7560. Distance does not grant power:
+a long slow roll stays weak.
+
+The peak is retained at release. A short fast flick can throw before the stroke
+length gate: release happens when forward motion ends, after 160 ms idle, or
+when windowed speed drops at least 40% from its peak after a full window.
+Stroke length (20–1200 counts, default 400) is only an auto-release upper bound;
+it does not set power. The forward timeout also releases an established peak.
+A single report or tiny jitter cannot throw; residual motion cannot fire again.
+Optional backswing spin and forward 1/3 aiming are unchanged.
+
+Backswing is optional. Back-left (A) adds clockwise landing spin and curl right;
+back-right (C) adds counterclockwise landing spin and curl left. Lean scales spin.
+Straight back (B) or no backswing gives zero spin. Stale backswing expires.
+Rotation affects landing, not airborne curvature; forward X still aims.
+
+Player 1 / Pad 0, Twin USB Gamepad (0810:e001, /dev/input/event8):
+  Top 1 / index 0: cycle Kobe / Slider / Normal height.
+  Top 2 / index 1: flip Slick / Sticky.
+  Top 3 / index 2: Reset Bag.
+  Top 4 / index 6: CLEAR BOARD (Practice only; menus do nothing).
+  Bottom 1 / index 3: nudge position left by 0.05.
+  Bottom 2 / index 4: nudge position right by 0.05.
+  Bottom 3 / index 5: Reset Bag.
+  Bottom 4 / index 7: KEYS toggle only.
+Indices 0, 1, 2, 3, 5 are confirmed by Ashe's live presses. Top 4 = index 6,
+bottom 2 = index 4, bottom 4 = index 7 are inferred from the standard Twin USB
+Y X L1 L2 / B A R1 R2 grid plus unused-button observations. Top 4 was not
+directly observed. cabinet-input.py still emits sorted evdev codes 288–297.
+Nudges clamp to [-0.45, 0.45], cancel windup and never throw. Each press acts once.
+Menus: 0/3 confirm, 1/4 back, 2/5 retain reset-key aliases, 6 does nothing, 7 toggles KEYS.
+Button 8 pauses/backs; button 9 confirms in menus and pauses in play.
+Other pads retain their 0.2.17 mappings. Explicit saved bindings still apply except reserved Pad 0 CLEAR / KEYS buttons.
+Keyboard fallback: H height, F surface, R reset, Enter select, Escape pause.
+F2 opens Cabinet Setup. Alt+F4 exits.
+
+Reset Bag centers the unthrown bag and clears its windup without consuming a
+throw, clearing the board, or changing scores. The gauge beside the bag shows
+actual throw power in a vertical bar and holds it for two seconds after release.
+The live board close-up is always on in play. Match and round points remain
+visible; round totals recount as bags settle.
+
+CALIBRATION
+-----------
+Preferences save to backyard-arcade-v9. Load v9 with speed-only factory migration;
+v8, v7, v6 and v5 migrate through previousSettings, and v4–v1 through legacySettings.
+Missing speed (including v8) and factory speeds 1050, 1650, 2100, 3300, 4000, 5600, 6500 and 7560 counts/sec
+become 6048 counts/sec. Other custom calibrated speeds are preserved for v9–v5.
+Legacy profiles also use the new defaults, with a 6048 counts/sec minimum to
+avoid turning old distance calibration into a hair-trigger. Bindings and
+sensitivity carry over. Only factory release gates 220, 48 and 80 become 400;
+other custom gates are preserved. Factory spin 0 becomes 1; nonzero spin stays.
+Current v9 profiles can explicitly choose spin 0 or a short stroke gate.
+
+Cabinet Setup restores Full-power speed with +/-200 counts/sec adjustments,
+clamped to 400–10000 counts/sec. Calibrate Trackball asks you to roll forward
+firmly at a comfortable full-power speed. It sets Full-power speed to the new
+peak measured speed / 0.7, then applies the same limits: that reference roll
+represents 70% power, leaving headroom. Calibration leaves sensitivity alone.
+Sensitivity, Wind, Stroke length, Backswing spin, bindings, Reset Settings and
+F2 remain available. Reset Settings restores speed 6048 counts/sec, stroke
+length 400 counts, spin 1 and the other factory settings.
+
+Sideways spinner rolls are ignored for placement. A quiet period after each turn prevents residual motion launching
+the next bag. No device is grabbed and no global controller mapping is edited.
+
+NATIVE BATOCERA PACKAGE
+----------------------
+Back up the existing package and metadata. Stage and verify the Linux ZIP
+outside the ROM collection before replacing its files while Cornhole is closed.
+Runtime: /userdata/system/backyard-games/BackyardCornhole-linux
+Ports launcher: /userdata/roms/ports/BackyardCornhole.sh
+Log: /userdata/system/logs/cornhole-native.log
+Music: /userdata/music/backyard-cornhole (or choose a local folder in Music).
+The runtime uses a private bundled libcups; it does not replace system libraries.
+
+The launcher releases only Cornhole's stranded virtual exit keys before handing
+back to Batocera. Batocera-Support contains the separately reviewed gameStop
+hook for /userdata/system/scripts/90-release-virtual-hotkeys.sh. It releases
+hotkeygen's virtual keys at game exit, never physical keys or input mappings.
+Keep the existing installed hook when updating Cornhole. Backups and successful
+Cornhole/Sega exit tests were preserved in the cabinet's es-diagnosis cache.
+
+The obsolete Windows/Wine package is not the cabinet's supported launcher.
+Prepare a recoverable backup outside scanned ROM folders before removing it.
+Do not remove other Windows games or Wine prefixes. Artwork and metadata are
+prepared in media/; their installation and Favorites verification remain pending.
+
+DEVELOPMENT AND QA
+------------------
+For this snapshot: node --test tests/*.test.mjs (from this directory).
+The committed app -> resources-app symlink supports the test imports.
+Build tooling in arcade/ is older than this cabinet snapshot; do not use it
+to replace the verified cabinet application.
+Optional local Mac package: node build.mjs --mac.
+Browser/Electron regression scripts live in tests/. They accept NODE_PATH for
+the test driver, ELECTRON_PATH for the packaged app, CHROME_PATH for Chromium,
+and BASE_URL for the generated site. No test fixture is included in the game.
+
+The build generates an isolated offline copy under arcade/dist/site. Canonical
+web files are never edited. Vercel excludes the whole arcade directory. Cabinet
+preferences use the standalone app's own profile. Preserve that profile during
+updates so calibration, mappings, music choice and tournament progress survive.
+
+Read BACKLOG.md for implemented work, verification and the remaining physical
+playtest/installation tasks. Do not report the cabinet updated from a local build.
+
+Compact legend (retained from 0.2.22)
+-----------------------------
+Pad 0 top row indices 0/1/2/6; bottom 3/4/5/7. Index 6 emits ClearBoard
+in play and nothing in menus. Only index 7 emits ToggleKeys, including in
+menus, with native/polled rising edges.
+Indices 2 and 5 still reset. Other pads retain their previous mappings.
+Companion localStorage key backyard-arcade-keys-tucked stores true/false;
+missing/unavailable storage defaults popped. Profile v9 is untouched.
+legend.mjs and legend.css hold the shared markup, behavior, and styling.
+legend-shots.html embeds that exact markup/CSS for offline Chrome capture.
+
+Spin behavior retained from 0.2.23
+A/C input sign flipped: negative-X backswing now produces negative spin.
+Negative Three.js +Y angular velocity is clockwise from above, curls +X/right.
+Positive spin is counterclockwise/left. Forward aim is unchanged.
+Full-flight flat spin runs at 14 rad/s; release slerp no longer erases yaw.
+Slide curl: slick 3.2 m/s^2 with exp(-1.4t) decay; sticky 1.5 with exp(-4.5t).
+Existing friction and bag contacts retained; zero spin leaves simulate/WIN unchanged.
+Shared legend markup/CSS adds a compact bottom-left spinner card.
