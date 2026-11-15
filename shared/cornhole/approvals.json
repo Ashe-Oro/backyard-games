@@ -1,5 +1,5 @@
 {
-  "$comment": "Structured drift approvals. A change to common.json or an override value must add an entry here: {field, platform, old, new, baseline, pr}. Changelog text is documentation, not an exception mechanism.",
+  "$comment": "Structured drift approvals. Every value that differs from baseline.json (commit a07afaa) needs exactly one entry {field, platform, old, new, baseline: \"a07afaa\", pr}; old = baseline value, new = current source value. Missing, mismatched or stale entries fail tests/drift.test.mjs. Changelog text is documentation, not an exception mechanism. See README.md.",
   "schema": 1,
   "approvals": []
 }
