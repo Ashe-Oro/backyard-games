@@ -14,7 +14,7 @@ int main(void)
     VIDEO_ClearFrameBuffer(mode, xfb, COLOR_BLACK);
     console_init(xfb, 0, 0, mode->fbWidth, mode->xfbHeight,
                  mode->fbWidth * VI_DISPLAY_PIX_SZ);
-    printf("\x1b[2J\x1b[3;3HBACKYARD CORNHOLE\n\n  Packaging smoke stub - NTSC / 60 Hz\n");
+    printf("\x1b[2J");
     VIDEO_SetNextFramebuffer(xfb);
     VIDEO_SetBlack(FALSE);
     VIDEO_Flush();
@@ -24,7 +24,10 @@ int main(void)
     for (;;) {
         WPAD_ScanPads();
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME) exit(0);
-        printf("\x1b[9;3HFrame: %lu", ++frame);
+        printf("\x1b[3;3HBACKYARD CORNHOLE"
+               "\x1b[5;3HPackaging smoke stub - NTSC / 60 Hz"
+               "\x1b[9;3HFrame: %lu", ++frame);
+        fflush(stdout);
         VIDEO_WaitVSync();
     }
 }
