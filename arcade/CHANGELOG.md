@@ -15,6 +15,13 @@ Future arcade releases are tagged `arcade-vX.Y.Z`, after the release-source reco
 ### Changed
 - Repo layout only: the arcade build now reads the website's Cornhole files from `web/`. The game, controls and cabinet install are unchanged.
 
+## [1.0.8] - 2026-11-15
+
+### Changed
+- The game is ready for your next toss as soon as you can throw.
+- A missed or late spin no longer comes out weak.
+- A soft glow on the bag shows when you can roll.
+
 ## [1.0.7] - 2026-11-15
 
 ### Changed
