@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] - 2026-11-15
+
+### Fixed
+- Line up left or right of center and throw straight: the bag flies straight and lands to that side of the hole.
+- Straight throws no longer auto-aim at the hole.
+
 ## [1.0.4] - 2026-11-15
 
 ### Changed
