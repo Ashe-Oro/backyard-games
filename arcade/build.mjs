@@ -5,13 +5,14 @@ import {createWriteStream} from 'node:fs';
 import {downloadArtifact} from '@electron/get';
 import extract from 'extract-zip';
 import yazl from 'yazl';
-const here=path.dirname(fileURLToPath(import.meta.url)),repo=path.dirname(here),dist=path.join(here,'dist'),site=path.join(dist,'site');
+// Web sources live in <repo>/web (the folder Vercel serves).
+const here=path.dirname(fileURLToPath(import.meta.url)),repo=path.dirname(here),webRoot=path.join(repo,'web'),dist=path.join(here,'dist'),site=path.join(dist,'site');
 const pkg=JSON.parse(await fs.readFile(path.join(here,'package.json')));
 // Rebuild only this generated tree; never write into the canonical web sources.
 await fs.rm(site,{recursive:true,force:true});
 await fs.mkdir(site,{recursive:true});
 for(const [folder,files] of Object.entries({'cornhole':['index.html','controls.mjs','wind-streaks.js'],'yard-games':['backyard.js','power-arrow.js','ui.css']})){
- await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(repo,folder,file),path.join(site,folder,file));
+ await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(webRoot,folder,file),path.join(site,folder,file));
 }
 await fs.mkdir(path.join(site,'arcade'),{recursive:true});for(const file of ['controller.js','trackball.mjs','party.mjs','music-player.mjs','board-view.mjs','dog-celebration.mjs','arcade.css'])await fs.copyFile(path.join(here,file),path.join(site,'arcade',file));
 await fs.mkdir(path.join(site,'vendor'),{recursive:true});
@@ -74,16 +75,16 @@ window.__arcadeHost={
  get party(){return party;},
  get boardZ(){return BOARD_Z;},
  tournament(){careerMap();},
- resetBag(){if(!humanTurn())return;M.position[thrower()]=0;M.aim=0;M.spin=0;cancelPull();setMeter(0);positionHeldBag(baseYaw(releaseX(thrower())));},
+ resetBag(){if(!humanTurn())return;M.position[thrower()]=0;M.aim=0;M.spin=0;cancelPull();setMeter(0);positionHeldBag(0);},
  power(p){return physicalPower(p);},
  start(mode){dogParty.reset();startMatch({practice:mode==='practice',vs:'2p',first:0});},
  pause(value){M.paused=value;cancelPull();},
  hideArrow(){cancelPull();},
  wind(enabled){if(!enabled)Object.assign(wind,{mph:0,angle:0,x:0,z:0});else if(!wind.mph)Object.assign(wind,roundWind({practice:false,previousX:wind.x}));renderHud();},
- position(dx){if(!humanTurn())return;M.position[thrower()]=clamp(M.position[thrower()]+dx,-.45,.45);positionHeldBag(baseYaw(releaseX(thrower())));},
+ position(dx){if(!humanTurn())return;M.position[thrower()]=clamp(M.position[thrower()]+dx,-.45,.45);positionHeldBag(0);},
  surface(){flipSide();},
  height(){if(!humanTurn())return;M.arc=(M.arc+1)%3;M.heights[thrower()]=M.arc;renderHud();},
- preview(shot){if(!humanTurn())return;M.aim=shot.aim;setMeter(shot.power);const origin=bagScreen(),yaw=baseYaw(releaseX(thrower()))+shot.aim,length=powerArrowLength(physicalPower(shot.power));showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},false,physicalPower(shot.power));},
+ preview(shot){if(!humanTurn())return;M.aim=shot.aim;setMeter(shot.power);const origin=bagScreen(),yaw=shot.aim,length=powerArrowLength(physicalPower(shot.power));showAim(origin,{x:origin.x+Math.sin(yaw)*length,y:origin.y-Math.cos(yaw)*length},false,physicalPower(shot.power));},
  throw(shot){if(!humanTurn())return false;M.aim=clamp(shot.aim,-AIM_MAX,AIM_MAX);M.spin=clamp(shot.spin,-1,1);return throwBag(clamp(shot.power,0,1));},
  advance(){if(['summary','over'].includes(M.phase))advance();},
 };

@@ -1,0 +1,8 @@
+build/
+dist/
+dolphin/iso-root/
+hbc/apps/backyardcornhole/boot.dol
+hbc/apps/backyardcornhole/boot.elf
+*.elf
+*.dol
+*.iso

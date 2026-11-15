@@ -1,0 +1,63 @@
+{
+  "$comment": "Cornhole values verified IDENTICAL in web and arcade 1.0.3. Data only: no game code imports this file yet. Run `node --test shared/cornhole/tests/*.test.mjs` from the repo root to re-verify.",
+  "schema": 1,
+  "verifiedAgainst": ["web", "arcade-1.0.3"],
+  "units": "SI (metres, seconds, radians) unless noted",
+  "constants": [
+    { "name": "G", "expr": "9.8", "value": 9.8, "unit": "m/s^2", "snippet": "const G = 9.8;", "file": "game" },
+    { "name": "IN", "expr": "0.0254", "value": 0.0254, "unit": "m", "snippet": "const IN = 0.0254, FT = 0.3048;", "file": "game" },
+    { "name": "FT", "expr": "0.3048", "value": 0.3048, "unit": "m", "snippet": "const IN = 0.0254, FT = 0.3048;", "file": "game" },
+    { "name": "W", "expr": "2 * FT", "value": 0.6096, "unit": "m", "note": "board deck width", "snippet": "const W = 2 * FT, L = 4 * FT;", "file": "game" },
+    { "name": "L", "expr": "4 * FT", "value": 1.2192, "unit": "m", "note": "board deck length", "snippet": "const W = 2 * FT, L = 4 * FT;", "file": "game" },
+    { "name": "FRONT_H", "expr": "3.5 * IN", "value": 0.0889, "unit": "m", "snippet": "const FRONT_H = 3.5 * IN, BACK_H = 12 * IN;", "file": "game" },
+    { "name": "BACK_H", "expr": "12 * IN", "value": 0.3048, "unit": "m", "snippet": "const FRONT_H = 3.5 * IN, BACK_H = 12 * IN;", "file": "game" },
+    { "name": "TH", "expr": "Math.asin((BACK_H - FRONT_H) / L)", "value": 0.17802215412371447, "unit": "rad", "note": "deck tilt", "snippet": "const TH = Math.asin((BACK_H - FRONT_H) / L);", "file": "game" },
+    { "name": "BOARD_Z", "expr": "-27 * FT", "value": -8.2296, "unit": "m", "note": "front edge of target board; foul line is z = 0", "snippet": "const BOARD_Z = -27 * FT;", "file": "game" },
+    { "name": "HOLE_FROM_TOP", "expr": "9 * IN", "value": 0.2286, "unit": "m", "snippet": "const HOLE_FROM_TOP = 9 * IN, HOLE_R = 3 * IN;", "file": "game" },
+    { "name": "HOLE_R", "expr": "3 * IN", "value": 0.0762, "unit": "m", "snippet": "const HOLE_FROM_TOP = 9 * IN, HOLE_R = 3 * IN;", "file": "game" },
+    { "name": "BAG", "expr": "6 * IN", "value": 0.1524, "unit": "m", "snippet": "const BAG = 6 * IN, BAG_H = 0.016, BAG_R = 0.074;", "file": "game" },
+    { "name": "BAG_H", "expr": "0.016", "value": 0.016, "unit": "m", "snippet": "const BAG = 6 * IN, BAG_H = 0.016, BAG_R = 0.074;", "file": "game" },
+    { "name": "BAG_R", "expr": "0.074", "value": 0.074, "unit": "m", "snippet": "const BAG = 6 * IN, BAG_H = 0.016, BAG_R = 0.074;", "file": "game" },
+    { "name": "STICKY_MU", "expr": "0.62", "value": 0.62, "note": "SIDES.sticky.mu", "snippet": "sticky: { mu: 0.62, ms: 0.85, keep: 0.30 }", "file": "game" },
+    { "name": "STICKY_MS", "expr": "0.85", "value": 0.85, "note": "SIDES.sticky.ms", "snippet": "sticky: { mu: 0.62, ms: 0.85, keep: 0.30 }", "file": "game" },
+    { "name": "STICKY_KEEP", "expr": "0.30", "value": 0.3, "note": "SIDES.sticky.keep", "snippet": "sticky: { mu: 0.62, ms: 0.85, keep: 0.30 }", "file": "game" },
+    { "name": "MU_GROUND", "expr": "1.1", "value": 1.1, "snippet": "const MU_GROUND = 1.1, BAG_E = 0.25;", "file": "game" },
+    { "name": "BAG_E", "expr": "0.25", "value": 0.25, "note": "bag-bag restitution", "snippet": "const MU_GROUND = 1.1, BAG_E = 0.25;", "file": "game" },
+    { "name": "ELEV", "expr": "35 * Math.PI / 180", "value": 0.6108652381980153, "unit": "rad", "snippet": "const ELEV = 35 * Math.PI / 180;", "file": "game" },
+    { "name": "V_MIN", "expr": "5.6", "value": 5.6, "unit": "m/s", "snippet": "const V_MIN = 5.6;", "file": "game" },
+    { "name": "AIM_MAX", "expr": "0.12", "value": 0.12, "unit": "rad", "snippet": "const AIM_MAX = 0.12;", "file": "game" },
+    { "name": "REL_Z", "expr": "-0.45", "value": -0.45, "unit": "m", "snippet": "REL_Z = -0.45;", "file": "game" },
+    { "name": "ARC_PUSH_DEG", "expr": "24", "value": 24, "unit": "deg", "note": "arcs[0]", "snippet": "const arcs = [24, 35, 58]", "file": "game" },
+    { "name": "ARC_NORMAL_DEG", "expr": "35", "value": 35, "unit": "deg", "note": "arcs[1]", "snippet": "const arcs = [24, 35, 58]", "file": "game" },
+    { "name": "ARC_KOBE_DEG", "expr": "58", "value": 58, "unit": "deg", "note": "arcs[2]", "snippet": "const arcs = [24, 35, 58]", "file": "game" },
+    { "name": "LAND_KEEP_KOBE", "expr": "0.40", "value": 0.4, "note": "landing speed multiplier for arc 2", "snippet": "S.keep * (b.arc === 2 ? 0.40 : b.arc === 0 ? 1.35 : 1)", "file": "game" },
+    { "name": "LAND_KEEP_PUSH", "expr": "1.35", "value": 1.35, "note": "landing speed multiplier for arc 0", "snippet": "S.keep * (b.arc === 2 ? 0.40 : b.arc === 0 ? 1.35 : 1)", "file": "game" },
+    { "name": "SWISH_R_FRAC", "expr": "0.9", "value": 0.9, "note": "air entry counts as a swish inside HOLE_R * 0.9", "snippet": "holeDist(lp) < HOLE_R * 0.9", "file": "game" },
+    { "name": "SLIDE_IN_MARGIN", "expr": "0.012", "value": 0.012, "unit": "m", "note": "a sliding bag drops when inside HOLE_R - 0.012", "snippet": "holeDist(lp) < HOLE_R - 0.012", "file": "game" },
+    { "name": "PHYSICS_DT", "expr": "1 / 240", "value": 0.004166666666666667, "unit": "s", "note": "fixed physics step", "snippet": "step(b, 1 / 240)", "file": "game" },
+    { "name": "WIND_MPH_TO_ACCEL", "expr": "0.025", "value": 0.025, "note": "wind x/z = sin/cos(angle) * mph * 0.025", "snippet": "x:Math.sin(angle)*mph*.025,z:-Math.cos(angle)*mph*.025", "file": "controls" }
+  ],
+  "rules": [
+    { "id": "points-in-hole", "value": 3, "snippet": "if (b.state === 'in') { pts[b.team] += 3; inC[b.team]++; }", "file": "game" },
+    { "id": "points-on-board", "value": 1, "snippet": "else if (b.state === 'board' && !b.dead) { pts[b.team] += 1; onC[b.team]++; }", "file": "game" },
+    { "id": "cancellation-scoring", "value": "net = |red - blue|, awarded to the higher side; a tie is a wash", "snippet": "const net = Math.abs(pts[0] - pts[1]);", "file": "game" },
+    { "id": "target-score", "value": 21, "snippet": "(M.exact ? M.scores[scorer] === 21 : M.scores[scorer] >= 21)", "file": "game" },
+    { "id": "exact-21-bust-to", "value": 13, "note": "only in EXACTLY 21 mode", "snippet": "if (M.exact && M.scores[scorer] > 21) { M.scores[scorer] = 13; bust = true; }", "file": "game" },
+    { "id": "last-scorer-throws-first", "value": true, "note": "a wash keeps the same order", "snippet": "M.first = scorer;", "file": "game" },
+    { "id": "bags-per-inning", "value": 8, "note": "4 per team, alternating", "snippet": "if (!M.practice && M.k >= 8) { M.phase = 'settle'; renderHud(); return; }", "file": "game" },
+    { "id": "alternating-throws", "value": true, "snippet": "const thrower = (k = M.k) => M.practice ? 0 : (k % 2 === 0 ? M.first : 1 - M.first);", "file": "game" },
+    { "id": "grounder-is-dead", "value": true, "note": "a bag that touches grass first scores nothing", "snippet": "else if (b.dead) say('GROUNDER', 'GRASS FIRST · NO SCORE', 1300);", "file": "game" }
+  ],
+  "wind": {
+    "practiceIsCalm": true,
+    "tiersByCircuit": [[4, 3], [6, 4], [9, 4], [12, 4]],
+    "defaultTier": [6, 5],
+    "tierMeaning": "[minimum mph, number of 1-mph steps]",
+    "laterRoundsSwitchSides": true,
+    "snippets": [
+      { "snippet": "const [minimum,steps]=[[4,3],[6,4],[9,4],[12,4]][circuit]??[6,5];", "file": "controls" },
+      { "snippet": "const side=previousX? -Math.sign(previousX):(random()<.5?-1:1);", "file": "controls" },
+      { "snippet": "if(practice)return {mph:0,angle:0,x:0,z:0};", "file": "controls" }
+    ]
+  }
+}

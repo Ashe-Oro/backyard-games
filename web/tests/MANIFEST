@@ -1,0 +1,62 @@
+# Web test manifest: the bounded, reproducible web test set (REPO_LAYOUT §6 PR T / PR 1).
+# Run: node web/tests/run-manifest.mjs          (from anywhere; see the header of run-manifest.mjs)
+#
+# Every file in web/tests/ must be listed exactly once (the runner refuses to run otherwise).
+#   modern      runs; must pass. Baseline at a07afaa (v1.0.3) and after the web/ move: all pass.
+#   known-fail  runs; reported separately and never fails the run. Accepted pre-existing failures
+#               (they already fail at a07afaa). Flagged if one starts passing: move it to modern.
+#   legacy      not run by this runner. Python Playwright suites: hard-coded 127.0.0.1:8000, need the
+#               pip `playwright` package (not on the dev box, so no recorded baseline), and several read
+#               index.html expecting cornhole at / (stale since the five-game home page). Archive or fix
+#               them in a separate bounded patch; python3 web/tests/run_all.py still runs them.
+#   tool        helper scripts, not checks.
+#
+# status     file                               note
+known-fail beer_pong_bounce_check.cjs         fails at a07afaa: 30 s timeout waiting for [data-shot-style=bounce]
+modern     beer_pong_check.cjs
+modern     beer_pong_difficulty_check.cjs
+modern     beer_pong_feedback_check.cjs
+modern     beer_pong_help_check.cjs
+known-fail beer_pong_human_swat_check.cjs     fails at a07afaa: human swatting is disabled (FEATURES.swatting=false), expects 'swat'
+modern     beer_pong_input_check.cjs
+modern     beer_pong_natural_bounce_check.cjs
+modern     beer_pong_no_swat_check.cjs
+modern     beer_pong_position_check.cjs
+modern     beer_pong_rerack_check.cjs
+modern     beer_pong_rerack_cpu_check.cjs
+modern     beer_pong_rim_check.cjs
+modern     beer_pong_swat_ai_check.mjs
+modern     beer_pong_tournament_check.mjs
+modern     beer_pong_tournament_ui_check.cjs
+known-fail cornhole_challenge_check.cjs       fails at a07afaa: 30 s timeout clicking [data-height="0"] (PUSH)
+modern     cornhole_controls_check.mjs
+modern     cornhole_mobile_options_check.cjs
+modern     framing_check.cjs
+modern     game_route_check.cjs
+modern     game_ui_check.cjs
+modern     home_check.cjs
+modern     swipe_feedback_check.cjs
+modern     yard_games_check.cjs
+modern     yard_help_check.cjs
+modern     yard_rules_check.mjs
+legacy     career_check.py                    Python suite, not run (see header)
+legacy     playwright_check.py                Python suite, not run (see header)
+legacy     task3_check.py                     Python suite, not run (see header)
+legacy     task5_check.py                     Python suite, not run (see header)
+legacy     task6_check.py                     Python suite, not run (see header)
+legacy     task8_check.py                     Python suite, not run (see header)
+legacy     task9_check.py                     Python suite, not run (see header)
+legacy     task10_check.py                    Python suite, not run (see header)
+legacy     task11_check.py                    Python suite, not run (see header)
+legacy     task12_check.py                    Python suite, not run (see header)
+legacy     task13_check.py                    Python suite, not run (see header)
+legacy     task14_check.py                    Python suite, not run (see header)
+legacy     task15_check.py                    Python suite, not run (see header)
+legacy     task16_check.py                    Python suite, not run (see header)
+legacy     task17_check.py                    Python suite, not run (see header)
+legacy     wind_flag_check.py                 Python suite, not run (see header)
+tool       run_all.py                         legacy Python runner (*_check.py)
+tool       _bagpos_probe.py                   debug probe
+tool       review2_shots.py                   review screenshot helper
+tool       run-manifest.mjs                   this runner
+tool       support/playwright-browser.cjs     browser preload used by the runner

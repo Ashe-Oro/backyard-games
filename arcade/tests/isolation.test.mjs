@@ -5,15 +5,17 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-const arcade=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),repo=path.dirname(arcade);
+const arcade=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),repo=path.dirname(arcade),webRoot=path.join(repo,'web');
+// Map keys stay web-relative (cornhole/index.html, ...); files are read from webRoot. Root vercel.json is hashed separately.
 async function webSources(){
  const result=new Map();
  async function visit(relative){
-  const file=path.join(repo,relative),stat=await fs.stat(file);
+  const file=path.join(webRoot,relative),stat=await fs.stat(file);
   if(stat.isDirectory()){for(const child of await fs.readdir(file))await visit(path.join(relative,child));}
   else if(/\.(html|css|m?js|json)$/.test(file))result.set(relative,await fs.readFile(file,'utf8'));
  }
- for(const entry of ['index.html','cornhole','yard-games','beer-pong','ladder-golf','washers','lawn-darts','assets','vercel.json'])await visit(entry);
+ for(const entry of ['index.html','cornhole','yard-games','beer-pong','ladder-golf','washers','lawn-darts','assets'])await visit(entry);
+ result.set('vercel.json',await fs.readFile(path.join(repo,'vercel.json'),'utf8'));
  return result;
 }
 const hashes=sources=>Object.fromEntries([...sources].sort().map(([file,text])=>[file,createHash('sha256').update(text).digest('hex')]));
@@ -35,6 +37,8 @@ test('web deployment excludes the entire arcade tree',async()=>{
  const rules=(await fs.readFile(path.join(repo,'.vercelignore'),'utf8')).split(/\r?\n/).map(s=>s.trim()).filter(s=>s&&!s.startsWith('#'));
  assert(rules.includes('arcade'),'Arcade code and generated runtimes must be excluded from Vercel');
  assert(!rules.some(rule=>rule.startsWith('!')&&rule.includes('arcade')),'A deployment rule re-includes arcade files');
+ for(const tree of ['wii','shared','web/tests'])assert(rules.includes(tree),`${tree} must be excluded from Vercel`);
+ assert.equal(JSON.parse(await fs.readFile(path.join(repo,'vercel.json'),'utf8')).outputDirectory,'web','Vercel must serve only the web/ folder');
 });
 test('accidental arcade import rejects before touching web storage or UI',()=>{
  const controller=new URL('../controller.js',import.meta.url).href;
