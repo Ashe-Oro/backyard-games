@@ -24,14 +24,11 @@ int32_t WPAD_Probe(int32_t ch, uint32_t *type) {
     return remotes[ch].connected ? 0 : WPAD_ERR_NO_CONTROLLER;
 }
 int32_t WPAD_SetDataFormat(int32_t ch, int32_t format) {
-    assert(format==WPAD_FMT_BTNS_ACC_IR); return remotes[ch].fail_stage==1 ? -3 : 0;
-}
-int32_t WPAD_SetVRes(int32_t ch, uint32_t x, uint32_t y) {
-    assert(x==640 && y==480); return remotes[ch].fail_stage==2 ? -3 : 0;
+    assert(format==WPAD_FMT_BTNS_ACC); return remotes[ch].fail_stage==1 ? -3 : 0;
 }
 int32_t WPAD_SetIdleThresholds(int32_t ch, int32_t btn, int32_t ir, int32_t acc,
                                int32_t js, int32_t wb, int32_t mp) {
-    assert(btn==0 && ir==0 && acc==0 && js==-1 && wb==-1 && mp==-1);
+    assert(btn==0 && ir==-1 && acc==0 && js==-1 && wb==-1 && mp==-1);
     return remotes[ch].fail_stage==3 ? -3 : 0;
 }
 int32_t WPAD_SetEventBufs(int32_t ch, WPADData *buf, uint32_t count) {
@@ -71,8 +68,8 @@ static void setup(Input *i, InputWpad *w, bool two) {
 static void queue(unsigned ch, unsigned count, uint32_t buttons) {
     FakeRemote *r=&remotes[ch]; r->count=count; r->read=0;
     for (unsigned n=0;n<count;++n) r->queue[n]=(WPADData){
-        .data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL|WPAD_DATA_IR,.btns_h=buttons,
-        .ir={1,480,240},.accel={500,500,700},.gforce={0,0,1}};
+        .data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,.btns_h=buttons,
+        .accel={500,500,700},.gforce={0,0,1}};
 }
 static void both_channels_drained_in_order(void) {
     Input i; InputWpad w; setup(&i,&w,true);
@@ -81,7 +78,7 @@ static void both_channels_drained_in_order(void) {
     assert(traced==4 && !rejected && remotes[0].read==2 && remotes[1].read==2);
     assert(trace_ms[0]==1010 && trace_ms[1]==1020 && trace_ms[2]==1010 && trace_ms[3]==1020);
     assert(w.reports[0]==2 && w.reports[1]==2);
-    assert(fabs(i.slots[0].aim-.06)<1e-9 && !i.b_held[0] && !i.b_held[1]);
+    assert(fabs(i.slots[0].aim)<1e-9 && !i.b_held[0] && !i.b_held[1]);
 }
 static void reconnect_registers_persistent_buffer(void) {
     Input i; InputWpad w; setup(&i,&w,true); input_next_turn(&i,1);
@@ -93,7 +90,9 @@ static void reconnect_registers_persistent_buffer(void) {
     assert(!input_resume(&i)); queue(1,1,0); input_wpad_poll(&w,1030); assert(input_resume(&i));
 }
 static void check_registration_and_read_errors(void) {
-    for (int failure=1;failure<=6;++failure) {
+    const int failures[]={1,3,4,5,6};
+    for (unsigned n=0;n<sizeof(failures)/sizeof(failures[0]);++n) {
+        int failure=failures[n];
         Input i; InputWpad w; setup(&i,&w,false);
         w.registered[0]=false; remotes[0].fail_stage=failure; input_wpad_poll(&w,1010);
         assert(w.status[0]==WPAD_ERR_TRANSFER && !w.registered[0] && !i.connected[0]);
@@ -128,7 +127,7 @@ static void invalid_data_and_clipping_flags(void) {
     input_wpad_poll(&w,1010); assert(last_sample.motion.clipped);
     queue(0,1,0); remotes[0].queue[0].data_present=WPAD_DATA_BUTTONS;
     i.detector.phase=SWING_GRIP; input_wpad_poll(&w,1020);
-    assert(!last_sample.motion.accel_valid && !last_sample.motion.ir && !swing_armed(&i.detector));
+    assert(!last_sample.motion.accel_valid && !swing_armed(&i.detector));
     queue(0,1,INPUT_A); remotes[0].queue[0].err=WPAD_ERR_TRANSFER;
     input_wpad_poll(&w,1030); assert(!last_sample.buttons_valid && !i.slots[0].sticky);
 }

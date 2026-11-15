@@ -55,7 +55,7 @@ arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/
 | Toolchain | devkitPro **devkitPPC** + **libogc** (latest is v3.2.1, Oct 2026), pinned in a Docker image (`devkitpro/devkitppc`) | Pin the exact tag. libogc's 2.x→3.x churn and the separate libogc2 fork are real risks (§8) |
 | 3D | Raw **GX**: display lists, fixed-function TEV, hardware fog, 1 directional light + ambient | Three.js features map almost 1:1 onto what this game uses: Lambert, unlit, fog, nearest-filtered pixel textures |
 | 2D HUD/text | Own ortho quad batcher + 8×8 bitmap font atlas. GRRLIB 4.6.x is acceptable if it builds against the pinned libogc | GRRLIB's 3D helpers are too limited for the scene; use it only for 2D or not at all |
-| Input | libogc **WPAD**: `WPAD_SetDataFormat(chan, WPAD_FMT_BTNS_ACC_IR)`, `WPAD_SetVRes`, `WPAD_SetEventBufs` + `WPAD_ReadEvent` (every report, not one per frame), `WPAD_SetMotionPlus` (optional) | Header: `gc/wiiuse/wpad.h`. Details in §4 |
+| Input | libogc **WPAD**: `WPAD_SetDataFormat(chan, WPAD_FMT_BTNS_ACC)`, `WPAD_SetEventBufs` + `WPAD_ReadEvent` (every report, not one per frame), `WPAD_SetMotionPlus` (optional) | Header: `gc/wiiuse/wpad.h`. Details in §4 |
 | Audio | libogc **ASND** (or aesnd) for short PCM/ADPCM SFX | The game ships no SFX today (§2.7) |
 | Storage | libfat (`fatInitDefault`) → `sd:/apps/backyardcornhole/save.dat` | Replaces `localStorage` |
 | Packaging | `.elf` → `elf2dol` → `boot.dol`, plus `meta.xml` and a 128×48 `icon.png` (HBC). For Dolphin/Kinhank, the same DOL is wrapped in an ISO with game ID `BYCEAO` plus `GameSettings/BYCEAO.ini` | §1.4–1.6 |
@@ -158,7 +158,7 @@ Video (**NTSC/60 Hz only**, on both targets): the build selects `TVNtsc480Prog` 
 
 1. Copy the ISO over ADB to `/storage/3050BAA350BA6EEA0/Roms/wii/`.
 2. Put `BYCEAO.ini` in the `GameSettings/` folder of **this** Dolphin Android build's user directory. The path isn't assumed from desktop Dolphin or newer Android builds: Retro records the real path for 5.0-19870 at the P0 check, and `INSTALL-KINHANK.md` is updated with it. Alternatively, set the same option in the game's per-game settings inside Dolphin Android.
-3. DolphinBar in **Mode 4**, Wiimotes synced to it. The DolphinBar also acts as the IR sensor bar.
+3. DolphinBar in **Mode 4**, Wiimotes synced to it. No optical tracking is used by the game.
 4. Dolphin settings already proven on this box: Vulkan, 1× native resolution.
 5. Virtual SD: at P0, Retro confirms that this Dolphin build's virtual SD card is enabled and writable (saves, logs and traces go to `sd:/apps/backyardcornhole/data/`), and records how to copy traces off the box (the build's SD export/sync option, or `adb pull` of the SD image/folder). This is written into `INSTALL-KINHANK.md`.
 6. Launch from Dolphin's game list. Confirm the game ID shows as `BYCEAO` in Properties.
@@ -353,14 +353,14 @@ The research behind this mapping (cabinet control → Wiimote equivalents, Wii S
 
 The *rules* mirror 1.0.3's `trackball.mjs`: peak speed over an `80 ms` window, `power = clamp(peak / fullPowerSpeed)`, linear, capped at 100%, release on deceleration, and nothing distance-like feeds power. The *measurement* differs: the cabinet measures speed directly (forward counts ÷ elapsed time), while a plain Wiimote only has an accelerometer. So the Wii signal is a **candidate speed proxy that P1 must validate** (§4.4). It isn't assumed to be "measured the same way".
 
-### 4.2 Grip and gesture (right-handed default; left-handed mirrors the spin sign)
+### 4.2 Grip and gesture (right-handed default; left-handed mirrors aim and spin)
 
-Hold the remote like the bag: pointer end toward the screen, buttons up, strap on.
+Hold the remote like the bag: front end toward the screen, buttons up, strap on.
 
-1. **Aim:** point at the board. The reticle moves the landing line.
-2. **Twist to curl** (optional): roll your wrist while aiming. A small curl arrow by the bag shows the direction.
-3. **Grab:** press and hold **B**. Aim and curl lock.
-4. **Toss:** swing back (optional), then swing forward underhand.
+1. **Position:** use D-pad LEFT/RIGHT to move along the foul line.
+2. **Choose:** height with UP/DOWN, surface with A, optional fine trim with −/+.
+3. **Grab:** press and hold **B** while still; this captures neutral grip and fine trim.
+4. **Toss:** swing back (optional), then forward underhand. Swing left/right to aim; twist at release to curl.
 5. **Let go of B** to release the bag. If you keep holding, the bag releases itself once the swing slows (§4.4).
 
 Releasing B with no forward swing does nothing, so the bag stays in hand. This matches 1.0.3's "a single report or tiny jitter cannot throw".
@@ -369,13 +369,12 @@ Releasing B with no forward swing does nothing, so the bag stays in hand. This m
 
 | Input | In play | In menus |
 |---|---|---|
-| **IR pointer** | Aim (locks on B press) | Point at a button to highlight it |
 | **B (hold)** | Grab → swing → let go to toss | Back |
-| **Wrist roll** | Curl: twist right = curl right, twist left = curl left (locks on B press) | — |
+| **Swing direction / wrist twist** | Lateral swing aims; lateral movement and release twist set curl | — |
 | **A** | Flip bag surface SLICK ⇄ STICKY | Confirm |
 | **D-pad ↑ / ↓** | Throw height up / down: SLIDER ⇄ NORMAL ⇄ KOBE | Move highlight |
 | **D-pad ← / →** | Step left / right along the foul line (0.05 per press, clamp ±0.45, eased 70 ms — the cabinet's nudge) | Move highlight |
-| **− / +** | Nudge aim left / right (for no sensor bar or a lost pointer; ±0.01 rad steps) | Adjust value |
+| **− / +** | Nudge aim left / right (fine trim; ±0.01 rad steps) | Adjust value |
 | **1** | Show / hide the button help | — |
 | **2** | Reset bag (center stance, clear aim/curl/windup; never costs a throw) | — |
 | **HOME** | Pause: RESUME · CLEAR BOARD (practice only) · MAIN MENU · QUIT | Pause / back |
@@ -389,17 +388,17 @@ Releasing B with no forward swing does nothing, so the bag stays in hand. This m
 | Input | Ready (not holding B) | Armed (holding B: grip/backswing/forward) | Bag in flight / CPU turn / menus |
 |---|---|---|---|
 | A (surface), D-pad ↑/↓ (height), D-pad ←/→ (step), 2 (reset bag) | Apply, then detector → `settling` (450 ms calm before B can arm) | **Ignored** | Ignored in play; menus use A/D-pad for navigation |
-| − / + (aim nudge) | Apply (aim isn't locked yet) | **Ignored** (aim is locked) | Ignored |
+| − / + (aim nudge) | Apply (aim isn't locked yet) | **Ignored** (fine trim is locked) | Ignored |
 | 1 (help) | Toggle | Toggle (UI only, gesture unaffected) | Toggle |
 | HOME | Pause | Pause **and cancel the gesture** (bag stays in hand) | Pause |
-| Pointer / wrist roll | Live aim / curl preview | Locked values shown | — |
+| Swing / wrist twist | Neutral grip | Direction and spin sampled until release | — |
 
 ### 4.4 Swing-speed detector: candidate design, gated by P1
 
 Status: **candidate.** The requirement (speed only, short window, peak, calibration, no distance or hold time) is fixed. The estimator and direction classifier below are the starting design that P1 must validate on plain Wiimotes on both targets (IMPL_PLAN P1 exit gate). If it fails, the estimator and/or supported gesture is revised and P1 repeats. Tuning thresholds or adding optional MotionPlus does **not** count as fixing the required plain-remote path.
 
 **Acquisition (libogc WPAD)**
-- `WPAD_SetDataFormat(chan, WPAD_FMT_BTNS_ACC_IR)`, `WPAD_SetVRes`. Persistent per-channel buffers registered with `WPAD_SetEventBufs(chan, buf, 64)`, with return codes checked. **One owner** (the main loop) drains each queue with `WPAD_ReadEvent` every frame. `WPAD_ReadPending` drains the **same** queue, so it isn't a fallback. `WPAD_DroppedEvents` is sampled every drain.
+- `WPAD_SetDataFormat(chan, WPAD_FMT_BTNS_ACC)`. Persistent per-channel buffers registered with `WPAD_SetEventBufs(chan, buf, 64)`, with return codes checked. **One owner** (the main loop) drains each queue with `WPAD_ReadEvent` every frame. `WPAD_ReadPending` drains the **same** queue, so it isn't a fallback. `WPAD_DroppedEvents` is sampled every drain.
 - libogc's disconnect handling clears the event-buffer registration, so buffers are **re-registered on every reconnect** before input is accepted.
 - If buffered events misbehave on a target, P0 picks and documents another acquisition path (for example, a dedicated higher-rate thread with its own timing record) before P1 starts.
 - Fields are used only when `err` is OK and the relevant `data_present` bits are set.
@@ -422,19 +421,19 @@ Status: **candidate.** The requirement (speed only, short window, peak, calibrat
 
 **Forward/backward classification: candidates, one chosen in P1** (acceleration sign alone isn't velocity direction, so it's not used as the classifier)
 - **C1 — lobe timing (accelerometer only, primary candidate).** A swing with a backswing passes the bottom twice: two `ē` lobes (back, then forward) separated by a low-`ē` apex. Power comes from the **last** qualifying lobe (≥ `FORWARD_START_G`, ≥ 40 ms long) that ends within `T_REL` of the B release. A release at the back apex leaves no qualifying recent lobe → cancel.
-- **C2 — follow-through confirmation.** After the forward pass, an underhand toss rises back toward the screen: the IR is reacquired, or the calm-sample gravity direction returns toward the grip attitude. Backswing-only motion ends pointing back and down. Used to confirm a lone lobe and to permit auto-release while B is held.
+- **C2 — follow-through confirmation.** After the forward pass, an underhand toss rises back toward the screen: calm gravity direction rises at least 15° forward-up relative to the grip attitude. Backswing-only motion ends pointing back and down. Used to confirm a lone lobe and to permit auto-release while B is held.
 - **C3 — apex attitude.** At low-`ē` apex samples, `gforce` ≈ gravity, so remote pitch is readable: back-down apex vs forward-up finish labels the lobe before it.
 - **C4 — MotionPlus pitch-rate sign** (optional; never required).
 - **Arming:** B arms only if the last 150 ms were **stable**: `ē < 0.10 g` **and** the gravity direction changed < 5° across that span. This rejects slow rotation and motion started before B. If unstable, the bag stays in hand and the HUD shows `HOLD STILL`.
-- **P1 exit gate:** zero false throws on the adversarial trace set (backswing braking, backswing-only release, motion started before B, no-backswing toss, shake, wrist-only rotation, pointer loss, packet gap, clipping in a rejected phase).
+- **P1 exit gate:** zero false throws on the adversarial trace set (backswing braking, backswing-only release, motion started before B, no-backswing toss, shake, wrist-only rotation, both-hand direction/twist, packet gap, clipping in a rejected phase).
 
 Phases:
 
 | Phase | Enter when | Notes |
 |---|---|---|
 | settling | turn start, any legal button action, reset, after a throw, reconnect | Arms only after 450 ms with `ē < NOISE_G` (1.0.3 `quietMs`) |
-| ready | settled | Aim/curl preview live |
-| grip | B pressed **and** stability check passed | Aim and curl lock; the gravity direction is captured |
+| ready | settled | Stance and fine trim preview live |
+| grip | B pressed **and** stability check passed | Fine trim and neutral gravity direction captured; swing sets aim/spin |
 | backswing / forward lobes | per the chosen classifier (C1–C3) | Only the qualifying forward lobe feeds power |
 | release | B up (primary); auto-release (`v ≤ 0.6·peak_v` + C2 confirmation); 2.5 s timeout | Throw only with a valid forward lobe; otherwise cancel quietly (bag stays) |
 | spent | after a throw | Until the next turn |
@@ -454,7 +453,7 @@ Tunables (one header; every value written into each swing-trace header together 
 | `GAP_CANCEL_MS` | 25 | |
 | `QUIET_MS` / `TIMEOUT_MS` | 450 / 2500 | 1.0.3 values |
 
-**Swing trace format** (CSV with a header block): detector version, all tunables, build id, target (Wii / Dolphin desktop / Kinhank), channel, player slot, extension type. Per row: drain time, event index, estimated time + method flag, `gforce` xyz, raw accel xyz + saturation flags, `data_present`, `err`, dropped-events delta, IR valid/x/y, B state, phase, `ē`, `v`. For P1 validation, plus an independent speed label (§IMPL_PLAN P1).
+**Swing trace format** (CSV with a header block): detector version, all tunables, build id, target (Wii / Dolphin desktop / Kinhank), channel, player slot, extension type. Per row: drain time, event index, estimated time + method flag, `gforce` xyz, raw accel xyz + saturation flags, `data_present`, `err`, dropped-events delta, B state, phase, `ē`, `v`. For P1 validation, plus an independent speed label (§IMPL_PLAN P1).
 
 Why this is speed and not distance: power comes from the peak of an 80 ms window of an instantaneous signal. Swing length and hold time are never measured or accumulated.
 
@@ -462,17 +461,23 @@ Why this is speed and not distance: power comes from the peak of an 80 ms window
 
 If a MotionPlus or Wii Remote Plus is detected (`WPAD_SetMotionPlus(chan, 1)`, `exp.type == EXP_MOTION_PLUS`, raw `mp.rx/ry/rz`, zeroed at rest, fast-mode scale ×2000/440), the pitch rate can (a) confirm lobe direction (C4) and (b) extend range above the accelerometer rail. Gyro rate alone doesn't give hand speed when the wrist articulates, so it refines and never replaces the plain-remote path. It is never required.
 
-### 4.6 Aim
+### 4.6 Aim from the swing
 
-- IR pointer x maps linearly to `aim ∈ [−0.12, +0.12]` rad (the host's `AIM_MAX`; the trackball used ±0.10), centered on the board. The reticle is drawn on the board plane, and the existing power arrow previews the line.
-- Aim **locks on B press**, so swing wobble can't change it. This keeps "aim where you point" readable.
-- No IR (no sensor bar, or pointing off-screen for more than 0.5 s): the reticle freezes at its last value and **−/+** nudge it. The HUD shows "AIM: − +".
+The owner directive of Nov 15, 2026 supersedes earlier pointing designs. No Wiimote camera, sensor bar, cursor, camera calibration or camera data format is used, including menus. Request `WPAD_FMT_BTNS_ACC` only; ignore the tracking threshold in `WPAD_SetIdleThresholds`.
 
-### 4.7 Spin / curl via wrist roll
+D-pad LEFT/RIGHT steps the stance along the foul line (0.05, clamp ±0.45, 70 ms ease); UP/DOWN retains height selection. A straight swing with zero fine trim launches straight from that stance, without targeting the hole. Minus/plus provides optional 0.01 rad fine trim, clamped ±0.12 and captured at grip. Menu navigation uses buttons.
 
-- Roll is computed from **calm `gforce` samples** (`atan2` of the X and Z components, relative to neutral: remote flat, buttons up). libogc's `orient`/`a_roll` is an orientation result that its own dynamics code treats as unreliable under high acceleration, so it's used only for display, never for locking. Deadzone ±10°, full spin at ±45°, linear in between, scaled by `spinStrength`.
-- Sign: twist **right** (clockwise from the player's view) → **negative** spin → clockwise from above → curls **right**. This matches 1.0.3's convention (A/back-left = negative = right curl). Left-handed mode mirrors it.
-- Spin **locks on B press**, as the mean roll of the stable 150 ms window that the arming check already requires (§4.4). If that window isn't stable, B doesn't arm. During the swing, accelerometer roll is corrupted by motion and is ill-conditioned when the remote points down, so it's never read there. Spin affects landing curl only, never flight curvature, as in 1.0.3.
+The implemented candidate yaw proxy uses the latest qualifying lobe: `lateral = mean(g.x / |g| - grip.x / |grip|)`, weighted by excess force × elapsed report time, only for non-clipped moving samples with excess ≥0.35 g. A new lobe clears the previous lateral accumulator. Values below 0.03 are neutral; `yaw = clamp(lateral / 0.5, -1, 1)`. `aim = clamp(fine_trim + hand * yaw * 0.12, ±0.12)` radians, where hand is +1 for RIGHT and −1 for LEFT. Direction freezes on B release, or at automatic release. Confirmation after B-up cannot change it.
+
+This accelerometer signal is a gesture proxy, not absolute world yaw or measured velocity direction. Grip, axis signs, attitude/translation ambiguity and thresholds require real-remote P1 traces. It never feeds the speed-power calculation.
+
+### 4.7 Spin and handedness
+
+Spin comes from lateral motion during the forward lobe and wrist twist at release, rather than a pre-grip curl lock. Capture neutral roll from the stable grip window; at release compute `roll_delta = remainder(atan2(g.x,g.z) - grip_roll, 360°)`. Apply a ±10° deadzone, full scale at ±45°, with right twist negative. Combine it with lateral motion: `spin = clamp(roll_spin(roll_delta, hand, strength) - hand * yaw * strength, -1, 1)`. Both aim and spin freeze at B-up; automatic release uses the current report. Clipped reports do not update these controls. The release result supplies signed `spin` directly to the existing bag launch/landing-curl physics: negative means right curl, positive left. No flight curvature is added.
+
+Each player slot has LEFT/RIGHT HAND in setup and pause, saved alongside `full_speed` and `spin_strength`. Both lateral aim and spin mirror for LEFT. Calibration updates only full speed, preserving hand and strength; reconnect and pass-and-play preserve the slot profile. `input_focus_hand(slot)` focuses this menu row; LEFT selects LEFT, RIGHT selects RIGHT, and `INPUT_PROFILE_CHANGED` identifies the slot to save. The renderer/save integration remains with the game branch. Changing hand cancels calibration and requires settling before another throw.
+
+Release roll under acceleration is a candidate twist signal, not reliable physical orientation. Hardware acceptance must test lateral-only, twist-only, combined swings, both hands and straight throws from both stance edges. The old release-window diagnostic remains trace-only; it does not override the causal release controls.
 
 ### 4.8 Underhand feel
 
@@ -490,8 +495,8 @@ If a MotionPlus or Wii Remote Plus is detected (`WPAD_SetMotionPlus(chan, 1)`, `
 |---|---|---|
 | Core golden tests | Host (`make host-test`), every change | C core vs vectors from a **read-only deterministic oracle harness** (`wii/tools/oracle/`, §5.1.1), not the page's narrow `__game` hooks alone. Tolerances: identical state classification and transition sequence; positions within 1 mm; WIN bounds within one 0.0025 step |
 | Swing detector tests | Host | Replays recorded swing traces (schema in §4.4) through `swing.c`: the P1 adversarial set gives zero false throws; slow-long < 0.4 power and short-fast > 0.7 within the supported gesture; results compared with **independent** speed labels, not the estimator's own output |
-| Dolphin — emulated Wiimote | Dev PC | Boot, menus, full matches, IR via mouse ("Point"), Motion Simulation "Swing" bound to a key/button for smoke-test throws, "Tilt" for roll/curl. Good for flow, **not** for power feel |
-| Dolphin — real Wiimote | Dev PC (desktop Dolphin) or an Android device, Wiimotes via a DolphinBar in Mode 4 (matches the Kinhank setup) | Power feel, curl, IR via the DolphinBar's built-in sensor bar, report rate and dropped events, two remotes |
+| Dolphin — emulated Wiimote | Dev PC | Boot, menus, full matches, Motion Simulation "Swing" bound to a key/button for smoke-test throws, "Tilt" for roll/curl. Good for flow, **not** for power feel |
+| Dolphin — real Wiimote | Dev PC (desktop Dolphin) or an Android device, Wiimotes via a DolphinBar in Mode 4 (matches the Kinhank setup) | Power feel, curl, report rate and dropped events, two remotes |
 | **Kinhank (Dolphin Android 5.0-19870)** | Retro installs the ISO + `GameSettings/BYCEAO.ini` over ADB (§1.6) | Full speed at Vulkan 1×, real Wiimotes via DolphinBar Mode 4, game ID and per-game Real Wiimote setting picked up, 2 PLAYER with two remotes, saves on Dolphin's virtual SD |
 | Real Wii | HBC | Frame time, video modes, SD saves, HOME/quit, long-session stability, the final feel test |
 
@@ -517,7 +522,7 @@ Required fixtures:
 
 - Boot the `.dol`/`.elf` with File → Open, or from the game list. Keep `boot.dol` **outside** the virtual SD. Files the app reads at runtime go inside Dolphin's virtual SD (`sd.raw`; "Automatically Sync with Folder" can mirror a host folder, but it is slow with large cards). You can also install HBC into Dolphin's NAND and launch from `apps/` for a true HBC check.
 - Known Dolphin limitation (issue #12939): loose ELF/DOL files can't boot from a folder-based virtual disc. Launch from a normal path.
-- Real Wiimotes: the standard setup is a **MAYFLASH DolphinBar in Mode 4** (USB), the same as on the Kinhank. It also provides the IR sensor bar. Desktop Dolphin can also use the host's Bluetooth stack or Bluetooth passthrough of a compatible USB adapter, but the DolphinBar keeps dev and Kinhank behavior the same.
+- Real Wiimotes: the standard setup is a **MAYFLASH DolphinBar in Mode 4** (USB), the same as on the Kinhank. The game uses only buttons and acceleration. Desktop Dolphin can also use the host's Bluetooth stack or Bluetooth passthrough of a compatible USB adapter, but the DolphinBar keeps dev and Kinhank behavior the same.
 - Per-game Real Wiimote: boot the **ISO** (game ID `BYCEAO`) so `GameSettings/BYCEAO.ini` applies (§1.5). A bare `.dol` needs the global "Real Wii Remote" fallback.
 - NTSC only: keep Dolphin's Wii settings at NTSC/60 Hz (no PAL60/EuRGB60 forcing in Dolphin).
 - Motion Input from a device with a real IMU (DSU client, or SDL on a DualSense/Switch Pro) is a middle ground for testing power without a Wiimote. The mapping differs from a real remote, so final tuning still uses a real Wiimote.
@@ -543,8 +548,8 @@ Required fixtures:
 | Situation | Copy |
 |---|---|
 | First throw hint (help shown) | HOLD B · SWING · LET GO |
-| Help legend | B TOSS · A SURFACE · ✚ HEIGHT/STEP · 2 RESET · TWIST CURL |
-| No pointer | POINT AT SCREEN / AIM: − + |
+| Help legend | B TOSS · A SURFACE · ✚ HEIGHT/STEP · 2 RESET · SWING TO AIM · TWIST TO CURL |
+| Fine aim | AIM: − + |
 | Remote missing (slot-correct) | CONNECT REMOTE 1 / CONNECT REMOTE 2 (+ `A: USE REMOTE 1` for slot 2) |
 | B pressed while moving | HOLD STILL |
 | Practice pause | CLEAR BOARD |
@@ -578,7 +583,7 @@ Required fixtures:
 
 | # | Risk | Impact | Mitigation |
 |---|---|---|---|
-| 1 | **The accelerometer speed proxy isn't valid enough** (P0-class): `|a|−1g` is a heuristic; pendulum radius changes skew it ~2×; clipping at ~±3 g including gravity; estimated timestamps; forward/backward can't be read from acceleration sign | Core mechanic feels random, or false throws | Treated as a candidate, not a fact (§4.4): supported-gesture envelope, stability-gated arming, lobe-timing classifier with IR/attitude confirmation, gap cancel, clip-capped calibration; **P1 exit gate** with independent speed labels and zero false throws on adversarial traces, on Wii **and** Kinhank. Failing it means revise and repeat P1; MotionPlus doesn't count as the fix |
+| 1 | **The accelerometer speed proxy isn't valid enough** (P0-class): `|a|−1g` is a heuristic; pendulum radius changes skew it ~2×; clipping at ~±3 g including gravity; estimated timestamps; forward/backward can't be read from acceleration sign | Core mechanic feels random, or false throws | Treated as a candidate, not a fact (§4.4): supported-gesture envelope, stability-gated arming, lobe-timing classifier with attitude confirmation, gap cancel, clip-capped calibration; **P1 exit gate** with independent speed labels and zero false throws on adversarial traces, on Wii **and** Kinhank. Failing it means revise and repeat P1; MotionPlus doesn't count as the fix |
 | 2 | **Dolphin ≠ hardware for motion**: emulated Swing is canned; DolphinBar Mode 4 timing may differ from the Wii's own Bluetooth (report rate, dropped events) | "Works in Dolphin" can hide feel bugs | Emulated motion is a smoke test only; real Wiimote via DolphinBar from P0; swing traces recorded on Wii **and** Kinhank and compared before tuning is locked |
 | 3 | **GX rewrite and performance**: replacing Three.js (lighting, shadows, sRGB look) and fitting the party scene in budget; Dolphin perf isn't predictive | Visual mismatch or < 60 fps | Exporter reuses the exact JS scene code; baked lighting; cut list in §3.3; hardware frame-time checks from P1 onward |
 | 4 | Physics parity drift (float vs double, matrix reconstruction, loop order, per-bag flags) | CPU calibration and WIN windows off; shots or callouts differ from arcade 1.0.3 | Doubles; deterministic oracle harness sliced from the pinned snapshot (§5.1.1) with transition fixtures; tolerant WIN check on device |
@@ -604,7 +609,7 @@ Already answered, so not repeated here: Kinhank model, OS (Android 12), Dolphin 
 2. HBC version and SD card size? Is the Wii on Wi-Fi (for `wiiload`)?
 3. Which remotes: original Wii Remote, Wii Remote Plus (built-in MotionPlus), or add-on MotionPlus? How many?
 4. Two players: two remotes, or pass one?
-5. Left-handed mode needed in v1?
+5. Resolved by owner: per-slot LEFT/RIGHT HAND in setup and pause, saved with SET POWER; mirrors aim and spin.
 
 **Kinhank**
 6. Exact SoC / Mali model (still unknown). Not blocking: Retro's full-speed checks are the real test.
@@ -615,8 +620,8 @@ Already answered, so not repeated here: Kinhank model, OS (Android 12), Dolphin 
 9. v1 must-haves: are all three modes (Practice, 2 Player, Tournament) required for the first release? The release plan includes animated party NPCs. OK to descope to static props if time runs short?
 9a. If long practice sessions can't hold 60 fps beyond the measured bag count, may the game offer an automatic "CLEAR BOARD?" prompt? (This changes 1.0.3's behavior.)
 9b. Wind: keep the arcade's default (calm in Practice/2 Player unless WIND is ON), or default to wind on for the Wii?
-10. Curl: OK to set it by twisting **before** you grab (recommended), rather than twisting during the swing?
-11. Aim with no sensor bar: is −/+ nudging acceptable? (The DolphinBar includes a sensor bar, so this mostly matters on the real Wii.)
+10. Resolved by owner: lateral swing motion and wrist twist at release drive spin (§4.7).
+11. Resolved by owner: swing-direction aim; −/+ remains optional fine trim. No optical tracking.
 12. Music on Wii: drop it, or support OGG files on the SD card later?
 13. Personal use only, or a public release (e.g., Open Shop Channel)? (Code location is proposed in [REPO_LAYOUT.md](REPO_LAYOUT.md).)
 14. Full-power feel: should the default match the cabinet's (a full-power toss takes real effort), or be easier for couch play?

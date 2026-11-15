@@ -54,16 +54,16 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 
 | # | Source | What it says (short) | What we took / rejected |
 |---|---|---|---|
-| S1 [control precedent] | **Wii Sports — Bowling**, Wikibooks: https://en.wikibooks.org/wiki/Wii_Sports/Bowling | "Hold B, and raise the remote… Keep B held, swing your arm back…, then swing forward, and release B when you want to let go of the ball." Direction: "Press A, then use the directional buttons to rotate the direction." "By using the directional buttons, you can change where the ball will go." Spin: "tilting the controller on release"; "The sooner you let go of the B button the more spin you will put on." | **Taken:** hold-B = grip, release-B = let go. This is the most familiar underhand-toss grammar on the platform. D-pad for positioning. **Rejected:** release-timing spin and tilt-at-release spin. Both tie spin to a split-second moment mid-swing, where accelerometer roll is unreliable. The cabinet sets spin *before* the forward stroke (backswing), and we keep that: spin locks at grip. **Rejected:** the "press A, then D-pad to rotate" sub-mode. The IR pointer aims directly instead |
-| S2 [control precedent, unverified] | **Wii Sports Resort** coverage (search summaries of reviews, e.g. https://www.gamesradar.com/wii-sports-resort-review, https://www.nintendoworldreport.com/review/19125/wii-sports-resort-wii; the official manual https://manualsnet.com/nintendo/wii-sports-resort wasn't retrievable) | Reported: MotionPlus makes spin a wrist flick/twist; bowling offers **automatic** (ball releases on its own after hold-B + swing) and **manual** release styles. *Unverified secondhand; treat as directional only* | **Taken:** an auto-release path when B stays held (our 40%-drop rule, mirroring the cabinet's). **Taken:** twist = spin as the player-facing idea, without needing MotionPlus to read it (we read roll from the accelerometer while the remote is calm) |
-| S3 [API/sensor fact] | **WiiBrew — Wiimote**: https://wiibrew.org/wiki/Wiimote | ADXL330 accelerometer, "at least +/- 3g with 10% sensitivity"; per-remote zero/1 g calibration in EEPROM (0x16/0x1A); continuous reporting bit "send reports whether there has been any change… or not"; mode 0x33 = buttons + accelerometer + 12 IR bytes; IR: 128×96 camera, ~1024×768 tracked resolution, up to 4 dots, sensor-bar clusters ~20 cm apart, FOV ~33°×23° (one measured unit) | **Taken:** the rail is per axis **and includes gravity**, so the full-power point sits below the *measured* rail minus 1 g and a margin (≈ `ē` 1.2 g candidate, not 2 g). Calibration is applied through libogc's calibrated **`gforce`** (`WPADData` has no `accel_calib` member); raw `accel` is used only to flag saturation. Use mode 0x33 data (libogc `WPAD_FMT_BTNS_ACC_IR`). The IR aim range maps a comfortable wrist sweep, not the whole camera FOV |
+| S1 [control precedent] | Wii Sports Bowling | Hold B, backswing, forward swing, release B; direction and twist during release | Owner-selected gesture grammar; aim/spin derive from swing motion. See SPEC §4.6–4.7 for the candidate math and limits |
+| S2 [control precedent, unverified] | Wii Sports Resort | Automatic/manual release and wrist twist | Optional automatic release retained; twist is sampled at release |
+| S3 [API/sensor fact] | WiiBrew Wiimote | Calibrated acceleration, raw per-axis rails including gravity | Buttons + acceleration only (`WPAD_FMT_BTNS_ACC`); raw axes flag clipping |
 | S4 [API/sensor fact] | **WiiBrew — Wii MotionPlus**: https://wiibrew.org/wiki/Wiimote/Extension_Controllers/Wii_Motion_Plus | 14-bit yaw/roll/pitch rates; slow mode ≈ **13.768 units per deg/s**, fast mode scaled by **2000/440**; slow/fast bits are 1 when rotating slowly; zero ≈ 0x1F7F (8063) "calibrate at startup"; activation by register writes | **Taken (optional path):** if MotionPlus is present, zero it at rest, apply the fast-mode scale, and use pitch rate to confirm swing direction and extend range above the accelerometer rail. Gyro rate alone isn't hand speed when the wrist articulates. **Never required, and never the fix for a failing plain-remote path.** |
-| S5 [API/sensor fact] | **libogc headers + implementation** (`wpad.c`, `dynamics.c`) `gc/wiiuse/wpad.h`, `wiiuse.h`: https://github.com/devkitPro/libogc (v3.2.1, 2026-10-15) | `WPAD_SetDataFormat`, `WPAD_SetVRes`, `WPAD_SetEventBufs`, `WPAD_ReadEvent`, `WPAD_DroppedEvents`, `WPAD_ReadPending`, `WPAD_SetMotionPlus`; `WPADData` holds `ir`, `accel`, `orient` (`roll` smoothed, `a_roll` unsmoothed), `gforce`, `exp` (`motion_plus_t rx,ry,rz`); **no timestamp field**. `WPAD_ReadPending` drains the same queue as `ReadEvent`; disconnect clears the event-buffer registration; the orientation code treats high-acceleration samples as unreliable | **Taken:** one owner drains every buffered report each frame; re-register buffers on reconnect; reconstructed timestamps are **estimates** (gaps cancel the gesture); calibrated `gforce` as the signal; roll computed from **calm** `gforce` samples (not `a_roll` during motion); count dropped events. `ReadPending` isn't treated as a fallback |
+| S5 [API/sensor fact] | libogc WPAD | Buffered reports, dropped counts, reconnect registration; no timestamps | One queue consumer per channel; calibrated gforce, raw rails, reconstructed timestamps; no optical data |
 | S6 [API/sensor fact] | Hand-held accelerometer study, arXiv 1309.2093: https://arxiv.org/pdf/1309.2093 | Wiimote reports over Bluetooth at **100 Hz**; ADXL330, 300 mV/g | **Taken:** nominal 10 ms spacing as a starting assumption; an 80 ms window ≈ 8 samples. The 16 ms minimum is an **elapsed span** (first→last sample), i.e. ≥ 3 samples at 100 Hz, not "2 samples". Real rates are measured per target in P0 |
 | S7 [API/sensor fact] | **Dolphin source**: `Core/HW/Wiimote.h`, `Core/ConfigLoaders/GameConfigLoader.cpp`: https://github.com/dolphin-emu/dolphin | `WiimoteSource { None=0, Emulated=1, Real=2 }`; `[Controls] WiimoteSource0..3` in a game's ini maps to Wii Remote 1–4 source | **Taken:** ship `GameSettings/BYCEAO.ini` with `WiimoteSource0 = 2`, `WiimoteSource1 = 2` (SPEC §1.5) |
-| S8 [API/sensor fact] | Dolphin input notes: Arch Wiki https://wiki.archlinux.org/title/Dolphin_emulator ; bug #11776 https://bugs.dolphin-emu.org/issues/11776 ; Dolphin controller guide https://dolphin-emu.org/docs/guides/configuring-controllers/ | Emulated remote maps buttons, IR/Point, Tilt, Swing, Shake ("Motion Simulation"); "Motion Input" takes real IMU data (SDL/DSU); fast tilts can briefly read the opposite way (#11776) | **Taken:** emulated Swing/Tilt are **smoke tests only**; power/curl feel is tuned with real Wiimotes (DolphinBar Mode 4 on desktop and on the Kinhank). Curl reads roll only while the remote is calm, which sidesteps fast-tilt artifacts |
+| S8 [API/sensor fact] | Dolphin motion simulation | Swing and Tilt | Smoke tests only; real remotes required for feel and direction/twist acceptance |
 | S9 [control precedent] | Repo: `/workspace/docs/cornhole/spin-research.md` (ACL / ACA shot guides) | Flat spin, slick vs sticky, airmail/slider/push; the arcade convention A → clockwise/right curl, C → counterclockwise/left | **Taken:** the sign convention, carried over exactly: twist right ≙ A ≙ curl right |
-| S10 [target fact] | Kinhank facts from Retro (2026-11-15) | Dolphin Android 5.0-19870, Vulkan 1×, real Wiimotes via DolphinBar Mode 4, NTSC/60 Hz | **Taken:** the DolphinBar (which includes IR) is the standard real-remote setup for all Dolphin testing |
+| S10 [target fact] | Existing deployment notes | Hardware deployment remains outside this input change | No deployment or device settings changed; game consumes buttons and acceleration only |
 
 ---
 
@@ -71,7 +71,7 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 
 1. **Same verbs, same outcomes.** Every cabinet action gets exactly one Wiimote action, and the game logic behind it (`host.throw({power, aim, spin})`, height, surface, nudge, reset) stays identical. Only the input layer changes.
 2. **Same power rules, different measurement.** Peak of an 80 ms windowed speed signal, linear to a calibratable full-power value, capped at 100%, peak retained to release, 40% *speed*-drop auto-release. Distance, duration and arc size never feed power. The cabinet measures speed directly (counts ÷ time); a plain Wiimote can only *estimate* it from acceleration, so the estimator is validated in P1, not assumed.
-3. **Lock parameters before the stroke.** On the cabinet, spin comes from the backswing (before the forward roll). On the Wiimote, **aim and spin lock when B is pressed, and only if the remote has been stable** for 150 ms (low `ē` *and* < 5° attitude change), so slow rotation can't pass as "calm".
+3. **Capture neutral grip, then read the swing.** Stable B-down captures neutral attitude and fine trim. Lateral forward-swing motion sets direction; lateral motion and release twist set spin, frozen at release. Both mirror for LEFT HAND.
 4. **Backswing stays optional.** It's never required, and backswing samples never count toward power.
 5. **Same anti-misfire guarantees, plus conservative cancellation.** A quiet period after each turn and after any legal button action; one throw per gesture; jitter or a B tap can't throw; residual motion can't fire the next bag; packet gaps, disconnects and HOME cancel the gesture rather than guess.
 6. **Buttons: one action per press, no auto-repeat**, as on the cabinet. Any button that changes the throw (height, surface, step, reset) is **ignored while B is held** and otherwise resets the detector to `settling`, mirroring `machine.reset()`.
@@ -89,16 +89,16 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 | Valid sample: ≥ 16 ms window, ≥ 8 counts | Window **elapsed span ≥ 16 ms** (≥ 3 samples at 100 Hz) and `ē ≥ 0.15 g` | Span, not sample count |
 | Release on roll end / 160 ms idle / 40% drop | **Release B** (primary) / auto-release at `v ≤ 0.6·peak_v` (≡ `ē ≤ 0.36·peak_ē`) after a full window, with follow-through confirmation / 2.5 s timeout | Same *speed* ratio as the cabinet |
 | `releaseGate` (stroke length bound) | No equivalent needed | Swing length is never measured |
-| Forward roll **angle** → aim | **IR pointer** → aim (locks at a stable B press) | Pointer x across a comfortable sweep → `aim ∈ ±0.12` rad. No IR → reticle freezes; **−/+** nudge it 0.01 rad, only while not armed |
-| Backswing A / C / B → spin | **Wrist twist** right / left / neutral → spin (locks at a stable B press) | Roll from the **mean of the stable 150 ms calm `gforce` window** (not `a_roll` during motion); deadzone ±10°, full at ±45°; twist right = negative spin = curls right (≙ A). Left-handed mode mirrors it |
-| Sideways roll → ignored | Lateral wobble → ignored | |
+| Forward roll **angle** → aim | Lateral forward-swing acceleration → aim | SPEC §4.6: grip-relative, lobe-local proxy; straight from stance, no auto-target; −/+ fine trim |
+| Backswing A / C / B → spin | Lateral swing + wrist twist at release → spin | SPEC §4.7: signed landing curl, mirrored for LEFT HAND |
+| Sideways-only roll → ignored | No confirmed forward lobe → cancel | Lateral input changes direction only within a valid toss |
 | 450 ms quiet after each turn | 450 ms with `ē < 0.15 g` before B can arm, after each turn **and** after any legal button action | Same constant |
 | One throw per gesture | Throw once, then `spent` until next turn | Same state machine shape |
 | Calibrate: roll hard → `powerSpeed = peak/0.7` | SETTINGS → **SET POWER** → "TOSS HARD" → `fullPowerSpeed = min(peak/0.7, clip ceiling)` | Reaching full power then needs ≈ 2.04× the calibration toss's `ē` (since `ē ∝ v²`), so the result is capped below the measured rail. Saved **per player slot** |
 
 **Forward vs backward (acceleration sign alone isn't velocity direction):** a hand braking during the backswing accelerates toward the screen while still moving backward, and the remote rotates through the swing. So the sign-of-acceleration rule from rev 1 is withdrawn. P1 records every swing through these candidates in parallel and picks one:
 - **C1 lobe timing (primary candidate):** a swing with a backswing passes the bottom twice, giving two `ē` lobes separated by a low-`ē` apex. Power comes from the **last** qualifying lobe (≥ 0.35 g, ≥ 40 ms) that ends within `T_REL` (≈ 250 ms) of the B release. A release at the back apex leaves no recent lobe → cancel.
-- **C2 follow-through:** after the forward pass, the remote rises back toward the screen: IR reacquired, or calm gravity direction returning toward the grip attitude. Confirms a lone lobe and gates auto-release.
+- **C2 follow-through:** after the forward pass, the remote rises back toward the screen: calm gravity direction at least 15° forward-up from the grip. Confirms a lone lobe and gates auto-release.
 - **C3 apex attitude:** at low-`ē` apex samples `gforce` ≈ gravity, so pitch reads back-down vs forward-up.
 - **C4 MotionPlus pitch-rate sign:** optional, never required.
 
@@ -117,10 +117,10 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 | Bottom 1 / 2 — nudge ±0.05 | **D-pad ← / →** — step left/right on the foul line (0.05, clamp ±0.45, 70 ms ease) | Wii Sports precedent: D-pad positions before the throw (S1) |
 | Start/Select — pause/confirm | **HOME** — pause (RESUME · CLEAR BOARD in practice · MAIN MENU · QUIT); **A** confirm, **B** back in menus | Wii convention; HOME returns to HBC from QUIT. Practice **CLEAR BOARD** (1.0.3's "clear bags; keep stats") is separate from RESET BAG |
 | CABINET SETUP | SETTINGS (SET POWER, CURL, HAND, WIND, RESET) | Cabinet-only items (sensitivity, bindings, stroke length, diagnostics) are dropped. WIND follows the arcade policy (calm by default in Practice/2 Player) |
-| (no cabinet equivalent) | **− / +** — aim nudge without a pointer | Needed for a real Wii with no sensor bar in view |
+| (no cabinet equivalent) | **− / +** — fine aim trim | 0.01 rad per press, captured at grip |
 | Keyboard fallback, F2 | Dev builds only: hold **1+2** at boot → dev overlay | Never in release builds |
 
-**Legality while armed** (SPEC §4.3): while B is held, A, D-pad, 2 and −/+ are **ignored** (aim and spin are locked; the throw can't be changed mid-gesture). 1 toggles help (UI only). HOME pauses and **cancels** the gesture. When not armed, A/D-pad/2 apply and return the detector to `settling`, matching the cabinet's `machine.reset()` on height, surface, nudge and reset.
+**Legality while armed** (SPEC §4.3): while B is held, A, D-pad, 2 and −/+ are **ignored** (discrete settings are frozen; swing direction and release twist remain live). 1 toggles help (UI only). HOME pauses and **cancels** the gesture. When not armed, A/D-pad/2 apply and return the detector to `settling`, matching the cabinet's `machine.reset()` on height, surface, nudge and reset.
 
 ### 4.3 Player slots, pass-and-play and disconnects
 
@@ -134,7 +134,7 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 
 ```
 settling ──(ē<NOISE for 450 ms)──► ready
-ready ──(B down AND last 150 ms stable: ē<0.10g, Δattitude<5°)──► grip  [lock aim + spin, capture gravity dir]
+ready ──(B down AND last 150 ms stable: ē<0.10g, Δattitude<5°)──► grip  [capture fine trim + neutral grip; read swing until release]
 ready ──(B down but unstable)──► ready, show HOLD STILL (no arm)
 grip ──(lobes detected per chosen classifier C1–C3)──► forward lobe tracked: peak_forward_v (80 ms, span ≥16 ms)
 grip/forward ──(B up)──► valid forward lobe? THROW → spent : cancel → ready (bag stays)
@@ -155,7 +155,6 @@ Suggested, for flow testing only (S8):
 
 | Wii input | Bind to | Purpose |
 |---|---|---|
-| Point (IR) | Mouse | Aim reticle |
 | B | Right mouse | Grip / release |
 | Motion Simulation → Swing (forward/back) | A key or stick | Fires a canned swing, so a throw happens. **Power from this isn't representative** |
 | Motion Simulation → Tilt left/right | Q / E | Wrist-twist curl |
@@ -186,7 +185,7 @@ Speed is judged against **independent labels** (≥ 120 fps video of a hand mark
 | T13 | Point left/right of the hole, swing with wobble | Landing left/right; aim unchanged by the wobble |
 | T14 | Twist right + SLICK; twist left; neutral | Curl right; curl left; straight |
 | T15 | Left-handed mode, twist toward/away from the body | Mirrored correctly |
-| T16 | Lose the pointer (turn away), −/+ while not armed; −/+ while armed | Reticle frozen and nudges work; ignored while armed |
+| T16 | Straight / left / right swing, then −/+ before grip and while armed | Straight launches from stance without targeting; yaw changes aim; trim ignored while armed |
 | T17 | Press A / D-pad / 2 while holding B | Ignored; the gesture continues |
 | T18 | Press A / D-pad / 2 while not holding B | Applied; B can't arm for 450 ms of calm |
 | T19 | Throw, then shake the remote during the next turn's first 450 ms | No throw fires |
@@ -201,7 +200,7 @@ Every test runs on the real Wii and (via Retro) the Kinhank before P1 sign-off (
 
 - **Release-timing spin** (Wii Sports, S1): spin depends on when B is released. Fun in bowling, but it makes cornhole curl unpredictable and contradicts the cabinet's "set spin on the backswing" model.
 - **Tilt-at-release spin:** accelerometer roll during the fastest part of the swing is dominated by motion, not gravity.
-- **Swing-direction aiming:** the lateral acceleration in an underhand pendulum is small and noisy, and Dolphin's emulated Swing can't produce it reliably. IR pointing is steadier and testable everywhere.
+- **Earlier pointing design:** superseded by the owner directive. Swing direction is required; validate the candidate lateral proxy on real remotes.
 - **Distance-based anything:** the retired 0.2.x / top-level `arcade/trackball.mjs` model (`power = forwardY / 400`) is never ported.
 
 ---
@@ -220,3 +219,5 @@ Source: [REVIEW_CODEX.md](REVIEW_CODEX.md); the overall accept/reject list is in
 - G2/G8 cross-references: practice CLEAR BOARD and the WIND policy are reflected in the button table.
 
 **Rejected / not adopted:** none for this doc. The review's partial points that weren't adopted (the remote-tag verification claim, README deployment) concern SPEC §10 and REPO_LAYOUT.
+
+Owner directive (Nov 15): no camera, sensor bar, optical cursor or optical calibration. Setup and pause expose per-slot LEFT/RIGHT HAND, saved with SET POWER. Both aim and spin mirror; see SPEC §4.6–4.7 and [ARCADE_PARITY_CHECKLIST.md](ARCADE_PARITY_CHECKLIST.md).

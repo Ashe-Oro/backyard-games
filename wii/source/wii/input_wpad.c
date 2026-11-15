@@ -25,12 +25,10 @@ bool input_wpad_set_rails(InputWpad *w, unsigned ch, const uint16_t lo[3], const
     return true;
 }
 static int register_channel(InputWpad *w, unsigned ch) {
-    int rc=WPAD_SetDataFormat((int)ch,WPAD_FMT_BTNS_ACC_IR);
-    if (rc<0) return rc;
-    rc=WPAD_SetVRes((int)ch,INPUT_WPAD_WIDTH,INPUT_WPAD_HEIGHT);
+    int rc=WPAD_SetDataFormat((int)ch,WPAD_FMT_BTNS_ACC);
     if (rc<0) return rc;
     /* Continuous format retains reports; zero thresholds also retain small idle changes. */
-    rc=WPAD_SetIdleThresholds((int)ch,WPAD_THRESH_ANY,WPAD_THRESH_ANY,WPAD_THRESH_ANY,
+    rc=WPAD_SetIdleThresholds((int)ch,WPAD_THRESH_ANY,WPAD_THRESH_IGNORE,WPAD_THRESH_ANY,
                             WPAD_THRESH_IGNORE,WPAD_THRESH_IGNORE,WPAD_THRESH_IGNORE);
     if (rc<0) return rc;
     return WPAD_SetEventBufs((int)ch,w->events[ch],INPUT_WPAD_EVENTS);
@@ -88,10 +86,6 @@ void input_wpad_poll(InputWpad *w, uint64_t now) {
             sample.buttons_valid=d->err==WPAD_ERR_NONE && (d->data_present&WPAD_DATA_BUTTONS)!=0;
             sample.buttons=d->btns_h;
             sample.motion.b=(sample.buttons&INPUT_B)!=0;
-            sample.motion.ir=d->err==WPAD_ERR_NONE && (d->data_present&WPAD_DATA_IR)!=0 &&
-                             d->ir.valid && isfinite(d->ir.x) && isfinite(d->ir.y);
-            sample.pointer_x=d->ir.x/(double)INPUT_WPAD_WIDTH;
-            sample.pointer_y=d->ir.y/(double)INPUT_WPAD_HEIGHT;
             sample.motion.dropped=n==0 ? (unsigned)drops : 0;
             const uint16_t raw[]={d->accel.x,d->accel.y,d->accel.z};
             for (unsigned a=0;a<3;++a)

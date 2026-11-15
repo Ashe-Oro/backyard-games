@@ -2,6 +2,8 @@
 #include <math.h>
 #include <string.h>
 
+const char input_help_text[] = "B HOLD, SWING, LET GO | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD HEIGHT/STEP | -/+ FINE AIM | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
+
 static double bound(double v, double lo, double hi) { return fmax(lo, fmin(hi,v)); }
 static void emit(Input *i, InputAction action, unsigned ch, double value, SwingResult toss) {
     InputEvent event = {action, i->active_slot, ch, value, toss};
@@ -20,7 +22,6 @@ void input_connection(Input *i, unsigned ch, bool connected) {
     if (ch>=2 || i->connected[ch]==connected) return;
     i->connected[ch]=connected;
     i->held[ch]=0;
-    i->pointer_valid[ch]=false;
     /* Unknown B state cannot satisfy the resume gate. */
     i->b_held[ch]=true;
     if (ch!=i->channels[i->active_slot]) return;
@@ -56,12 +57,14 @@ void input_next_turn(Input *i, unsigned slot) {
 }
 void input_set_context(Input *i, InputContext context) {
     i->context=context;
+    i->hand_option=false;
     swing_reset(&i->detector,true);
 }
 bool input_resume(Input *i) {
     unsigned ch=i->channels[i->active_slot];
     if (!i->connected[ch] || i->b_held[ch]) return false;
     i->paused=i->disconnect_pause=false;
+    i->hand_option=false;
     swing_reset(&i->detector,true);
     return true;
 }
@@ -93,17 +96,14 @@ double input_stance(const Input *i, unsigned slot, uint64_t now) {
     double t=now>=s->stance_ms ? bound((double)(now-s->stance_ms)/SWING_STEP_EASE_MS,0,1) : 0;
     return s->stance_from+(s->stance-s->stance_from)*t;
 }
-bool input_aim_fallback(const Input *i, uint64_t now) {
-    const InputSlot *s=&i->slots[i->active_slot];
-    return !s->ever_ir || (now>=s->last_ir_ms && now-s->last_ir_ms>500);
+bool input_focus_hand(Input *i, unsigned slot) {
+    if (slot>=2 || (i->context!=INPUT_MENU && !i->paused) || i->disconnect_pause) return false;
+    i->hand_option=true; i->hand_slot=slot;
+    return true;
 }
+void input_blur_hand(Input *i) { i->hand_option=false; }
 void input_feed(Input *i, unsigned ch, const InputSample *p) {
     if (ch>=2 || !i->connected[ch]) return;
-    i->pointer_valid[ch]=p->motion.ir && isfinite(p->pointer_x) && isfinite(p->pointer_y);
-    if (i->pointer_valid[ch]) {
-        i->pointer_x[ch]=bound(p->pointer_x,0,1);
-        i->pointer_y[ch]=bound(p->pointer_y,0,1);
-    }
     uint32_t pressed=0;
     if (p->buttons_valid) {
         pressed=p->buttons & ~i->held[ch];
@@ -125,9 +125,20 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
         return;
     }
     if (pressed & INPUT_ONE) { i->help=!i->help; action(i,INPUT_HELP,ch,i->help); }
-    if (i->context==INPUT_DISABLED) return;
+    if (i->context==INPUT_DISABLED && !i->paused) return;
     if (i->context==INPUT_MENU || i->paused) {
         if (i->disconnect_pause) return;
+        if (i->hand_option && (pressed & (INPUT_LEFT|INPUT_RIGHT))) {
+            unsigned slot_index=i->hand_slot;
+            SwingProfile profile=i->slots[slot_index].profile;
+            profile.left_handed=(pressed & INPUT_LEFT)!=0;
+            (void)input_set_profile(i,slot_index,profile);
+            input_cancel_calibration(i);
+            InputEvent event={.action=INPUT_PROFILE_CHANGED,.slot=slot_index,.channel=ch,
+                              .value=profile.left_handed};
+            if (i->sink) i->sink(i->user,&event);
+            pressed &= ~(INPUT_LEFT|INPUT_RIGHT);
+        }
         const uint32_t masks[]={INPUT_A,INPUT_B,INPUT_UP,INPUT_DOWN,INPUT_LEFT,INPUT_RIGHT,INPUT_MINUS,INPUT_PLUS};
         const InputAction actions[]={INPUT_CONFIRM,INPUT_BACK,INPUT_NAV_UP,INPUT_NAV_DOWN,
                                     INPUT_NAV_LEFT,INPUT_NAV_RIGHT,INPUT_ADJUST_MINUS,INPUT_ADJUST_PLUS};
@@ -138,10 +149,6 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     bool armed=swing_armed(&i->detector);
     bool b=i->b_held[ch];
     if (i->detector.phase==SWING_SPENT) return;
-    if (!armed && (!b || (pressed & INPUT_B)) && p->motion.ir && isfinite(p->pointer_x)) {
-        slot->aim=bound((p->pointer_x*2-1)*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
-        slot->ever_ir=true; slot->last_ir_ms=p->motion.ms;
-    }
     if (!armed && !b) {
         uint32_t changes=pressed & (INPUT_A|INPUT_UP|INPUT_DOWN|INPUT_LEFT|INPUT_RIGHT|INPUT_TWO|INPUT_MINUS|INPUT_PLUS);
         if (changes) {

@@ -6,8 +6,6 @@
 
 #define INPUT_WPAD_EVENTS 64
 #define INPUT_WPAD_REPORT_MS 10 /* reconstructed estimate; measure per target in P0 */
-#define INPUT_WPAD_WIDTH 640
-#define INPUT_WPAD_HEIGHT 480
 
 typedef struct {
     unsigned channel, event_index, player_slot;

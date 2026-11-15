@@ -96,7 +96,7 @@ static SwingResult finish(Swing *s, const SwingProfile *profile, SwingRelease ca
         reference_ms-s->lobe_end <= SWING_RELEASE_MS) {
         r = (SwingResult){.thrown=true, .speed=s->peak,
             .power=s->lobe_clipped ? 1 : swing_power(s->peak, profile->full_speed),
-            .aim=s->locked_aim, .spin=s->locked_spin, .roll=s->locked_roll,
+            .aim=s->locked_aim, .spin=s->locked_spin, .roll=s->motion_roll,
             .clipped=s->lobe_clipped, .release=cause,
             .release_ms=cause==SWING_B_UP ? s->release_ms : s->last_ms};
         s->phase = SWING_SPENT;
@@ -146,24 +146,33 @@ SwingResult swing_feed(Swing *s, const SwingSample *p, double aim, const SwingPr
         if (down && !s->require_b_up) {
             SwingVector mean;
             if (!stable(s, &mean)) { r.hold_still = true; return r; }
-            s->locked_aim = clamp(aim, -SWING_AIM_MAX, SWING_AIM_MAX);
+            s->fine_aim = s->locked_aim = clamp(aim, -SWING_AIM_MAX, SWING_AIM_MAX);
             s->locked_roll = atan2(mean.x, mean.z)*180/SWING_PI;
-            s->locked_spin = swing_roll_spin(s->locked_roll, profile);
+            s->locked_spin = 0;
+            s->motion_roll = 0;
             s->grip_g = mean;
             s->armed_ms = p->ms;
             s->phase = SWING_GRIP;
         }
         return r;
     }
-    if (!p->ir) s->lost_ir = true;
     /* C1: keep the last lobe, never the maximum of backswing + forward lobes. */
     if (s->phase != SWING_PENDING && !p->clipped && s->mean_e >= SWING_FORWARD_G && span >= SWING_MIN_SPAN_MS) {
         if (!s->in_lobe) {
             s->in_lobe = true;
             s->lobe_start = p->ms;
             s->lobe_peak = 0;
+            s->lateral_sum = s->lateral_weight = 0;
             s->lobe_valid = s->lobe_clipped = s->confirmed = false;
             s->peak = 0;
+        }
+        /* Grip-relative lateral acceleration is a candidate swing-yaw proxy.
+           Weight by excess force, never use this signal for power. */
+        if (e >= SWING_FORWARD_G) {
+            double lateral=p->g.x/mag-s->grip_g.x/norm(s->grip_g);
+            double dt=(double)(p->ms-s->history[s->count-2].ms);
+            s->lateral_sum+=lateral*e*dt;
+            s->lateral_weight+=e*dt;
         }
         s->lobe_peak = fmax(s->lobe_peak, s->speed);
         s->lobe_end = p->ms;
@@ -174,18 +183,24 @@ SwingResult swing_feed(Swing *s, const SwingSample *p, double aim, const SwingPr
     } else if (!p->clipped && s->mean_e < SWING_FORWARD_G) s->in_lobe = false;
     if (p->clipped && s->lobe_valid && s->in_lobe) s->lobe_clipped = true;
 
-    /* C2/C3: calm forward-up finish, or return from a back-down apex with IR reacquired.
-       Direction is never inferred from acceleration sign. Must be validated on P1 traces. */
+    /* Freeze motion controls at B-up (or the last auto-release report).
+       Post-release follow-through may confirm the toss, but cannot retarget it. */
+    if (s->phase!=SWING_PENDING && !p->clipped) {
+        double lateral=s->lateral_weight>0 ? s->lateral_sum/s->lateral_weight : 0;
+        if (fabs(lateral)<SWING_LATERAL_DEAD) lateral=0;
+        double yaw=clamp(lateral/SWING_LATERAL_FULL,-1,1);
+        double hand=profile->left_handed ? -1 : 1;
+        s->locked_aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
+        s->motion_roll=delta_degrees(atan2(p->g.x,p->g.z)*180/SWING_PI,s->locked_roll);
+        s->locked_spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1);
+    }
+    /* Calm forward-up finish confirms a new forward lobe. No external tracking. */
     if (e < SWING_STABLE_G && s->mean_e < SWING_NOISE_G && !p->clipped) {
         double dp = delta_degrees(pitch(p->g), pitch(s->grip_g));
         if (dp <= -SWING_FINISH_DEG) {
-            s->saw_back = true;
             s->confirmed = s->lobe_valid = s->lobe_clipped = false;
-            s->peak = 0; /* C3 labels this lobe as backswing; a new forward lobe is required. */
-        }
-        else if (s->lobe_valid && (dp >= SWING_FINISH_DEG ||
-                 (s->saw_back && s->lost_ir && p->ir && angle(p->g, s->grip_g) < SWING_RETURN_DEG)))
-            s->confirmed = true;
+            s->peak = 0;
+        } else if (s->lobe_valid && dp >= SWING_FINISH_DEG) s->confirmed = true;
     }
     if (up && s->phase == SWING_GRIP) {
         if (!s->lobe_valid) return finish(s, profile, SWING_B_UP);

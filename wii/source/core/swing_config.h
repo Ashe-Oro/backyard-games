@@ -2,7 +2,7 @@
 #define BYC_SWING_CONFIG_H
 
 /* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
-#define SWING_VERSION "c1-c2-c3-candidate-1"
+#define SWING_VERSION "c1-c2-c3-candidate-2-no-pointer"
 #define SWING_WINDOW_MS 80
 #define SWING_MIN_SPAN_MS 16
 #define SWING_NOISE_G 0.15
@@ -24,12 +24,13 @@
 #define SWING_ROLL_DEAD_DEG 10.0
 #define SWING_ROLL_FULL_DEG 45.0
 #define SWING_AIM_MAX 0.12
+#define SWING_LATERAL_FULL 0.5
+#define SWING_LATERAL_DEAD 0.03
 #define SWING_AIM_NUDGE 0.01
 #define SWING_STEP 0.05
 #define SWING_STEP_CLAMP 0.45
 #define SWING_STEP_EASE_MS 70
 #define SWING_FINISH_DEG 15.0
-#define SWING_RETURN_DEG 25.0
 #define SWING_TWIST_MS 133
 #define SWING_HISTORY 192
 #define SWING_PI 3.14159265358979323846

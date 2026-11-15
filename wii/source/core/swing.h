@@ -9,7 +9,7 @@ typedef struct { double x, y, z; } SwingVector;
 typedef struct {
     uint64_t ms;
     SwingVector g;
-    bool b, ir, clipped;
+    bool b, clipped;
     bool accel_valid;
     unsigned dropped;
 } SwingSample;
@@ -30,8 +30,9 @@ typedef struct {
     unsigned count;
     uint64_t last_ms, quiet_since, armed_ms, lobe_start, lobe_end, release_ms;
     bool have_time, quiet, previous_b, require_b_up;
-    bool in_lobe, lobe_valid, lobe_clipped, lost_ir, saw_back, confirmed;
+    bool in_lobe, lobe_valid, lobe_clipped, confirmed;
     double mean_e, speed, peak, lobe_peak, locked_aim, locked_spin, locked_roll;
+    double lateral_sum, lateral_weight, motion_roll, fine_aim;
     SwingVector grip_g;
 } Swing;
 
