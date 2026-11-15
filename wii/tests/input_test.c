@@ -417,7 +417,91 @@ static void setup_pause_hand_selection_and_calibration(void) {
     assert(strstr(input_help_text,"SWING LEFT/RIGHT TO AIM"));
 }
 
+/* Shoulder-pivot model: theta from hanging, remote Y tangent, Z radial.
+   Specific force includes gravity, tangential and centripetal acceleration. */
+static SwingSample pendulum(unsigned ms, double theta, double omega, double alpha, bool b) {
+    return (SwingSample){.ms=ms, .g={0,
+        SWING_RADIUS_M*alpha/SWING_GRAVITY+sin(theta),
+        SWING_RADIUS_M*omega*omega/SWING_GRAVITY+cos(theta)},
+        .b=b, .accel_valid=true};
+}
+static SwingResult physical_toss(double back_deg, double forward_deg, double forward_s,
+                                 double release_deg, bool back_only, bool held, bool left) {
+    Swing s; arm(&s,0); SwingProfile p=profile();
+    p.full_speed=5; p.left_handed=left; /* Avoid saturation masking speed ordering. */
+    SwingResult shot={0};
+    double back=back_deg*SWING_PI/180, forward=forward_deg*SWING_PI/180;
+    bool released=false;
+    for (unsigned t=0;t<=2100;t+=10) {
+        double seconds=t/1000.0, theta, omega=0, alpha=0;
+        if (seconds<.5) {
+            double phase=SWING_PI*seconds/.5;
+            theta=-back*(1-cos(phase))/2;
+            omega=-back*SWING_PI/.5*sin(phase)/2;
+            alpha=-back*pow(SWING_PI/.5,2)*cos(phase)/2;
+        } else if (back_only || seconds<.65) theta=-back;
+        else if (seconds<.65+forward_s) {
+            double phase=SWING_PI*(seconds-.65)/forward_s;
+            theta=-back+(back+forward)*(1-cos(phase))/2;
+            omega=(back+forward)*SWING_PI/forward_s*sin(phase)/2;
+            alpha=(back+forward)*pow(SWING_PI/forward_s,2)*cos(phase)/2;
+        } else theta=forward;
+        if (!held && ((back_only && seconds>=.5) ||
+            (!back_only && seconds>=.65 && theta>=release_deg*SWING_PI/180))) released=true;
+        SwingSample v=pendulum(520+t,theta,omega,alpha,!released);
+        SwingResult r=swing_feed(&s,&v,0,&p);
+        if (back_only || seconds<.65) assert(!r.thrown);
+        if (r.thrown) {
+            assert(!shot.thrown);
+            shot=r;
+            if (!held) {
+                assert(r.release==SWING_B_UP && r.release_ms==v.ms);
+                /* Classified forward release must not wait for static follow-through. */
+                assert(seconds<.65+forward_s);
+            }
+        }
+    }
+    return shot;
+}
+static void physical_backswing_never_throws(void) {
+    for (unsigned hand=0;hand<2;++hand) for (unsigned angle=45;angle<=60;angle+=15) {
+        assert(!physical_toss(angle,60,.5,0,true,true,hand).thrown);
+        assert(!physical_toss(angle,60,.5,0,true,false,hand).thrown);
+    }
+}
+static void physical_bottom_releases_and_speed(void) {
+    for (unsigned hand=0;hand<2;++hand) {
+        SwingResult held=physical_toss(45,60,.6,0,false,true,hand);
+        assert(held.thrown && held.release==SWING_AUTO);
+    }
+    const double angles[]={-10,0,10,20};
+    for (unsigned hand=0;hand<2;++hand) for (unsigned i=0;i<4;++i) {
+        SwingResult slow=physical_toss(45,45,.6,angles[i],false,false,hand);
+        SwingResult fast=physical_toss(45,45,.45,angles[i],false,false,hand);
+        SwingResult wide=physical_toss(60,75,.6,angles[i],false,false,hand);
+        SwingResult quick=physical_toss(60,75,.45,angles[i],false,false,hand);
+        assert(slow.thrown && fast.thrown && wide.thrown && quick.thrown);
+        assert(fast.power>slow.power && quick.power>wide.power);
+    }
+}
+static void subgravity_is_not_calm(void) {
+    Swing s; swing_reset(&s,true); SwingProfile p=profile();
+    for (unsigned t=0;t<=600;t+=10) {
+        SwingSample v=sample(t,-.22,0,0,false);
+        swing_feed(&s,&v,0,&p);
+        assert(s.phase==SWING_SETTLING);
+    }
+    ready(&s,0);
+    for (unsigned t=510;t<=700;t+=10) {
+        SwingSample v=sample(t,-.22,0,0,t==700);
+        SwingResult r=swing_feed(&s,&v,0,&p);
+        if (t==700) assert(r.hold_still && !swing_armed(&s));
+    }
+}
+
 int main(void) {
+    TEST(physical_backswing_never_throws); TEST(physical_bottom_releases_and_speed);
+    TEST(subgravity_is_not_calm);
     TEST(release_freezes_motion_controls); TEST(backswing_direction_does_not_leak_to_forward);
     TEST(swing_direction_and_spin_both_hands); TEST(straight_swing_from_shifted_stance);
     TEST(setup_pause_hand_selection_and_calibration);

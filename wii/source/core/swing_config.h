@@ -2,13 +2,14 @@
 #define BYC_SWING_CONFIG_H
 
 /* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
-#define SWING_VERSION "c1-c2-c3-candidate-2-no-pointer"
+#define SWING_VERSION "c1-c2-c3-candidate-3-apex-order"
 #define SWING_WINDOW_MS 80
 #define SWING_MIN_SPAN_MS 16
 #define SWING_NOISE_G 0.15
 #define SWING_STABLE_G 0.10
 #define SWING_STABLE_DEG 5.0
 #define SWING_STABLE_MS 150
+#define SWING_APEX_MS 40
 #define SWING_FORWARD_G 0.35
 #define SWING_LOBE_MS 40
 #define SWING_RELEASE_MS 250

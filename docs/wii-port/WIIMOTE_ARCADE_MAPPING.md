@@ -99,7 +99,7 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 **Forward vs backward (acceleration sign alone isn't velocity direction):** a hand braking during the backswing accelerates toward the screen while still moving backward, and the remote rotates through the swing. So the sign-of-acceleration rule from rev 1 is withdrawn. P1 records every swing through these candidates in parallel and picks one:
 - **C1 lobe timing (primary candidate):** a swing with a backswing passes the bottom twice, giving two `ē` lobes separated by a low-`ē` apex. Power comes from the **last** qualifying lobe (≥ 0.35 g, ≥ 40 ms) that ends within `T_REL` (≈ 250 ms) of the B release. A release at the back apex leaves no recent lobe → cancel.
 - **C2 follow-through:** after the forward pass, the remote rises back toward the screen: calm gravity direction at least 15° forward-up from the grip. Confirms a lone lobe and gates auto-release.
-- **C3 apex attitude:** at low-`ē` apex samples `gforce` ≈ gravity, so pitch reads back-down vs forward-up.
+- **C3 apex pause:** 40 ms of two-sided calm (`abs(|g|−1) < 0.10 g`, pairwise attitude variation < 5°, mean excess < 0.15 g) at least 15° behind grip discards the back lobe. The next qualifying lobe is forward; B-up throws immediately with frozen peak/aim/spin, without static follow-through. C2 also requires this sustained calm dwell. Settling and grip stability use two-sided deviation, so sub-1 g motion is never assumed calm.
 - **C4 MotionPlus pitch-rate sign:** optional, never required.
 
 **Clipping:** the rail is per raw axis **including gravity**. At the bottom the dominant axis reads ≈ `1 g + ē`, so rev 1's "`ē ≈ 2 g` is well below ±3 g" was wrong and is withdrawn. The full-power default (candidate `ē ≈ 1.2 g`) comes from measured rails. Saturation can only **cap an already validated forward toss** at full power. It never validates a toss, and saturated samples in grip, backswing or rejected phases are ignored and flagged.
@@ -198,8 +198,7 @@ Every test runs on the real Wii and (via Retro) the Kinhank before P1 sign-off (
 
 ## 8. Deliberately not copied
 
-- **Release-timing spin** (Wii Sports, S1): spin depends on when B is released. Fun in bowling, but it makes cornhole curl unpredictable and contradicts the cabinet's "set spin on the backswing" model.
-- **Tilt-at-release spin:** accelerometer roll during the fastest part of the swing is dominated by motion, not gravity.
+- **Release timing alone as spin:** elapsed time never supplies curl. The owner-required lateral motion and wrist twist at B-up do supply spin, mirrored by hand; this supersedes the earlier rejection of tilt-at-release spin. Accelerometer roll under load remains a proxy to validate on hardware.
 - **Earlier pointing design:** superseded by the owner directive. Swing direction is required; validate the candidate lateral proxy on real remotes.
 - **Distance-based anything:** the retired 0.2.x / top-level `arcade/trackball.mjs` model (`power = forwardY / 400`) is never ported.
 
