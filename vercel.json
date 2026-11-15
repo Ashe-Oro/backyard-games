@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "web",
   "headers": [
     {
       "source": "/(.*)",

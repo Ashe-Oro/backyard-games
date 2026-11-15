@@ -5,13 +5,14 @@ import {createWriteStream} from 'node:fs';
 import {downloadArtifact} from '@electron/get';
 import extract from 'extract-zip';
 import yazl from 'yazl';
-const here=path.dirname(fileURLToPath(import.meta.url)),repo=path.dirname(here),dist=path.join(here,'dist'),site=path.join(dist,'site');
+// Web sources live in <repo>/web (the folder Vercel serves).
+const here=path.dirname(fileURLToPath(import.meta.url)),repo=path.dirname(here),webRoot=path.join(repo,'web'),dist=path.join(here,'dist'),site=path.join(dist,'site');
 const pkg=JSON.parse(await fs.readFile(path.join(here,'package.json')));
 // Rebuild only this generated tree; never write into the canonical web sources.
 await fs.rm(site,{recursive:true,force:true});
 await fs.mkdir(site,{recursive:true});
 for(const [folder,files] of Object.entries({'cornhole':['index.html','controls.mjs','wind-streaks.js'],'yard-games':['backyard.js','power-arrow.js','ui.css']})){
- await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(repo,folder,file),path.join(site,folder,file));
+ await fs.mkdir(path.join(site,folder),{recursive:true});for(const file of files)await fs.copyFile(path.join(webRoot,folder,file),path.join(site,folder,file));
 }
 await fs.mkdir(path.join(site,'arcade'),{recursive:true});for(const file of ['controller.js','trackball.mjs','party.mjs','music-player.mjs','board-view.mjs','dog-celebration.mjs','arcade.css'])await fs.copyFile(path.join(here,file),path.join(site,'arcade',file));
 await fs.mkdir(path.join(site,'vendor'),{recursive:true});

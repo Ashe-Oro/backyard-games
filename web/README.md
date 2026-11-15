@@ -1,4 +1,7 @@
-# Backyard Games
+# Backyard Games — Web
+
+This folder is the website Vercel serves. Paths and commands in this file are relative to `web/`.
+For the other builds (arcade cabinet, Wii) see the [repository README](../README.md).
 
 Backyard Games has a buildless home page at `/` and five static Three.js games:
 
@@ -23,6 +26,7 @@ in the `ashe-oros-projects` team.
 - Vercel automatically assigns the production domains after a successful deployment.
 - Other branches receive preview deployments through the Vercel Git integration.
 - No separate build or dependency installation is needed for the static game.
+- Vercel serves only this `web/` folder: the root `vercel.json` sets `"outputDirectory": "web"`, and the root `.vercelignore` excludes `arcade`, `wii`, `shared`, `docs`, `web/tests` and test screenshots.
 
 Manage the connection in Vercel's **Settings → Git** and production branch tracking
 in **Settings → Environments → Production**. Deployment status appears on GitHub
