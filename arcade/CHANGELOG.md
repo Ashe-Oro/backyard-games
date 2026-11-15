@@ -15,6 +15,14 @@ Future arcade releases are tagged `arcade-vX.Y.Z`, after the release-source reco
 ### Changed
 - Repo layout only: the arcade build now reads the website's Cornhole files from `web/`. The game, controls and cabinet install are unchanged.
 
+## [1.0.7] - 2026-11-15
+
+### Changed
+- The big vertical power bar is gone.
+- One compact arrow on your bag now shows where you threw and how hard.
+- A short arrow is a soft toss; a long, filled arrow is full power.
+- The arrow still stays about two seconds after your throw, then fades.
+
 ## [1.0.6] - 2026-11-15
 
 ### Fixed

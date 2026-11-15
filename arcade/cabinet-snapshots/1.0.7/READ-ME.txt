@@ -1,0 +1,46 @@
+Backyard Cornhole Arcade — 1.0.7
+================================
+
+PLAY
+Roll forward to throw. Roll faster for more power; a long slow roll stays soft.
+Aim where you roll: 1 left, 3 right.
+Backswing is optional: back-left spins right, back-right spins left.
+
+BUTTONS
+TOP     HEIGHT · SURFACE · RESET · CLEAR
+BOTTOM  LEFT · RIGHT · RESET · KEYS
+The top-right red button clears the board in Practice and keeps your stats.
+The bottom-right button tucks or pops KEYS; your choice is remembered. SURFACE switches
+SLICK / STICKY. The tiny readout shows your current height and surface.
+Height cycles Kobe / Slider / Normal. Use the bottom buttons to line up;
+sideways rolls do not move the bag. RESET centers your bag and clears windup.
+
+PICK A GAME
+Practice, share the trackball in 2 PLAYER, or take on eight tournament rivals.
+Pause to resume, change music, or open CABINET SETUP.
+Keyboard: H height, F surface, R reset, Enter select, Escape pause, F2 setup.
+
+SETUP
+Adjust FULL POWER or choose CALIBRATE TRACKBALL.
+Roll forward hard, like a full-power throw.
+RESET SETTINGS restores the starting setup.
+
+NEW THIS ROUND
+The big power bar is gone. One compact arrow from your bag shows direction and power.
+A short arrow is a soft toss; a long, filled arrow is full power. The faint guide
+shows how much farther it can fill. Lean left or right to aim.
+It stays about two seconds after release, then fades.
+Line up left or right and roll straight: your bag stays on that side of the hole.
+Straight throws no longer auto-aim at the hole. Aim and backswing hooks still work.
+The CLEAR BOARD popup is gone. Top-right clears the board in Practice.
+Only bottom-right tucks the keys legend.
+Your running version is shown in the upper-right corner during play.
+The blue cooler has been removed from the yard.
+The vertical power bar fills with your throw power.
+It holds for about two seconds after your throw, then hides.
+A full-power roll is now a bit easier to reach.
+
+SPINNER
+Pull back toward A for clockwise spin and a right hook; C spins left.
+Roll forward toward 1 to aim left or 3 to aim right. Straight back: no spin.
+SLICK carries a longer hook; STICKY stops sooner. See the small left legend.
