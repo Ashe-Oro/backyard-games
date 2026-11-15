@@ -1,0 +1,39 @@
+#ifndef BYC_SWING_CONFIG_H
+#define BYC_SWING_CONFIG_H
+
+/* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
+#define SWING_VERSION "c1-c2-c3-candidate-3-apex-order"
+#define SWING_WINDOW_MS 80
+#define SWING_MIN_SPAN_MS 16
+#define SWING_NOISE_G 0.15
+#define SWING_STABLE_G 0.10
+#define SWING_STABLE_DEG 5.0
+#define SWING_STABLE_MS 150
+#define SWING_APEX_MS 40
+#define SWING_FORWARD_G 0.35
+#define SWING_LOBE_MS 40
+#define SWING_RELEASE_MS 250
+#define SWING_QUIET_MS 450
+#define SWING_TIMEOUT_MS 2500
+#define SWING_AUTO_RATIO 0.6
+#define SWING_GAP_MS 25
+#define SWING_RADIUS_M 0.6
+#define SWING_GRAVITY 9.80665
+#define SWING_DEFAULT_E_G 1.2
+#define SWING_CAL_TOSSES 3
+#define SWING_CAL_SPREAD 0.30
+#define SWING_ROLL_DEAD_DEG 10.0
+#define SWING_ROLL_FULL_DEG 45.0
+#define SWING_AIM_MAX 0.12
+#define SWING_LATERAL_FULL 0.5
+#define SWING_LATERAL_DEAD 0.03
+#define SWING_AIM_NUDGE 0.01
+#define SWING_STEP 0.05
+#define SWING_STEP_CLAMP 0.45
+#define SWING_STEP_EASE_MS 70
+#define SWING_FINISH_DEG 15.0
+#define SWING_TWIST_MS 133
+#define SWING_HISTORY 192
+#define SWING_PI 3.14159265358979323846
+
+#endif

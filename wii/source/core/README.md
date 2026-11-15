@@ -1,1 +1,1 @@
-Platform-free C core (physics, rules, wind, CPU, swing detector). Builds for the Wii and the host. Empty until Track C / P1.
+Platform-free C core. `swing.c` implements the candidate speed detector and calibration; `input.c` owns player-slot routing, button actions and aim. See [INPUT.md](../../INPUT.md). Physics, rules, wind and CPU remain Track C work.
