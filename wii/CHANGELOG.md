@@ -7,10 +7,18 @@ and this project follows [Semantic Versioning](https://semver.org/).
 Releases are tagged `wii-vX.Y.Z`. The version source is `VERSION` in `wii/Makefile`,
 which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and this file.
 
-## [Unreleased]
+## [0.1.0] - 2026-11-16
+
+- Hit the backyard in Practice, 2 Player or an eight-rival Tournament.
+- Hold B, swing back, swing forward and release. Slide along the foul line and curl bags with your wrist. Lefties welcome; no pointing needed.
+- One arrow shows direction and power. Enjoy the backyard party, wind, dog celebrations and your own SD-card MP3s.
+- Save your career and player settings. Clear practice mid-flight and keep throwing without a bag cap.
+- First real HBC and BYCEAO USA/NTSC release, with verified disc contents, checksums and isolated Dolphin smoke tooling. Real-Wiimote feel still awaits playtesting.
+
+## Development history
 
 ### Added
-- Project scaffold: folder layout, toolchain notes, HBC `meta.xml`, and the Dolphin `GameSettings/BYCEAO.ini` that turns on real Wii Remotes. Not playable yet.
+- Project scaffold: folder layout, toolchain notes, HBC `meta.xml`, and the Dolphin `GameSettings/BYCEAO.ini` that turns on real Wii Remotes. Included in this release.
 - Wiimote input for both player slots: buffered WPAD reports, reconnect and disconnect handling, pass-and-play, accelerometer swing-direction aim with minus/plus fine trim, lateral/release-twist spin, setup/pause per-slot handedness, and the documented play/menu button map.
 - Candidate underhand toss detector: retained peak of an 80 ms accelerometer speed proxy, stability-gated grip, lobe/attitude confirmation, manual and automatic release, clipping guards, and cancellation on report loss. Power never uses stroke distance.
 - Per-slot comfortable-toss SET POWER calibration with median, outlier retry, floor and measured clip-ceiling hooks; trace diagnostics and release-window twist helper; game integration notes.

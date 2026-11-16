@@ -17,6 +17,8 @@ PPC := $(DEVKITPPC)/bin/powerpc-eabi-
 ELF2DOL ?= $(DEVKITPRO)/tools/bin/elf2dol
 WIT ?= $(firstword $(wildcard /opt/wit/bin/wit) wit)   # pinned: Wiimms ISO Tools v3.05a r8638 (3.01a cannot generate bi2.bin)
 NODE ?= node
+PYTHON ?= python3
+OUT ?= dist
 
 HOST_CC ?= cc
 HOST_CFLAGS ?= -std=c11 -O2 -Wall -Wextra -Werror -pedantic
@@ -40,7 +42,7 @@ HBC_DIR := hbc/apps/backyardcornhole
 ISO_ROOT := dolphin/iso-root
 ISO := dist/BackyardCornhole-$(GAME_ID).iso
 
-.PHONY: all host-test iso release clean version check-generated icon soak
+.PHONY: all host-test iso release clean version check-generated icon soak smoke export-release
 
 all: build/boot.dol
 	@mkdir -p $(HBC_DIR)
@@ -131,19 +133,26 @@ iso: build/boot.dol build/apploader.bin
 	@a=$$(sha256sum build/boot.dol | cut -d' ' -f1); b=$$(sha256sum build/iso-check/sys/main.dol | cut -d' ' -f1); \
 		if [ "$$a" != "$$b" ]; then echo "ISO main.dol $$b != boot.dol $$a" >&2; exit 1; fi; \
 		echo "ISO ok: $(ISO) ID $(GAME_ID), main.dol == boot.dol ($$a)"
-	cp dolphin/GameSettings/$(GAME_ID).ini dist/$(GAME_ID).ini
+	mkdir -p dist/GameSettings
+	cp dolphin/GameSettings/$(GAME_ID).ini dist/GameSettings/$(GAME_ID).ini
 
 # ---------------- release bundle ----------------
 release: all iso
+	@grep -qx "WiimoteSource0 = 2" dolphin/GameSettings/$(GAME_ID).ini
+	@grep -qx "WiimoteSource1 = 2" dolphin/GameSettings/$(GAME_ID).ini
 	@grep -q "<version>$(VERSION)</version>" $(HBC_DIR)/meta.xml || { echo "meta.xml version != $(VERSION)" >&2; exit 1; }
-	@grep -q "^## \[" CHANGELOG.md
+	@grep -Fq "## [$(VERSION)]" CHANGELOG.md
 	rm -rf build/hbc-zip && mkdir -p build/hbc-zip/apps/backyardcornhole
 	cp $(HBC_DIR)/boot.dol $(HBC_DIR)/meta.xml $(HBC_DIR)/icon.png build/hbc-zip/apps/backyardcornhole/
 	cd build/hbc-zip && rm -f ../../dist/BackyardCornhole-HBC-v$(VERSION).zip && \
 		$(NODE) ../../tools/zip.mjs ../../dist/BackyardCornhole-HBC-v$(VERSION).zip apps
-	cp dolphin/INSTALL-KINHANK.md dist/
-	cd dist && sha256sum BackyardCornhole-HBC-v$(VERSION).zip BackyardCornhole-$(GAME_ID).iso $(GAME_ID).ini INSTALL-KINHANK.md > SHA256SUMS
-	@cat dist/SHA256SUMS
+	$(PYTHON) tools/release.py --version $(VERSION) --out "$(OUT)"
+	@cat "$(OUT)/SHA256SUMS"
+
+export-release: release
+
+smoke: release
+	./packaging/smoke.sh "$(OUT)/BackyardCornhole-$(GAME_ID).iso"
 
 clean:
 	@rm -rf build dist $(ISO_ROOT) $(HBC_DIR)/boot.dol

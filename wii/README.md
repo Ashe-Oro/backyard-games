@@ -2,7 +2,7 @@
 
 Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, raw GX, WPAD).
 
-**Status: playable build (0.1.0, unreleased).** Practice, 2 Player and the 8-rival Tournament run on a GX
+**Status: first release build (0.1.0).** Practice, 2 Player and the 8-rival Tournament run on a GX
 renderer; physics, scoring and the tournament CPU match the pinned 1.0.3 game on the host golden tests.
 Boots in Dolphin from the ISO (game ID `BYCEAO`) and as a bare DOL. Swing feel and hardware timing are
 not validated yet: that needs real Wii Remotes on a Wii, desktop Dolphin and the Kinhank (IMPL_PLAN P1).
@@ -16,7 +16,8 @@ not validated yet: that needs real Wii Remotes on a Wii, desktop Dolphin and the
 ```bash
 make -C wii host-test        # input, physics-golden, game tests (host compiler + Node)
 make -C wii                  # build/boot.dol
-make -C wii iso release      # dist/: HBC zip, ISO, BYCEAO.ini, SHA256SUMS
+make -C wii release OUT=/workspace/uploads/wii-game # complete release, one command
+make -C wii smoke OUT=/workspace/uploads/wii-game   # isolated 25-second NoGUI capture
 ```
 
 ## Controls (Wii Sports Bowling style; no pointer, no sensor bar)
@@ -48,3 +49,5 @@ only; HBC `boot.dol` is byte-identical to the ISO's `sys/main.dol`; shared rules
 `shared/cornhole/` through the generated header.
 
 Docs: [SPEC.md](../docs/wii-port/SPEC.md) · [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md) · [WIIMOTE_ARCADE_MAPPING.md](../docs/wii-port/WIIMOTE_ARCADE_MAPPING.md) · [ARCADE_PARITY_CHECKLIST.md](../docs/wii-port/ARCADE_PARITY_CHECKLIST.md) · [INPUT.md](INPUT.md)
+
+Release packaging: [packaging/README.md](packaging/README.md). Manual handoff: [KINHANK_INSTALL.md](packaging/KINHANK_INSTALL.md).

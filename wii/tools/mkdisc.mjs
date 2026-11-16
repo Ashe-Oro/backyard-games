@@ -35,6 +35,13 @@ header.writeUInt32BE(padded.length, 0x14);
 header.writeUInt32BE(0, 0x18);
 writeFileSync(join(root, 'sys', 'apploader.img'), Buffer.concat([header, padded]));
 
+// WIT otherwise generates a random title key on every build. Reuse an original,
+// WIT-generated homebrew ticket (never taken from a retail disc).
+const ticketHex = readFileSync(new URL('../dolphin/generated-ticket.hex', import.meta.url), 'utf8')
+  .split('\n').filter(line => !line.startsWith('#')).join('').trim();
+const ticket = Buffer.from(ticketHex, 'hex');
+if (ticket.length !== 676) throw new Error('homebrew ticket must be 676 bytes');
+writeFileSync(join(root, 'ticket.bin'), ticket);
 copyFileSync(dol, join(root, 'sys', 'main.dol'));
 writeFileSync(join(root, 'files', 'README.txt'),
   'Backyard Cornhole (Wii homebrew). Disc image for Dolphin; the game is sys/main.dol.\n' +
