@@ -114,41 +114,34 @@ static void callout(const Game *g) {
     if (g->msg_small[0]) gfx_text_center_shadow(cx, 166 + 16 * s + 8, 1, rgb(GOLD), g->msg_small);
 }
 
-static void power_gauge(const Game *g) {
-    if (!g->last_shot || game_menu_screen(g)) return;
-    const float w = 168, h = 46, x = 320 + 48, y = 480 - 60 - h;
-    card(x, y, w, h);
-    gfx_text_center(x + w / 2, y + 6, 1, rgb(CREAM), "LAST SHOT");
-    float tx = x + 10, ty = y + 26, tw = w - 20, th = 12;
-    gfx_rect(tx - 2, ty - 2, tw + 4, th + 4, rgb(0x769184));
-    gfx_rect(tx, ty, tw, th, rgb(INK));
-    gfx_rect(tx, ty, tw * (float)fmax(0, fmin(1, g->last_shot_power)), th, power_color(g->last_shot_power));
-    for (int i = 1; i < 5; i++) gfx_rect(tx + tw * i / 5 - 1, ty, 2, th, rgb(TEAL));
+/* The one combined direction + power arrow (arcade 1.0.7 / COMBINED_ARROW_NOTES.md). Geometry comes
+ * from core/arrow.c (host-tested): origin at the bag, direction = the launch bearing projected
+ * through the main camera, coloured shaft length = power on a faint full-power track. There is no
+ * separate power meter or LAST SHOT gauge. */
+static void line2(float x0, float y0, float x1, float y1, float half, float nx, float ny, Rgba c) {
+    gfx_tri2(x0 + nx * half, y0 + ny * half, x1 + nx * half, y1 + ny * half, x1 - nx * half, y1 - ny * half, c);
+    gfx_tri2(x0 + nx * half, y0 + ny * half, x1 - nx * half, y1 - ny * half, x0 - nx * half, y0 - ny * half, c);
 }
-
 static void shot_arrow(const Game *g) {
-    if (!g->arrow_on || game_menu_screen(g)) return;
-    float ox, oy;
-    if (!scene_bag_screen(g, &ox, &oy)) return;
-    const float scale = 0.45f, maxlen = 145 * scale;
-    float len = fmaxf(16 * scale, (float)fmax(0, fmin(1, g->arrow_power)) * maxlen);
-    float sx = sinf((float)g->arrow_yaw), sy = -cosf((float)g->arrow_yaw);
-    Rgba c = power_color(g->arrow_power);
-    float a = 1 - fmaxf(0, (float)(g->arrow_age_ms - 2000) / 400);
+    if (!g->arrow_on || game_menu_screen(g) || g->connect_prompt) return;
+    ArrowShape s;
+    if (!arrow_shape(g->arrow_x, g->arrow_yaw, g->arrow_power, gfx_aspect, &s)) return;
+    float a = (float)arrow_alpha(g->arrow_age_ms, g->arrow_live);
+    if (a <= 0) return;
+    float ox = (float)s.ox, oy = (float)s.oy, dx = (float)s.dx, dy = (float)s.dy, nx = -dy, ny = dx;
+    const float head = 8;
+    float len = (float)s.length, shaft = fmaxf(0, len - head);
+    Rgba c = power_color(g->arrow_power), ink = rgba(INK, (u8)(255 * a)), track = rgba(CREAM, (u8)(0x58 * a));
     c.a = (u8)(255 * a);
-    float px = -sy, py = sx;
-    float ex = ox + sx * maxlen, ey = oy + sy * maxlen;
-    Rgba track = rgba(CREAM, (u8)(0x48 * a));
-    gfx_tri2(ox + px, oy + py, ex + px, ey + py, ex - px, ey - py, track);
-    gfx_tri2(ox + px, oy + py, ex - px, ey - py, ox - px, oy - py, track);
-    float hx = ox + sx * len, hy = oy + sy * len;
-    float bx = ox + sx * (len - 9), by = oy + sy * (len - 9);
-    Rgba ink = rgba(INK, c.a);
-    gfx_tri2(ox + px * 4, oy + py * 4, bx + px * 4, by + py * 4, bx - px * 4, by - py * 4, ink);
-    gfx_tri2(ox + px * 4, oy + py * 4, bx - px * 4, by - py * 4, ox - px * 4, oy - py * 4, ink);
-    gfx_tri2(ox + px * 2, oy + py * 2, bx + px * 2, by + py * 2, bx - px * 2, by - py * 2, c);
-    gfx_tri2(ox + px * 2, oy + py * 2, bx - px * 2, by - py * 2, ox - px * 2, oy - py * 2, c);
-    gfx_tri2(hx, hy, bx + px * 7, by + py * 7, bx - px * 7, by - py * 7, c);
+    /* faint full-power track + end mark */
+    line2(ox, oy, (float)s.ex, (float)s.ey, 1, nx, ny, track);
+    line2((float)s.ex - nx * 4, (float)s.ey - ny * 4, (float)s.ex + nx * 4, (float)s.ey + ny * 4, 1, dx, dy, track);
+    /* outlined shaft filled to the current power, then the head */
+    float bx = ox + dx * shaft, by = oy + dy * shaft, tx = (float)s.tx, ty = (float)s.ty;
+    line2(ox - dx, oy - dy, bx, by, 3, nx, ny, ink);
+    gfx_tri2(tx + dx * 2, ty + dy * 2, bx + nx * 7 - dx, by + ny * 7 - dy, bx - nx * 7 - dx, by - ny * 7 - dy, ink);
+    line2(ox, oy, bx, by, 1.5f, nx, ny, c);
+    gfx_tri2(tx, ty, bx + nx * 5, by + ny * 5, bx - nx * 5, by - ny * 5, c);
 }
 
 static void board_view_frame(void) {
@@ -209,7 +202,7 @@ static void menu_list(const Game *g, float cx, float y, float w) {
         bool sel = i == g->menu.sel;
         float iy = y + i * 24;
         if (sel) gfx_rect(cx - w / 2, iy - 3, w, 22, rgb(GOLD));
-        Rgba c = sel ? rgb(INK) : rgb(CREAM);
+        Rgba c = sel ? rgba(INK, it->disabled ? 0x80 : 0xff) : rgba(CREAM, it->disabled ? 0x60 : 0xff);
         if (it->value[0]) {
             gfx_text(cx - w / 2 + 10, iy, 1, c, it->label);
             gfx_text(cx + w / 2 - 10 - gfx_text_width(it->value, 1), iy, 1, sel ? rgb(INK) : rgb(GOLD), it->value);
@@ -376,10 +369,18 @@ static void panel(const Game *g) {
         menu_list(g, 320, y + 62, 160);
         break;
     }
-    case UI_BOARD_FULL: {
-        float h = 110, y = 185; card(x, y, w, h);
-        gfx_text_center(320, y + 16, 2, rgb(GOLD), "BOARD FULL");
-        menu_list(g, 320, y + 64, 200);
+    case UI_MUSIC: {
+        float h = 250, y = 115; card(x, y, w, h);
+        gfx_text_center(320, y + 10, 2, rgb(GOLD), "MUSIC");
+        const char *now = g->music ? music_now(g->music) : "Music folder unavailable.";
+        snprintf(buf, sizeof buf, "%.48s", now);
+        gfx_text_center(320, y + 48, 1, rgb(CREAM), buf);
+        if (g->music) {
+            const char *folder = g->music->folder;
+            snprintf(buf, sizeof buf, "%.48s", strlen(folder) > 48 ? folder + strlen(folder) - 48 : folder);
+            gfx_text_center(320, y + 66, 1, rgba(CREAM, 0xb0), buf);
+        }
+        menu_list(g, 320, y + 94, 300);
         break;
     }
     case UI_NONE: break;
@@ -395,7 +396,6 @@ void hud_draw(const Game *g, const Input *in) {
         wind_panel(g);
         turn_banner(g);
         callout(g);
-        power_gauge(g);
         shot_arrow(g);
         help_legend(g, in);
         if (g->hold_still_ms > 0) gfx_text_center_shadow(320, 300, 2, rgb(GOLD), "HOLD STILL");

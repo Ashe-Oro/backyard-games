@@ -22,16 +22,17 @@ HOST_CC ?= cc
 HOST_CFLAGS ?= -std=c11 -O2 -Wall -Wextra -Werror -pedantic
 INPUT_CORE := source/core/swing.c source/core/input.c
 INPUT_HEADERS := source/core/swing.h source/core/swing_config.h source/core/input.h
-GAME_CORE := source/core/physics.c source/core/rng.c source/core/cpu.c source/core/save.c source/core/game.c
+GAME_CORE := source/core/physics.c source/core/rng.c source/core/cpu.c source/core/save.c source/core/game.c \
+	source/core/arrow.c source/core/music.c source/core/wind_streaks.c source/core/party.c
 CORE_HEADERS := $(wildcard source/core/*.h)
 
 MACHDEP := -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
 PPC_CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Wno-missing-field-initializers $(MACHDEP) \
 	-I$(DEVKITPRO)/libogc/include -Isource/core -Isource/wii -Ibuild/gen -DBYC_VERSION=\"$(VERSION)\"
 PPC_LDFLAGS := $(MACHDEP) -L$(DEVKITPRO)/libogc/lib/wii -Wl,-Map,build/wii/boot.map
-PPC_LIBS := -lfat -lwiiuse -lbte -logc -lm
+PPC_LIBS := -lfat -lmad -lasnd -lwiiuse -lbte -logc -lm
 WII_SRC := $(GAME_CORE) $(INPUT_CORE) source/wii/input_wpad.c source/wii/gfx.c source/wii/scene.c \
-	source/wii/hud.c source/wii/main.c build/gen/win_table.c
+	source/wii/hud.c source/wii/party_draw.c source/wii/music_wii.c source/wii/main.c build/gen/win_table.c
 WII_OBJ := $(patsubst %.c,build/wii/%.o,$(notdir $(WII_SRC)))
 vpath %.c source/core source/wii build/gen
 
@@ -83,11 +84,12 @@ soak: $(WII_SRC)
 	$(ELF2DOL) build/soak/boot-soak.elf build/soak/boot-soak.dol
 
 # ---------------- host tests ----------------
-host-test: build/input-test build/wpad-test build/physics-probe build/game-test check-generated
+host-test: build/input-test build/wpad-test build/physics-probe build/game-test build/party-test check-generated
 	./build/input-test
 	./build/wpad-test
 	$(NODE) tests/physics_golden.mjs build/physics-probe
 	./build/game-test
+	./build/party-test
 
 build/input-test: tests/input_test.c $(INPUT_CORE) $(INPUT_HEADERS)
 	@mkdir -p build
@@ -104,6 +106,10 @@ build/physics-probe: tests/physics_probe.c source/core/physics.c source/core/rng
 build/game-test: tests/game_test.c $(GAME_CORE) $(INPUT_CORE) $(CORE_HEADERS)
 	@mkdir -p build
 	$(HOST_CC) $(HOST_CFLAGS) -Isource/core tests/game_test.c $(GAME_CORE) $(INPUT_CORE) -lm -o $@
+
+build/party-test: tests/party_test.c source/core/party.c source/core/rng.c $(CORE_HEADERS)
+	@mkdir -p build
+	$(HOST_CC) $(HOST_CFLAGS) -Isource/core tests/party_test.c source/core/party.c source/core/rng.c -lm -o $@
 
 # ---------------- Dolphin ISO (SPEC §1.5) ----------------
 build/apploader.elf: dolphin/apploader/apploader.c dolphin/apploader/apploader.ld

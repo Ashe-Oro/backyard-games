@@ -47,6 +47,9 @@ double swing_twist_relative(const SwingPoint *points, unsigned count, uint64_t r
 void swing_reset(Swing *s, bool require_b_up);
 bool swing_armed(const Swing *s);
 bool swing_calm_roll(const Swing *s, double *roll_degrees);
+/* Read-only HUD preview of the classified forward lobe (after the back-apex pause, before the
+   toss is emitted): the power and aim a release right now would lock. Never changes the throw. */
+bool swing_preview(const Swing *s, const SwingProfile *profile, double *power, double *aim);
 SwingResult swing_feed(Swing *s, const SwingSample *sample, double aim, const SwingProfile *profile);
 
 /* Supply P_TARGET from physics, and floor/ceiling from P1 measured rails. No invented defaults. */

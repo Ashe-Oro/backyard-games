@@ -1,10 +1,13 @@
 #include "save.h"
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 void save_defaults(SaveData *s) {
     memset(s, 0, sizeof(*s));
     s->profile[0] = s->profile[1] = swing_default_profile();
+    s->music_volume = MUSIC_DEFAULT_VOLUME;
+    snprintf(s->music_folder, sizeof s->music_folder, "%s", MUSIC_DEFAULT_FOLDER);
 }
 
 uint32_t save_crc32(const uint8_t *d, size_t n) {
@@ -39,6 +42,12 @@ size_t save_encode(const SaveData *s, uint8_t *out, size_t cap) {
     }
     put8(&w, s->help_tucked ? 1 : 0);
     put8(&w, s->wind_on ? 1 : 0);
+    put8(&w, s->music_on ? 1 : 0);
+    put8(&w, (uint8_t)lround(fmax(0, fmin(1, s->music_volume)) * 100));
+    size_t folder = 0;
+    while (folder < sizeof s->music_folder - 1 && s->music_folder[folder]) folder++;
+    put8(&w, (uint8_t)folder);
+    for (size_t i = 0; i < folder; i++) put8(&w, (uint8_t)s->music_folder[i]);
     size_t payload = w.n - start;
     if (w.ok) { out[len_at] = (uint8_t)(payload >> 8); out[len_at + 1] = (uint8_t)payload; }
     uint32_t crc = w.ok ? save_crc32(out, w.n) : 0;
@@ -57,7 +66,7 @@ bool save_decode(SaveData *s, const uint8_t *in, size_t len) {
     if (len < 12 || memcmp(in, "BYCS", 4) != 0) return false;
     R r = {in, len, 4};
     uint16_t version = get16(&r), payload = get16(&r);
-    if (version != SAVE_VERSION || (size_t)payload + 12 != len) return false;
+    if (version < 1 || version > SAVE_VERSION || (size_t)payload + 12 != len) return false;
     uint32_t crc = (uint32_t)in[len - 4] << 24 | (uint32_t)in[len - 3] << 16 | (uint32_t)in[len - 2] << 8 | in[len - 1];
     if (save_crc32(in, len - 4) != crc) return false;
     r.n = len - 4;
@@ -73,5 +82,16 @@ bool save_decode(SaveData *s, const uint8_t *in, size_t len) {
     }
     s->help_tucked = get8(&r) == 1;
     s->wind_on = get8(&r) == 1;
+    if (version >= 2) {
+        s->music_on = get8(&r) == 1;
+        uint8_t volume = get8(&r), folder = get8(&r);
+        if (volume <= 100) s->music_volume = volume / 100.0;
+        if (folder > 0 && folder < sizeof s->music_folder && r.i + folder <= r.n) {
+            bool printable = true;
+            for (size_t i = 0; i < folder; i++) if (in[r.i + i] < 0x20 || in[r.i + i] > 0x7e) printable = false;
+            if (printable) { memcpy(s->music_folder, in + r.i, folder); s->music_folder[folder] = 0; }
+        }
+        r.i += folder;
+    }
     return true;
 }

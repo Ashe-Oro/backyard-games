@@ -26,7 +26,7 @@ Source of the cabinet controls: Backyard Cornhole Arcade **1.0.3**, `arcade/cabi
 | **Spin** | Optional **backswing**: back-left (A) → negative spin = clockwise from above = **curls right**; back-right (C) → positive = curls left; straight back (B) or none → 0. Lean scales it: `spin = clamp(backX/backY, ±1)` | Spin affects landing curl only, never flight curvature (`spin.mjs`) |
 | Anti-misfire | **450 ms quiet** after each turn before input arms; one throw per gesture; single report or tiny jitter can't throw; sideways rolls ignored | `quietMs`, `phase` `settling/ready/backswing/forward/spent` |
 | Calibration | "Roll forward hard, like a full-power throw": `powerSpeed = measured_peak / 0.7` | Leaves 30% headroom |
-| Feedback | Live power gauge + 5-stop color ramp; last-shot gauge lingers **3 s**; power arrow shows aim | `LAST_SHOT_MS = 3000`, `shotPowerColor` |
+| Feedback | 1.0.3: live power gauge + 5-stop color ramp, last-shot gauge lingering 3 s, power arrow for aim. **Superseded by arcade 1.0.7 (owner directive): no separate power meter.** One compact arrow from the bag shows the launch direction; its length and fill show power on a faint full-power track; it appears during the forward stroke, holds ~2 s after release, then fades. The Wii follows 1.0.7 (`wii/source/core/arrow.c`): live during the forward swing after the top-of-backswing pause, 70 px at full power on the 640×480 HUD, 2 s hold + 0.4 s fade | `ARROW_LINGER_MS = 2000`, `shotPowerColor`, `showDirectionArrow` |
 
 ### 1.2 P1 buttons (Twin USB grid, Pad 0)
 

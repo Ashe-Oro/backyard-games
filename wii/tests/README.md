@@ -13,5 +13,11 @@ Game tests (wii/game): `make -C wii host-test` also runs
 - `game_test.c`: menus, a 20-round 2 PLAYER soak, 200 practice throws with CLEAR BOARD, career vs the first
   and last rivals, scoring (cancellation, wash keeps order, crossing 21, moving slides don't count), wind policy,
   straight-from-stance throws and the KOBE remap, pause freezing, disconnect/resume, hand/settings/SET POWER,
-  saves (round trip, CRC failure, invalid fields).
+  saves (round trip, CRC failure, invalid fields); review fixes: CLEAR BOARD while aiming, waiting and in flight,
+  pause/resume on round summary, FINAL and tournament result, practice past 256 throws (1,500 throws with 800+
+  bags left in the yard, plus a simulated allocation ceiling), the combined arrow (forward-swing preview,
+  straight/left/right, both hands, power ordering, 2 s hold + fade, projected launch line), the MUSIC screen
+  against a fake backend, wind streaks.
+- `party_test.c`: the `party.mjs` port (pong catalog, scripts, miss paths, non-repeating selection, keg/keg-stand
+  and cook timelines, geometry) and a 30-minute soak checked against values from the JS module.
 - `check-generated`: `cornhole_constants.h` matches `shared/cornhole`, and the golden vectors match the oracle.

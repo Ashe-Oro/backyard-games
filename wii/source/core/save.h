@@ -9,15 +9,19 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "swing.h"
+#include "music.h"
 
-#define SAVE_VERSION 1
-#define SAVE_MAX_BYTES 128
+#define SAVE_VERSION 2          /* 2 adds the MUSIC settings; version 1 files still load */
+#define SAVE_MAX_BYTES 256
 
 typedef struct {
     int career_fight, career_wins;   /* valid: 0 <= fight <= 8, wins >= fight */
     SwingProfile profile[2];         /* per player slot (RED, BLUE), never per remote */
     bool help_tucked;
     bool wind_on;                    /* WIND setting CALM/ON */
+    bool music_on;                   /* MUSIC: PLAY/PAUSE */
+    double music_volume;             /* 0..1 in 1% steps */
+    char music_folder[MUSIC_PATH_MAX];
 } SaveData;
 
 void save_defaults(SaveData *s);

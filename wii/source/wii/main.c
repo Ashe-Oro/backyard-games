@@ -17,6 +17,7 @@
 #include "gfx.h"
 #include "scene.h"
 #include "hud.h"
+#include "music_wii.h"
 
 #define SAVE_DIR "sd:/apps/backyardcornhole/data"
 #define SAVE_DAT SAVE_DIR "/save.dat"
@@ -26,6 +27,7 @@
 static Input input;
 static InputWpad wpad;
 static Game game;
+static Music music;
 static InputEvent queue[64];
 static int queued;
 static volatile bool power_off, reset_pressed;
@@ -58,7 +60,12 @@ static uint64_t now_ms(void) { return ticks_to_millisecs(gettime()); }
 static int soak_rounds, soak_matches, soak_wait, soak_stage, soak_practice_throws;
 static double soak_cpu_ms, soak_cpu_max; static unsigned soak_frames;
 static void soak_drive(Game *g) {
-    if (g->ui == UI_STRAP) { game_menu_select(g, MI_OK); return; }
+    if (g->ui == UI_STRAP) {
+        /* also exercise the wind streaks and, when the SD card has MP3s, the MUSIC player */
+        g->save.wind_on = true;
+        if (g->music && music_can_toggle(g->music) && !g->music->enabled) music_toggle(g->music);
+        game_menu_select(g, MI_OK); return;
+    }
     if (soak_stage == 0 && g->ui == UI_TITLE) { game_start(g, false, false, false); SYS_Report("BYC-SOAK: 2 PLAYER match %d\n", soak_matches + 1); return; }
     if (g->ui == UI_SUMMARY) {
         soak_rounds++;
@@ -162,6 +169,11 @@ int main(void) {
     scene_init();
     game_init(&game, &input, &byc_win, (uint32_t)gettime(), &save, fat_ok);
     game.cpu_step_budget = measure_step_budget();
+    /* MUSIC: the player's own MP3s from the SD card (never bundled). */
+    MusicBackend audio = music_wii_backend(fat_ok);
+    music_init(&music, &audio, game.save.music_on, game.save.music_volume, game.save.music_folder);
+    game_set_music(&game, &music);
+    SYS_Report("BYC: music folder %s: %d track(s), %s, volume %d%%\n", music.folder, music.count, music.enabled ? "on" : "off", (int)(music.volume * 100 + .5));
     SYS_Report("BYC: WIN NORMAL/SLICK lo %.4f hi %.4f mid %.4f\n", byc_win.w[0][0][1].lo, byc_win.w[0][0][1].hi, byc_win.w[0][0][1].mid);
 
     uint64_t last = now_ms();
@@ -228,6 +240,12 @@ int main(void) {
             last_conn[ch] = input.connected[ch];
             SYS_Report("BYC: remote %d %s (WPAD status %d)\n", ch + 1, last_conn[ch] ? "connected" : "disconnected", wpad.status[ch]);
         }
+        static int last_track = -2; static bool last_music;
+        int track_now = music.started ? music.index : -1;
+        if (track_now != last_track || music.enabled != last_music) {
+            last_track = track_now; last_music = music.enabled;
+            SYS_Report("BYC: music %s: %s\n", music.enabled ? "on" : "off", music_now(&music));
+        }
         static int last_ui = -1, last_phase = -1;
         if ((int)game.ui != last_ui || (int)game.phase != last_phase) {
             last_ui = game.ui; last_phase = game.phase;
@@ -236,6 +254,8 @@ int main(void) {
         if (++frame == 120) SYS_Report("BYC: 120 frames rendered; ui %d phase %d\n", game.ui, game.phase);
     }
     for (int ch = 0; ch < 2; ch++) WPAD_Rumble(ch, 0);
+    music_shutdown(&music);
+    music_wii_shutdown();
     SYS_Report("BYC: exit (%s)\n", power_off ? "power" : reset_pressed ? "reset" : "quit");
     WPAD_Shutdown();
     if (fat_ok) fatUnmount("sd");

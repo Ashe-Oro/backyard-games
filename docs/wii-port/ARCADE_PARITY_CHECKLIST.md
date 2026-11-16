@@ -29,11 +29,11 @@ Legend: **mapped** = same function, Wiimote control; **adapted** = same purpose,
 | Reset held bag (Top 3 / Bottom 3) | 2 | mapped | done — re-centres stance/aim/spin, no throw consumed |
 | Nudge left / right | D-pad LEFT/RIGHT, 0.05 steps, ±0.45, 70 ms ease | mapped | done — `input_stance` read every frame |
 | KEYS legend pop / tuck | 1 toggles help | adapted | done — help legend from `input_help_text`, one item per line; saved as `help_tucked` |
-| Pause (Start / Select) | HOME cancels gesture and opens pause | mapped | done — physics and timers freeze |
+| Pause (Start / Select) | HOME cancels gesture and opens pause | mapped | done — physics and timers freeze; pausing a round summary, FINAL or tournament result returns to that screen on RESUME |
 | Menu navigation | D-pad, A confirm, B back, minus/plus adjust | mapped | done |
-| Main menu | PRACTICE / 2 PLAYER / TOURNAMENT / SETTINGS / QUIT | adapted | done |
+| Main menu | PRACTICE / 2 PLAYER / TOURNAMENT / MUSIC / SETTINGS / QUIT | adapted | done |
 | Resume | HOME → RESUME, A (B up required) | adapted | done — `input_resume` retried until B is up |
-| Practice mode | Main menu → PRACTICE | adapted | done — unlimited bags, IN/ON/% HIT/THROWS |
+| Practice mode | Main menu → PRACTICE | adapted | done — no bag limit (storage grows; nothing visible is ever dropped; no forced CLEAR BOARD), IN/ON/% HIT/THROWS; host test throws 1,500 bags with 800+ left lying in the yard |
 | 2 player mode | Main menu → 2 PLAYER | adapted | done — Remote 2 or pass-and-play ("PASS THE REMOTE") |
 | Versus CPU / challenge | TOURNAMENT rivals | adapted | done — career planner; casual CPU kept as code path (test mode, not a menu mode, as 1.0.3) |
 | Tournament map / circuits | D-pad, A, B | adapted | done — ROAD TO CORNHOLE KING ladder |
@@ -42,7 +42,7 @@ Legend: **mapped** = same function, Wiimote control; **adapted** = same purpose,
 | Rival introduction / roster / taunts | A LET'S TOSS, B back | adapted | done — portrait, nickname, taunt, style, air |
 | Tournament result / next rival / retry | NEXT UP / TRY AGAIN / CIRCUIT MAP | adapted | done — fight saved only when won |
 | Champion screen | CIRCUIT MAP / NEW CAREER | adapted | done |
-| Pause CLEAR BOARD | Practice pause → CLEAR BOARD | adapted | done — clears bags, keeps stats; separate from 2 |
+| Pause CLEAR BOARD | Practice pause → CLEAR BOARD | adapted | done — clears bags, keeps stats, and hands over a fresh bag from any moment (aiming, bag in flight, between bags); separate from 2 |
 | Pause MAIN MENU | HOME → MAIN MENU | adapted | done |
 | EXIT GAME / quit | HOME → QUIT → YES (also title QUIT) | adapted | done — returns to the Homebrew Channel loader |
 | CABINET SETUP screen | SETTINGS | adapted | done |
@@ -60,10 +60,9 @@ Legend: **mapped** = same function, Wiimote control; **adapted** = same purpose,
 | Keyboard fallback / F2 | Dev overlay (hold 1+2 at boot) | adapted | **open** — OSReport logging instead; overlay not built |
 | Scoreboard / team colors / pips | Persistent HUD | adapted | done — TOTAL/RND, pips, ROUND n / TO 21 / FINAL, round edge |
 | Turn banner / CPU turn | HUD; input disabled during flight/CPU | adapted | done |
-| Power meter / five-stop color ramp | LAST SHOT gauge from release (no live fill, per IMPL_PLAN P1) | adapted | done |
-| LAST SHOT meter / 3 s linger | Post-throw HUD | adapted | done |
-| Power direction arrow | Shot arrow from the bag after release | adapted | done (2.4 s) |
-| Wind HUD / pennant / streaks | Wind panel, pennant | adapted | done for panel + pennant; streaks **open** (first on the SPEC §3.3 cut list) |
+| Power meter / LAST SHOT meter | — | N/A — removed in arcade 1.0.7 (owner directive: no separate power meter); the Wii draws none | — |
+| Combined direction + power arrow (arcade 1.0.6/1.0.7) | One compact arrow from the bag: direction = launch direction projected through the camera, length/fill = power on a faint full-power track, five-stop color ramp | mapped | done — live during the forward swing (after the top-of-backswing pause), holds 2 s after release, fades over 0.4 s; hidden by step/height/surface/reset/pause and by a swing that ends without a throw; mirrored for LEFT HAND; `core/arrow.c` + host tests |
+| Wind HUD / pennant / streaks | Wind panel, pennant, 24 gust streaks | adapted | done — streaks are a port of `wind-streaks.js` (same seed and maths, `GX_LINES`); hidden in calm air and on menu screens |
 | Board View inset | BOARD · 27 FT second viewport | adapted | done — clears colour + depth, restores state |
 | Held bag / height / surface feedback | Held bag + status line | adapted | done — B-held dip |
 | Callouts / landing results | CORNHOLE!, HANGER!, ON THE BOARD, GROUNDER, OFF THE BOARD, MISS, KNOCKED IN!/OFF!, WASH | adapted | done — verbatim |
@@ -74,10 +73,10 @@ Legend: **mapped** = same function, Wiimote control; **adapted** = same purpose,
 | Saved input profiles | Per-slot full speed, curl, hand | adapted | done — save.dat |
 | Version label / menu kicker | "WII · 0.1.0" on the title, v0.1.0 in pause | adapted | done |
 | Dog celebration / confetti / dust / trail | Scene | adapted | done |
-| Party NPCs (keg, beer pong, chess, cook) | Scene | adapted | **open** — SPEC: animated for release (P6) |
-| MUSIC menu, play/pause, next, folder, refresh, volume, back | MUSIC screen | adapted | **open** — SPEC §2.7 drops music for v1; owner question §9 Q12 still open |
+| Party NPCs (keg guests + keg stand, beer pong match scripts, grill cook + dog snack, cacti) | Scene | adapted | done — port of `party.mjs`: keg fill/drink cycle with pump, hose, tap and stream, the keg-stand gag, the five scripted beer pong matches (catalog, timing, miss paths, non-repeating selection, swats, cheering winner), the cook flipping food and tossing a burger to the dog, perimeter cacti. The pinned 1.0.3 `party.mjs` has no chess set (earlier SPEC text was wrong), so there is none to port |
+| MUSIC menu, play/pause, next, folder, refresh, volume, back | Main menu / pause → MUSIC: PLAY MUSIC / PAUSE MUSIC, NEXT TRACK, CHOOSE FOLDER, REFRESH, VOLUME − / +, BACK | adapted | done — plays the player's own MP3s from the SD card (`sd:/apps/backyardcornhole/music` by default; CHOOSE FOLDER cycles that folder, `sd:/music`, `sd:/mp3` and their sub-folders); on/off, volume and folder are saved; unplayable files are skipped; same status lines as the arcade. Nothing is bundled. MP3 only (libmad); the arcade also accepts OGG/WAV/M4A |
 
-Verification on wii/game: host input 33 + WPAD 7, physics golden 938/938, game tests 601/601; arcade 24/24; pinned
+Verification on wii/game: host input 33 + WPAD 7, physics golden 938/938, game tests 2256/2256, party tests 209137/209137; arcade 24/24; pinned
 snapshot 48/48; shared drift 32/32. Dolphin 2609a: ISO and bare DOL boot; scripted soak (dev build) plays full matches.
 P1 hardware acceptance remains open: both hands, speed labels, backswing/pause/forward traces, lateral/twist separation,
 zero false throws, Kinhank speed.

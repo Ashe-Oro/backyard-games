@@ -40,6 +40,10 @@ static void mark_save(Game *g) {
     g->save.career_fight = g->fight; g->save.career_wins = g->wins;
     g->save.help_tucked = !g->help_shown;
     if (g->input) for (int s = 0; s < 2; s++) g->save.profile[s] = g->input->slots[s].profile;
+    if (g->music) {
+        g->save.music_on = g->music->enabled; g->save.music_volume = g->music->volume;
+        copy(g->save.music_folder, sizeof g->save.music_folder, g->music->folder);
+    }
     g->save_dirty = true;
 }
 
@@ -52,6 +56,7 @@ const char *game_team_name(const Game *g, int t) {
 }
 Lie game_lie(const Game *g) {
     Lie l; memset(&l, 0, sizeof l);
+    l = g->banked;   /* practice only: in-the-hole bags already compacted out of the list */
     for (int i = 0; i < g->nbags; i++) {
         const Bag *b = &g->bags[i];
         if (b->state == BAG_IN) { l.pts[b->team] += BYC_POINTS_IN_HOLE; l.in_c[b->team]++; }
@@ -74,7 +79,7 @@ static MenuItem *menu_add(Game *g, MenuItemId id, const char *label) {
     Menu *m = &g->menu;
     if (m->count >= GAME_MENU_MAX) return &m->items[GAME_MENU_MAX - 1];
     MenuItem *it = &m->items[m->count++];
-    it->id = id; copy(it->label, sizeof it->label, label); it->value[0] = 0;
+    it->id = id; copy(it->label, sizeof it->label, label); it->value[0] = 0; it->disabled = false;
     return it;
 }
 static void menu_values(Game *g) {
@@ -91,6 +96,15 @@ static void menu_values(Game *g) {
         case MI_CURL_RED: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p0->spin_strength * 100)); break;
         case MI_CURL_BLUE: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p1->spin_strength * 100)); break;
         case MI_WIND: copy(it->value, sizeof it->value, g->save.wind_on ? "ON" : "CALM"); break;
+        case MI_MUSIC_TOGGLE:
+            copy(it->label, sizeof it->label, g->music && g->music->enabled ? "PAUSE MUSIC" : "PLAY MUSIC");
+            it->disabled = !g->music || !music_can_toggle(g->music);
+            break;
+        case MI_MUSIC_NEXT: it->disabled = !g->music || !music_can_next(g->music); break;
+        case MI_MUSIC_FOLDER: case MI_MUSIC_REFRESH: it->disabled = !g->music; break;
+        case MI_MUSIC_VOLUME:
+            snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround((g->music ? g->music->volume : g->save.music_volume) * 100));
+            break;
         default: break;
         }
     }
@@ -107,14 +121,15 @@ static void open_ui(Game *g, UiScreen ui) {
     switch (ui) {
     case UI_TITLE:
         menu_add(g, MI_PRACTICE, "PRACTICE"); menu_add(g, MI_TWO_PLAYER, "2 PLAYER");
-        menu_add(g, MI_TOURNAMENT, "TOURNAMENT"); menu_add(g, MI_SETTINGS, "SETTINGS"); menu_add(g, MI_QUIT, "QUIT");
+        menu_add(g, MI_TOURNAMENT, "TOURNAMENT"); menu_add(g, MI_MUSIC, "MUSIC");
+        menu_add(g, MI_SETTINGS, "SETTINGS"); menu_add(g, MI_QUIT, "QUIT");
         break;
     case UI_PAUSE:
         menu_add(g, MI_RESUME, "RESUME");
         if (g->practice) menu_add(g, MI_CLEAR_BOARD, "CLEAR BOARD");
         menu_add(g, MI_HAND_RED, g->practice ? "HAND" : "RED HAND");
         if (!g->practice && !g->vs_cpu) menu_add(g, MI_HAND_BLUE, "BLUE HAND");
-        menu_add(g, MI_SETTINGS, "SETTINGS");
+        menu_add(g, MI_MUSIC, "MUSIC"); menu_add(g, MI_SETTINGS, "SETTINGS");
         menu_add(g, MI_MAIN_MENU, "MAIN MENU"); menu_add(g, MI_QUIT, "QUIT");
         break;
     case UI_SETTINGS:
@@ -137,7 +152,11 @@ static void open_ui(Game *g, UiScreen ui) {
         menu_add(g, MI_CIRCUIT_MAP, "CIRCUIT MAP");
         break;
     case UI_CONFIRM_QUIT: case UI_CONFIRM_NEW_CAREER: menu_add(g, MI_NO, "NO"); menu_add(g, MI_YES, "YES"); break;
-    case UI_BOARD_FULL: menu_add(g, MI_CLEAR_BOARD, "CLEAR BOARD"); break;
+    case UI_MUSIC:   /* arcade #arcade-audio: toggle, next, folder, refresh, volume, back */
+        menu_add(g, MI_MUSIC_TOGGLE, "PLAY MUSIC"); menu_add(g, MI_MUSIC_NEXT, "NEXT TRACK");
+        menu_add(g, MI_MUSIC_FOLDER, "CHOOSE FOLDER"); menu_add(g, MI_MUSIC_REFRESH, "REFRESH");
+        menu_add(g, MI_MUSIC_VOLUME, "VOLUME"); menu_add(g, MI_BACK, "BACK");
+        break;
     case UI_SETPOWER: case UI_STRAP: menu_add(g, MI_OK, "OK"); break;
     case UI_NONE: break;
     }
@@ -155,7 +174,35 @@ static void apply_wind_setting(Game *g) {
 }
 
 /* ---------------- match flow ---------------- */
-static void clear_bags(Game *g) { g->nbags = 0; g->active = -1; g->nbefore = 0; g->live = (Lie){{0, 0}, {0, 0}, {0, 0}}; }
+static void clear_bags(Game *g) {
+    g->nbags = 0; g->active = -1; g->nbefore = 0;
+    g->live = g->banked = (Lie){{0, 0}, {0, 0}, {0, 0}};
+}
+/* Room for one more bag. Entries that have left the world (BAG_IN, BAG_REMOVED: never stepped,
+ * collided with or drawn again) are squeezed out first, keeping insertion order and banking their
+ * points; then the arrays double. Nothing visible is ever dropped and there is no bag limit. */
+static bool reserve_bag(Game *g) {
+    if (g->nbags < g->bag_cap) return true;
+    int n = 0;
+    for (int i = 0; i < g->nbags; i++) {
+        const Bag *b = &g->bags[i];
+        if (b->state == BAG_IN) { g->banked.pts[b->team] += BYC_POINTS_IN_HOLE; g->banked.in_c[b->team]++; continue; }
+        if (b->state == BAG_REMOVED) continue;
+        if (n != i) g->bags[n] = *b;
+        n++;
+    }
+    g->nbags = n;
+    if (g->nbags < g->bag_cap) return true;
+    int cap = g->bag_cap ? g->bag_cap * 2 : 64;
+    if (g->bag_cap_limit > 0 && cap > g->bag_cap_limit) return false;
+    Bag *bags = realloc(g->bags, (size_t)cap * sizeof *bags);
+    if (bags) g->bags = bags;
+    BagState *before = bags ? realloc(g->before, (size_t)cap * sizeof *before) : NULL;
+    if (before) g->before = before;
+    if (!bags || !before) return false;
+    g->bag_cap = cap;
+    return true;
+}
 
 static void sync_input_slot(Game *g, int t) {
     if (!g->input) return;
@@ -168,7 +215,7 @@ static void show_menu(Game *g) {
     timers_clear(g); g->active = -1; g->nbefore = 0; g->paused = false;
     g->phase = PH_MENU; g->career_match = false; g->resume_pending = false;
     clear_bags(g);
-    g->last_shot = false; g->arrow_on = false;
+    g->arrow_on = g->arrow_live = false;
     open_ui(g, UI_TITLE);
 }
 
@@ -190,7 +237,7 @@ void game_start(Game *g, bool practice, bool vs_cpu, bool career) {
     g->scores[0] = g->scores[1] = 0; g->inning = 1; g->winner = -1;
     g->first = practice ? 0 : (rng_next(&g->rng) < 0.5 ? 0 : 1);   /* coin toss */
     g->ui = UI_NONE; g->menu.count = 0;
-    g->last_shot = false; g->arrow_on = false; g->cpu_planning = false;
+    g->arrow_on = g->arrow_live = false; g->cpu_planning = false;
     fx(g, FX_DOG_RESET, (Vec3){0, 0, 0}, 0);
     if (g->input) {
         input_start_match(g->input);
@@ -212,7 +259,6 @@ static void next_turn(Game *g) {
     int t = game_thrower(g);
     g->aim = 0; g->arc = (BagArc)g->heights[t]; g->meter = 0;
     if (game_is_human(g, t)) {
-        if (g->nbags >= GAME_MAX_BAGS) { open_ui(g, UI_BOARD_FULL); g->phase = PH_AIM; return; }
         g->phase = PH_AIM;
         g->spin = 0;
         if (g->input) { sync_input_slot(g, t); g->input->slots[t].aim = 0; input_next_turn(g->input, (unsigned)t); }
@@ -228,7 +274,7 @@ static void next_turn(Game *g) {
 static bool throw_bag(Game *g, double power, double drift, int team) {
     if (g->paused || g->connect_prompt) return false;   /* frozen worlds never take a throw */
     if (!(g->phase == PH_AIM || g->phase == PH_CPU)) return false;
-    if (g->nbags >= GAME_MAX_BAGS) return false;
+    if (!reserve_bag(g)) { say(g, "OUT OF MEMORY", "HOME: CLEAR BOARD", 2000); return false; }
     BagSide side = g->side[team];
     bool human = game_is_human(g, team);
     double actual = human ? physical_power(g->win, team, side, g->arc, power) : power;
@@ -247,8 +293,9 @@ static bool throw_bag(Game *g, double power, double drift, int team) {
     g->active = g->nbags++;
     g->phase = PH_FLYING; g->meter = power;
     if (human) {
-        g->last_shot = true; g->last_shot_power = actual; g->last_shot_age_ms = 0;
-        g->arrow_on = true; g->arrow_power = actual; g->arrow_yaw = atan2(b->v.x, -b->v.z); g->arrow_age_ms = 0;
+        /* 1.0.7 showShotArrow: the actual launch yaw and physical power, from the release x. */
+        g->arrow_on = true; g->arrow_live = false; g->arrow_age_ms = 0;
+        g->arrow_power = actual; g->arrow_yaw = atan2(b->v.x, -b->v.z); g->arrow_x = b->p.x;
         fx(g, FX_RUMBLE, b->p, 60);
     }
     return true;
@@ -261,21 +308,19 @@ bool game_throw(Game *g, double power, double aim, double spin) {
     return throw_bag(g, clampd(power, 0, 1), 0, game_thrower(g));
 }
 
-static void team_list(char *out, size_t cap, const Game *g, const int *idx, int n) {
-    out[0] = 0;
-    for (int i = 0; i < n; i++) {
-        size_t len = strlen(out);
-        snprintf(out + len, cap - len, "%s%s", i ? " + " : "", TEAM[g->bags[idx[i]].team]);
-    }
+static void team_list_add(char *out, size_t cap, int team) {
+    size_t len = strlen(out);
+    snprintf(out + len, cap - len, "%s%s", len ? " + " : "", TEAM[team]);
 }
 
 static void after_throw(Game *g) {
     Bag *b = &g->bags[g->active]; g->active = -1;
-    int knocked_in[GAME_MAX_BAGS], knocked_off[GAME_MAX_BAGS], nin = 0, noff = 0;
+    int nin = 0, noff = 0;
+    char in_list[64] = "", off_list[64] = "";
     for (int i = 0; i < g->nbefore; i++) {
         BagState s = g->before[i], now = g->bags[i].state;
-        if (s != BAG_IN && now == BAG_IN) knocked_in[nin++] = i;
-        if (s == BAG_BOARD && !bag_on_deck(&g->bags[i]) && now != BAG_IN) knocked_off[noff++] = i;
+        if (s != BAG_IN && now == BAG_IN) { nin++; team_list_add(in_list, sizeof in_list, g->bags[i].team); }
+        if (s == BAG_BOARD && !bag_on_deck(&g->bags[i]) && now != BAG_IN) { noff++; team_list_add(off_list, sizeof off_list, g->bags[i].team); }
     }
     Vec3 hole = byc_board.hole_world; hole.y += 0.1;
     if (b->state == BAG_IN || nin) fx(g, FX_CELEBRATE, hole, 0);
@@ -286,16 +331,13 @@ static void after_throw(Game *g) {
     }
     else if (b->dead) say(g, "GROUNDER", "GRASS FIRST - NO SCORE", 1300);
     else say(g, b->off_board ? "OFF THE BOARD" : "MISS", "0", 1100);
-    char list[64];
     if (nin) {
-        team_list(list, sizeof list, g, knocked_in, nin);
         Timer *t = timer_add(g, T_SAY_LATER, 900);
-        if (t) { copy(t->big, sizeof t->big, "KNOCKED IN!"); snprintf(t->small, sizeof t->small, "%.36s BAG +3", list); t->say_ms = 1400; }
+        if (t) { copy(t->big, sizeof t->big, "KNOCKED IN!"); snprintf(t->small, sizeof t->small, "%.36s BAG +3", in_list); t->say_ms = 1400; }
         fx(g, FX_HOLE_BURST, hole, 0);
     } else if (noff) {
-        team_list(list, sizeof list, g, knocked_off, noff);
         Timer *t = timer_add(g, T_SAY_LATER, 900);
-        if (t) { copy(t->big, sizeof t->big, "KNOCKED OFF!"); snprintf(t->small, sizeof t->small, "%.36s BAG", list); t->say_ms = 1400; }
+        if (t) { copy(t->big, sizeof t->big, "KNOCKED OFF!"); snprintf(t->small, sizeof t->small, "%.36s BAG", off_list); t->say_ms = 1400; }
     }
     if (g->practice) { g->practice_throws++; g->practice_in += b->state == BAG_IN; g->practice_on += b->state == BAG_BOARD; }
     g->k++; g->phase = PH_WAIT;
@@ -340,10 +382,17 @@ static void champion(Game *g) {
     Vec3 hole = byc_board.hole_world; fx(g, FX_HOLE_BURST, hole, 0);
 }
 
+static void next_turn(Game *g);
 void game_clear_board(Game *g) {
-    if (!g->practice) return;
+    if (!g->practice || g->phase == PH_MENU) return;
+    /* Practice is always WAIT, AIM or FLYING. Whatever was in progress (a bag in the air, the
+     * pause before the next bag, a pending KNOCKED IN! callout) belonged to the cleared board, so
+     * drop it and hand the player a fresh bag. Throw/in/on stats are kept. */
     clear_bags(g);
-    if (g->phase == PH_AIM && g->input) input_next_turn(g->input, 0);
+    for (int i = 0; i < 8; i++) if (g->timers[i].kind == T_NEXT_TURN || g->timers[i].kind == T_SAY_LATER) g->timers[i].kind = T_NONE;
+    g->arrow_on = g->arrow_live = false;
+    g->phase = PH_WAIT;
+    next_turn(g);
 }
 
 /* ---------------- settings / calibration ---------------- */
@@ -372,7 +421,11 @@ static void end_setpower(Game *g) {
 
 /* ---------------- menu actions ---------------- */
 static void resume_play(Game *g) {
-    g->ui = UI_NONE; g->paused = false; g->resume_pending = true;
+    g->paused = false; g->resume_pending = true;
+    /* HOME on a round summary / FINAL / tournament result goes back to that screen: it holds the
+     * only NEXT ROUND / NEW MATCH / NEXT UP button. */
+    if (g->pause_return != UI_NONE && g->phase != PH_MENU) { UiScreen back_to = g->pause_return; g->pause_return = UI_NONE; open_ui(g, back_to); return; }
+    g->ui = UI_NONE; g->pause_return = UI_NONE;
     /* SET POWER from the pause menu may have moved the input layer to another slot. */
     int t = game_thrower(g);
     if (g->input && g->phase == PH_AIM && game_is_human(g, t)) input_next_turn(g->input, (unsigned)t);
@@ -380,6 +433,8 @@ static void resume_play(Game *g) {
 static void pause_game(Game *g) {
     if (g->phase == PH_MENU || g->phase == PH_INTRO || g->phase == PH_CHAMPION) return;
     g->paused = true;
+    g->pause_return = g->ui == UI_SUMMARY || g->ui == UI_CAREER_RESULT ? g->ui : UI_NONE;
+    g->arrow_on = g->arrow_live = false;
     open_ui(g, UI_PAUSE);
 }
 
@@ -401,7 +456,13 @@ void game_menu_select(Game *g, MenuItemId id) {
         break;
     case MI_RESUME: resume_play(g); break;
     case MI_CLEAR_BOARD: game_clear_board(g); resume_play(g); break;
-    case MI_MAIN_MENU: show_menu(g); break;
+    case MI_MAIN_MENU: g->pause_return = UI_NONE; show_menu(g); break;
+    case MI_MUSIC: g->music_return = ui; open_ui(g, UI_MUSIC); break;
+    case MI_MUSIC_TOGGLE: if (g->music) { music_toggle(g->music); menu_values(g); } break;
+    case MI_MUSIC_NEXT: if (g->music) { music_next(g->music); menu_values(g); } break;
+    case MI_MUSIC_FOLDER: if (g->music) { music_choose_folder(g->music); menu_values(g); } break;
+    case MI_MUSIC_REFRESH: if (g->music) { music_refresh(g->music); menu_values(g); } break;
+    case MI_MUSIC_VOLUME: break;
     case MI_HAND_RED: case MI_HAND_BLUE: {
         int s = id == MI_HAND_RED ? 0 : 1;
         SwingProfile p = g->input ? g->input->slots[s].profile : g->save.profile[s];
@@ -422,6 +483,7 @@ void game_menu_select(Game *g, MenuItemId id) {
         break;
     case MI_BACK:
         if (ui == UI_SETTINGS) open_ui(g, g->settings_return == UI_PAUSE ? UI_PAUSE : UI_TITLE);
+        else if (ui == UI_MUSIC) open_ui(g, g->music_return == UI_PAUSE ? UI_PAUSE : UI_TITLE);
         break;
     case MI_CONTINUE: if (g->fight >= BYC_RIVALS) champion(g); else career_intro(g); break;
     case MI_NEW_CAREER: open_ui(g, UI_CONFIRM_NEW_CAREER); break;
@@ -454,11 +516,12 @@ static void adjust(Game *g, int dir) {
         p.spin_strength = clampd(round((p.spin_strength + dir * 0.1) * 10) / 10, 0, 1);
         set_profile(g, s, p);
     } else if (id == MI_WIND) game_menu_select(g, MI_WIND);
+    else if (id == MI_MUSIC_VOLUME && g->music) { music_volume_step(g->music, dir); menu_values(g); }
 }
 
 static void back(Game *g) {
     switch (g->ui) {
-    case UI_SETTINGS: game_menu_select(g, MI_BACK); break;
+    case UI_SETTINGS: case UI_MUSIC: game_menu_select(g, MI_BACK); break;
     case UI_PAUSE: resume_play(g); break;
     case UI_CAREER_MAP: show_menu(g); break;
     case UI_INTRO: case UI_CHAMPION: career_map(g); break;
@@ -494,9 +557,11 @@ void game_input(Game *g, const InputEvent *e) {
         return;
     case INPUT_PAUSE:
         if (g->ui == UI_SETPOWER) { end_setpower(g); return; }
-        if (g->ui == UI_NONE) pause_game(g);
+        if (g->ui == UI_NONE || g->ui == UI_SUMMARY || g->ui == UI_CAREER_RESULT) pause_game(g);
         else if (g->ui == UI_PAUSE) resume_play(g);
         else back(g);
+        /* HOME always pauses the input layer; when no pause menu opened, release it again. */
+        if (g->ui != UI_PAUSE) g->resume_pending = true;
         return;
     default: break;
     }
@@ -508,7 +573,7 @@ void game_input(Game *g, const InputEvent *e) {
         case INPUT_NAV_DOWN: if (m->count) { m->sel = (m->sel + 1) % m->count; menu_focus_effects(g); } break;
         case INPUT_NAV_LEFT: case INPUT_ADJUST_MINUS: adjust(g, -1); break;
         case INPUT_NAV_RIGHT: case INPUT_ADJUST_PLUS: adjust(g, 1); break;
-        case INPUT_CONFIRM: if (m->count && g->ui != UI_SETPOWER) game_menu_select(g, m->items[m->sel].id); break;
+        case INPUT_CONFIRM: if (m->count && g->ui != UI_SETPOWER && !m->items[m->sel].disabled) game_menu_select(g, m->items[m->sel].id); break;
         case INPUT_BACK: if (g->ui != UI_SETPOWER) back(g); break;
         default: break;
         }
@@ -569,7 +634,16 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
             int t = game_thrower(g);
             g->position[t] = input_stance(in, (unsigned)t, now_ms);
             g->aim = in->slots[t].aim;  /* fine trim preview (− / +) */
-        }
+            /* 1.0.7 host.preview: while the forward swing is in progress the one arrow follows the
+             * launch direction and power a release would give; a swing that ends without a throw
+             * hides it again (finishStroke). */
+            double power, aim;
+            if (!g->paused && !g->connect_prompt && !in->calibrating && swing_preview(&in->detector, &in->slots[t].profile, &power, &aim)) {
+                g->arrow_on = g->arrow_live = true; g->arrow_age_ms = 0;
+                g->arrow_power = physical_power(g->win, t, g->side[t], g->arc, clampd(power, 0, 1));
+                g->arrow_yaw = game_launch_yaw(g, t, aim); g->arrow_x = game_release_x(g, t);
+            } else if (g->arrow_live) g->arrow_on = g->arrow_live = false;
+        } else if (g->arrow_live) g->arrow_on = g->arrow_live = false;
     }
 
     bool frozen = g->paused || g->connect_prompt || (g->ui == UI_PAUSE) || (g->ui == UI_CONFIRM_QUIT && g->phase != PH_MENU);
@@ -606,16 +680,33 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
         }
     }
     /* scoreboard recount happens only when every bag rests (arcade controller) */
-    if (!g->nbags) g->live = (Lie){{0, 0}, {0, 0}, {0, 0}};
-    else if (bags_settled(g->bags, g->nbags)) g->live = game_lie(g);
+    if (bags_settled(g->bags, g->nbags)) g->live = game_lie(g);
 
-    if (g->last_shot) { g->last_shot_age_ms += dt * 1000; if (g->last_shot_age_ms > LAST_SHOT_MS) g->last_shot = false; }
-    if (g->arrow_on) { g->arrow_age_ms += dt * 1000; if (g->arrow_age_ms > 2400) g->arrow_on = false; }
+    if (g->arrow_on && !g->arrow_live && !frozen) {
+        g->arrow_age_ms += dt * 1000;
+        if (g->arrow_age_ms > ARROW_HOLD_MS + ARROW_FADE_MS) g->arrow_on = false;
+    }
+    if (g->music) {
+        music_update(g->music);
+        if (g->music->dirty) { g->music->dirty = false; mark_save(g); if (g->ui == UI_MUSIC) menu_values(g); }
+    }
     if (g->hold_still_ms > 0) g->hold_still_ms -= dt * 1000;
 }
 
+double game_launch_yaw(const Game *g, int team, double aim) {
+    (void)g;
+    return base_yaw(RX[team]) + clampd(aim, -BYC_AIM_MAX, BYC_AIM_MAX);
+}
+void game_set_music(Game *g, Music *music) { g->music = music; }
+void game_free(Game *g) {
+    free(g->bags); free(g->before);
+    g->bags = NULL; g->before = NULL; g->bag_cap = g->nbags = g->nbefore = 0; g->active = -1;
+}
 void game_init(Game *g, Input *input, const WinTable *win, uint32_t seed, const SaveData *loaded, bool save_ok) {
+    Bag *bags = g->bags; BagState *before = g->before; int cap = g->bag_cap;   /* keep the buffers */
     memset(g, 0, sizeof(*g));
+    g->bags = bags; g->before = before; g->bag_cap = cap;
+    reserve_bag(g);   /* first block; later growth happens between throws */
     g->input = input; g->win = win; g->active = -1;
     rng_seed(&g->rng, seed);
     if (loaded) g->save = *loaded; else save_defaults(&g->save);

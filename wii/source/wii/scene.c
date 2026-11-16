@@ -1,4 +1,7 @@
 #include "scene.h"
+#include "../core/wind_streaks.h"
+#include "party_draw.h"
+#include <ogc/lwp_watchdog.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -215,6 +218,7 @@ static void build_yard(void) {
     const float legH = (float)BYC_BACK_H + .02f;
     for (int s = -1; s <= 1; s += 2)
         voxel(.05f, legH, .05f, skirt, s * (W / 2 - .05f), legH / 2 - .05f, (float)(BYC_BOARD_Z - BYC_L * cos(BYC_TH) + .08));
+    party_draw_static();   /* keg body, beer pong table, perimeter cacti (party.mjs) */
     dl_end(&yard);
 }
 
@@ -233,6 +237,9 @@ typedef struct { int index, count; float elapsed; bool active; } DogParty;
 static DogParty dog_party = {-1, 0, 0, false};
 static float dog_head_y_rot;
 static double scene_time;
+static WindStreaks streaks;
+static Party party;
+static V3 dog_mouth = {2.3f, .5f, -8.9f};
 
 void scene_init(void) {
     physics_init();
@@ -244,6 +251,8 @@ void scene_init(void) {
     paint_team1(0x2f5fe8, true);
     paint_portraits();
     build_yard();
+    wind_streaks_init(&streaks);
+    party_init(&party, (uint32_t)gettime());   /* Math.random in the arcade: any seed */
     for (int i = 0; i < 5; i++) smoke_t[i] = i / 5.0f;
 }
 
@@ -288,6 +297,8 @@ void scene_update(const Game *g, double dt) {
         c->p.x += c->v.x * dt; c->p.y += c->v.y * dt; c->p.z += c->v.z * dt;
     }
     for (int i = 0; i < 5; i++) smoke_t[i] = fmodf(smoke_t[i] + dt * .25f, 1);
+    party_update(&party, dt);
+    wind_streaks_update(&streaks, dt, &g->wind, g->phase != PH_MENU && g->phase != PH_INTRO && g->phase != PH_CHAMPION);
     if (dog_party.active) { dog_party.elapsed = fminf(2.2f, dog_party.elapsed + dt); if (dog_party.elapsed >= 2.2f) dog_party.active = false; }
     /* flight trail: three afterimages sampled every 60 ms */
     for (int i = 0; i < 3; i++) trail[i].life = fmaxf(0, trail[i].life - dt);
@@ -385,7 +396,7 @@ static void draw_bags(const Game *g) {
     }
 }
 static void draw_held(const Game *g, float dip) {
-    if (!(g->phase == PH_AIM || g->phase == PH_CPU) || g->ui == UI_BOARD_FULL) return;
+    if (!(g->phase == PH_AIM || g->phase == PH_CPU)) return;
     int t = game_thrower(g);
     double rx = game_release_x(g, t);
     double yaw = (game_is_human(g, t) ? base_yaw(0) : base_yaw(rx)) + g->aim;
@@ -522,6 +533,12 @@ static void draw_dog(const Game *g) {
         else if (dog_party.index == 1) { float turn = t * t * (3 - 2 * t); ry += turn * (float)M_PI * 2; gp.y = e * .15f; head_rz = sinf(t * (float)M_PI * 4) * .16f * e; }
         else { float bounce = sinf(t * (float)M_PI * 4); rx = -.22f * e; gp.y = fmaxf(0, bounce) * .12f * e; head_y -= .08f * e; head_rz = sinf(t * (float)M_PI * 6) * .22f * e; sy *= 1 - .1f * e; }
     }
+    float head_ry = dog_head_y_rot;
+    if (party.toss && !dog_party.active) {   /* party.mjs updateCook: watch the burger, wag, catch */
+        head_ry = (float)party_dog_head_yaw((Vec3){gp.x, gp.y, gp.z}, ry);
+        head_rz = -sinf((float)(party.toss_progress * M_PI)) * .18f;
+        tail_y = sinf((float)party.time * 24);
+    }
     M3 R = m3_euler_xyz(rx, ry, rz), S = {{{.85f, 0, 0}, {0, sy, 0}, {0, 0, .85f}}}, M = m3_mul(&R, &S);
     const unsigned fur = 0xe89a45, cream = 0xfff1d6, dark = 0x2b1a2e, pink = 0xff8fb6;
 #define DOGBOX(bw, bh, bd, col, bx, by, bz, MM, OFF) dog_box(bw, bh, bd, col, bx, by, bz, &MM, OFF)
@@ -530,7 +547,8 @@ static void draw_dog(const Game *g) {
     for (int s = -1; s <= 1; s += 2) { DOGBOX(.08f, .2f, .08f, fur, s * .1f, .1f, -.15f, M, gp); DOGBOX(.09f, .04f, .1f, cream, s * .1f, .02f, -.18f, M, gp); }
     DOGBOX(.14f, .12f, .3f, fur, -.18f, .08f, .15f, M, gp); DOGBOX(.14f, .12f, .3f, fur, .18f, .08f, .15f, M, gp);
     V3 hp = m3_apply(&M, (V3){0, head_y, -.15f}); hp = (V3){gp.x + hp.x, gp.y + hp.y, gp.z + hp.z};
-    M3 HR = m3_euler_xyz(head_rx, dog_head_y_rot, head_rz), H = m3_mul(&M, &HR);
+    M3 HR = m3_euler_xyz(head_rx, head_ry, head_rz), H = m3_mul(&M, &HR);
+    { V3 m = m3_apply(&H, (V3){0, -.06f, -.22f}); dog_mouth = (V3){hp.x + m.x, hp.y + m.y, hp.z + m.z}; }
     DOGBOX(.3f, .26f, .26f, fur, 0, 0, 0, H, hp); DOGBOX(.16f, .1f, .12f, cream, 0, -.05f, -.17f, H, hp);
     DOGBOX(.06f, .05f, .04f, dark, 0, -.01f, -.24f, H, hp);
     DOGBOX(.05f, .05f, .02f, dark, -.08f, .05f, -.135f, H, hp); DOGBOX(.05f, .05f, .02f, dark, .08f, .05f, -.135f, H, hp);
@@ -566,9 +584,25 @@ static void draw_trail(const Game *g) {
     gfx_blend(false); gfx_depth(true, true);
 }
 
+/* wind-streaks.js: 24 faint two-dash gusts (LineSegments, #e5efdc, no depth write) */
+static void draw_wind_streaks(void) {
+    if (!streaks.visible || !streaks.active) return;
+    Rgba c = rgba(0xe5efdc, (u8)(streaks.opacity * 255 + .5));
+    tex_bind(NULL);
+    gfx_blend(true); gfx_depth(true, false);
+    GX_SetLineWidth(8, GX_TO_ZERO);
+    GX_Begin(GX_LINES, GX_VTXFMT0, (u16)(streaks.active * STREAK_VERTS));
+    for (int i = 0; i < streaks.active * STREAK_VERTS; i++) {
+        GX_Position3f32((float)streaks.verts[i].x, (float)streaks.verts[i].y, (float)streaks.verts[i].z);
+        GX_Color4u8(c.r, c.g, c.b, c.a);
+    }
+    GX_End();
+    gfx_blend(false); gfx_depth(true, true);
+}
+
 void scene_draw(const Game *g, float held_dip) {
-    gfx_perspective(18, gfx_aspect, .1f, 200);   /* effective landscape FOV 18 (resize(): 18 + 6*portrait) */
-    gfx_look((V3){0, 3.6f, 8}, (V3){0, .5f, -8.7f});
+    gfx_perspective((float)VIEW_FOV_DEG, gfx_aspect, .1f, 200);   /* effective landscape FOV 18 (resize(): 18 + 6*portrait) */
+    gfx_look((V3){(float)VIEW_EYE_X, (float)VIEW_EYE_Y, (float)VIEW_EYE_Z}, (V3){(float)VIEW_AT_X, (float)VIEW_AT_Y, (float)VIEW_AT_Z});
     gfx_fog(true);
     gfx_depth(true, true); gfx_blend(false);
     draw_ground(30, 24);
@@ -576,10 +610,12 @@ void scene_draw(const Game *g, float held_dip) {
     draw_deck();
     draw_hay_and_pennant(g);
     draw_dog(g);
+    party_draw(&party, dog_mouth);
     draw_bags(g);
     draw_held(g, held_dip);
     draw_particles();
     draw_trail(g);
+    draw_wind_streaks();
 }
 
 void scene_draw_board_view(const Game *g, int x, int y, int w, int h) {
@@ -610,8 +646,8 @@ void scene_draw_board_view(const Game *g, int x, int y, int w, int h) {
     draw_bags(g);
     gfx_full_viewport();
     /* restore the main camera so later projections (shot arrow) use it */
-    gfx_perspective(18, gfx_aspect, .1f, 200);
-    gfx_look((V3){0, 3.6f, 8}, (V3){0, .5f, -8.7f});
+    gfx_perspective((float)VIEW_FOV_DEG, gfx_aspect, .1f, 200);
+    gfx_look((V3){(float)VIEW_EYE_X, (float)VIEW_EYE_Y, (float)VIEW_EYE_Z}, (V3){(float)VIEW_AT_X, (float)VIEW_AT_Y, (float)VIEW_AT_Z});
 }
 
 bool scene_bag_screen(const Game *g, float *sx, float *sy) {
