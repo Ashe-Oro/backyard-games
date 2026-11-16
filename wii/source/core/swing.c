@@ -92,6 +92,14 @@ bool swing_calm_roll(const Swing *s, double *roll) {
     *roll=atan2(mean.x,mean.z)*180/SWING_PI;
     return true;
 }
+bool swing_preview(const Swing *s, const SwingProfile *profile, double *power, double *aim) {
+    if (!swing_armed(s) || !s->confirmed || !(s->in_lobe || s->lobe_valid)) return false;
+    double peak = fmax(s->peak, s->lobe_peak);
+    if (!(peak > 0)) return false;
+    *power = s->lobe_clipped ? 1 : swing_power(peak, profile->full_speed);
+    *aim = s->locked_aim;
+    return true;
+}
 static SwingResult finish(Swing *s, const SwingProfile *profile, SwingRelease cause) {
     SwingResult r = {0};
     uint64_t reference_ms=cause==SWING_B_UP ? s->release_ms : s->last_ms;

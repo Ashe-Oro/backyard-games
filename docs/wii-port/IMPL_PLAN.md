@@ -136,7 +136,7 @@ Includes
 - Track B board + bag rendering, held bag at the release point, flight with flat spin (`AIR_SPIN_RATE`), hole shrink, board dust and hole confetti.
 - Track A detector (SPEC §4.4 candidate) driving `launch()`: power from the peak windowed speed proxy, aim from lateral forward-swing acceleration and spin from lateral motion/release twist (neutral grip captured at a **stable** B press; both mirrored for LEFT HAND and frozen at release), auto-release at `v ≤ 0.6·peak_v` with follow-through confirmation; action-legality rules (armed inputs ignored).
 - Throw height (D-pad ↑/↓) and SLICK/STICKY (A) to exercise all six WIN combinations; stance step (D-pad ←/→); reset bag (2).
-- Power gauge with the 1.0.3 color ramp and the 3 s last-shot linger; aim arrow.
+- One combined direction + power arrow (arcade 1.0.7, owner directive; no separate power gauge): 1.0.3 color ramp, live during the forward swing, 2 s hold after release.
 - Callouts: CORNHOLE! / HANGER! / ON THE BOARD / GROUNDER / OFF THE BOARD / MISS.
 - Each throw auto-clears after 2 s (practice-style). Dev overlay toggle. Swing-trace capture still available.
 
@@ -194,7 +194,7 @@ Acceptance
 **Goal:** the 1.0.3 look within **both** budgets: Wii hardware and Dolphin Android/Mali at 1× (SPEC §3, §3.4).
 
 Tasks
-- Exporter: `createBackyard(scene, {farZ:-13, nearZ:4, propZ:-7})` and `createParty(scene)` (keg, table, people, chess set, cacti), hay bales, smoke puffs, string lanterns. Codex's headless count before culling: 258 mesh nodes, 746 instances, 11,114 triangles, 72 material objects (board, bags, dog and HUD extra). Static parts merge by material; **animated parts keep object identity and pivots** in the manifest for P6. Hidden-face removal only on static merged geometry (SPEC §2.9).
+- Exporter: `createBackyard(scene, {farZ:-13, nearZ:4, propZ:-7})` and `createParty(scene)` (keg, table, people, cacti), hay bales, smoke puffs, string lanterns. Codex's headless count before culling: 258 mesh nodes, 746 instances, 11,114 triangles, 72 material objects (board, bags, dog and HUD extra). Static parts merge by material; **animated parts keep object identity and pivots** in the manifest for P6. Hidden-face removal only on static merged geometry (SPEC §2.9).
 - Lighting bake into vertex colors (hemisphere `#d6ecff`/`#7a8f3a` + sun `#ffe0b0` from `(-7,12,5)` toward `(0,0,-5)`), linear lighting written as sRGB, plus baked contact shadows. Tune against **fresh 1.0.3 screenshots** at 4:3 and 16:9 (the older preview stills predate 1.0.1 and still show the removed cooler). Collapse color-only material differences into vertex colors to stay ≤ 12 TEV/blend configurations.
 - Sky sphere (vertex colors, inside-facing, no fog, no depth write), clouds, fog.
 - Dynamic: dog + `DogCelebration` (hops/spin/bow) and head tracking, blob shadows for bags/dog/NPCs, pennant animation (`animatePennant`), wind streaks (24 lines), confetti/dust/trail pools, flight trail.
@@ -259,7 +259,7 @@ Acceptance
 **Goal:** finish parity polish and ship to HBC and the Kinhank.
 
 Tasks
-- Port `party.mjs` animations (**required for release** unless Ashe descopes them, SPEC §9 Q9): keg pours (pump/tap/stream), the five scripted beer pong matches (`pongCatalog`, `pongTiming`, `buildPongScript`, `selectNext` non-repeat), chess opening with lifted pieces, cook flipping food and the dog burger toss. All of it pauses with the game clock and uses the pivots kept by the P3 export.
+- Port `party.mjs` animations (**required for release** unless Ashe descopes them, SPEC §9 Q9): keg pours (pump/tap/stream), the five scripted beer pong matches (`pongCatalog`, `pongTiming`, `buildPongScript`, `selectNext` non-repeat), cook flipping food and the dog burger toss. All of it pauses with the game clock and uses the pivots kept by the P3 export.
 - Video: NTSC 480p/480i at 60 Hz only (no PAL/EURGB60), 16:9 anamorphic when the console is set to widescreen, safe-area margins for the HUD.
 - Final `icon.png` (128×48, from `arcade/media/backyard-cornhole-cover.png` art), `meta.xml` with version/date, license files (font OFL, SFX CC0, apploader provenance; Three.js MIT is not shipped since no Three.js code is in the `.dol`).
 - **`make release` (new target)** produces, in `wii/dist/`: `BackyardCornhole-Wii-HBC-vX.Y.Z.zip` (`apps/backyardcornhole/{boot.dol,meta.xml,icon.png}`), `BackyardCornhole-BYCEAO-vX.Y.Z.iso`, `BYCEAO.ini`, `INSTALL-KINHANK.md` (with Retro's recorded 5.0-19870 paths), licenses, and `SHA256SUMS`. It verifies that the `main.dol` extracted from the ISO is byte-identical to `boot.dol`, and that `VERSION` in the Makefile, `meta.xml`, the in-game footer, `wii/CHANGELOG.md` and the tag (`wii-vX.Y.Z`, REPO_LAYOUT.md) all agree.

@@ -1,1 +1,1 @@
-Wii platform layer. `input_wpad.c` is the single owner of the P1/P2 WPAD report queues; see [INPUT.md](../../INPUT.md). GX, ASND, libfat and the game loop remain separate work.
+Wii platform layer: `gfx.c` (NTSC video, GX state, RGB5A3 textures, display lists, 2D + font), `scene.c` (yard, board, bags, dog, particles, board-view inset), `hud.c` (HUD and menus), `main.c` (loop, libfat saves, rumble, exits, OSReport logging), `input_wpad.c` (from wii/input: sole owner of the WPAD queues; see [INPUT.md](../../INPUT.md)). No ASND audio yet.

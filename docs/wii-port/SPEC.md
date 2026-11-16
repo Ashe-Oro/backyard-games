@@ -33,7 +33,7 @@ arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/
   cornhole/wind-streaks.js
   arcade/trackball.mjs    ← speed-based power model (SPEED_WINDOW_MS = 80, powerSpeed 6048)
   arcade/controller.js    ← arcade menus, scoreboard, power gauge, legends, button routing
-  arcade/party.mjs        ← background NPCs: keg, beer pong match scripts, chess, cook
+  arcade/party.mjs        ← background NPCs: keg, beer pong match scripts, cook
   arcade/board-view.mjs   ← live board close-up (second camera)
   arcade/dog-celebration.mjs, arcade/legend.mjs
   yard-games/backyard.js  ← voxel scenery (fences, trees, lanterns, grill)
@@ -115,7 +115,7 @@ sd:/apps/backyardcornhole/
   <version>0.1.0</version>
   <release_date>20270101000000</release_date>
   <short_description>Toss bags. First to 21.</short_description>
-  <long_description>Backyard cornhole for the Wii Remote. Swing to toss, point to aim, twist to curl. Practice, 2 Player, or take on eight tournament rivals.</long_description>
+  <long_description>Backyard cornhole for the Wii Remote, Wii Sports style. Hold B, swing back, swing through and let go. Swing left or right to aim, twist to curl. Practice, 2 Player, or take on eight tournament rivals.</long_description>
 </app>
 ```
 
@@ -244,13 +244,13 @@ The WIND setting (CALM / ON) persists in `save.dat`.
 | Wind streaks: 24 `LineSegments` | `GX_LINES` with alpha, same update math (separate seed) |
 | Confetti 70, board dust 14, flight trail 3, smoke 5 | Pooled unit cubes, unlit, alpha via TEV |
 | Board View PIP (`board-view.mjs`: camera fov 30, near .05, far 30, at `(0, 2.5, BOARD_Z+.75)` looking at `(0, .16, BOARD_Z−.55)`; the original clears color **and depth** in the inset and restores state) | Second pass after the main scene, before the HUD: set viewport + scissor to the inset → **reset the inset's color and depth** (draw a full-inset quad with the background color, depth compare `GX_ALWAYS` and depth write at far Z; or `GX_SetCopyClear`-equivalent behavior inside the scissor) → set the PIP projection/view → draw the culled list (board, bags, ground patch) → **restore** projection, viewport, scissor, depth, blend and fog state for the HUD. **No** render-to-texture/EFB copy (§3.4). Drawn every frame (no skipped frames, since skipping makes the inset disappear) |
-| Power arrow (SVG) + gauge colors (`shotPowerColor`) | 2D quads with the same 5-stop color ramp `#8fc6ee → #a7efb1 → #ffe16b → #f6a35c → #f1755f` |
-| Party NPCs (`party.mjs`): keg, hose, 6 people, scripted beer pong, chess, cook, cacti | Static parts export as merged meshes. Animated parts keep **object identity and pivots** in the export manifest (§2.9) so P6 can animate them. Static poses are an interim milestone state; the release requires the animations unless Ashe descopes them (§9). Scripts (`pongCatalog`, `pongTiming`, `buildPongScript`) are pure data and port directly |
+| Combined direction + power arrow (arcade 1.0.7; owner directive: **no separate power meter**) | 2D quads from `core/arrow.c`: origin at the bag, direction = the launch bearing projected through the main camera, shaft length = power (15–70 px) on a faint full-power track, 5-stop color ramp `#8fc6ee → #a7efb1 → #ffe16b → #f6a35c → #f1755f`. Live during the forward swing, 2 s hold after release, 0.4 s fade |
+| Party NPCs (`party.mjs`): keg, hose, 5 people, scripted beer pong, cook, cacti (1.0.3 has no chess set) | Static parts export as merged meshes. Animated parts keep **object identity and pivots** in the export manifest (§2.9) so P6 can animate them. Static poses are an interim milestone state; the release requires the animations unless Ashe descopes them (§9). Scripts (`pongCatalog`, `pongTiming`, `buildPongScript`) are pure data and port directly |
 | Dog + `DogCelebration` (hops/spin/bow) | Port: hierarchical boxes, same pose math |
 
 ### 2.6 UI/HUD — Rewrite
 
-All HUD is DOM/CSS today: scoreboard with pips, turn banner, callouts, wind panel, power gauge with 3 s last-shot linger, key legend, round summary, tournament map/intro/result/champion, menus. Rebuild it as 2D quads + bitmap text at 640×480 using the existing teal/cream/gold palette (`#173f3d`, `#fff1cf`, `#ffe16b`, red `#f1755f`, blue `#8fc6ee`).
+All HUD is DOM/CSS today: scoreboard with pips, turn banner, callouts, wind panel, the combined direction + power arrow (arcade 1.0.7; the 1.0.3 power gauge and LAST SHOT linger are gone by owner directive), key legend, round summary, tournament map/intro/result/champion, menus. Rebuild it as 2D quads + bitmap text at 640×480 using the existing teal/cream/gold palette (`#173f3d`, `#fff1cf`, `#ffe16b`, red `#f1755f`, blue `#8fc6ee`).
 
 - Font: the game uses **Press Start 2P** (OFL 1.1, Reserved Font Name "Press Start 2P", `vendor/FONT-LICENSE.txt`). An 8×8 bitmap atlas works at 1×/2×/3× on 480p. Ship the license text. The converted font must not be *called* "Press Start 2P" in credits or files; describe it as "based on Press Start 2P" with the license included.
 - **Glyph repertoire** (fixed, checked by a build-time string-table scan): printable ASCII plus custom glyphs `▶ ◀ · − × ✚ ← → ↑ ↓ ↻ ↺` and Wiimote button icons (A, B, 1, 2, −, +, HOME, D-pad). Typographic characters in source strings (`’ “ ” –`, e.g. "Slidin’ Steve", "CPU’S THROW") are mapped to ASCII at export. Any other character fails the build. **480i readability:** in-play text renders at ≥ 2× (16 px glyphs); 1× is only for the dev overlay.
@@ -261,7 +261,7 @@ All HUD is DOM/CSS today: scoreboard with pips, turn banner, callouts, wind pane
 1.0.3 has **no sound effects**; its only audio is a user-supplied music playlist read from disk. On Wii:
 - v1: a short SFX set (bag thump on wood, grass thud, hole swish, crowd cheer, menu tick) from CC0 sources already shortlisted in `arcade/AUDIO.md` (Kenney Impact Sounds). Keep each source's license file. ~2–4 MB of 32 kHz mono.
 - Wiimote rumble: short pulse on board hit, longer on CORNHOLE!. The Wiimote speaker is optional and not in v1.
-- Music: **drop for v1.** Optional later: OGG from `sd:/apps/backyardcornhole/music/` via Tremor. Never bundle commercial music.
+- Music: **in v1** (arcade parity, review WG-4). MUSIC screen with the arcade's controls (play/pause, next track, choose folder, refresh, volume, back). Plays the player's own MP3s from `sd:/apps/backyardcornhole/music/` (or a chosen SD folder) through libogc's libmad player on ASND. Never bundle commercial music.
 
 ### 2.8 Saves — Rewrite
 
@@ -317,13 +317,13 @@ Two budgets apply, and both must pass:
 
 All Broadway/Kinhank timing figures in this section are **budgets to verify, not measurements**. P0/P1 adds real profiling on both targets (frame time on the Wii; Dolphin speed % on the Kinhank).
 
-**Practice bag retention:** 1.0.3 keeps every practice bag until CLEAR BOARD. The Wii keeps that behavior as long as the 48-bag benchmark holds 60 fps on both targets. If it doesn't, the fallback is a **gameplay change that needs Ashe's approval** (§9): for example, an automatic "CLEAR BOARD?" prompt at the measured limit. Bags are never silently dropped.
+**Practice bag retention:** 1.0.3 keeps every practice bag until CLEAR BOARD. The Wii keeps that behavior as long as the 48-bag benchmark holds 60 fps on both targets. If it doesn't, the fallback is a **gameplay change that needs Ashe's approval** (§9): for example, an automatic "CLEAR BOARD?" prompt at the measured limit. Bags are never silently dropped. **As built:** there is no limit and no prompt; bag storage grows on demand, and only list entries that have already left the world (holed bags, removed grounders) are compacted between throws, with their points banked so the practice readout is unchanged.
 | Input + swing detector | ≤ 0.3 ms |
 | HUD | ≤ 1 ms CPU |
 
 ### 3.3 Scene budget and the scoped subset
 
-The 1.0.3 yard is all low-poly boxes: fences (~250 slats), 8 trees, hedges, stones, string lanterns, grill, 6 NPCs (~20 cubes each), keg with an 18-segment hose, beer pong table and cups, chess set, hay bales, dog, sky sphere. Codex's headless build of `createBackyard` + `createParty` (snapshot, before culling) measured **258 mesh nodes, 746 mesh instances, 11,114 triangles, 72 material objects**. Board, bags, dog, HUD and inline props come on top. 72 material objects is **not** 72 shader configurations: most differ only in color, which goes into vertex colors in the bake. That leaves the triangle budget comfortable, while submission count and distinct material setups are the real constraints (§3.4).
+The 1.0.3 yard is all low-poly boxes: fences (~250 slats), 8 trees, hedges, stones, string lanterns, grill, 6 NPCs (~20 cubes each), keg with an 18-segment hose, beer pong table and cups, hay bales, dog, sky sphere. Codex's headless build of `createBackyard` + `createParty` (snapshot, before culling) measured **258 mesh nodes, 746 mesh instances, 11,114 triangles, 72 material objects**. Board, bags, dog, HUD and inline props come on top. 72 material objects is **not** 72 shader configurations: most differ only in color, which goes into vertex colors in the bake. That leaves the triangle budget comfortable, while submission count and distinct material setups are the real constraints (§3.4).
 
 **60 Hz / 60 fps is the acceptance contract on both targets.** If measurements in P3 say otherwise, cut scenery in this order before release: (1) wind streaks, (2) NPC detail (merge limbs), (3) far fence slats become one textured quad, (4) fewer background props. There is no PIP frame-skipping and no 30 fps fallback. A reduced-frame-rate or reduced-content edition would be a separate scope decision by Ashe.
 
@@ -339,7 +339,7 @@ Dolphin's cost isn't the Wii's cost. These rules keep the game cheap to emulate 
 
 ### 3.5 Scoped out
 
-**Cannot reasonably run on Wii, scoped out:** the Three.js/WebGL runtime itself; real-time 1024² shadow maps over the whole scene (blob plus baked shadows instead); DOM/CSS UI; the music folder scanner. Everything that affects play — physics, spin/curl, scoring, CPU AI, wind, tournament — survives intact.
+**Cannot reasonably run on Wii, scoped out:** the Three.js/WebGL runtime itself; real-time 1024² shadow maps over the whole scene (blob plus baked shadows instead); DOM/CSS UI; the cabinet's OS folder dialog (the Wii MUSIC screen cycles SD folders instead). Everything that affects play — physics, spin/curl, scoring, CPU AI, wind, tournament — survives intact.
 
 ---
 
@@ -539,7 +539,7 @@ Required fixtures:
 ## 6. Player-facing copy principles
 
 1. **Short.** Prompts are 1–4 words; new callouts 1–2. ALL CAPS pixel font, like 1.0.3. **Exempt:** the established 1.0.3 callouts (ON THE BOARD, OFF THE BOARD, KNOCKED IN!, etc.), rival names and taunts, and the save warning. They're kept verbatim.
-2. **Verb first.** "HOLD B · SWING · LET GO", "TOSS HARD", "POINT AT SCREEN".
+2. **Verb first.** "HOLD B · SWING · LET GO", "TOSS EASY ×3", "HOLD STILL".
 3. **No tech words on screen.** Never show g, counts, IR, accelerometer, MotionPlus, calibration, sensor bar, Bluetooth or version numbers in play (the version can appear in the pause menu footer).
 4. **Reuse the game's voice.** Keep CORNHOLE!, HANGER!, ON THE BOARD, GROUNDER, KNOCKED IN!, WASH, LET'S TOSS, CORNHOLE KING!, and the rival taunts verbatim.
 5. **No coaching boxes.** 1.0.3 removed post-throw strength/direction coaching; the colored power arrow is the feedback. Keep it that way.
@@ -548,13 +548,13 @@ Required fixtures:
 | Situation | Copy |
 |---|---|
 | First throw hint (help shown) | HOLD B · SWING · LET GO |
-| Help legend | B TOSS · A SURFACE · ✚ HEIGHT/STEP · 2 RESET · SWING TO AIM · TWIST TO CURL |
+| Help legend | `input_help_text`, one item per line: B HOLD, SWING, LET GO · SWING LEFT/RIGHT TO AIM · TWIST TO CURL · D-PAD HEIGHT/STEP · -/+ FINE AIM · A SURFACE · 2 RESET · 1 HELP · HOME PAUSE |
 | Fine aim | AIM: − + |
 | Remote missing (slot-correct) | CONNECT REMOTE 1 / CONNECT REMOTE 2 (+ `A: USE REMOTE 1` for slot 2) |
 | B pressed while moving | HOLD STILL |
 | Practice pause | CLEAR BOARD |
 | Low battery | LOW BATTERY |
-| Power setup (settings) | SET POWER → TOSS HARD → POWER SET! |
+| Power setup (settings) | SET POWER → TOSS EASY ×3 → POWER SET! (TRY AGAIN on a rejected set) |
 | Strap reminder (boot) | STRAP ON! |
 | Save problem | Progress won't save on this device. |
 | Quit | QUIT? YES / NO |
@@ -565,17 +565,18 @@ Required fixtures:
 
 | Feature (1.0.3) | Wii v1 |
 |---|---|
-| Practice with live stats, clear board | Yes (CLEAR BOARD in the practice pause menu; unlimited retained bags, §3.2) |
+| Practice with live stats, clear board | Yes (CLEAR BOARD in the practice pause menu, usable at any moment; no bag limit, §3.2) |
 | 2 Player (same screen) | Yes (2 remotes or pass-and-play) |
 | Tournament: 8 rivals, 4 circuits, wind tiers, saves, champion | Yes |
 | Throw heights SLIDER/NORMAL/KOBE, SLICK/STICKY | Yes |
 | Spin/curl | Yes (wrist roll) |
-| Shared per-round crosswind, pennant, wind panel, streaks | Yes, with the arcade's mode policy: calm by default in Practice/2 Player, WIND setting, circuit wind in Tournament (§2.3); streaks first to cut |
+| Shared per-round crosswind, pennant, wind panel, streaks | Yes, with the arcade's mode policy: calm by default in Practice/2 Player, WIND setting, circuit wind in Tournament (§2.3) |
 | Live board close-up | Yes |
-| Power gauge with 3 s last-shot linger, colored arrow | Yes |
+| Combined direction + power arrow (arcade 1.0.7; no separate power meter) | Yes |
 | Dog + celebrations, confetti | Yes |
-| Party NPCs (keg, beer pong scripts, chess, cook) | Static at interim milestones; **animated for release** (P6) unless Ashe descopes it (§9) |
-| Music playlist, cabinet setup, trackball calibration, Electron packaging | No |
+| Party NPCs (keg, beer pong scripts, cook) | Yes, animated |
+| Music playlist (MUSIC screen, user-supplied files) | Yes (MP3 from the SD card) |
+| Cabinet setup, trackball calibration, Electron packaging | No (cabinet hardware) |
 
 ---
 
@@ -618,11 +619,11 @@ Already answered, so not repeated here: Kinhank model, OS (Android 12), Dolphin 
 
 **Scope and feel**
 9. v1 must-haves: are all three modes (Practice, 2 Player, Tournament) required for the first release? The release plan includes animated party NPCs. OK to descope to static props if time runs short?
-9a. If long practice sessions can't hold 60 fps beyond the measured bag count, may the game offer an automatic "CLEAR BOARD?" prompt? (This changes 1.0.3's behavior.)
+9a. If long practice sessions can't hold 60 fps beyond the measured bag count, may the game offer an automatic "CLEAR BOARD?" prompt? (This changes 1.0.3's behavior. Not implemented: the build keeps every bag, with no limit, until Ashe says otherwise.)
 9b. Wind: keep the arcade's default (calm in Practice/2 Player unless WIND is ON), or default to wind on for the Wii?
 10. Resolved by owner: lateral swing motion and wrist twist at release drive spin (§4.7).
 11. Resolved by owner: swing-direction aim; −/+ remains optional fine trim. No optical tracking.
-12. Music on Wii: drop it, or support OGG files on the SD card later?
+12. Resolved (arcade-parity directive): the MUSIC screen ships, playing the player's own MP3 files from the SD card.
 13. Personal use only, or a public release (e.g., Open Shop Channel)? (Code location is proposed in [REPO_LAYOUT.md](REPO_LAYOUT.md).)
 14. Full-power feel: should the default match the cabinet's (a full-power toss takes real effort), or be easier for couch play?
 
@@ -651,6 +652,28 @@ Source: [REVIEW_CODEX.md](REVIEW_CODEX.md). IDs refer to that review.
 **Rejected / not adopted (mentioned for the record)**
 - **R7, partly:** "the claim that all four tags are on GitHub needs a real remote check." That check *was* done on 2026-11-15 with `git ls-remote --tags origin`, which returned all four annotated tags. We still re-check remote state when the migration PR is prepared (see REPO_LAYOUT). Only the `origin/main` position was a cached ref.
 - **R6, partly:** excluding README/CHANGELOG files from the deployed site. Today's site already serves them harmlessly, and they're useful as public docs. Tests, screenshots and tool output *are* excluded (REPO_LAYOUT).
+
+---
+
+## 11. Implementation status (branch `wii/game`, 2026-11-15)
+
+What the first playable build does, and where it intentionally differs from the plan above. Hardware acceptance (P1 exit gate, Kinhank checkpoints) is still open.
+
+| Area | Status |
+|---|---|
+| Shared rules | `wii/source/core/cornhole_constants.h` is generated from `shared/cornhole/{common.json, overrides/arcade-1.0.3.json, overrides/wii.json}` by `wii/tools/gen-constants.mjs`; `make host-test` fails if it is stale. No rules value is restated by hand |
+| Physics / WIN / scoring / CPU | Ported (§2.1–2.4). The oracle (`wii/tools/oracle/golden.mjs`, read-only slices of the pinned snapshot, §5.1.1) checks WIN, 66 shots, 8 multi-bag scenes, roundWind, mulberry32 and 24 seeded `planCareerShot` decisions. The planner is resumable at candidate granularity with a per-frame step budget measured at boot (~4 ms), and the windup holds until it finishes. Step-granular yield is a follow-up |
+| WIN table | Baked at build time by `wii/tools/bake_win.c` from the C core into `build/gen/win_table.c` (hex-float literals: exact, no loader). Not a `win.bin` blob (deviation from §2.2/§2.9; same goal, simpler and endian-free) |
+| Human throw line | `yaw = baseYaw(RX[team]) + aim` (straight down-range from the stance, owner directive). CPU keeps 1.0.3's line. With `RX = [0, 0]` the CPU is unchanged |
+| Rendering | Raw GX, no GRRLIB. The yard is a direct C port of `backyard.js`'s voxel layout (solid colours, CPU-lit, one display list) rather than the `export-scene.mjs` pipeline (§2.9, deferred). Board/bag/hay/grass textures are painted at boot by ports of the 1.0.3 `pixTex` painters, replaying `R = rng(7)` so the board speckle matches pixel for pixel. Party NPCs (`core/party.c` + `wii/party_draw.c`, a port of `party.mjs`) and wind streaks (`core/wind_streaks.c`) are drawn and animated. Blob/baked shadows and clouds are not drawn yet |
+| HUD / text | libogc's 8×16 console font (CP437, so `·` and arrows exist), not a Press Start 2P atlas, so no font license applies to this build |
+| Video | NTSC only: `TVNtsc480Prog` when progressive is available, else `TVNtsc480IntDf`; 16:9 when the console is set to widescreen |
+| Saves | `sd:/apps/backyardcornhole/data/save.dat` per §2.8 (big-endian, CRC-32, tmp → bak → dat) |
+| Audio | MUSIC screen: the player's own MP3s from the SD card (`core/music.c`, `wii/music_wii.c`; libmad + ASND). No SFX (1.0.3 has none; no CC0 set bundled); rumble on release, board and CORNHOLE! |
+| HUD arrow | One combined direction + power arrow per arcade 1.0.7 (`core/arrow.c`); no power gauge, no LAST SHOT meter |
+| Practice bags | No limit: storage grows on demand; only entries that have already left the world (holed, removed grounders) are compacted, with their points kept (§3.2) |
+| SET POWER limits | `target_power` = WIN NORMAL/SLICK mid; floor/ceiling **provisional** (`swing_speed(0.5 g)` / `swing_speed(2.0 g)`) until P1 traces |
+| ISO | Game ID `BYCEAO`, USA, IOS 58, own apploader (`wii/dolphin/apploader/`), WIT 3.05a with `--trunc`; `make iso` checks main.dol == boot.dol. Boots in Dolphin 2609a; real-remote and Kinhank checks remain with Retro |
 
 ---
 

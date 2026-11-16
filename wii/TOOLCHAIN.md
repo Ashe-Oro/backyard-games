@@ -1,22 +1,32 @@
 # Wii toolchain notes
 
-Status: not installed or pinned yet. P0 does that (IMPL_PLAN.md task 1).
+Status: **installed and used** on the dev box (2026-11-15). `make`, `make host-test`, `make iso` and `make release`
+all run there.
 
-| Piece | Choice | Pin rule |
+| Piece | Version used | Pin |
 |---|---|---|
-| Compiler | devkitPro **devkitPPC** | Exact `devkitpro/devkitppc:<tag>` in `docker/Dockerfile`; record the tag in this file |
-| Platform library | **libogc** v3.2.x (WPAD, GX, ASND, libfat) | Record the exact version. libogc2 is a separate fork: don't mix |
-| 2D (optional) | Own ortho batcher + 8×8 font; GRRLIB 4.6.x only if it builds against the pinned libogc | — |
-| Disc image | **WIT** (Wiimms ISO Tools) composes the ISO from `dolphin/iso-root/` | Exact version and command line in the Dockerfile and Makefile |
-| Host tests | Host gcc/clang builds `source/core/` for `make host-test` | In the same image |
-| Tools | Node 20+, `npm ci --prefix arcade` (provides `three@0.170.0` for the scene exporter) | Lockfile in `arcade/` |
+| Compiler | devkitPPC **r51** (`powerpc-eabi-gcc` 16.2.0, binutils 2.47) | `docker/Dockerfile`: `devkitpro/devkitppc:20261102` |
+| Platform library | **libogc 3.2.1** (GX, VIDEO, WPAD, SYS), **libfat-ogc 2.1.0** | same image; libogc2 is a separate fork — not used |
+| Tools | `elf2dol` (gamecube-tools 1.0.7), `wiiload` 0.5.3, general-tools 1.4.4 | same image |
+| 2D | Own ortho quads + the libogc console font (`console_font_8x16`, CP437) | GRRLIB not used (not in the devkitPro repos; SPEC allows raw GX) |
+| Disc image | **Wiimms ISO Tools 3.05a r8638** | 3.01a can't compose without `sys/bi2.bin`; Makefile prefers `/opt/wit/bin/wit` |
+| Host tests | system `cc` (gcc), Node 20+ | — |
 
-Build output contract (P0):
-- `make` → `boot.elf` → `elf2dol` → `boot.dol`
-- `make iso` → complete tree in `dolphin/iso-root/` (`sys/boot.bin` generated with ID `BYCEAO` and USA region, a **redistributable** `sys/apploader.img` with `dolphin/PROVENANCE.md`, `sys/main.dol` = `boot.dol`, `files/`) → `BackyardCornhole-BYCEAO.iso`
-- `make release` → `dist/`: HBC zip, ISO, `BYCEAO.ini`, `INSTALL-KINHANK.md`, licenses, `SHA256SUMS`; checks that `main.dol` in the ISO is byte-identical to `boot.dol` and that every version source agrees
+How the dev box got them (no Docker there, and its Debian `make`/apt mirrors were down):
+- Package databases and archives fetched from `pkg.devkitpro.org` (`dkp-libs.db`, `linux/x86_64/dkp-linux.db`), each archive's
+  SHA-256 checked against the database entry, unpacked into `/opt/devkitpro`.
+- GNU make 4.4.1 built from the ftp.gnu.org tarball.
+- WIT from wit.wiimm.de (SHA-256 above in `dolphin/PROVENANCE.md`) into `/opt/wit`.
 
-Video: NTSC only. `TVNtsc480Prog` when progressive output is available, else `TVNtsc480IntDf`.
+Build outputs:
+- `make` → `build/boot.elf` → `build/boot.dol`, copied to `hbc/apps/backyardcornhole/boot.dol` (git-ignored).
+- `make iso` → `dolphin/iso-root/` (`sys/boot.bin` generated, our own `sys/apploader.img`, `sys/main.dol` = boot.dol,
+  `files/`) → `dist/BackyardCornhole-BYCEAO.iso` (truncated) + `dist/GameSettings/BYCEAO.ini`; fails unless the ISO's
+  `main.dol` hashes equal to `boot.dol`.
+- `make release` → `dist/`: HBC folder/zip, ISO, `GameSettings/BYCEAO.ini`, `KINHANK_INSTALL.md`, full release ZIP and `SHA256SUMS`. Use `make -C wii release OUT=/workspace/uploads/wii-game` from the repo root; Python 3.11+ stages the release.
+- `make soak` → `build/soak/boot-soak.dol`: dev-only auto-throw soak with OSReport logging. Never shipped.
 
-Never bundle Nintendo retail files (no retail apploader, no copied `boot.bin`).
-Install on the dev box only. Never on the arcade cabinet or the Kinhank.
+Video: NTSC only. `TVNtsc480Prog` when progressive output is available, else `TVNtsc480IntDf`; 16:9 when the console
+is set to widescreen. There is no PAL/EURGB60 branch.
+
+Never bundle Nintendo retail files. Install on the dev box only — never on the arcade cabinet or the Kinhank.

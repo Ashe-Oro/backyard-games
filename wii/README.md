@@ -1,42 +1,55 @@
 # Backyard Cornhole — Wii
 
-Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, GX, WPAD).
+Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, raw GX, WPAD).
 
-**Status: input layer with host tests; the game is not playable yet.** The platform-free swing detector, player-slot routing and WPAD adapter are implemented. See [INPUT.md](INPUT.md) for game integration and provisional tuning. Phase P0 still owns the Wii build and packaging: see [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md).
+**Status: first release build (0.1.0).** Practice, 2 Player and the 8-rival Tournament run on a GX
+renderer; physics, scoring and the tournament CPU match the pinned 1.0.3 game on the host golden tests.
+Boots in Dolphin from the ISO (game ID `BYCEAO`) and as a bare DOL. Swing feel and hardware timing are
+not validated yet: that needs real Wii Remotes on a Wii, desktop Dolphin and the Kinhank (IMPL_PLAN P1).
 
 | Target | Package |
 |---|---|
 | Real softmodded Wii | Homebrew Channel: `sd:/apps/backyardcornhole/{boot.dol,meta.xml,icon.png}` |
-| Kinhank X5 Pro (Dolphin Android 5.0-19870) | `BackyardCornhole-BYCEAO.iso` + `GameSettings/BYCEAO.ini` (real Wiimotes via DolphinBar Mode 4). Retro installs and tests |
+| Kinhank X5 Pro (Dolphin Android 5.0-19870) | `BackyardCornhole-BYCEAO.iso` + `GameSettings/BYCEAO.ini` (real Wiimotes via DolphinBar Mode 4). See `dolphin/INSTALL-KINHANK.md` |
 | Dev loop | Dolphin desktop/Android, same binary |
 
-Standing rules:
-- **Port from the 1.0.3 snapshot only:** `arcade/cabinet-snapshots/1.0.3/resources-app/dist/site/`. The top-level `arcade/trackball.mjs` and `arcade/controller.js` are retired distance-power code.
-- **Toss power = swing speed** (accelerometer peak over a short window). Never stroke distance.
-- **NTSC / 60 Hz only.** No PAL or EURGB60 branch.
-- One game binary: HBC `boot.dol` is byte-identical to the ISO's `sys/main.dol`.
-- Game ID `BYCEAO` (pending a GameTDB collision check).
-- Shared rules data lives in [`shared/cornhole/`](../shared/cornhole/). The Wii baseline is `overrides/arcade-1.0.3.json`.
+Build from source: [BUILD.md](BUILD.md). Play on a real Wii: [INSTALL-WII.md](INSTALL-WII.md).
+
+```bash
+make -C wii host-test        # input, physics-golden, game tests (host compiler + Node)
+make -C wii                  # build/boot.dol
+make -C wii release OUT=/workspace/uploads/wii-game # complete release, one command
+make -C wii smoke OUT=/workspace/uploads/wii-game   # isolated 25-second NoGUI capture
+```
+
+## Controls (Wii Sports Bowling style; no pointer, no sensor bar)
+
+Hold **B**, swing back, pause, swing through, **let go of B**. Swing speed sets power; swing left/right
+aims; wrist twist / lateral motion at release curls the bag (mirrored for LEFT HAND). **D-pad ←/→** steps
+along the foul line, **↑/↓** throw height, **A** SLICK/STICKY, **−/+** fine aim, **2** reset bag, **1** help,
+**HOME** pause (RESUME · CLEAR BOARD · HAND · SETTINGS · MAIN MENU · QUIT).
 
 ## Layout
 
 ```
 wii/
-  Makefile                 VERSION source; host-test works; platform packaging remains P0
-  TOOLCHAIN.md             devkitPPC / libogc / WIT notes and pinning rules
-  CHANGELOG.md
-  docker/                  pinned build image (P0)
-  source/core/             platform-free C: physics, rules, wind, CPU, swing detector (host-testable)
-  source/wii/              GX renderer, WPAD input, ASND audio, libfat saves, main loop
-  tools/                   Node scripts: scene exporter, WIN baker, golden-vector oracle
-  data/                    generated assets (scene, textures, font atlas, WIN table)
-  hbc/apps/backyardcornhole/  meta.xml, icon.png; boot.dol is a build output
-  dolphin/                 GameSettings/BYCEAO.ini, iso-root/ (generated), INSTALL-KINHANK.md, PROVENANCE.md
-  tests/                   host tests: C core vs golden vectors
+  Makefile                 VERSION source; all / host-test / iso / release / soak
+  TOOLCHAIN.md             versions used and pins
+  docker/                  pinned build image
+  source/core/             platform-free C (host-testable): physics, rules/game flow, CPU, wind/rng, saves,
+                           swing detector + input (wii/input), cornhole_constants.h (generated)
+  source/wii/              GX renderer (gfx, scene, hud), WPAD adapter, libfat saves, main loop
+  tools/                   gen-constants.mjs (shared/cornhole → C), oracle/golden.mjs, bake_win.c,
+                           mkdisc.mjs, make-icon.mjs, zip.mjs
+  tests/                   host tests + golden/arcade-1.0.3-physics.json
+  hbc/apps/backyardcornhole/  meta.xml, icon.png (boot.dol is a build output)
+  dolphin/                 GameSettings/BYCEAO.ini, apploader/, PROVENANCE.md, INSTALL-KINHANK.md
 ```
 
-## Docs
+Standing rules: port from the 1.0.3 snapshot only; toss power = swing **speed**, never distance; NTSC/60 Hz
+only; HBC `boot.dol` is byte-identical to the ISO's `sys/main.dol`; shared rules values come from
+`shared/cornhole/` through the generated header.
 
-Host input tests: `make -C wii host-test` from the repo root. Without make: `sh wii/tests/run-input-tests.sh` (native C11 compiler and libm only).
+Docs: [SPEC.md](../docs/wii-port/SPEC.md) · [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md) · [WIIMOTE_ARCADE_MAPPING.md](../docs/wii-port/WIIMOTE_ARCADE_MAPPING.md) · [ARCADE_PARITY_CHECKLIST.md](../docs/wii-port/ARCADE_PARITY_CHECKLIST.md) · [INPUT.md](INPUT.md)
 
-[SPEC.md](../docs/wii-port/SPEC.md) · [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md) · [WIIMOTE_ARCADE_MAPPING.md](../docs/wii-port/WIIMOTE_ARCADE_MAPPING.md) · [REPO_LAYOUT.md](../docs/wii-port/REPO_LAYOUT.md)
+Release packaging: [packaging/README.md](packaging/README.md). Manual handoff: [KINHANK_INSTALL.md](packaging/KINHANK_INSTALL.md).
