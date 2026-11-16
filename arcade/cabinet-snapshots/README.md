@@ -20,3 +20,13 @@ Do not push licensed or packaged Electron binaries; these snapshots contain only
 - `1.0.2/` lowers default full-power speed from 7560 to 6048 (−20%) with factory-profile migration including 7560 and 5600. All other gameplay stays as in 1.0.1, including the removed blue cooler. Install timestamp: pending. Rollback path: pending.
 
 - `1.0.3/` adds a small upper-right running-version label (`v` + installed package version), visible during gameplay. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.4/` adds a vertical power meter with no LAST SHOT label; it persists about two seconds after the throw. Removes the CLEAR BOARD popup; top-right clears bags in Practice, while only bottom-right toggles KEYS. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.5/` fixes straight throws from a left or right stance: the bag flies parallel to the board and stays to that side of the hole, with aim and spin still available. Copied from the verified live 1.0.4 snapshot. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.6/` adds a clear direction arrow from the bag during the forward stroke and after release. Hard left/right leans show clearly; the arrow holds about two seconds, then fades. Copied from 1.0.5 with its straight-path behavior preserved. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.7/` replaces the big vertical power bar and long direction shaft with one compact arrow from the bag: length and color show power on a faint full-power guide. Holds about two seconds, then fades. Copied from 1.0.6 with gameplay preserved. Install timestamp: pending. Rollback path: pending.
+
+- `1.0.8/` fixes next-toss readiness and rejects incomplete early spins; a soft bag glow shows readiness. Install timestamp: pending. Rollback path: pending.
