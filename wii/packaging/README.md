@@ -1,5 +1,9 @@
 # Real-game packaging
 
+See [BUILD.md](../BUILD.md) for tool installation and build steps, and
+[INSTALL-WII.md](../INSTALL-WII.md) for the real-Wii Homebrew Channel install.
+Both guides ship in the full release; the install guide also ships at the HBC ZIP root.
+
 The canonical pipeline is `wii/Makefile`. From the repository root:
 
 ```sh

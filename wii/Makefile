@@ -144,8 +144,9 @@ release: all iso
 	@grep -Fq "## [$(VERSION)]" CHANGELOG.md
 	rm -rf build/hbc-zip && mkdir -p build/hbc-zip/apps/backyardcornhole
 	cp $(HBC_DIR)/boot.dol $(HBC_DIR)/meta.xml $(HBC_DIR)/icon.png build/hbc-zip/apps/backyardcornhole/
+	cp INSTALL-WII.md build/hbc-zip/INSTALL-WII.md
 	cd build/hbc-zip && rm -f ../../dist/BackyardCornhole-HBC-v$(VERSION).zip && \
-		$(NODE) ../../tools/zip.mjs ../../dist/BackyardCornhole-HBC-v$(VERSION).zip apps
+		$(NODE) ../../tools/zip.mjs ../../dist/BackyardCornhole-HBC-v$(VERSION).zip apps INSTALL-WII.md
 	$(PYTHON) tools/release.py --version $(VERSION) --out "$(OUT)"
 	@cat "$(OUT)/SHA256SUMS"
 

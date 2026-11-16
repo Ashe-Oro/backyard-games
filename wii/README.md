@@ -13,6 +13,8 @@ not validated yet: that needs real Wii Remotes on a Wii, desktop Dolphin and the
 | Kinhank X5 Pro (Dolphin Android 5.0-19870) | `BackyardCornhole-BYCEAO.iso` + `GameSettings/BYCEAO.ini` (real Wiimotes via DolphinBar Mode 4). See `dolphin/INSTALL-KINHANK.md` |
 | Dev loop | Dolphin desktop/Android, same binary |
 
+Build from source: [BUILD.md](BUILD.md). Play on a real Wii: [INSTALL-WII.md](INSTALL-WII.md).
+
 ```bash
 make -C wii host-test        # input, physics-golden, game tests (host compiler + Node)
 make -C wii                  # build/boot.dol

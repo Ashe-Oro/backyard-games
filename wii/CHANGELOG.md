@@ -9,6 +9,7 @@ which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and th
 
 ## [0.1.0] - 2026-11-16
 
+- Build and real-Wii install guides included.
 - Hit the backyard in Practice, 2 Player or an eight-rival Tournament.
 - Hold B, swing back, swing forward and release. Slide along the foul line and curl bags with your wrist. Lefties welcome; no pointing needed.
 - One arrow shows direction and power. Enjoy the backyard party, wind, dog celebrations and your own SD-card MP3s.

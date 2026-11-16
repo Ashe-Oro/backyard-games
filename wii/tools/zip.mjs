@@ -1,12 +1,18 @@
 #!/usr/bin/env node
-// Minimal deterministic ZIP (store, no compression) for the HBC bundle: node zip.mjs out.zip <dir>
+// Minimal deterministic ZIP (store, no compression) for the HBC bundle: node zip.mjs out.zip <dir-or-file> [...]
 import {readdirSync, readFileSync, statSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
-const [out, root] = process.argv.slice(2);
+const [out, ...roots] = process.argv.slice(2);
 const crcT = Array.from({length: 256}, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
 const crc = (b) => { let c = 0xFFFFFFFF; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
 const files = [];
-(function walk(d) { for (const n of readdirSync(d).sort()) { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : files.push(p); } })(root);
+function walk(p) {
+  if (statSync(p).isDirectory()) {
+    for (const n of readdirSync(p).sort()) walk(join(p, n));
+  } else files.push(p);
+}
+for (const root of roots) walk(root);
+files.sort();
 const parts = [], central = []; let off = 0;
 for (const f of files) {
   const data = readFileSync(f), name = Buffer.from(f.replace(/\\/g, '/')), c = crc(data);

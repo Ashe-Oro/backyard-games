@@ -13,6 +13,8 @@ a = p.parse_args()
 out = a.out.resolve()
 out.mkdir(parents=True, exist_ok=True)
 files = {
+    'BUILD.md': Path('BUILD.md'),
+    'INSTALL-WII.md': Path('INSTALL-WII.md'),
     'boot.dol': Path('build/boot.dol'),
     'BackyardCornhole-BYCEAO.iso': Path('dist/BackyardCornhole-BYCEAO.iso'),
     f'BackyardCornhole-HBC-v{a.version}.zip': Path(f'dist/BackyardCornhole-HBC-v{a.version}.zip'),
