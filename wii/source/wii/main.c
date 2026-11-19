@@ -164,7 +164,8 @@ int main(void) {
 #ifdef BYC_SOAK
     WPAD_SetIdleTimeout(3600);   /* soak only: nobody presses buttons; release keeps the 5-minute default */
 #endif
-    SYS_Report("BYC: WPAD init %d (buttons + accelerometer only; no IR)\n", status);
+    if (gfx_mode) input_wpad_set_vres(&wpad, gfx_mode->fbWidth, gfx_mode->xfbHeight);
+    SYS_Report("BYC: WPAD init %d (buttons + accel + optional IR; A or 2 confirms menus)\n", status);
 
     scene_init();
     game_init(&game, &input, &byc_win, (uint32_t)gettime(), &save, fat_ok);
@@ -221,6 +222,11 @@ int main(void) {
             scene_draw_board_view(&game, x, y, w, h);
         }
         hud_draw(&game, &input);
+        {
+            InputPointer ptr;
+            for (unsigned ch = 0; ch < 2; ch++)
+                if (input_wpad_pointer(&wpad, ch, &ptr)) { hud_draw_pointer(ptr.x, ptr.y); break; }
+        }
 #ifdef BYC_SOAK
         double cpu = ticks_to_microsecs(diff_ticks(cpu0, gettime())) / 1000.0;
         soak_cpu_ms += cpu; if (cpu > soak_cpu_max) soak_cpu_max = cpu;
@@ -251,7 +257,26 @@ int main(void) {
             last_ui = game.ui; last_phase = game.phase;
             SYS_Report("BYC: screen %d phase %d (remote 1 %s)\n", last_ui, last_phase, input.connected[0] ? "connected" : "missing");
         }
-        if (++frame == 120) SYS_Report("BYC: 120 frames rendered; ui %d phase %d\n", game.ui, game.phase);
+        if (game.msg_on && game.msg_big[0]) {
+            static char last_msg[24];
+            if (strcmp(last_msg, game.msg_big) != 0) {
+                snprintf(last_msg, sizeof last_msg, "%s", game.msg_big);
+                SYS_Report("BYC: callout '%s' '%s' score %d-%d practice in=%d on=%d throws=%d\n",
+                           game.msg_big, game.msg_small, game.scores[0], game.scores[1],
+                           game.practice_in, game.practice_on, game.practice_throws);
+            }
+        }
+        {
+            static uint64_t fps_anchor;
+            if (fps_anchor == 0) fps_anchor = now;
+            if (++frame % 120 == 0) {
+                uint64_t elapsed = now - fps_anchor;
+                double fps = elapsed ? (120000.0 / (double)elapsed) : 0;
+                SYS_Report("BYC: %u frames rendered; ui %d phase %d; fps %.1f\n",
+                           frame, game.ui, game.phase, fps);
+                fps_anchor = now;
+            }
+        }
     }
     for (int ch = 0; ch < 2; ch++) WPAD_Rumble(ch, 0);
     music_shutdown(&music);

@@ -1,4 +1,4 @@
-# Build Backyard Cornhole Wii 0.1.0
+# Build Backyard Cornhole Wii 0.1.1
 
 Run the commands below from the repository root after cloning this repository
 and checking out `wii/game`. For playing on hardware, see [INSTALL-WII.md](INSTALL-WII.md).
@@ -58,6 +58,9 @@ Host tools need a C compiler, GNU make, Node 20+ and Python 3.11+.
    libogc and libfat-ogc, including the MP3/audio libraries used here. Pacman
    repositories move forward; compare installed versions with TOOLCHAIN.md.
    For the pinned release environment, use the Docker recipe instead.
+
+The Makefile links a vendored `libasnd.a` from official libogc 2.5.0-2 (see [third_party/asnd-libogc-2.5.0/PROVENANCE.md](third_party/asnd-libogc-2.5.0/PROVENANCE.md)) so the DOL's ASND ucode is one Dolphin 5.0-19870 HLE already knows. `make` checks that CRC after linking. Pacman still installs libogc 3.2.1 for everything else; no extra install step.
+
 
 3. Install [Wiimms ISO Tools 3.05a r8638](https://wit.wiimm.de/download.html).
    Linux x86_64 commands (the archive checksum is also in
@@ -125,8 +128,8 @@ make -C wii release OUT=dist
   make -C wii release OUT=/workspace/uploads/wii-game
   ```
 
-The HBC ZIP is `BackyardCornhole-HBC-v0.1.0.zip`; the full ZIP is
-`BackyardCornhole-BYCEAO-v0.1.0-release.zip`. The ISO and HBC ZIP are always
+The HBC ZIP is `BackyardCornhole-HBC-v0.1.1.zip`; the full ZIP is
+`BackyardCornhole-BYCEAO-v0.1.1-release.zip`. The ISO and HBC ZIP are always
 built in `wii/dist/` first, even with a different OUT. ZIP metadata is fixed
 and entries/checksums are sorted for repeatable packaging.
 
@@ -160,3 +163,33 @@ isolated profile. Output defaults to
 the title/menu; process survival alone is not a pass. See
 [packaging/README.md](packaging/README.md). This capture does not validate real
 Wii hardware or swing feel.
+
+Automated emulated-Wiimote end-to-end (required before a 0.1.1 tag):
+
+```sh
+make -C wii iso
+./wii/test/run-wiimote-e2e.sh wii/dist/BackyardCornhole-BYCEAO.iso
+# or: make -C wii wiimote-e2e
+```
+
+This boots the ISO in Dolphin (prefer `dolphin-emu-nogui`; `dolphin-emu -b` is
+fine) under Xvfb, using an isolated profile with an emulated Remote 1. The
+default `E2E_MODE=dtm` path (option 1) generates a TAS movie with
+`wii/test/gen_wiimote_dtm.py` and plays it with `-b -v Null -m movie.dtm` at
+~60 FPS. The movie taps A on the strap and Practice menus, then feeds the
+toss detector the same quiet / B-down / forward-lobe / 25° finish / B-up
+profile as the host tests, at energies that land in the NORMAL/SLICK board
+window. A pass requires OSREPORT `BYC: throw`, a scored callout (ON THE
+BOARD, HANGER! or CORNHOLE!), an FPS number, and no DSP ucode warning.
+`E2E_MODE=mouse` is the fallback that drives menus and the IMU with
+`xdotool` (needs `[Input] BackgroundInput=True`). The Null backend has no
+framebuffer; set `E2E_VIDEO=OGL` if you want stage screenshots at ~1 FPS on
+softpipe. Outputs (`result.txt`, `fps.txt`, `dolphin.log`, and screenshots
+when a renderer can present) go under `wii/build/wiimote-e2e/` (`E2E_OUT=`
+overrides). The run also fails if `wii/tools/check-ucode` does not see a
+5.0-19870-recognized ASND CRC in the DOL. Exit `2` means the environment
+blocked the harness (missing Dolphin, Xvfb failed to bind a display, and so
+on), not a game bug. Point `DOLPHIN=` at a local binary or AppImage if it is
+not on `PATH`. This is not a substitute for a real DolphinBar session on
+Kinhank, but it is the automated gate so a human is not the first person to
+press A on the strap screen or to throw a bag.

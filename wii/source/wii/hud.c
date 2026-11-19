@@ -412,3 +412,10 @@ void hud_draw(const Game *g, const Input *in) {
         if (g->connect_offer_reassign) gfx_text_center(320, y + 58, 1, rgb(CREAM), "A: USE REMOTE 1");
     }
 }
+
+void hud_draw_pointer(float x, float y) {
+    /* Gold plus; drawn after the HUD so it stays visible on menus. */
+    gfx_rect(x - 10, y - 2, 20, 4, rgb(GOLD));
+    gfx_rect(x - 2, y - 10, 4, 20, rgb(GOLD));
+    gfx_rect(x - 3, y - 3, 6, 6, rgb(CREAM));
+}

@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
 Releases are tagged `wii-vX.Y.Z`. The version source is `VERSION` in `wii/Makefile`,
 which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and this file.
 
+## [0.1.1] - 2026-11-18
+
+- Boot with no DSP HLE warning on stock Dolphin 5.0-19870 (Kinhank). Link the official libogc 2.5.0-2 ASND mixer, whose ucode CRC `0xdbbeeb61` (padded `0xbad876ef`) is in that Dolphin's known list, instead of libogc 3.2.1's CRC `0x5dbf8bf1`.
+- Real Wii Remotes over a DolphinBar are no longer ignored: every frame calls `WPAD_ScanPads`, each channel uses `WPAD_FMT_BTNS_ACC_IR` plus `WPAD_SetVRes`, and buttons fall back to the ScanPads snapshot when the event queue stays empty. The strap and other menus accept A or 2 from any connected remote. The IR cursor is optional and never required for input.
+- `wii/test/run-wiimote-e2e.sh` is the automated ship gate: a generated Dolphin TAS `.dtm` (option 1) plays an emulated Wiimote on the Null backend at 60 FPS through the strap screen, Practice, a detector-matched toss and a scored bag, records FPS, and fails if the DSP ucode warning is still in the log.
+
 ## [0.1.0] - 2026-11-16
 
 - Build and real-Wii install guides included.
