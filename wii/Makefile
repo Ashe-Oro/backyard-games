@@ -7,7 +7,7 @@
 #   make iso          dist/BackyardCornhole-BYCEAO.iso (WIT), main.dol == boot.dol check
 #   make release      dist/: HBC zip, ISO, GameSettings ini, install notes, SHA256SUMS
 
-VERSION := 0.1.0
+VERSION := 0.1.1
 GAME_ID := BYCEAO
 TITLE := Backyard Cornhole
 
@@ -31,7 +31,11 @@ CORE_HEADERS := $(wildcard source/core/*.h)
 MACHDEP := -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
 PPC_CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Wno-missing-field-initializers $(MACHDEP) \
 	-I$(DEVKITPRO)/libogc/include -Isource/core -Isource/wii -Ibuild/gen -DBYC_VERSION=\"$(VERSION)\"
-PPC_LDFLAGS := $(MACHDEP) -L$(DEVKITPRO)/libogc/lib/wii -Wl,-Map,build/wii/boot.map
+# libogc 3.2.1's ASND ships ucode CRC 0x5dbf8bf1, unknown to Dolphin 5.0-19870 HLE.
+# Link official libogc 2.5.0-2 libasnd (CRC 0xdbbeeb61 / padded 0xbad876ef) first.
+# See third_party/asnd-libogc-2.5.0/PROVENANCE.md.
+ASND_LIBDIR := third_party/asnd-libogc-2.5.0/lib/wii
+PPC_LDFLAGS := $(MACHDEP) -L$(ASND_LIBDIR) -L$(DEVKITPRO)/libogc/lib/wii -Wl,-Map,build/wii/boot.map
 PPC_LIBS := -lfat -lmad -lasnd -lwiiuse -lbte -logc -lm
 WII_SRC := $(GAME_CORE) $(INPUT_CORE) source/wii/input_wpad.c source/wii/gfx.c source/wii/scene.c \
 	source/wii/hud.c source/wii/party_draw.c source/wii/music_wii.c source/wii/main.c build/gen/win_table.c
@@ -42,7 +46,7 @@ HBC_DIR := hbc/apps/backyardcornhole
 ISO_ROOT := dolphin/iso-root
 ISO := dist/BackyardCornhole-$(GAME_ID).iso
 
-.PHONY: all host-test iso release clean version check-generated icon soak smoke export-release
+.PHONY: all host-test iso release clean version check-generated icon soak smoke wiimote-e2e export-release
 
 all: build/boot.dol
 	@mkdir -p $(HBC_DIR)
@@ -76,8 +80,13 @@ build/wii/%.o: %.c $(CORE_HEADERS) $(wildcard source/wii/*.h)
 build/boot.elf: $(WII_OBJ)
 	$(PPC)gcc $(PPC_LDFLAGS) $(WII_OBJ) $(PPC_LIBS) -o $@
 
-build/boot.dol: build/boot.elf
+build/check-ucode: tools/check-ucode.c
+	@mkdir -p build
+	$(HOST_CC) $(HOST_CFLAGS) tools/check-ucode.c -o $@
+
+build/boot.dol: build/boot.elf build/check-ucode
 	$(ELF2DOL) $< $@
+	./build/check-ucode $@
 
 # Dev-only scripted soak build (auto-throws; logs to Dolphin OSReport). Not part of any release.
 soak: $(WII_SRC)
@@ -154,6 +163,9 @@ export-release: release
 
 smoke: release
 	./packaging/smoke.sh "$(OUT)/BackyardCornhole-$(GAME_ID).iso"
+
+wiimote-e2e: iso
+	./test/run-wiimote-e2e.sh "$(OUT)/BackyardCornhole-$(GAME_ID).iso"
 
 clean:
 	@rm -rf build dist $(ISO_ROOT) $(HBC_DIR)/boot.dol

@@ -6,11 +6,13 @@
 
 typedef struct {
     bool connected;
-    WPADData queue[128];
-    unsigned count, read, registrations, drops;
-    int fail_stage;
+    WPADData queue[128], snapshot;
+    unsigned count, read, registrations, drops, scans;
+    int fail_stage, format;
+    uint32_t vres_x, vres_y;
     WPADData *registered_buffer;
 } FakeRemote;
+static unsigned scan_pads;
 static FakeRemote remotes[2];
 static unsigned tests, traced, rejected, pauses;
 static uint64_t trace_ms[128];
@@ -24,11 +26,36 @@ int32_t WPAD_Probe(int32_t ch, uint32_t *type) {
     return remotes[ch].connected ? 0 : WPAD_ERR_NO_CONTROLLER;
 }
 int32_t WPAD_SetDataFormat(int32_t ch, int32_t format) {
-    assert(format==WPAD_FMT_BTNS_ACC); return remotes[ch].fail_stage==1 ? -3 : 0;
+    assert(format==WPAD_FMT_BTNS_ACC_IR);
+    remotes[ch].format=format;
+    return remotes[ch].fail_stage==1 ? -3 : 0;
+}
+int32_t WPAD_SetVRes(int32_t ch, uint32_t xres, uint32_t yres) {
+    if (ch==WPAD_CHAN_ALL) {
+        remotes[0].vres_x=remotes[1].vres_x=xres;
+        remotes[0].vres_y=remotes[1].vres_y=yres;
+        return 0;
+    }
+    assert(ch>=0 && ch<2);
+    remotes[ch].vres_x=xres; remotes[ch].vres_y=yres;
+    return remotes[ch].fail_stage==2 ? -3 : 0;
+}
+int32_t WPAD_ScanPads(void) {
+    ++scan_pads;
+    for (int ch=0;ch<2;++ch) ++remotes[ch].scans;
+    return 0;
+}
+WPADData *WPAD_Data(int ch) {
+    assert(ch>=0 && ch<2);
+    return remotes[ch].connected ? &remotes[ch].snapshot : NULL;
+}
+uint32_t WPAD_ButtonsHeld(int ch) {
+    assert(ch>=0 && ch<2);
+    return remotes[ch].snapshot.btns_h;
 }
 int32_t WPAD_SetIdleThresholds(int32_t ch, int32_t btn, int32_t ir, int32_t acc,
                                int32_t js, int32_t wb, int32_t mp) {
-    assert(btn==0 && ir==-1 && acc==0 && js==-1 && wb==-1 && mp==-1);
+    assert(btn==0 && ir==0 && acc==0 && js==-1 && wb==-1 && mp==-1);
     return remotes[ch].fail_stage==3 ? -3 : 0;
 }
 int32_t WPAD_SetEventBufs(int32_t ch, WPADData *buf, uint32_t count) {
@@ -60,8 +87,10 @@ static void trace(void *user, const InputWpadTrace *row) {
 }
 static void setup(Input *i, InputWpad *w, bool two) {
     memset(remotes,0,sizeof(remotes));
-    traced=rejected=pauses=0; init_status=0;
+    traced=rejected=pauses=0; init_status=0; scan_pads=0;
     remotes[0].connected=true; remotes[1].connected=two;
+    remotes[0].snapshot.err=WPAD_ERR_NO_CONTROLLER;
+    remotes[1].snapshot.err=WPAD_ERR_NO_CONTROLLER;
     input_init(i,event,NULL); assert(input_wpad_init(w,i,trace,NULL)==0);
     input_wpad_poll(w,1000); input_start_match(i);
 }
@@ -79,6 +108,7 @@ static void both_channels_drained_in_order(void) {
     assert(trace_ms[0]==1010 && trace_ms[1]==1020 && trace_ms[2]==1010 && trace_ms[3]==1020);
     assert(w.reports[0]==2 && w.reports[1]==2);
     assert(fabs(i.slots[0].aim)<1e-9 && !i.b_held[0] && !i.b_held[1]);
+    assert(scan_pads>=2 && remotes[0].format==WPAD_FMT_BTNS_ACC_IR);
 }
 static void reconnect_registers_persistent_buffer(void) {
     Input i; InputWpad w; setup(&i,&w,true); input_next_turn(&i,1);
@@ -139,11 +169,49 @@ static void overlapping_timestamps_and_full_buffer_rejected(void) {
     setup(&i,&w,false); queue(0,64,INPUT_B); input_wpad_poll(&w,1020);
     assert(rejected==64 && w.rejected_batches[0]==1);
 }
+
+static void scan_fallback_and_optional_ir(void) {
+    Input i; InputWpad w; setup(&i,&w,false);
+    input_set_context(&i,INPUT_MENU);
+    /* Event queue stays empty; ScanPads snapshot still delivers A. */
+    remotes[0].snapshot=(WPADData){.err=WPAD_ERR_NONE,
+        .data_present=WPAD_DATA_BUTTONS,.btns_h=INPUT_A,
+        .accel={500,500,700},.gforce={0,0,1}};
+    unsigned before=traced;
+    input_wpad_poll(&w,1010);
+    assert(traced==before+1 && last_sample.buttons_valid && last_sample.buttons==INPUT_A);
+    assert(!w.have_event_path[0] && remotes[0].scans>=1);
+    InputPointer ptr;
+    assert(!input_wpad_pointer(&w,0,&ptr));
+    /* IR cursor is optional and never required for the next button. */
+    remotes[0].snapshot.ir.valid=1; remotes[0].snapshot.ir.x=320; remotes[0].snapshot.ir.y=240;
+    remotes[0].snapshot.data_present|=WPAD_DATA_IR;
+    remotes[0].snapshot.btns_h=INPUT_TWO;
+    input_wpad_poll(&w,1020);
+    assert(input_wpad_pointer(&w,0,&ptr) && fabs(ptr.x-320)<1e-3 && fabs(ptr.y-240)<1e-3);
+    assert(last_sample.buttons_valid && last_sample.buttons==INPUT_TWO);
+    remotes[0].snapshot.ir.valid=0;
+    input_wpad_poll(&w,1030);
+    assert(!input_wpad_pointer(&w,0,&ptr) && last_sample.buttons_valid);
+    input_wpad_set_vres(&w,1280,960);
+    assert(remotes[0].vres_x==1280 && remotes[0].vres_y==960);
+}
+static void event_path_does_not_replay_stale_snapshot(void) {
+    /* Once ReadEvent works, an empty queue is a gap, not a WPAD_Data replay. */
+    Input i; InputWpad w; setup(&i,&w,false);
+    queue(0,1,INPUT_B); remotes[0].snapshot=remotes[0].queue[0];
+    input_wpad_poll(&w,1010);
+    assert(w.have_event_path[0] && last_sample.buttons==INPUT_B);
+    unsigned before=traced;
+    input_wpad_poll(&w,1020);
+    assert(traced==before);
+}
 #define TEST(fn) do { fn(); ++tests; printf("ok %u - %s\n",tests,#fn); } while (0)
 int main(void) {
     TEST(both_channels_drained_in_order); TEST(reconnect_registers_persistent_buffer);
     TEST(check_registration_and_read_errors); TEST(dropped_events_are_counts_not_cumulative);
     TEST(stall_and_packet_gap_cancel); TEST(invalid_data_and_clipping_flags);
     TEST(overlapping_timestamps_and_full_buffer_rejected);
+    TEST(scan_fallback_and_optional_ir); TEST(event_path_does_not_replay_stale_snapshot);
     printf("%u WPAD adapter tests passed\n",tests); return 0;
 }

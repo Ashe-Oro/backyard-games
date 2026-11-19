@@ -499,6 +499,27 @@ static void subgravity_is_not_calm(void) {
     }
 }
 
+
+static void menu_a_or_two_from_any_remote(void) {
+    Input i; Events e;
+    input_init(&i,sink,&e); input_connection(&i,0,true); input_connection(&i,1,true);
+    input_set_context(&i,INPUT_MENU);
+    /* Channel 1 is not the active slot (0). A and 2 both confirm. */
+    e=(Events){0};
+    input_sample(&i,1,10,INPUT_A,0,0);
+    assert(occurrences(&e,INPUT_CONFIRM)==1 && e.events[0].channel==1);
+    e=(Events){0};
+    input_sample(&i,1,20,0,0,0);
+    input_sample(&i,0,30,INPUT_TWO,0,0);
+    assert(occurrences(&e,INPUT_CONFIRM)==1);
+    /* Play mode still ignores the inactive channel. */
+    input_set_context(&i,INPUT_PLAY); input_start_match(&i);
+    e=(Events){0};
+    input_sample(&i,1,40,INPUT_A,0,0);
+    assert(!occurrences(&e,INPUT_CONFIRM) && !i.slots[0].sticky);
+    input_sample(&i,0,50,INPUT_A,0,0);
+    assert(i.slots[0].sticky);
+}
 int main(void) {
     TEST(physical_backswing_never_throws); TEST(physical_bottom_releases_and_speed);
     TEST(subgravity_is_not_calm);
@@ -516,6 +537,7 @@ int main(void) {
     TEST(buttons_mapping_and_easing); TEST(buttons_blocked_while_b_held); TEST(menu_confirm_back_navigation);
     TEST(slots_and_disconnect_reassignment); TEST(pass_and_play_profile_is_slot_owned);
     TEST(input_throw_only_on_release_and_spent); TEST(calibration_route_does_not_throw_game_bags);
+    TEST(menu_a_or_two_from_any_remote);
     printf("%u input tests passed\n",tests);
     return 0;
 }

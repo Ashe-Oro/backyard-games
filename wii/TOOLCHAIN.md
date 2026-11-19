@@ -12,6 +12,8 @@ all run there.
 | Disc image | **Wiimms ISO Tools 3.05a r8638** | 3.01a can't compose without `sys/bi2.bin`; Makefile prefers `/opt/wit/bin/wit` |
 | Host tests | system `cc` (gcc), Node 20+ | — |
 
+Audio: MP3 playback still uses libogc ASND + libmad. The 3.2.1 `libasnd.a` is **not** linked; the Makefile uses a vendored official `libasnd.a` from libogc 2.5.0-2 so the embedded ucode CRC is `0xdbbeeb61` (Dolphin 5.0-19870 HLE), not `0x5dbf8bf1`. See `third_party/asnd-libogc-2.5.0/PROVENANCE.md`.
+
 How the dev box got them (no Docker there, and its Debian `make`/apt mirrors were down):
 - Package databases and archives fetched from `pkg.devkitpro.org` (`dkp-libs.db`, `linux/x86_64/dkp-linux.db`), each archive's
   SHA-256 checked against the database entry, unpacked into `/opt/devkitpro`.

@@ -6,3 +6,5 @@ hbc/apps/backyardcornhole/boot.elf
 *.elf
 *.dol
 *.iso
+
+__pycache__/

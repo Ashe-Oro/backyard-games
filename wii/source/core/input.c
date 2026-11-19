@@ -116,18 +116,8 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
         (void)input_resume(i);
         return;
     }
-    if (ch!=i->channels[i->active_slot]) return;
-    InputSlot *slot=&i->slots[i->active_slot];
-    if (pressed & INPUT_HOME) {
-        i->paused=true;
-        swing_reset(&i->detector,true);
-        action(i,INPUT_PAUSE,ch,0);
-        return;
-    }
-    if (pressed & INPUT_ONE) { i->help=!i->help; action(i,INPUT_HELP,ch,i->help); }
-    if (i->context==INPUT_DISABLED && !i->paused) return;
-    if (i->context==INPUT_MENU || i->paused) {
-        if (i->disconnect_pause) return;
+    /* Menus (strap, title, pause): A or 2 confirms, from any connected remote. No IR required. */
+    if ((i->context==INPUT_MENU || i->paused) && !i->disconnect_pause) {
         if (i->hand_option && (pressed & (INPUT_LEFT|INPUT_RIGHT))) {
             unsigned slot_index=i->hand_slot;
             SwingProfile profile=i->slots[slot_index].profile;
@@ -139,13 +129,25 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
             if (i->sink) i->sink(i->user,&event);
             pressed &= ~(INPUT_LEFT|INPUT_RIGHT);
         }
-        const uint32_t masks[]={INPUT_A,INPUT_B,INPUT_UP,INPUT_DOWN,INPUT_LEFT,INPUT_RIGHT,INPUT_MINUS,INPUT_PLUS};
-        const InputAction actions[]={INPUT_CONFIRM,INPUT_BACK,INPUT_NAV_UP,INPUT_NAV_DOWN,
+        if (pressed & (INPUT_A|INPUT_TWO)) action(i,INPUT_CONFIRM,ch,0);
+        const uint32_t masks[]={INPUT_B,INPUT_UP,INPUT_DOWN,INPUT_LEFT,INPUT_RIGHT,INPUT_MINUS,INPUT_PLUS};
+        const InputAction actions[]={INPUT_BACK,INPUT_NAV_UP,INPUT_NAV_DOWN,
                                     INPUT_NAV_LEFT,INPUT_NAV_RIGHT,INPUT_ADJUST_MINUS,INPUT_ADJUST_PLUS};
         for (unsigned n=0;n<sizeof(masks)/sizeof(masks[0]);++n)
             if (pressed & masks[n]) action(i,actions[n],ch,0);
+        if (ch!=i->channels[i->active_slot] && !(pressed & INPUT_HOME) && !(pressed & INPUT_ONE)) return;
+    }
+    if (ch!=i->channels[i->active_slot]) return;
+    InputSlot *slot=&i->slots[i->active_slot];
+    if (pressed & INPUT_HOME) {
+        i->paused=true;
+        swing_reset(&i->detector,true);
+        action(i,INPUT_PAUSE,ch,0);
         return;
     }
+    if (pressed & INPUT_ONE) { i->help=!i->help; action(i,INPUT_HELP,ch,i->help); }
+    if (i->context==INPUT_DISABLED && !i->paused) return;
+    if (i->context==INPUT_MENU || i->paused) return;
     bool armed=swing_armed(&i->detector);
     bool b=i->b_held[ch];
     if (i->detector.phase==SWING_SPENT) return;
