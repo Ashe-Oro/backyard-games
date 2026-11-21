@@ -5,7 +5,7 @@
 #   make              build/boot.dol (+ copy into hbc/apps/backyardcornhole/)
 #   make host-test    input + physics-golden + game tests, generated-file checks (host compiler)
 #   make iso          dist/BackyardCornhole-BYCEAO.iso (WIT), main.dol == boot.dol check
-#   make release      dist/: HBC zip, ISO, GameSettings ini, install notes, SHA256SUMS
+#   make release      dist/: HBC zip, ISO, INSTALL-WII.md, SHA256SUMS (real Wii only)
 
 VERSION := 0.1.2
 GAME_ID := BYCEAO
@@ -142,13 +142,9 @@ iso: build/boot.dol build/apploader.bin
 	@a=$$(sha256sum build/boot.dol | cut -d' ' -f1); b=$$(sha256sum build/iso-check/sys/main.dol | cut -d' ' -f1); \
 		if [ "$$a" != "$$b" ]; then echo "ISO main.dol $$b != boot.dol $$a" >&2; exit 1; fi; \
 		echo "ISO ok: $(ISO) ID $(GAME_ID), main.dol == boot.dol ($$a)"
-	mkdir -p dist/GameSettings
-	cp dolphin/GameSettings/$(GAME_ID).ini dist/GameSettings/$(GAME_ID).ini
 
 # ---------------- release bundle ----------------
 release: all iso
-	@grep -qx "WiimoteSource0 = 2" dolphin/GameSettings/$(GAME_ID).ini
-	@grep -qx "WiimoteSource1 = 2" dolphin/GameSettings/$(GAME_ID).ini
 	@grep -q "<version>$(VERSION)</version>" $(HBC_DIR)/meta.xml || { echo "meta.xml version != $(VERSION)" >&2; exit 1; }
 	@grep -Fq "## [$(VERSION)]" CHANGELOG.md
 	rm -rf build/hbc-zip && mkdir -p build/hbc-zip/apps/backyardcornhole
