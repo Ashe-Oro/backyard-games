@@ -23,9 +23,9 @@ How the dev box got them (no Docker there, and its Debian `make`/apt mirrors wer
 Build outputs:
 - `make` → `build/boot.elf` → `build/boot.dol`, copied to `hbc/apps/backyardcornhole/boot.dol` (git-ignored).
 - `make iso` → `dolphin/iso-root/` (`sys/boot.bin` generated, our own `sys/apploader.img`, `sys/main.dol` = boot.dol,
-  `files/`) → `dist/BackyardCornhole-BYCEAO.iso` (truncated) + `dist/GameSettings/BYCEAO.ini`; fails unless the ISO's
+  `files/`) → `dist/BackyardCornhole-BYCEAO.iso` (truncated); fails unless the ISO's
   `main.dol` hashes equal to `boot.dol`.
-- `make release` → `dist/`: HBC folder/zip, ISO, `GameSettings/BYCEAO.ini`, `KINHANK_INSTALL.md`, full release ZIP and `SHA256SUMS`. Use `make -C wii release OUT=/workspace/uploads/wii-game` from the repo root; Python 3.11+ stages the release.
+- `make release` → `dist/`: HBC folder/zip, ISO, `INSTALL-WII.md`, Wii release ZIP and `SHA256SUMS` (original hardware only; no Dolphin GameSettings). Use `make -C wii release OUT=/workspace/uploads/wii-game` from the repo root; Python 3.11+ stages the release. The Kinhank bundle is `make -C kinhank`.
 - `make soak` → `build/soak/boot-soak.dol`: dev-only auto-throw soak with OSReport logging. Never shipped.
 
 Video: NTSC only. `TVNtsc480Prog` when progressive output is available, else `TVNtsc480IntDf`; 16:9 when the console

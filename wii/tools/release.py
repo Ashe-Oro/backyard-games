@@ -12,16 +12,13 @@ p.add_argument('--out', type=Path, required=True)
 a = p.parse_args()
 out = a.out.resolve()
 out.mkdir(parents=True, exist_ok=True)
+# Real-Wii artifacts only. Dolphin GameSettings belong in the kinhank target.
 files = {
     'BUILD.md': Path('BUILD.md'),
     'INSTALL-WII.md': Path('INSTALL-WII.md'),
     'boot.dol': Path('build/boot.dol'),
     'BackyardCornhole-BYCEAO.iso': Path('dist/BackyardCornhole-BYCEAO.iso'),
     f'BackyardCornhole-HBC-v{a.version}.zip': Path(f'dist/BackyardCornhole-HBC-v{a.version}.zip'),
-    'GameSettings/BYCEAO.ini': Path('dolphin/GameSettings/BYCEAO.ini'),
-    'BYCEAO.ini': Path('dolphin/GameSettings/BYCEAO.ini'),
-    'INSTALL-KINHANK.md': Path('packaging/KINHANK_INSTALL.md'),
-    'KINHANK_INSTALL.md': Path('packaging/KINHANK_INSTALL.md'),
 }
 for name in ('boot.dol', 'meta.xml', 'icon.png'):
     files[f'apps/backyardcornhole/{name}'] = Path(f'hbc/apps/backyardcornhole/{name}')
@@ -44,8 +41,14 @@ with zipfile.ZipFile(out / archive, 'w', compression=zipfile.ZIP_DEFLATED, compr
         info = zipfile.ZipInfo(name, date_time=(2026, 11, 16, 0, 0, 0))
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
+        if name in ('BYCEAO.ini', 'INSTALL-KINHANK.md', 'KINHANK_INSTALL.md') or name.startswith('GameSettings/'):
+            raise SystemExit(f'Wii release must not include Kinhank file {name}')
         with (out / name).open('rb') as src, z.open(info, 'w', force_zip64=True) as dst:
             shutil.copyfileobj(src, dst)
+    leaked = [n for n in z.namelist() if n.startswith('GameSettings/') or n in
+              ('BYCEAO.ini', 'INSTALL-KINHANK.md', 'KINHANK_INSTALL.md')]
+    if leaked:
+        raise SystemExit(f'Wii release zip must not include Kinhank files: {leaked}')
 (out / 'SHA256SUMS').write_text(manifest + f'{checksum(out / archive)}  {archive}\n' +
                                f'{checksum(out / "PAYLOAD-SHA256SUMS")}  PAYLOAD-SHA256SUMS\n')
 print(f'Release: {out / archive}')

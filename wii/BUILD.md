@@ -116,13 +116,15 @@ make -C wii release OUT=dist
   physics, game and party tests, and checks generated files.
 - Default build: writes `wii/build/boot.elf` and `wii/build/boot.dol`, then copies
   the DOL to `wii/hbc/apps/backyardcornhole/boot.dol`.
-- `iso`: writes `wii/dist/BackyardCornhole-BYCEAO.iso` and
-  `wii/dist/GameSettings/BYCEAO.ini`. The disc tree is staged in
+- `iso`: writes `wii/dist/BackyardCornhole-BYCEAO.iso`. The disc tree is staged in
   `wii/dolphin/iso-root/`; inspection output is `wii/build/iso-dump.txt`.
-- `release`: rebuilds the ISO and stages the standalone DOL, ISO, INIs,
-  `apps/backyardcornhole/`, HBC ZIP, both guides, Kinhank notes, full release
-  ZIP, `PAYLOAD-SHA256SUMS` and `SHA256SUMS` in OUT. `OUT=dist` means `wii/dist/`;
-  an absolute OUT selects another directory:
+- `release`: rebuilds the ISO and stages the standalone DOL, ISO,
+  `apps/backyardcornhole/`, HBC ZIP, `INSTALL-WII.md`, `BUILD.md`, the Wii
+  release ZIP, `PAYLOAD-SHA256SUMS` and `SHA256SUMS` in OUT. This is the
+  original-hardware bundle only; it does not include Dolphin `GameSettings`.
+  For the Kinhank (3×) zip, run `make -C kinhank` after the ISO exists. See
+  [../TARGETS.md](../TARGETS.md). `OUT=dist` means `wii/dist/`; an absolute
+  OUT selects another directory:
 
   ```sh
   make -C wii release OUT=/workspace/uploads/wii-game

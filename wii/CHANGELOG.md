@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project follows [Semantic Versioning](https://semver.org/).
 Releases are tagged `wii-vX.Y.Z`. The version source is `VERSION` in `wii/Makefile`,
 which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and this file.
+This changelog covers the original Wii target (480p/480i, Homebrew Channel zip and ISO).
+The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
+[../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
 ## [0.1.2] - 2026-11-21
 - Targets: original Wii (480p progressive with a component cable and 480p enabled in Wii Settings, otherwise 480i; 16:9 when the console is set to widescreen) and emulation (Dolphin on the Kinhank). Emulation's GameSettings `BYCEAO.ini` now renders at 3x internal resolution, about 1080p.
