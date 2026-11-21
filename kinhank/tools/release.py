@@ -31,6 +31,7 @@ files = {
     'GameSettings/BYCEAO.ini': root / 'GameSettings' / 'BYCEAO.ini',
     'BYCEAO.ini': root / 'GameSettings' / 'BYCEAO.ini',
     'INSTALL.md': root / 'INSTALL.md',
+    'install-adb.sh': root / 'install-adb.sh',
 }
 for name, src in files.items():
     dst = out / name
@@ -49,7 +50,8 @@ with zipfile.ZipFile(out / archive, 'w', compression=zipfile.ZIP_DEFLATED, compr
     for name in sorted([*files, 'PAYLOAD-SHA256SUMS']):
         info = zipfile.ZipInfo(name, date_time=(2026, 11, 21, 0, 0, 0))
         info.compress_type = zipfile.ZIP_DEFLATED
-        info.external_attr = 0o100644 << 16
+        mode = 0o100755 if name.endswith('.sh') else 0o100644
+        info.external_attr = mode << 16
         with (out / name).open('rb') as src, z.open(info, 'w', force_zip64=True) as dst:
             shutil.copyfileobj(src, dst)
     names = z.namelist()

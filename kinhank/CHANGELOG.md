@@ -18,7 +18,15 @@ resolution (about 1080p). This is the current test target.
   at its hardware limit (480p progressive with a component cable and 480p
   enabled in Wii Settings, otherwise 480i).
 - `GameSettings/BYCEAO.ini` turns on real Wii Remotes (`WiimoteSource0 = 2`,
-  `WiimoteSource1 = 2`) and sets `InternalResolution = 3`.
+  `WiimoteSource1 = 2`) and sets `InternalResolution = 3`. After copying the
+  ini over ADB, `chmod 666` it so Dolphin can read it; a default
+  `-rw-rw---- shell:shell` file is invisible to the app uid, which then
+  silently falls back to global settings. The 0.1.1 Kinhank install
+  probably never applied `WiimoteSource = 2` for this reason. The ini
+  format was already correct. With `chmod 666` on
+  `/storage/emulated/0/Android/data/org.dolphinemu.dolphinemu/files/GameSettings/BYCEAO.ini`,
+  3× is verified at 59.95 FPS. Leave Dolphin's global `GFX.ini` at 1× for
+  other games.
 - Preserve each Wii Remote report's B state and acceleration through the WPAD
   queue. Hold B, swing back and forward, then release to throw. Short or
   gentle forward swings use a low-power release in the measured direction. A
