@@ -7,13 +7,13 @@ The original Wii hardware target is separate: see [../wii/INSTALL-WII.md](../wii
 and [../TARGETS.md](../TARGETS.md). Do not put this bundle's `GameSettings` on
 a real Wii; that hardware ignores it and tops out at 480p.
 
-This is the playable 0.1.2 throw-fix build, rendered at 3× (about 1080p) in
+This is the playable 0.1.3 Bowling-throw build, rendered at 3× (about 1080p) in
 Dolphin. Desktop smoke does not validate real Wiimote feel or Android
 performance. Owner: Ashe.
 
 ## Bundle
 
-From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.2.zip` release:
+From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.3.zip` release:
 
 ```text
 BackyardCornhole-BYCEAO.iso

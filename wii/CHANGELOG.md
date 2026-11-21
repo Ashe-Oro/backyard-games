@@ -10,6 +10,17 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.3] - 2026-11-21
+
+Throw like Wii Sports Bowling: point the Wii Remote up, hold B, swing back, swing forward and let go of B during the forward swing.
+
+- B grips on the report it goes down, in any pose and while moving. No settle period, no stillness check, no HOLD STILL message.
+- A continuous back-and-forward swing now throws on the B-up report. Power comes from the forward swing's speed; lateral motion still aims and wrist twist still curls, mirrored for left hands.
+- Letting go of B always throws. With no forward swing to measure (a tap, a release on the backswing, a swing that ended long ago) you get a weak lob, never nothing.
+- Late, missing or bursty Wii Remote reports no longer cancel the swing. Gaps up to 100 ms are bridged, gaps up to 250 ms are accepted, and a longer stall restarts the motion measurement but keeps the grip. A press during the bag flight or the turn change grips as soon as the turn opens.
+- The 1+2 debug overlay adds the swing phase, B, reports per second, the largest report gap and the last throw's peak speed and power.
+- At 16:9 (the console's widescreen setting, Dolphin's default) the HUD is laid out for 16:9: text keeps its proportions, right-side pieces sit on the real screen edge, and the BOARD 27 FT inset moves to the top-left corner, clear of the beer-pong table. 4:3 is unchanged.
+
 ## [0.1.2] - 2026-11-21
 - Targets: original Wii (480p progressive with a component cable and 480p enabled in Wii Settings, otherwise 480i; 16:9 when the console is set to widescreen) and emulation (Dolphin on the Kinhank). Emulation's GameSettings `BYCEAO.ini` now renders at 3x internal resolution, about 1080p.
 

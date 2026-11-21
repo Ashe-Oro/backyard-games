@@ -61,7 +61,7 @@ double swing_twist_relative(const SwingPoint *p, unsigned n, uint64_t release_ms
 }
 void swing_reset(Swing *s, bool up) {
     memset(s, 0, sizeof(*s));
-    s->phase = SWING_SETTLING;
+    s->phase = SWING_READY;
     s->require_b_up = up;
 }
 bool swing_armed(const Swing *s) { return s->phase == SWING_GRIP || s->phase == SWING_PENDING; }
@@ -82,15 +82,6 @@ static bool stable_for(const Swing *s, SwingVector *mean, unsigned duration) {
         mean->z += s->history[i].g.z;
     }
     return norm(*mean) > 0;
-}
-static bool stable(const Swing *s, SwingVector *mean) {
-    return stable_for(s, mean, SWING_STABLE_MS);
-}
-bool swing_calm_roll(const Swing *s, double *roll) {
-    SwingVector mean;
-    if (!stable(s,&mean)) return false;
-    *roll=atan2(mean.x,mean.z)*180/SWING_PI;
-    return true;
 }
 bool swing_preview(const Swing *s, const SwingProfile *profile, double *power, double *aim) {
     if (!swing_armed(s) || !s->confirmed || !(s->in_lobe || s->lobe_valid)) return false;
@@ -140,142 +131,222 @@ bool swing_forward_motion(const Swing *s) { return s->confirmed || forward_retur
 static double swing_yaw(double lateral) {
     return fabs(lateral)<SWING_LATERAL_DEAD ? 0 : clamp(lateral/SWING_LATERAL_FULL,-1,1);
 }
+const char *swing_phase_name(const Swing *s) {
+    switch (s->phase) {
+    case SWING_READY: return "READY";
+    case SWING_PENDING: return "RELEASE";
+    case SWING_SPENT: return "SPENT";
+    case SWING_GRIP: break;
+    }
+    if ((s->confirmed && (s->in_lobe || s->lobe_valid)) || forward_return(s)) return "FORWARD";
+    if (s->lobes || s->back_apex || s->back_motion_ms) return "BACKSWING";
+    return "GRIP";
+}
+
+/* ---------- history ---------- */
+static void push_point(Swing *s, uint64_t ms, SwingVector g, double e, bool clipped) {
+    while (s->count > 1 && ms-s->history[1].ms > SWING_HISTORY_MS) {
+        memmove(s->history, s->history+1, (--s->count)*sizeof(s->history[0]));
+    }
+    /* Bursts can outrun the ring: drop the oldest sample, never the swing. */
+    if (s->count == SWING_HISTORY) memmove(s->history, s->history+1, (--s->count)*sizeof(s->history[0]));
+    s->history[s->count++] = (SwingPoint){ms, g, e, clipped};
+}
+/* Whatever the remote is doing when B goes down: mean gravity of the last 100 ms of reports
+   (the B-down report included), unclipped if possible. No stillness test. */
+static SwingVector grip_reference(const Swing *s) {
+    SwingVector sum = {0,0,0};
+    if (!s->count) return s->have_g ? s->last_g : (SwingVector){0,1,0};
+    uint64_t now = s->history[s->count-1].ms;
+    for (int pass = 0; pass < 2; ++pass) {
+        for (unsigned i = 0; i < s->count; ++i) {
+            if (now-s->history[i].ms > SWING_GRIP_MS || (pass == 0 && s->history[i].clipped)) continue;
+            sum.x += s->history[i].g.x; sum.y += s->history[i].g.y; sum.z += s->history[i].g.z;
+        }
+        if (norm(sum) > 0) return sum;
+    }
+    return s->history[s->count-1].g;
+}
+static void restart_motion(Swing *s) {
+    s->count = 0;
+    s->in_lobe = s->dipping = false;
+    s->mean_e = s->speed = 0;
+    s->back_motion_ms = 0;
+    clear_return(s, s->previous_pitch);
+}
+
+/* ---------- grip ---------- */
+static void grip(Swing *s, double aim) {
+    s->fine_aim = s->locked_aim = clamp(aim, -SWING_AIM_MAX, SWING_AIM_MAX);
+    s->grip_g = grip_reference(s);
+    /* Roll is measurable from gravity only when the remote is not pointing straight up or down
+       (Bowling's remote-up start is exactly that case). Otherwise lock it from the first loaded
+       part of the swing, where the arm's radial force fills the X-Z plane. */
+    double xz = sqrt(s->grip_g.x*s->grip_g.x + s->grip_g.z*s->grip_g.z);
+    s->roll_ref = xz >= SWING_ROLL_REF_G*norm(s->grip_g);
+    s->locked_roll = s->roll_ref ? atan2(s->grip_g.x, s->grip_g.z)*180/SWING_PI : 0;
+    s->roll_x = s->roll_z = 0;
+    s->roll_since = 0;
+    s->locked_spin = 0;
+    s->motion_roll = 0;
+    s->armed_ms = s->last_ms;
+    s->previous_pitch = 0;
+    clear_return(s, 0);
+    s->phase = SWING_GRIP;
+}
+
+/* ---------- throws ---------- */
+/* Weak throw: B came up without a classified forward stroke. Power from whatever speed was
+   measured (a B tap gives the minimum), capped well below a real swing. */
+static SwingResult finish_weak(Swing *s, const SwingProfile *profile, double speed) {
+    s->phase = SWING_SPENT;
+    return (SwingResult){.thrown=true, .fallback=true, .speed=speed,
+        .power=clamp(SWING_FALLBACK_POWER_SCALE*swing_power(speed, profile->full_speed),
+                     SWING_FALLBACK_MIN_POWER, SWING_FALLBACK_MAX_POWER),
+        .aim=s->locked_aim, .spin=s->locked_spin, .roll=s->motion_roll,
+        .release=SWING_B_UP, .release_ms=s->release_ms};
+}
 static SwingResult finish_fallback(Swing *s, const SwingProfile *profile) {
+    if (!(s->return_travel > 0)) return finish_weak(s, profile, swing_speed(s->return_peak));
     double lateral=s->return_lateral_sum/s->return_travel;
     double yaw=swing_yaw(lateral);
     double hand=profile->left_handed ? -1 : 1;
-    double speed=swing_speed(s->return_peak);
-    s->phase=SWING_SPENT;
-    return (SwingResult){.thrown=true,.fallback=true,.speed=speed,
-        .power=clamp(SWING_FALLBACK_POWER_SCALE*swing_power(speed,profile->full_speed),
-                     SWING_FALLBACK_MIN_POWER,SWING_FALLBACK_MAX_POWER),
-        .aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX),
-        .spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1),
-        .roll=s->motion_roll,.release=SWING_B_UP,.release_ms=s->release_ms};
-}
-static SwingResult finish(Swing *s, const SwingProfile *profile, SwingRelease cause) {
-    SwingResult r = {0};
-    uint64_t reference_ms=cause==SWING_B_UP ? s->release_ms : s->last_ms;
-    if (s->lobe_valid && s->confirmed && s->peak > 0 && reference_ms>=s->lobe_end &&
-        reference_ms-s->lobe_end <= SWING_RELEASE_MS) {
-        r = (SwingResult){.thrown=true, .speed=s->peak,
-            .power=s->lobe_clipped ? 1 : swing_power(s->peak, profile->full_speed),
-            .aim=s->locked_aim, .spin=s->locked_spin, .roll=s->motion_roll,
-            .clipped=s->lobe_clipped, .release=cause,
-            .release_ms=cause==SWING_B_UP ? s->release_ms : s->last_ms};
-        s->phase = SWING_SPENT;
-    } else {
-        r.cancelled = true;
-        swing_reset(s, true);
-    }
+    SwingResult r=finish_weak(s, profile, swing_speed(s->return_peak));
+    r.aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
+    r.spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1);
     return r;
 }
-SwingResult swing_feed(Swing *s, const SwingSample *p, double aim, const SwingProfile *profile) {
-    SwingResult r = {0};
-    if (s->phase == SWING_SPENT) return r;
-    bool armed = swing_armed(s);
-    double mag = norm(p->g);
-    if (!p->accel_valid || !isfinite(mag) || mag < 0.1 || p->dropped ||
-        (s->have_time && (p->ms <= s->last_ms || p->ms-s->last_ms > SWING_GAP_MS))) {
-        r.cancelled = armed;
-        swing_reset(s, true);
-        return r;
+static SwingResult finish(Swing *s, const SwingProfile *profile, SwingRelease cause) {
+    uint64_t reference_ms=cause==SWING_B_UP ? s->release_ms : s->last_ms;
+    bool recent = s->lobe_valid && s->peak > 0 && reference_ms>=s->lobe_end &&
+        reference_ms-s->lobe_end <= SWING_RELEASE_MS;
+    if (recent && s->confirmed) {
+        s->phase = SWING_SPENT;
+        return (SwingResult){.thrown=true, .speed=s->peak,
+            .power=s->lobe_clipped ? 1 : swing_power(s->peak, profile->full_speed),
+            .aim=s->locked_aim, .spin=s->locked_spin, .roll=s->motion_roll,
+            .clipped=s->lobe_clipped, .release=cause, .release_ms=reference_ms};
     }
+    SwingResult r = finish_weak(s, profile, recent ? s->peak : swing_speed(s->return_peak));
+    r.release = cause;
+    r.release_ms = reference_ms;
+    return r;
+}
+
+/* ---------- strokes ---------- */
+static void start_lobe(Swing *s, uint64_t ms) {
+    s->in_lobe = true;
+    s->dipping = false;
+    s->lobe_start = ms;
+    s->lobe_peak = s->lobe_peak_e = 0;
+    s->lateral_sum = s->lateral_weight = 0;
+    s->lobe_valid = s->lobe_clipped = false;
+    s->peak = 0;
+    ++s->lobes;
+    /* After a back apex (a calm pause behind, or the speed dip of a continuous swing) the
+       stroke is forward. A lone first stroke still needs follow-through confirmation. */
+    s->confirmed = s->back_apex || s->lobes >= 2;
+}
+static void track_strokes(Swing *s, const SwingSample *p, double mag, double e, unsigned span) {
+    if (s->phase == SWING_PENDING || p->clipped || span < SWING_MIN_SPAN_MS) {
+        if (p->clipped && s->lobe_valid && s->in_lobe) s->lobe_clipped = true;
+        return;
+    }
+    bool active = s->mean_e >= SWING_FORWARD_G;
+    /* A continuous Bowling swing never drops below SWING_FORWARD_G at the back apex: the
+       backswing and forward stroke merge. Split them where the load dips to half its peak. */
+    if (s->in_lobe && s->lobe_valid && s->mean_e < SWING_DIP_RATIO*s->lobe_peak_e) {
+        s->in_lobe = false;
+        s->dipping = true;
+        s->dip_e = s->mean_e;
+    }
+    if (s->dipping) {
+        s->dip_e = fmin(s->dip_e, s->mean_e);
+        if (!active) s->dipping = false;
+        else if (s->mean_e >= SWING_RISE_RATIO*s->dip_e && s->mean_e >= s->dip_e+SWING_NOISE_G)
+            start_lobe(s, p->ms);
+    }
+    if (active && !s->in_lobe && !s->dipping) start_lobe(s, p->ms);
+    if (!active) { s->in_lobe = false; return; }
+    if (!s->in_lobe) return;
+    /* Grip-relative lateral acceleration is a candidate swing-yaw proxy.
+       Weight by excess force, never use this signal for power. */
+    if (e >= SWING_FORWARD_G && s->count >= 2) {
+        double lateral=p->g.x/mag-s->grip_g.x/norm(s->grip_g);
+        double dt=(double)(p->ms-s->history[s->count-2].ms);
+        s->lateral_sum+=lateral*e*dt;
+        s->lateral_weight+=e*dt;
+    }
+    s->lobe_peak = fmax(s->lobe_peak, s->speed);
+    s->lobe_peak_e = fmax(s->lobe_peak_e, s->mean_e);
+    s->lobe_end = p->ms;
+    if (p->ms-s->lobe_start >= SWING_LOBE_MS) {
+        s->lobe_valid = true;
+        s->peak = s->lobe_peak;
+    }
+}
+static void track_controls(Swing *s, const SwingSample *p, double mag, const SwingProfile *profile) {
+    if (s->phase == SWING_PENDING || p->clipped) return;
+    if (!s->roll_ref && s->mean_e >= SWING_FORWARD_G &&
+        sqrt(p->g.x*p->g.x+p->g.z*p->g.z) >= SWING_ROLL_REF_G*mag) {
+        if (!s->roll_since) s->roll_since = p->ms;
+        s->roll_x += p->g.x; s->roll_z += p->g.z;
+        if (p->ms-s->roll_since >= SWING_ROLL_REF_MS) {
+            s->locked_roll = atan2(s->roll_x, s->roll_z)*180/SWING_PI;
+            s->roll_ref = true;
+        }
+    }
+    double lateral=s->lateral_weight>0 ? s->lateral_sum/s->lateral_weight : 0;
+    double yaw=swing_yaw(lateral);
+    double hand=profile->left_handed ? -1 : 1;
+    s->locked_aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
+    s->motion_roll=s->roll_ref ? delta_degrees(atan2(p->g.x,p->g.z)*180/SWING_PI,s->locked_roll) : 0;
+    s->locked_spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1);
+}
+
+/* One report (real or bridged). motion=false: accel unusable, B still counts. */
+static SwingResult advance(Swing *s, const SwingSample *p, bool motion, double aim, const SwingProfile *profile) {
+    SwingResult r = {0};
     s->have_time = true;
     s->last_ms = p->ms;
-    bool down = p->b && !s->previous_b, up = !p->b && s->previous_b;
+    bool up = !p->b && s->previous_b;
     s->previous_b = p->b;
     if (!p->b) s->require_b_up = false;
-    double e = fmax(0, mag-1);
-    while (s->count > 1 && p->ms-s->history[1].ms > SWING_STABLE_MS) {
-        memmove(s->history, s->history+1, (--s->count)*sizeof(s->history[0]));
-    }
-    if (s->count == SWING_HISTORY) {
-        r.cancelled = armed;
-        swing_reset(s, true);
-        return r;
-    }
-    s->history[s->count++] = (SwingPoint){p->ms, p->g, e, p->clipped};
-    unsigned span;
-    s->mean_e = swing_window_mean(s->history, s->count, p->ms, &span);
-    s->speed = span >= SWING_MIN_SPAN_MS && s->mean_e >= SWING_NOISE_G ? swing_speed(s->mean_e) : 0;
-    if (s->phase == SWING_SETTLING) {
-        if (s->mean_e < SWING_NOISE_G && fabs(mag-1) < SWING_NOISE_G && !p->clipped && !p->b) {
-            if (!s->quiet) { s->quiet = true; s->quiet_since = p->ms; }
-            if (p->ms-s->quiet_since >= SWING_QUIET_MS) s->phase = SWING_READY;
-        } else s->quiet = false;
-        return r;
+    double mag = 0, e = 0;
+    unsigned span = 0;
+    if (motion) {
+        mag = norm(p->g);
+        e = fmax(0, mag-1);
+        push_point(s, p->ms, p->g, e, p->clipped);
+        s->last_g = p->g;
+        s->have_g = true;
+        s->last_clipped = p->clipped;
+        s->mean_e = swing_window_mean(s->history, s->count, p->ms, &span);
+        s->speed = span >= SWING_MIN_SPAN_MS && s->mean_e >= SWING_NOISE_G ? swing_speed(s->mean_e) : 0;
     }
     if (s->phase == SWING_READY) {
-        if (down && !s->require_b_up) {
-            SwingVector mean;
-            if (!stable(s, &mean)) { r.hold_still = true; return r; }
-            s->fine_aim = s->locked_aim = clamp(aim, -SWING_AIM_MAX, SWING_AIM_MAX);
-            s->locked_roll = atan2(mean.x, mean.z)*180/SWING_PI;
-            s->locked_spin = 0;
-            s->motion_roll = 0;
-            s->grip_g = mean;
-            s->armed_ms = p->ms;
-            s->phase = SWING_GRIP;
-        }
+        if (p->b && !s->require_b_up) grip(s, aim); /* this report: 0 ms from B down to grip */
         return r;
     }
-    if (s->phase==SWING_GRIP && !p->clipped) track_return(s,p,mag,e);
-    /* C1: keep the last lobe, never the maximum of backswing + forward lobes. */
-    if (s->phase != SWING_PENDING && !p->clipped && s->mean_e >= SWING_FORWARD_G && span >= SWING_MIN_SPAN_MS) {
-        if (!s->in_lobe) {
-            s->in_lobe = true;
-            s->lobe_start = p->ms;
-            s->lobe_peak = 0;
-            s->lateral_sum = s->lateral_weight = 0;
-            s->lobe_valid = s->lobe_clipped = false;
-            s->confirmed = s->back_apex;
-            s->peak = 0;
-        }
-        /* Grip-relative lateral acceleration is a candidate swing-yaw proxy.
-           Weight by excess force, never use this signal for power. */
-        if (e >= SWING_FORWARD_G) {
-            double lateral=p->g.x/mag-s->grip_g.x/norm(s->grip_g);
-            double dt=(double)(p->ms-s->history[s->count-2].ms);
-            s->lateral_sum+=lateral*e*dt;
-            s->lateral_weight+=e*dt;
-        }
-        s->lobe_peak = fmax(s->lobe_peak, s->speed);
-        s->lobe_end = p->ms;
-        if (p->ms-s->lobe_start >= SWING_LOBE_MS) {
-            s->lobe_valid = true;
-            s->peak = s->lobe_peak;
-        }
-    } else if (!p->clipped && s->mean_e < SWING_FORWARD_G) s->in_lobe = false;
-    if (p->clipped && s->lobe_valid && s->in_lobe) s->lobe_clipped = true;
-
-    /* Freeze motion controls at B-up (or the last auto-release report).
-       Post-release follow-through may confirm the toss, but cannot retarget it. */
-    if (s->phase!=SWING_PENDING && !p->clipped) {
-        double lateral=s->lateral_weight>0 ? s->lateral_sum/s->lateral_weight : 0;
-        double yaw=swing_yaw(lateral);
-        double hand=profile->left_handed ? -1 : 1;
-        s->locked_aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
-        s->motion_roll=delta_degrees(atan2(p->g.x,p->g.z)*180/SWING_PI,s->locked_roll);
-        s->locked_spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1);
-    }
-    /* Motion can fake pitch even at sub-1 g. Require a two-sided calm
-       dwell before labeling an apex/finish, never a single attitude report.
-       A new lobe after the back-apex pause is forward: B-up needs no later
-       static follow-through. Automatic release still needs a calm finish. */
-    SwingVector calm;
     bool forward_finish = false;
-    if (s->mean_e < SWING_NOISE_G && stable_for(s, &calm, SWING_APEX_MS)) {
-        double dp = delta_degrees(pitch(calm), pitch(s->grip_g));
-        if (dp <= -SWING_FINISH_DEG) {
-            s->back_apex = true;
-            s->in_lobe = false;
-            s->confirmed = s->lobe_valid = s->lobe_clipped = false;
-            s->peak = 0;
-            s->lateral_sum = s->lateral_weight = 0;
-        } else if (s->lobe_valid && dp >= SWING_FINISH_DEG) {
-            s->confirmed = true;
-            forward_finish = true;
+    if (motion) {
+        if (s->phase == SWING_GRIP && !p->clipped) track_return(s, p, mag, e);
+        track_strokes(s, p, mag, e, span);
+        track_controls(s, p, mag, profile);
+        /* Optional cues from a calm attitude (a paused backswing, a held follow-through). */
+        SwingVector calm;
+        if (s->mean_e < SWING_NOISE_G && stable_for(s, &calm, SWING_APEX_MS)) {
+            double dp = delta_degrees(pitch(calm), pitch(s->grip_g));
+            if (dp <= -SWING_FINISH_DEG) {
+                s->back_apex = true;
+                s->in_lobe = s->dipping = false;
+                s->confirmed = s->lobe_valid = s->lobe_clipped = false;
+                s->peak = 0;
+                s->lateral_sum = s->lateral_weight = 0;
+            } else if (s->lobe_valid && dp >= SWING_FINISH_DEG) {
+                s->confirmed = true;
+                forward_finish = true;
+            }
         }
     }
     if (up && s->phase == SWING_GRIP) {
@@ -288,6 +359,7 @@ SwingResult swing_feed(Swing *s, const SwingSample *p, double aim, const SwingPr
             if (!recent_lobe) return finish_fallback(s,profile);
             s->confirmed=true;
         }
+        /* Releasing B always throws something: no stroke at all is the weak lob. */
         if (!s->lobe_valid) return finish(s, profile, SWING_B_UP);
         s->phase = SWING_PENDING;
     }
@@ -295,12 +367,44 @@ SwingResult swing_feed(Swing *s, const SwingSample *p, double aim, const SwingPr
         if (s->confirmed || p->ms-s->release_ms >= SWING_RELEASE_MS) return finish(s, profile, SWING_B_UP);
     } else if (!p->manual_release && s->lobe_valid && s->confirmed && forward_finish && p->ms-s->lobe_start >= SWING_WINDOW_MS &&
                s->speed <= SWING_AUTO_RATIO*s->peak) return finish(s, profile, SWING_AUTO);
-    if (s->phase==SWING_GRIP && p->ms-s->armed_ms >= SWING_TIMEOUT_MS) {
-        if (!p->manual_release) return finish(s,profile,SWING_TIMEOUT);
-        r.cancelled=true;
-        swing_reset(s,true);
-    }
+    /* Bowling input has no timeout: holding B just keeps the grip. */
+    if (s->phase==SWING_GRIP && !p->manual_release && p->ms-s->armed_ms >= SWING_TIMEOUT_MS)
+        return finish(s,profile,SWING_TIMEOUT);
     return r;
+}
+
+SwingResult swing_feed(Swing *s, const SwingSample *in, double aim, const SwingProfile *profile) {
+    SwingResult r = {0};
+    if (s->phase == SWING_SPENT) return r;
+    SwingSample p = *in;
+    double mag = norm(p.g);
+    bool motion = p.accel_valid && isfinite(mag) && mag >= 0.1;
+    if (s->have_time && p.ms <= s->last_ms) p.ms = s->last_ms+1; /* duplicate/backward stamp */
+    if (s->have_time) {
+        uint64_t gap = p.ms-s->last_ms;
+        if (gap > SWING_RESET_GAP_MS) {
+            /* A long stall: the motion so far no longer describes this swing. Keep the grip;
+               if B is up now, the release below still throws. */
+            restart_motion(s);
+            ++s->restarts;
+        } else if (gap > SWING_GAP_MS && gap <= SWING_BRIDGE_MS && motion && s->have_g && s->count) {
+            unsigned steps = (unsigned)((gap+SWING_BRIDGE_STEP_MS-1)/SWING_BRIDGE_STEP_MS);
+            uint64_t t0 = s->last_ms;
+            SwingVector g0 = s->last_g;
+            bool clipped = s->last_clipped || p.clipped;
+            for (unsigned k = 1; k < steps; ++k) {
+                double u = (double)k/steps;
+                SwingSample q = {.ms=t0+(uint64_t)llround(u*(double)gap),
+                    .g={g0.x+(p.g.x-g0.x)*u, g0.y+(p.g.y-g0.y)*u, g0.z+(p.g.z-g0.z)*u},
+                    .b=s->previous_b, .clipped=clipped, .accel_valid=true,
+                    .manual_release=p.manual_release};
+                r = advance(s, &q, true, aim, profile);
+                if (r.thrown) return r;
+            }
+            ++s->bridged;
+        }
+    }
+    return advance(s, &p, motion, aim, profile);
 }
 
 SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult *toss,

@@ -16,7 +16,7 @@
 #include "arrow.h"
 
 #ifndef BYC_VERSION
-#define BYC_VERSION "0.1.2"
+#define BYC_VERSION "0.1.3"
 #endif
 
 #define GAME_MENU_MAX 16
@@ -86,7 +86,6 @@ typedef struct {
      * then held ARROW_HOLD_MS after release and faded. There is no separate power meter. */
     double arrow_yaw, arrow_power, arrow_x, arrow_age_ms;
     bool arrow_on, arrow_live;
-    double hold_still_ms;
     bool help_shown;
     bool pass_and_play;
     double meter;

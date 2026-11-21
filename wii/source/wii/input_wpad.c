@@ -48,7 +48,7 @@ static void lost_channel(InputWpad *w, unsigned ch) {
     input_connection(w->input,ch,false);
 }
 static void feed_report(InputWpad *w, unsigned ch, WPADData *d, unsigned n, unsigned drops,
-                        uint64_t sample_ms, bool reject, uint64_t now) {
+                        uint64_t sample_ms, uint64_t now) {
     Input *i=w->input;
     InputSample sample={0};
     sample.motion.ms=sample_ms;
@@ -70,10 +70,10 @@ static void feed_report(InputWpad *w, unsigned ch, WPADData *d, unsigned n, unsi
         if (raw[a]<=w->raw_low[ch][a]+2 || raw[a]>=w->raw_high[ch][a]-2)
             sample.motion.clipped=true;
     w->latest[ch]=sample;
-    if (!reject) input_feed(i,ch,&sample);
+    input_feed(i,ch,&sample);
     if (w->trace) {
         InputWpadTrace row={ch,n,i->active_slot,now,sample.motion.ms,
-            sample.motion.dropped,true,reject,d,&sample,&i->detector};
+            sample.motion.dropped,true,d,&sample,&i->detector};
         w->trace(w->trace_user,&row);
     }
 }
@@ -110,7 +110,11 @@ void input_wpad_poll(InputWpad *w, uint64_t now) {
 
         /* WPAD reports arrive without timestamps. Partition the observed
          * interval across the batch instead of subtracting a fixed 10 ms per
-         * report from the end of a ~17 ms video frame. */
+         * report from the end of a ~17 ms video frame. After a stall, place
+         * the batch at no more than SWING_GAP_MS spacing ending now, so the
+         * detector sees the real hole (it bridges or restarts as needed).
+         * 0.1.3: no batch is ever rejected and a late or missing report never
+         * cancels the swing; real Wiimotes via a DolphinBar are bursty. */
         int drops=WPAD_DroppedEvents((int)ch);
         if (drops<0) { w->status[ch]=drops; lost_channel(w,ch); continue; }
         w->dropped[ch]+=(unsigned)drops;
@@ -118,19 +122,16 @@ void input_wpad_poll(InputWpad *w, uint64_t now) {
         uint64_t nominal=(uint64_t)count*INPUT_WPAD_REPORT_MS;
         uint64_t start=now>=nominal ? now-nominal : 0;
         if (w->have_sample[ch]) start=w->last_sample_ms[ch];
+        uint64_t span=(uint64_t)count*SWING_GAP_MS;
+        if (count && now>start+span) start=now-span;
         uint64_t elapsed=now>start ? now-start : 0;
-        bool reject=drops>0 || count==INPUT_WPAD_EVENTS ||
-            (count && (elapsed<count || elapsed>(uint64_t)count*SWING_GAP_MS));
-        bool gap=!count && w->have_sample[ch] && elapsed>SWING_GAP_MS;
-        if (reject) ++w->rejected_batches[ch];
-        if ((reject || gap) && ch==i->channels[i->active_slot]) input_report_loss(i);
-        if (gap) {
+        if (!count && w->have_sample[ch] && now-w->last_sample_ms[ch]>SWING_GAP_MS) {
+            ++w->empty_polls[ch];
             w->latest[ch].motion.accel_valid=false;
             w->latest[ch].buttons_valid=false;
         }
         for (unsigned n=0;n<count;++n)
-            feed_report(w,ch,&w->batch[n],n,(unsigned)drops,
-                        start+(n+1)*elapsed/count,reject,now);
+            feed_report(w,ch,&w->batch[n],n,(unsigned)drops,start+(n+1)*elapsed/count,now);
         if (count) {
             w->have_sample[ch]=true;
             w->last_sample_ms[ch]=now;

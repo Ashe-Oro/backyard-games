@@ -1,4 +1,6 @@
-/* HUD + menus at 640x480 (SPEC §2.6). Palette: teal #173f3d, cream #fff1cf, gold #ffe16b,
+/* HUD + menus on the 480-high 2D screen: 640 wide at 4:3, 853.3 at 16:9 (UI_W). Left-anchored
+ * pieces keep their x, right-anchored ones use UI_W, centred ones UI_CX (SPEC §2.6).
+ * Palette: teal #173f3d, cream #fff1cf, gold #ffe16b,
  * red #f1755f, blue #8fc6ee, outline #172c32. Text uses the 8x16 font (16 px tall at 1x). */
 #include "hud.h"
 #include <math.h>
@@ -12,6 +14,8 @@
 #define BLUE 0x8fc6ee
 #define INK 0x172c32
 #define DOT "\xFA"
+#define UI_W gfx_ui_w
+#define UI_CX (gfx_ui_w * 0.5f)
 
 static Rgba power_color(double p) {
     static const unsigned stops[5] = {0x8fc6ee, 0xa7efb1, 0xffe16b, 0xf6a35c, 0xf1755f};
@@ -28,7 +32,7 @@ static void card(float x, float y, float w, float h) {
 }
 
 static void scoreboard(const Game *g) {
-    const float w = 360, x = 320 - w / 2, y = 14, h = 62;
+    const float w = 360, x = UI_CX - w / 2, y = 14, h = 62;
     card(x, y, w, h);
     for (int t = 0; t < 2; t++) {
         float cx = t ? x + w - 62 : x + 62;
@@ -58,28 +62,28 @@ static void scoreboard(const Game *g) {
     }
     char mid[32];
     if (g->practice) {
-        gfx_text_center(320, y + 6, 1, rgb(GOLD), "PRACTICE");
+        gfx_text_center(UI_CX, y + 6, 1, rgb(GOLD), "PRACTICE");
         int n = g->practice_throws;
-        snprintf(mid, sizeof mid, "%d IN", g->practice_in); gfx_text_center(320, y + 22, 1, rgb(CREAM), mid);
-        snprintf(mid, sizeof mid, "%d ON", g->practice_on); gfx_text_center(320, y + 38, 1, rgb(CREAM), mid);
+        snprintf(mid, sizeof mid, "%d IN", g->practice_in); gfx_text_center(UI_CX, y + 22, 1, rgb(CREAM), mid);
+        snprintf(mid, sizeof mid, "%d ON", g->practice_on); gfx_text_center(UI_CX, y + 38, 1, rgb(CREAM), mid);
         snprintf(mid, sizeof mid, "%d%% HIT " DOT " %d THROWS", n ? (int)lround((g->practice_in + g->practice_on) * 100.0 / n) : 0, n);
-        card(320 - gfx_text_width(mid, 1) / 2 - 8, y + h + 4, gfx_text_width(mid, 1) + 16, 22);
-        gfx_text_center(320, y + h + 7, 1, rgb(CREAM), mid);
+        card(UI_CX - gfx_text_width(mid, 1) / 2 - 8, y + h + 4, gfx_text_width(mid, 1) + 16, 22);
+        gfx_text_center(UI_CX, y + h + 7, 1, rgb(CREAM), mid);
     } else {
         snprintf(mid, sizeof mid, "ROUND %d", g->inning);
-        gfx_text_center(320, y + 6, 1, rgb(CREAM), mid);
-        gfx_text_center(320, y + 22, 1, rgb(GOLD), g->phase == PH_OVER ? "FINAL" : "TO 21");
+        gfx_text_center(UI_CX, y + 6, 1, rgb(CREAM), mid);
+        gfx_text_center(UI_CX, y + 22, 1, rgb(GOLD), g->phase == PH_OVER ? "FINAL" : "TO 21");
         if (g->phase != PH_MENU && g->phase != PH_INTRO && g->phase != PH_CHAMPION) {
             int d = g->live.pts[0] - g->live.pts[1];
             if (!d) snprintf(mid, sizeof mid, "EVEN"); else snprintf(mid, sizeof mid, "%s +%d", d > 0 ? "RED" : "BLUE", d > 0 ? d : -d);
-            gfx_text_center(320, y + 40, 1, d > 0 ? rgb(RED) : d < 0 ? rgb(BLUE) : rgb(CREAM), mid);
+            gfx_text_center(UI_CX, y + 40, 1, d > 0 ? rgb(RED) : d < 0 ? rgb(BLUE) : rgb(CREAM), mid);
         }
     }
 }
 
 static void wind_panel(const Game *g) {
     if (g->wind.mph <= 0) return;
-    const float w = 84, h = 76, x = 640 - 28 - w, y = 168;
+    const float w = 84, h = 76, x = UI_W - 28 - w, y = 168;
     card(x, y, w, h);
     gfx_text_center(x + w / 2, y + 6, 1, rgb(GOLD), "WIND");
     /* arrow points where the wind blows: up = away from the thrower; rotate by angle */
@@ -101,7 +105,7 @@ static void turn_banner(const Game *g) {
     char buf[32];
     if (g->vs_cpu) snprintf(buf, sizeof buf, "%s", t == 0 ? "YOUR THROW" : "CPU'S THROW");
     else snprintf(buf, sizeof buf, "%s'S THROW", t ? "BLUE" : "RED");
-    float cx = hud_board_view_visible(g) ? 396 : 320;   /* arcade.css #turn {left:200px; top:112px} */
+    float cx = hud_board_view_visible(g) ? (UI_CX + 76) : UI_CX;   /* arcade.css #turn {left:200px; top:112px} */
     gfx_text_center_shadow(cx, 106, 2, rgb(t ? BLUE : RED), buf);
     if (g->pass_and_play && g->phase == PH_AIM) gfx_text_center_shadow(cx, 140, 1, rgb(CREAM), "PASS THE REMOTE");
 }
@@ -109,7 +113,7 @@ static void turn_banner(const Game *g) {
 static void callout(const Game *g) {
     if (!g->msg_on) return;
     /* arcade.css #msg {left:200px; right:16px}: centred right of the board-view inset */
-    float s = strlen(g->msg_big) > 9 ? 2 : 3, cx = hud_board_view_visible(g) ? 396 : 320;
+    float s = strlen(g->msg_big) > 9 ? 2 : 3, cx = hud_board_view_visible(g) ? (UI_CX + 76) : UI_CX;
     gfx_text_center_shadow(cx, 166, s, rgb(0xffffff), g->msg_big);
     if (g->msg_small[0]) gfx_text_center_shadow(cx, 166 + 16 * s + 8, 1, rgb(GOLD), g->msg_small);
 }
@@ -145,13 +149,13 @@ static void shot_arrow(const Game *g) {
 }
 
 static void board_view_frame(void) {
-    const int x = 28, y = 92, w = 132, h = 150;
+    int x, y, w, h; view_board_inset(gfx_aspect, &x, &y, &w, &h);
     gfx_rect(x - 3 + 5, y - 22 + 5, w + 6, h + 25, rgba(INK, 0x66));
     gfx_frame(x - 3, y - 22, w + 6, h + 25, 3, rgb(INK));
     gfx_rect(x, y - 19, w, 19, rgb(TEAL));
     gfx_text_center(x + w / 2, y - 18, 1, rgb(GOLD), "BOARD " DOT " 27 FT");
 }
-void hud_board_view_rect(int *x, int *y, int *w, int *h) { *x = 28; *y = 92; *w = 132; *h = 150; }
+void hud_board_view_rect(int *x, int *y, int *w, int *h) { view_board_inset(gfx_aspect, x, y, w, h); }
 bool hud_board_view_visible(const Game *g) {
     return g->phase != PH_MENU && g->phase != PH_INTRO && g->phase != PH_CHAMPION &&
            !(g->ui == UI_TITLE || g->ui == UI_SETTINGS || g->ui == UI_SETPOWER || g->ui == UI_CAREER_MAP || g->ui == UI_STRAP);
@@ -165,7 +169,7 @@ static void help_legend(const Game *g, const Input *in) {
     const char *state = "-";
     if (in && g->phase == PH_AIM && game_is_human(g, t)) {
         SwingPhase p = in->detector.phase;
-        state = p == SWING_SETTLING ? DOT : p == SWING_READY ? "\x18" : "\x18\x1a";
+        state = p == SWING_READY ? "\x18" : "\x18\x1a";
     }
     snprintf(status, sizeof status, "%s %s " DOT " %s", state, heights[g->arc], g->side[t] == SIDE_STICKY ? "STICKY" : "SLICK");
     float y = 480 - 40;
@@ -224,51 +228,51 @@ static void wrap_center(float cx, float y, float maxw, Rgba c, const char *text)
 
 static void panel(const Game *g) {
     char buf[96];
-    float w = 420, x = 320 - w / 2;
+    float w = 420, x = UI_CX - w / 2;
     const Rival *o = &byc_roster[g->fight < 8 ? g->fight : 7];
     Tex *portrait = NULL;
     switch (g->ui) {
     case UI_STRAP: {
         float h = 150, y = 150; card(x, y, w, h);
-        gfx_text_center(320, y + 24, 3, rgb(GOLD), "STRAP ON!");
-        gfx_text_center(320, y + 82, 1, rgb(CREAM), "HOLD B " DOT " BACK " DOT " FORWARD " DOT " LET GO");
-        menu_list(g, 320, y + 114, 120);
+        gfx_text_center(UI_CX, y + 24, 3, rgb(GOLD), "STRAP ON!");
+        gfx_text_center(UI_CX, y + 82, 1, rgb(CREAM), "HOLD B " DOT " BACK " DOT " FORWARD " DOT " LET GO");
+        menu_list(g, UI_CX, y + 114, 120);
         break;
     }
     case UI_TITLE: {
         float h = 300, y = 96; card(x, y, w, h);
-        gfx_text_center(320, y + 14, 1, rgb(GOLD), "WII " DOT " " BYC_VERSION);
-        gfx_text_center_shadow(320, y + 38, 3, rgb(CREAM), "BACKYARD");
-        gfx_text_center_shadow(320, y + 88, 3, rgb(GOLD), "CORNHOLE");
-        menu_list(g, 320, y + 158, 220);
-        if (!g->save_ok) gfx_text_center(320, y + h - 22, 1, rgba(CREAM, 0xb0), "Progress won't save on this device.");
+        gfx_text_center(UI_CX, y + 14, 1, rgb(GOLD), "WII " DOT " " BYC_VERSION);
+        gfx_text_center_shadow(UI_CX, y + 38, 3, rgb(CREAM), "BACKYARD");
+        gfx_text_center_shadow(UI_CX, y + 88, 3, rgb(GOLD), "CORNHOLE");
+        menu_list(g, UI_CX, y + 158, 220);
+        if (!g->save_ok) gfx_text_center(UI_CX, y + h - 22, 1, rgba(CREAM, 0xb0), "Progress won't save on this device.");
         break;
     }
     case UI_PAUSE: {
         float h = 64 + g->menu.count * 24, y = 240 - h / 2; card(x, y, w, h);
-        gfx_text_center(320, y + 12, 2, rgb(GOLD), "PAUSED");
-        menu_list(g, 320, y + 52, 260);
+        gfx_text_center(UI_CX, y + 12, 2, rgb(GOLD), "PAUSED");
+        menu_list(g, UI_CX, y + 52, 260);
         gfx_text(x + w - 8 - gfx_text_width("v" BYC_VERSION, 1), y + h + 6, 1, rgba(CREAM, 0xc0), "v" BYC_VERSION);
         break;
     }
     case UI_SETTINGS: {
         float h = 60 + g->menu.count * 24, y = 240 - h / 2; card(x, y, w, h);
-        gfx_text_center(320, y + 10, 2, rgb(GOLD), "SETTINGS");
-        menu_list(g, 320, y + 48, 380);
+        gfx_text_center(UI_CX, y + 10, 2, rgb(GOLD), "SETTINGS");
+        menu_list(g, UI_CX, y + 48, 380);
         break;
     }
     case UI_SETPOWER: {
         float h = 170, y = 150; card(x, y, w, h);
-        gfx_text_center(320, y + 12, 2, rgb(GOLD), g->setpower_slot ? "BLUE SET POWER" : "RED SET POWER");
-        gfx_text_center(320, y + 54, 2, rgb(CREAM), "TOSS EASY x3");
-        for (int i = 0; i < SWING_CAL_TOSSES; i++) gfx_rect(320 - 40 + i * 30, y + 92, 20, 12, i < g->setpower_count ? rgb(GOLD) : rgba(CREAM, 0x40));
-        if (g->setpower_note[0]) gfx_text_center(320, y + 114, 1, rgb(strcmp(g->setpower_note, "POWER SET!") ? RED : GOLD), g->setpower_note);
-        gfx_text_center(320, y + 140, 1, rgba(CREAM, 0xc0), "HOME: DONE");
+        gfx_text_center(UI_CX, y + 12, 2, rgb(GOLD), g->setpower_slot ? "BLUE SET POWER" : "RED SET POWER");
+        gfx_text_center(UI_CX, y + 54, 2, rgb(CREAM), "TOSS EASY x3");
+        for (int i = 0; i < SWING_CAL_TOSSES; i++) gfx_rect(UI_CX - 40 + i * 30, y + 92, 20, 12, i < g->setpower_count ? rgb(GOLD) : rgba(CREAM, 0x40));
+        if (g->setpower_note[0]) gfx_text_center(UI_CX, y + 114, 1, rgb(strcmp(g->setpower_note, "POWER SET!") ? RED : GOLD), g->setpower_note);
+        gfx_text_center(UI_CX, y + 140, 1, rgba(CREAM, 0xc0), "HOME: DONE");
         break;
     }
     case UI_CAREER_MAP: {
         float h = 330, y = 74; card(x, y, w, h);
-        gfx_text_center(320, y + 10, 1, rgb(GOLD), "ROAD TO CORNHOLE KING");
+        gfx_text_center(UI_CX, y + 10, 1, rgb(GOLD), "ROAD TO CORNHOLE KING");
         for (int i = 0; i < 8; i++) {
             const char *mark = i < g->fight ? "\xFB" : i == g->fight ? "\x10" : DOT;
             snprintf(buf, sizeof buf, "%s %s " DOT " %s", mark, byc_roster[i].name, byc_circuits[byc_roster[i].circuit]);
@@ -276,20 +280,20 @@ static void panel(const Game *g) {
             gfx_text(x + 24, y + 34 + i * 20, 1, c, buf);
         }
         snprintf(buf, sizeof buf, "%d WINS " DOT " %d/8 CLEARED", g->wins, g->fight);
-        gfx_text_center(320, y + 200, 1, rgb(CREAM), buf);
-        menu_list(g, 320, y + 228, 220);
-        if (!g->save_ok) gfx_text_center(320, y + h - 22, 1, rgba(CREAM, 0xb0), "Progress won't save on this device.");
+        gfx_text_center(UI_CX, y + 200, 1, rgb(CREAM), buf);
+        menu_list(g, UI_CX, y + 228, 220);
+        if (!g->save_ok) gfx_text_center(UI_CX, y + h - 22, 1, rgba(CREAM, 0xb0), "Progress won't save on this device.");
         break;
     }
     case UI_INTRO: {
         float h = 330, y = 74; card(x, y, w, h);
         snprintf(buf, sizeof buf, "%s " DOT " MATCH %d/8", byc_circuits[o->circuit], g->fight + 1);
-        gfx_text_center(320, y + 10, 1, rgb(GOLD), buf);
+        gfx_text_center(UI_CX, y + 10, 1, rgb(GOLD), buf);
         snprintf(buf, sizeof buf, "NEXT UP: %s", o->name);
-        gfx_text_center(320, y + 32, 1, rgb(CREAM), buf);
+        gfx_text_center(UI_CX, y + 32, 1, rgb(CREAM), buf);
         scene_portrait(o->level, &portrait);
         tex_bind(portrait); {
-            float px = 320 - 40, py = y + 56, s = 80;
+            float px = UI_CX - 40, py = y + 56, s = 80;
             GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
             GX_Position3f32(px, py, -1); GX_Color4u8(255, 255, 255, 255); GX_TexCoord2f32(0, 0);
             GX_Position3f32(px + s, py, -1); GX_Color4u8(255, 255, 255, 255); GX_TexCoord2f32(1, 0);
@@ -297,20 +301,20 @@ static void panel(const Game *g) {
             GX_Position3f32(px, py + s, -1); GX_Color4u8(255, 255, 255, 255); GX_TexCoord2f32(0, 1);
             GX_End();
         }
-        snprintf(buf, sizeof buf, "\"%s\"", o->nick); gfx_text_center(320, y + 146, 1, rgb(CREAM), buf);
-        wrap_center(320, y + 166, w - 30, rgb(CREAM), o->taunt);
+        snprintf(buf, sizeof buf, "\"%s\"", o->nick); gfx_text_center(UI_CX, y + 146, 1, rgb(CREAM), buf);
+        wrap_center(UI_CX, y + 166, w - 30, rgb(CREAM), o->taunt);
         const char *style = o->style; char up[16]; size_t i = 0; for (; style[i] && i < 15; i++) up[i] = (char)(style[i] >= 'a' && style[i] <= 'z' ? style[i] - 32 : style[i]); up[i] = 0;
         snprintf(buf, sizeof buf, "%s " DOT " %s", up, o->circuit == 0 ? "CALM AIR" : o->circuit == 1 ? "LIGHT WIND" : "STRONG WIND");
-        gfx_text_center(320, y + 206, 1, rgb(GOLD), buf);
-        menu_list(g, 320, y + 250, 220);
+        gfx_text_center(UI_CX, y + 206, 1, rgb(GOLD), buf);
+        menu_list(g, UI_CX, y + 250, 220);
         break;
     }
     case UI_CHAMPION: {
         float h = 300, y = 90; card(x, y, w, h);
-        gfx_text_center(320, y + 12, 1, rgb(GOLD), "ALL FOUR CIRCUITS CONQUERED");
-        gfx_text_center_shadow(320, y + 40, 3, rgb(GOLD), "CORNHOLE KING!");
+        gfx_text_center(UI_CX, y + 12, 1, rgb(GOLD), "ALL FOUR CIRCUITS CONQUERED");
+        gfx_text_center_shadow(UI_CX, y + 40, 3, rgb(GOLD), "CORNHOLE KING!");
         scene_portrait(7, &portrait); tex_bind(portrait); {
-            float px = 320 - 40, py = y + 100, s = 80;
+            float px = UI_CX - 40, py = y + 100, s = 80;
             GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
             GX_Position3f32(px, py, -1); GX_Color4u8(255, 255, 255, 255); GX_TexCoord2f32(0, 0);
             GX_Position3f32(px + s, py, -1); GX_Color4u8(255, 255, 255, 255); GX_TexCoord2f32(1, 0);
@@ -318,8 +322,8 @@ static void panel(const Game *g) {
             GX_Position3f32(px, py + s, -1); GX_Color4u8(255, 255, 255, 255); GX_TexCoord2f32(0, 1);
             GX_End();
         }
-        gfx_text_center(320, y + 190, 1, rgb(CREAM), "All eight rivals defeated.");
-        menu_list(g, 320, y + 224, 220);
+        gfx_text_center(UI_CX, y + 190, 1, rgb(CREAM), "All eight rivals defeated.");
+        menu_list(g, UI_CX, y + 224, 220);
         break;
     }
     case UI_SUMMARY: case UI_CAREER_RESULT: {
@@ -327,60 +331,60 @@ static void panel(const Game *g) {
         float h = 250, y = 110; card(x, y, w, h);
         if (g->ui == UI_CAREER_RESULT) {
             const Rival *rv = &byc_roster[(g->winner == 0 ? g->fight - 1 : g->fight) < 8 ? (g->winner == 0 ? g->fight - 1 : g->fight) : 7];
-            gfx_text_center(320, y + 12, 1, rgb(GOLD), g->winner == 0 ? "CIRCUIT VICTORY" : "RIVAL WINS");
+            gfx_text_center(UI_CX, y + 12, 1, rgb(GOLD), g->winner == 0 ? "CIRCUIT VICTORY" : "RIVAL WINS");
             snprintf(buf, sizeof buf, "%s %s", g->winner == 0 ? "You beat" : "You lost to", rv->name);
-            gfx_text_center(320, y + 44, 1, rgb(CREAM), buf);
+            gfx_text_center(UI_CX, y + 44, 1, rgb(CREAM), buf);
             snprintf(buf, sizeof buf, "%d - %d", g->scores[0], g->scores[1]);
-            gfx_text_center(320, y + 68, 2, rgb(CREAM), buf);
-            gfx_text_center(320, y + 110, 1, rgb(CREAM), g->winner == 0 ? "Next rival unlocked!" : "Try again.");
-            if (!g->save_ok) gfx_text_center(320, y + 132, 1, rgba(CREAM, 0xb0), "Progress won't save on this device.");
-            menu_list(g, 320, y + 170, 220);
+            gfx_text_center(UI_CX, y + 68, 2, rgb(CREAM), buf);
+            gfx_text_center(UI_CX, y + 110, 1, rgb(CREAM), g->winner == 0 ? "Next rival unlocked!" : "Try again.");
+            if (!g->save_ok) gfx_text_center(UI_CX, y + 132, 1, rgba(CREAM, 0xb0), "Progress won't save on this device.");
+            menu_list(g, UI_CX, y + 170, 220);
             break;
         }
         if (g->phase == PH_OVER) {
-            gfx_text_center(320, y + 10, 1, rgb(GOLD), "FINAL");
+            gfx_text_center(UI_CX, y + 10, 1, rgb(GOLD), "FINAL");
             if (g->vs_cpu) snprintf(buf, sizeof buf, "%s", g->winner == 0 ? "YOU WIN!" : "CPU WINS");
             else snprintf(buf, sizeof buf, "%s WINS!", g->winner ? "BLUE" : "RED");
-            gfx_text_center_shadow(320, y + 30, 3, rgb(g->winner ? BLUE : RED), buf);
+            gfx_text_center_shadow(UI_CX, y + 30, 3, rgb(g->winner ? BLUE : RED), buf);
         } else {
-            snprintf(buf, sizeof buf, "ROUND %d", r->inning); gfx_text_center(320, y + 10, 1, rgb(GOLD), buf);
+            snprintf(buf, sizeof buf, "ROUND %d", r->inning); gfx_text_center(UI_CX, y + 10, 1, rgb(GOLD), buf);
             if (r->scorer < 0) snprintf(buf, sizeof buf, "WASH"); else snprintf(buf, sizeof buf, "%s +%d", r->scorer ? "BLUE" : "RED", r->net);
-            gfx_text_center_shadow(320, y + 30, 3, r->scorer < 0 ? rgb(CREAM) : rgb(r->scorer ? BLUE : RED), buf);
+            gfx_text_center_shadow(UI_CX, y + 30, 3, r->scorer < 0 ? rgb(CREAM) : rgb(r->scorer ? BLUE : RED), buf);
         }
         for (int t = 0; t < 2; t++) {
-            float cx = t ? 320 + 110 : 320 - 110;
+            float cx = t ? UI_CX + 110 : UI_CX - 110;
             gfx_text_center(cx, y + 90, 1, rgb(t ? BLUE : RED), t ? "BLUE" : "RED");
             snprintf(buf, sizeof buf, "%d", r->lie.pts[t]); gfx_text_center(cx, y + 108, 2, rgb(CREAM), buf);
             snprintf(buf, sizeof buf, "%d IN " DOT " %d ON", r->lie.in_c[t], r->lie.on_c[t]); gfx_text_center(cx, y + 142, 1, rgb(CREAM), buf);
         }
-        gfx_text_center(320, y + 112, 1, rgb(CREAM), "vs");
+        gfx_text_center(UI_CX, y + 112, 1, rgb(CREAM), "vs");
         if (r->scorer < 0) snprintf(buf, sizeof buf, "TIED ROUND " DOT " NO POINTS");
         else snprintf(buf, sizeof buf, "%d - %d = %d (CANCELLATION)", r->lie.pts[r->scorer], r->lie.pts[1 - r->scorer], r->net);
-        gfx_text_center(320, y + 166, 1, rgb(CREAM), buf);
+        gfx_text_center(UI_CX, y + 166, 1, rgb(CREAM), buf);
         snprintf(buf, sizeof buf, "MATCH: RED %d " DOT " BLUE %d", g->scores[0], g->scores[1]);
-        gfx_text_center(320, y + 186, 1, rgb(CREAM), buf);
-        if (g->phase != PH_OVER) { snprintf(buf, sizeof buf, "%s THROWS FIRST", g->first ? "BLUE" : "RED"); gfx_text_center(320, y + 204, 1, rgb(GOLD), buf); }
-        menu_list(g, 320, y + 224, 200);
+        gfx_text_center(UI_CX, y + 186, 1, rgb(CREAM), buf);
+        if (g->phase != PH_OVER) { snprintf(buf, sizeof buf, "%s THROWS FIRST", g->first ? "BLUE" : "RED"); gfx_text_center(UI_CX, y + 204, 1, rgb(GOLD), buf); }
+        menu_list(g, UI_CX, y + 224, 200);
         break;
     }
     case UI_CONFIRM_QUIT: case UI_CONFIRM_NEW_CAREER: {
         float h = 130, y = 175; card(x, y, w, h);
-        gfx_text_center(320, y + 16, 2, rgb(GOLD), g->ui == UI_CONFIRM_QUIT ? "QUIT?" : "NEW CAREER?");
-        menu_list(g, 320, y + 62, 160);
+        gfx_text_center(UI_CX, y + 16, 2, rgb(GOLD), g->ui == UI_CONFIRM_QUIT ? "QUIT?" : "NEW CAREER?");
+        menu_list(g, UI_CX, y + 62, 160);
         break;
     }
     case UI_MUSIC: {
         float h = 250, y = 115; card(x, y, w, h);
-        gfx_text_center(320, y + 10, 2, rgb(GOLD), "MUSIC");
+        gfx_text_center(UI_CX, y + 10, 2, rgb(GOLD), "MUSIC");
         const char *now = g->music ? music_now(g->music) : "Music folder unavailable.";
         snprintf(buf, sizeof buf, "%.48s", now);
-        gfx_text_center(320, y + 48, 1, rgb(CREAM), buf);
+        gfx_text_center(UI_CX, y + 48, 1, rgb(CREAM), buf);
         if (g->music) {
             const char *folder = g->music->folder;
             snprintf(buf, sizeof buf, "%.48s", strlen(folder) > 48 ? folder + strlen(folder) - 48 : folder);
-            gfx_text_center(320, y + 66, 1, rgba(CREAM, 0xb0), buf);
+            gfx_text_center(UI_CX, y + 66, 1, rgba(CREAM, 0xb0), buf);
         }
-        menu_list(g, 320, y + 94, 300);
+        menu_list(g, UI_CX, y + 94, 300);
         break;
     }
     case UI_NONE: break;
@@ -398,38 +402,44 @@ void hud_draw(const Game *g, const Input *in) {
         callout(g);
         shot_arrow(g);
         help_legend(g, in);
-        if (g->hold_still_ms > 0) gfx_text_center_shadow(320, 300, 2, rgb(GOLD), "HOLD STILL");
     }
     if (g->ui != UI_NONE) {
-        if (g->ui != UI_SETPOWER) gfx_rect(0, 0, 640, 480, rgba(0x000000, 0x50));
+        if (g->ui != UI_SETPOWER) gfx_rect(0, 0, UI_W, 480, rgba(0x000000, 0x50));
         panel(g);
     } else if (g->phase == PH_MENU) panel(g);
     if (g->connect_prompt) {
-        float w = 360, h = g->connect_offer_reassign ? 96 : 72, x = 320 - w / 2, y = 200;
+        float w = 360, h = g->connect_offer_reassign ? 96 : 72, x = UI_CX - w / 2, y = 200;
         card(x, y, w, h);
         char buf[32]; snprintf(buf, sizeof buf, "CONNECT REMOTE %u", g->connect_remote);
-        gfx_text_center(320, y + 14, 2, rgb(GOLD), buf);
-        if (g->connect_offer_reassign) gfx_text_center(320, y + 58, 1, rgb(CREAM), "A: USE REMOTE 1");
+        gfx_text_center(UI_CX, y + 14, 2, rgb(GOLD), buf);
+        if (g->connect_offer_reassign) gfx_text_center(UI_CX, y + 58, 1, rgb(CREAM), "A: USE REMOTE 1");
     }
 }
 
 void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
     const Swing *s = &in->detector;
     unsigned ch = in->channels[in->active_slot];
-    static const char *const phases[] = {"SETTLING", "READY", "GRIP", "RELEASE", "SPENT"};
-    const char *phase = phases[s->phase];
-    if (s->phase == SWING_GRIP) {
-        if (swing_forward_motion(s)) phase = "FORWARD";
-        else if (s->back_apex || s->back_motion_ms) phase = "BACKSWING";
-    }
-    gfx_rect(264, 414, 348, 43, rgba(TEAL, 0xf0));
+    const InputStats *st = &in->stats;
+    /* Five lines for a phone photo of the TV: live accel; B and swing phase; report rate and
+       largest gap; the last throw's peak speed and power. */
+    float x = UI_W - 28 - 348, y = 480 - 24 - 5 * 18 - 10;
+    gfx_rect(x, y, 348, 5 * 18 + 10, rgba(TEAL, 0xf0));
     char line[48];
     if (latest->motion.accel_valid) {
         SwingVector g = latest->motion.g;
         snprintf(line, sizeof line, "ACCEL G  X %+.2f  Y %+.2f  Z %+.2f", g.x, g.y, g.z);
     } else snprintf(line, sizeof line, "ACCEL G  NO REPORT");
-    gfx_text(274, 419, 1, rgb(CREAM), line);
+    gfx_text(x + 10, y + 5, 1, rgb(CREAM), line);
     const char *b = !latest->buttons_valid ? "?" : latest->motion.b ? "HELD" : "UP";
-    snprintf(line, sizeof line, "REMOTE %u  B %s  %s", ch + 1, b, phase);
-    gfx_text(274, 437, 1, rgb(GOLD), line);
+    snprintf(line, sizeof line, "REMOTE %u  B %s  PHASE %s", ch + 1, b, swing_phase_name(s));
+    gfx_text(x + 10, y + 23, 1, rgb(GOLD), line);
+    snprintf(line, sizeof line, "REPORTS %u/S  MAX GAP %u MS", st->rate, input_largest_gap(in));
+    gfx_text(x + 10, y + 41, 1, rgb(CREAM), line);
+    snprintf(line, sizeof line, "SWING SPEED %.2f  PEAK %.2f M/S", s->speed, s->peak);
+    gfx_text(x + 10, y + 59, 1, rgb(CREAM), line);
+    if (st->have_toss)
+        snprintf(line, sizeof line, "LAST THROW PEAK %.2f POWER %.2f%s", st->last_toss.speed,
+                 st->last_toss.power, st->last_toss.fallback ? " LOB" : "");
+    else snprintf(line, sizeof line, "LAST THROW  -");
+    gfx_text(x + 10, y + 77, 1, rgb(GOLD), line);
 }

@@ -7,6 +7,7 @@
 
 GXRModeObj *gfx_mode;
 float gfx_aspect = 4.0f / 3.0f;
+float gfx_ui_w = 640.0f;
 bool gfx_widescreen, gfx_progressive;
 
 static void *xfb[2];
@@ -29,6 +30,7 @@ void gfx_init(void) {
         gfx_mode->viXOrigin = (VI_MAX_WIDTH_NTSC - 678) / 2;
         gfx_aspect = 16.0f / 9.0f;
     }
+    gfx_ui_w = 480.0f * gfx_aspect;
     VIDEO_Configure(gfx_mode);
     for (int i = 0; i < 2; i++) {
         xfb[i] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(gfx_mode));
@@ -145,7 +147,7 @@ void gfx_model(V3 p, const M3 *r, V3 s) {
 }
 void gfx_begin_2d(void) {
     Mtx44 o; Mtx id;
-    guOrtho(o, 0, 480, 0, 640, 0, 1000);
+    guOrtho(o, 0, 480, 0, gfx_ui_w, 0, 1000);
     GX_LoadProjectionMtx(o, GX_ORTHOGRAPHIC);
     guMtxIdentity(id);
     GX_LoadPosMtxImm(id, GX_PNMTX0);
@@ -162,10 +164,12 @@ bool gfx_project(V3 w, float *sx, float *sy) {
     float cy = proj[1][0] * ex + proj[1][1] * ey + proj[1][2] * ez + proj[1][3];
     float cw = -ez;
     if (cw <= 0.001f) return false;
-    *sx = (cx / cw + 1) * 320.0f;
+    *sx = (cx / cw + 1) * gfx_ui_w * 0.5f;
     *sy = (1 - cy / cw) * 240.0f;
     return true;
 }
+
+float gfx_ui_to_efb(float x) { return x * (float)gfx_mode->fbWidth / gfx_ui_w; }
 
 /* ---------------- textures (RGB5A3, 4x4 texel tiles) ---------------- */
 void tex_create(Tex *t, int w, int h, bool repeat) {

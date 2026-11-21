@@ -13,6 +13,10 @@ typedef struct { u8 r, g, b, a; } Rgba;
 
 extern GXRModeObj *gfx_mode;
 extern float gfx_aspect;      /* 4:3 or 16:9 (console setting) */
+/* 2D virtual screen: gfx_ui_w x 480 square units (640 at 4:3, 853.3 at 16:9). The EFB stays
+ * 640 wide; gfx_ui_to_efb converts a 2D x or width to EFB pixels (for viewports). */
+extern float gfx_ui_w;
+float gfx_ui_to_efb(float x);
 extern bool gfx_widescreen, gfx_progressive;
 
 void gfx_init(void);

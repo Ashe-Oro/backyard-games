@@ -11,7 +11,7 @@ typedef struct {
     unsigned channel, event_index, player_slot;
     uint64_t drain_ms, estimated_ms;
     unsigned dropped;
-    bool timestamp_estimated, batch_rejected;
+    bool timestamp_estimated;
     const WPADData *raw; /* borrowed for callback only; includes extension, raw axes, err, data_present */
     const InputSample *sample;
     const Swing *detector;
@@ -25,7 +25,7 @@ typedef struct {
     uint64_t last_sample_ms[2];
     uint16_t raw_low[2][3], raw_high[2][3];
     int status[2];
-    uint64_t reports[2], dropped[2], rejected_batches[2];
+    uint64_t reports[2], dropped[2], empty_polls[2]; /* diagnostics only; none cancels a swing */
     InputSample latest[2];
     Input *input;
     InputWpadTraceSink trace;
