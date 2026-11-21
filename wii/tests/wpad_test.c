@@ -121,7 +121,7 @@ static void both_channels_drained_in_order(void) {
     assert(traced==4 && remotes[0].read==2 && remotes[1].read==2);
     assert(trace_ms[0]==1010 && trace_ms[1]==1020 && trace_ms[2]==1010 && trace_ms[3]==1020);
     assert(w.reports[0]==2 && w.reports[1]==2);
-    assert(fabs(i.slots[0].aim)<1e-9 && !i.b_held[0] && !i.b_held[1]);
+    assert(!i.b_held[0] && !i.b_held[1]);
     assert(remotes[0].drains==2 && remotes[1].drains==2 && remotes[0].format==WPAD_FMT_BTNS_ACC);
 }
 static void reconnect_registers_persistent_buffer(void) {

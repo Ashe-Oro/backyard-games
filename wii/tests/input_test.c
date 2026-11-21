@@ -18,7 +18,7 @@ static void ready(Swing *s, double roll) {
     SwingProfile p=profile();
     for (unsigned t=0;t<=500;t+=10) {
         SwingSample v=sample(t,0,0,roll,false);
-        assert(!swing_feed(s,&v,.04,&p).thrown);
+        assert(!swing_feed(s,&v,&p).thrown);
     }
     assert(s->phase==SWING_READY);
 }
@@ -26,7 +26,7 @@ static void arm(Swing *s, double roll) {
     ready(s,roll);
     SwingProfile p=profile();
     SwingSample v=sample(510,0,0,roll,true);
-    assert(!swing_feed(s,&v,.04,&p).thrown);
+    assert(!swing_feed(s,&v,&p).thrown);
     assert(s->phase==SWING_GRIP);
 }
 static SwingResult replay(double e, unsigned duration, unsigned release_delay, bool auto_release, bool back, bool clip) {
@@ -39,7 +39,7 @@ static SwingResult replay(double e, unsigned duration, unsigned release_delay, b
         SwingSample v=sample(t,active?e:0,active?0:(back?-35:25),0,
                              auto_release || t<end+release_delay);
         v.clipped=clip && t==end-10;
-        SwingResult r=swing_feed(&s,&v,-.12,&p);
+        SwingResult r=swing_feed(&s,&v,&p);
         if (r.thrown) { assert(!shot.thrown); shot=r; }
     }
     return shot;
@@ -63,7 +63,7 @@ static void elapsed_span_not_sample_count(void) {
     Swing s; arm(&s,0); SwingProfile p=profile();
     for (unsigned t=511;t<=525;++t) {
         SwingSample v=sample(t,1.2,0,0,true);
-        swing_feed(&s,&v,0,&p);
+        swing_feed(&s,&v,&p);
         assert(!s.lobe_valid);
     }
     assert(!s.lobe_valid);
@@ -88,7 +88,7 @@ static void release_latency_retains_peak(void) {
 static void auto_release_and_locks(void) {
     SwingResult r=replay(.8,180,0,true,false,false);
     assert(r.thrown && r.release==SWING_AUTO);
-    near(r.aim,.04); near(r.spin,0); near(r.roll,0);
+    near(r.aim,0); near(r.spin,0); near(r.roll,0);
 }
 /* 0.1.3: releasing B behind the body is a weak lob, never nothing (the bag is not lost). */
 static void backswing_release_is_weak_lob(void) {
@@ -100,7 +100,7 @@ static void tap_b_is_one_weak_lob(void) {
     Swing s; arm(&s,0); SwingProfile p=profile(); unsigned throws=0; SwingResult shot={0};
     for (unsigned t=520;t<1200;t+=10) {
         SwingSample v=sample(t,0,0,(t%100)*2,false);
-        SwingResult r=swing_feed(&s,&v,0,&p);
+        SwingResult r=swing_feed(&s,&v,&p);
         if (r.thrown) { ++throws; shot=r; }
     }
     assert(throws==1 && shot.fallback && shot.release_ms==520);
@@ -111,15 +111,15 @@ static void moving_press_grips_immediately(void) {
     Swing s; ready(&s,0); SwingProfile p=profile();
     for (unsigned t=510;t<650;t+=10) {
         SwingSample v=sample(t,0,0,(double)(t-500)/10,false);
-        swing_feed(&s,&v,0,&p);
+        swing_feed(&s,&v,&p);
     }
     SwingSample v=sample(650,0,0,15,true);
-    swing_feed(&s,&v,0,&p); assert(s.phase==SWING_GRIP);
+    swing_feed(&s,&v,&p); assert(s.phase==SWING_GRIP);
     ready(&s,0); v=sample(510,.5,0,0,true);
-    swing_feed(&s,&v,0,&p); assert(s.phase==SWING_GRIP);
+    swing_feed(&s,&v,&p); assert(s.phase==SWING_GRIP);
     /* No history at all (first report of the turn) still grips, using that report. */
     swing_reset(&s,false); v=sample(0,1.4,70,0,true);
-    swing_feed(&s,&v,0,&p); assert(s.phase==SWING_GRIP);
+    swing_feed(&s,&v,&p); assert(s.phase==SWING_GRIP);
 }
 static void gaps_drops_and_bad_samples_keep_grip(void) {
     Swing s; SwingProfile p=profile();
@@ -130,7 +130,7 @@ static void gaps_drops_and_bad_samples_keep_grip(void) {
         if (scenario==3) v.g.x=NAN;
         if (scenario==4) v.ms=510;
         if (scenario==5) v.ms=610; /* 100 ms gap: bridged */
-        SwingResult r=swing_feed(&s,&v,0,&p);
+        SwingResult r=swing_feed(&s,&v,&p);
         assert(!r.thrown && swing_armed(&s));
     }
     assert(s.bridged==1);
@@ -138,13 +138,13 @@ static void gaps_drops_and_bad_samples_keep_grip(void) {
 static void ready_at_once_and_one_throw(void) {
     Swing s; swing_reset(&s,true); SwingProfile p=profile();
     assert(s.phase==SWING_READY);
-    SwingSample v=sample(0,0,0,0,true); swing_feed(&s,&v,0,&p);
+    SwingSample v=sample(0,0,0,0,true); swing_feed(&s,&v,&p);
     assert(s.phase==SWING_READY); /* require_b_up: a held B must be let go first */
-    v=sample(10,0,0,0,false); swing_feed(&s,&v,0,&p);
-    v=sample(20,0,0,0,true); swing_feed(&s,&v,0,&p); assert(s.phase==SWING_GRIP);
+    v=sample(10,0,0,0,false); swing_feed(&s,&v,&p);
+    v=sample(20,0,0,0,true); swing_feed(&s,&v,&p); assert(s.phase==SWING_GRIP);
     s.phase=SWING_SPENT;
     for (unsigned t=460;t<1000;t+=10) {
-        v=sample(t,1,25,0,t%20!=0); assert(!swing_feed(&s,&v,0,&p).thrown);
+        v=sample(t,1,25,0,t%20!=0); assert(!swing_feed(&s,&v,&p).thrown);
         assert(s.phase==SWING_SPENT);
     }
 }
@@ -152,7 +152,7 @@ static void clipping_never_validates(void) {
     Swing s; arm(&s,0); SwingProfile p=profile(); SwingResult lob={0};
     for (unsigned t=520;t<1100;t+=10) {
         SwingSample v=sample(t,4,25,0,t<700); v.clipped=true;
-        SwingResult r=swing_feed(&s,&v,0,&p);
+        SwingResult r=swing_feed(&s,&v,&p);
         if (r.thrown) { assert(!lob.thrown); lob=r; }
     }
     /* Saturated-only motion never validates a stroke: B-up gives the weak lob. */
@@ -175,7 +175,7 @@ static void last_lobe_not_backswing_peak(void) {
         double e=t<700?1.2:(t>=850 && t<1030?.6:0);
         double pitch=t<700?0:(t<850?-35:(t<1030?0:25));
         SwingSample v=sample(t,e,pitch,0,t<1030);
-        SwingResult r=swing_feed(&s,&v,0,&p); if (r.thrown) shot=r;
+        SwingResult r=swing_feed(&s,&v,&p); if (r.thrown) shot=r;
     }
     assert(shot.thrown); near(shot.power,sqrt(.6/1.2));
 }
@@ -183,7 +183,7 @@ static void back_apex_then_slow_return_cannot_reuse_peak(void) {
     Swing s; arm(&s,0); SwingProfile p=profile(); SwingResult shot={0};
     for (unsigned t=520;t<1200;t+=10) {
         SwingSample v=sample(t,t<700?1.2:0,t<700?0:(t<850?-35:0),0,t<870);
-        SwingResult r=swing_feed(&s,&v,0,&p);
+        SwingResult r=swing_feed(&s,&v,&p);
         if (r.thrown) { assert(!shot.thrown); shot=r; }
     }
     assert(shot.thrown && shot.fallback && shot.power<=SWING_FALLBACK_MAX_POWER);
@@ -237,13 +237,35 @@ static void input_ready(Input *i, Events *events, bool two) {
     for (unsigned t=0;t<=500;t+=10) input_sample(i,0,t,0,0,0);
     assert(i->detector.phase==SWING_READY);
 }
-static void fine_aim_and_clamp(void) {
+/* Run one input-layer swing (B grip, forward stroke, let go). extra: buttons OR'd into every
+   report; extra_up: a press of those buttons while B is up before the grip. */
+static SwingResult input_swing(uint32_t extra, bool extra_up) {
     Input i; Events e; input_ready(&i,&e,false);
-    near(i.slots[0].aim,0);
-    input_sample(&i,0,510,INPUT_PLUS,0,0); near(i.slots[0].aim,.01);
-    input_sample(&i,0,520,INPUT_PLUS,0,0); near(i.slots[0].aim,.01);
-    for (unsigned t=530;t<900;t+=10) input_sample(&i,0,t,t%20?0:INPUT_PLUS,0,0);
-    near(i.slots[0].aim,.12);
+    if (extra_up) for (unsigned t=510;t<600;t+=10) input_sample(&i,0,t,(t/10)%2?extra:0,0,0);
+    else for (unsigned t=510;t<600;t+=10) input_sample(&i,0,t,0,0,0);
+    input_sample(&i,0,600,INPUT_B,0,0);
+    for (unsigned t=610;t<790;t+=10) input_sample(&i,0,t,INPUT_B|((t/10)%2?extra:0),.8,t<700?12:6);
+    for (unsigned t=790;t<1000;t+=10) input_sample(&i,0,t,(t/10)%2?extra:0,0,25);
+    assert(occurrences(&e,INPUT_THROW)==1);
+    assert(!occurrences(&e,INPUT_ADJUST_MINUS) && !occurrences(&e,INPUT_ADJUST_PLUS));
+    for (unsigned n=0;n<e.count;++n) if (e.events[n].action==INPUT_THROW) return e.events[n].toss;
+    return (SwingResult){0};
+}
+/* 0.1.4: in gameplay -/+ change nothing about the throw (no fine-aim nudge). */
+static void plus_minus_change_nothing_in_play(void) {
+    SwingResult plain=input_swing(0,false);
+    const uint32_t keys[]={INPUT_PLUS,INPUT_MINUS,INPUT_PLUS|INPUT_MINUS};
+    for (unsigned k=0;k<3;++k) for (int up=0;up<2;++up) {
+        SwingResult r=input_swing(keys[k],up);
+        near(r.power,plain.power); near(r.aim,plain.aim); near(r.spin,plain.spin);
+        assert(r.release==plain.release && r.fallback==plain.fallback);
+    }
+    /* Pressing + ten times before the grip leaves the grip ready (no reset, no event). */
+    Input i; Events e; input_ready(&i,&e,false);
+    for (unsigned t=510;t<710;t+=10) input_sample(&i,0,t,(t/10)%2?INPUT_PLUS:INPUT_MINUS,0,0);
+    assert(e.count==0 && i.detector.phase==SWING_READY && !i.detector.require_b_up);
+    input_sample(&i,0,710,INPUT_B|INPUT_PLUS,0,0);
+    assert(i.detector.phase==SWING_GRIP);
 }
 static void buttons_mapping_and_easing(void) {
     Input i; Events e; input_ready(&i,&e,false);
@@ -253,7 +275,7 @@ static void buttons_mapping_and_easing(void) {
     near(input_stance(&i,0,580),.05); assert(i.detector.phase==SWING_READY);
     input_sample(&i,0,520,0,0,0);
     input_sample(&i,0,530,INPUT_TWO,0,0);
-    near(i.slots[0].stance,0); near(i.slots[0].aim,0);
+    near(i.slots[0].stance,0);
     assert(occurrences(&e,INPUT_RESET_BAG)==1 && occurrences(&e,INPUT_HEIGHT)==1);
 }
 static void buttons_blocked_while_b_held(void) {
@@ -262,7 +284,7 @@ static void buttons_blocked_while_b_held(void) {
     assert(swing_armed(&i.detector));
     input_sample(&i,0,520,INPUT_B|INPUT_A|INPUT_TWO|INPUT_LEFT|INPUT_DOWN|INPUT_PLUS|INPUT_ONE,1,0);
     assert(i.slots[0].height==1 && !i.slots[0].sticky && i.help);
-    near(i.slots[0].stance,0); near(i.slots[0].aim,0); near(i.detector.locked_aim,0);
+    near(i.slots[0].stance,0); near(i.detector.locked_aim,0);
     assert(!occurrences(&e,INPUT_RESET_BAG) && !occurrences(&e,INPUT_SURFACE));
     assert(swing_armed(&i.detector));
     input_sample(&i,0,530,INPUT_B|INPUT_HOME,1,0);
@@ -348,14 +370,14 @@ static SwingResult directional_toss(double lateral, double release_roll, bool le
     for (unsigned t=520;t<1100;t+=10) {
         bool moving=t<700;
         SwingSample v=sample(t,moving?.8:0,moving?0:25,moving?lateral:release_roll,t<700+delay);
-        SwingResult result=swing_feed(&s,&v,0,&p);
+        SwingResult result=swing_feed(&s,&v,&p);
         if (result.thrown) shot=result;
     }
     assert(shot.thrown); return shot;
 }
 static void swing_direction_and_spin_both_hands(void) {
     SwingResult straight=directional_toss(0,0,false,0);
-    near(straight.aim,.04); /* arm() fine trim, independent of stance/hole */
+    near(straight.aim,0); /* no fine trim: a straight swing is straight */
     near(straight.spin,0);
     SwingResult right=directional_toss(12,0,false,0);
     SwingResult left=directional_toss(-12,0,false,0);
@@ -363,7 +385,7 @@ static void swing_direction_and_spin_both_hands(void) {
     assert(right.spin<0 && left.spin>0);
     near(right.power,straight.power); near(left.power,straight.power);
     SwingResult mirrored=directional_toss(12,0,true,0);
-    near(mirrored.aim-.04,-(right.aim-.04)); near(mirrored.spin,-right.spin);
+    near(mirrored.aim,-right.aim); near(mirrored.spin,-right.spin);
     SwingResult twist=directional_toss(0,30,false,0);
     SwingResult twist_left=directional_toss(0,30,true,0);
     assert(twist.spin<0); near(twist_left.spin,-twist.spin);
@@ -375,15 +397,15 @@ static void swing_direction_and_spin_both_hands(void) {
 static void release_freezes_motion_controls(void) {
     Swing s; arm(&s,0); SwingProfile p=profile(); SwingResult shot={0};
     for (unsigned t=520;t<700;t+=10) {
-        SwingSample v=sample(t,.8,0,12,true); swing_feed(&s,&v,0,&p);
+        SwingSample v=sample(t,.8,0,12,true); swing_feed(&s,&v,&p);
     }
     SwingSample release=sample(700,0,25,30,false);
-    swing_feed(&s,&release,0,&p);
+    swing_feed(&s,&release,&p);
     double aim=s.locked_aim, spin=s.locked_spin;
     assert(s.phase==SWING_PENDING);
     for (unsigned t=710;t<1000;t+=10) {
         SwingSample v=sample(t,0,25,-35,false);
-        SwingResult result=swing_feed(&s,&v,-.12,&p);
+        SwingResult result=swing_feed(&s,&v,&p);
         if (result.thrown) shot=result;
     }
     assert(shot.thrown); near(shot.aim,aim); near(shot.spin,spin);
@@ -394,10 +416,10 @@ static void backswing_direction_does_not_leak_to_forward(void) {
         bool back=t<700, forward=t>=850 && t<1030;
         SwingSample v=sample(t,back?1.2:(forward?.8:0),
                              back||forward?0:(t<850?-35:25),back?-20:0,t<1030);
-        SwingResult result=swing_feed(&s,&v,0,&p);
+        SwingResult result=swing_feed(&s,&v,&p);
         if (result.thrown) shot=result;
     }
-    assert(shot.thrown); near(shot.aim,.04); near(shot.spin,0);
+    assert(shot.thrown); near(shot.aim,0); near(shot.spin,0);
     near(shot.power,sqrt(.8/1.2));
 }
 static void straight_swing_from_shifted_stance(void) {
@@ -432,6 +454,11 @@ static void setup_pause_hand_selection_and_calibration(void) {
     assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.full_speed,2);
     input_blur_hand(&i); assert(!i.hand_option);
     assert(strstr(input_help_text,"SWING LEFT/RIGHT TO AIM"));
+    /* 0.1.4 help matches the controls: speed = power, D-pad up/down = arc, no -/+ fine aim. */
+    const char *want[]={"B HOLD, SWING BACK & FORWARD, LET GO","SWING SPEED = POWER","TWIST TO CURL",
+        "D-PAD UP/DOWN LOB-NORMAL-SLIDER","D-PAD LEFT/RIGHT MOVE","A SURFACE","2 RESET","1 HELP","HOME PAUSE"};
+    for (unsigned n=0;n<sizeof want/sizeof want[0];++n) assert(strstr(input_help_text,want[n]));
+    assert(!strstr(input_help_text,"-/+") && !strstr(input_help_text,"FINE AIM") && !strstr(input_help_text,"POINT"));
 }
 
 /* Shoulder-pivot model: theta from hanging, remote Y tangent, Z radial.
@@ -466,7 +493,7 @@ static SwingResult physical_toss(double back_deg, double forward_deg, double for
         if (!held && ((back_only && seconds>=.5) ||
             (!back_only && seconds>=.65 && theta>=release_deg*SWING_PI/180))) released=true;
         SwingSample v=pendulum(520+t,theta,omega,alpha,!released);
-        SwingResult r=swing_feed(&s,&v,0,&p);
+        SwingResult r=swing_feed(&s,&v,&p);
         if (seconds<(back_only ? .5 : .65)) assert(!r.thrown);
         if (r.thrown) {
             assert(!shot.thrown);
@@ -509,11 +536,11 @@ static void subgravity_press_still_grips(void) {
     Swing s; ready(&s,0); SwingProfile p=profile();
     for (unsigned t=510;t<=700;t+=10) {
         SwingSample v=sample(t,-.22,0,0,t==700);
-        swing_feed(&s,&v,0,&p);
+        swing_feed(&s,&v,&p);
         if (t==700) assert(swing_armed(&s));
     }
     SwingSample v=sample(710,-.22,0,0,false);
-    SwingResult r=swing_feed(&s,&v,0,&p);
+    SwingResult r=swing_feed(&s,&v,&p);
     assert(r.thrown && r.fallback);
 }
 
@@ -578,7 +605,7 @@ int main(void) {
     TEST(gaps_drops_and_bad_samples_keep_grip); TEST(ready_at_once_and_one_throw); TEST(clipping_never_validates);
     TEST(roll_sign_deadzone_and_hand); TEST(last_lobe_not_backswing_peak);
     TEST(back_apex_then_slow_return_cannot_reuse_peak);
-    TEST(calibration_median_floor_clip_outlier); TEST(fine_aim_and_clamp);
+    TEST(calibration_median_floor_clip_outlier); TEST(plus_minus_change_nothing_in_play);
     TEST(trace_twist_uses_release_window_without_changing_curl);
     TEST(buttons_mapping_and_easing); TEST(buttons_blocked_while_b_held); TEST(menu_confirm_back_navigation);
     TEST(slots_and_disconnect_reassignment); TEST(pass_and_play_profile_is_slot_owned);
