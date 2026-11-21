@@ -613,10 +613,11 @@ void scene_draw_board_view(const Game *g, int x, int y, int w, int h) {
     tex_bind(NULL);
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
     float zf = -999.9f;
-    GX_Position3f32(0, 0, zf); GX_Color4u8(0, 0, 0, 255); GX_Position3f32(640, 0, zf); GX_Color4u8(0, 0, 0, 255);
-    GX_Position3f32(640, 480, zf); GX_Color4u8(0, 0, 0, 255); GX_Position3f32(0, 480, zf); GX_Color4u8(0, 0, 0, 255);
+    GX_Position3f32(0, 0, zf); GX_Color4u8(0, 0, 0, 255); GX_Position3f32(gfx_ui_w, 0, zf); GX_Color4u8(0, 0, 0, 255);
+    GX_Position3f32(gfx_ui_w, 480, zf); GX_Color4u8(0, 0, 0, 255); GX_Position3f32(0, 480, zf); GX_Color4u8(0, 0, 0, 255);
     GX_End();
-    gfx_perspective(30, (float)w / h, .05f, 30);
+    /* EFB pixels are 4:3-shaped; in 16:9 each one shows wider, so use the displayed aspect. */
+    gfx_perspective(30, (float)w / h * gfx_aspect / (4.0f / 3.0f), .05f, 30);
     gfx_look((V3){0, 2.5f, (float)BYC_BOARD_Z + .75f}, (V3){0, .16f, (float)BYC_BOARD_Z - .55f});
     gfx_fog(true); gfx_depth(true, true);
     draw_ground(30, 24);

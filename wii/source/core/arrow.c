@@ -1,6 +1,8 @@
 #include "arrow.h"
 #include <math.h>
 
+double view_ui_width(double aspect) { return aspect > 0 ? VIEW_H * aspect : VIEW_W; }
+
 bool view_project(Vec3 w, double aspect, double *sx, double *sy) {
     /* lookAt with up = +Y, then a symmetric perspective (same matrices as guLookAt/guPerspective). */
     double fx = VIEW_AT_X - VIEW_EYE_X, fy = VIEW_AT_Y - VIEW_EYE_Y, fz = VIEW_AT_Z - VIEW_EYE_Z;
@@ -13,9 +15,14 @@ bool view_project(Vec3 w, double aspect, double *sx, double *sy) {
     double ex = px * rx + pz * rz, ey = px * ux + py * uy + pz * uz, depth = px * fx + py * fy + pz * fz;
     if (depth <= 0.001) return false;
     double f = 1 / tan(VIEW_FOV_DEG * BYC_PI / 360);
-    *sx = (f / aspect * ex / depth + 1) * VIEW_W / 2;
+    *sx = (f / aspect * ex / depth + 1) * view_ui_width(aspect) / 2;
     *sy = (1 - f * ey / depth) * VIEW_H / 2;
     return true;
+}
+
+void view_board_inset(double aspect, int *x, int *y, int *w, int *h) {
+    if (aspect > 1.5) { *x = 12; *y = 28; *w = 136; *h = 100; }
+    else { *x = 28; *y = 92; *w = 132; *h = 150; }
 }
 
 double arrow_length(double power) {

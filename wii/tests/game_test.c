@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "game.h"
+#include "party.h"
 
 static int failures, checks;
 #define CHECK(cond, ...) do { checks++; if (!(cond)) { failures++; printf("FAIL %s:%d: ", __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); } } while (0)
@@ -543,6 +544,34 @@ static SwingSeen bowling_swing(double forward_e, double lateral, bool release) {
     return seen;
 }
 static void next_bag(void) { int guard = 0; while (game.phase != PH_AIM && guard++ < 6000) frames(1); frames(1); }
+/* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
+ * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
+static void test_widescreen_layout(void) {
+    CHECK(fabs(view_ui_width(4.0 / 3) - 640) < 1e-9 && fabs(view_ui_width(16.0 / 9) - 480 * 16.0 / 9) < 1e-9, "2D width 640 at 4:3, 853.3 at 16:9");
+    int x, y, w, h;
+    view_board_inset(4.0 / 3, &x, &y, &w, &h);
+    CHECK(x == 28 && y == 92 && w == 132 && h == 150, "4:3 inset unchanged");
+    view_board_inset(16.0 / 9, &x, &y, &w, &h);
+    double fx0 = x - 3, fy0 = y - 22, fx1 = x + w + 3 + 5, fy1 = y + h + 3 + 5;   /* frame + drop shadow */
+    CHECK(fx0 >= 0 && fy0 >= 0, "16:9 inset inside the screen");
+    /* boxes: the table, and each pong player (0.6 m square, 1.85 m tall) at their table-local spots */
+    const double box[3][4] = {{-1.06, 1.06, -.44, PARTY_TABLE_TOP}, {-1.59, -.99, -.22, 1.85}, {.99, 1.59, .12, 1.85}};
+    for (int b = 0; b < 3; b++) {
+        double sx0 = 1e9, sx1 = -1e9, sy0 = 1e9, sy1 = -1e9;
+        for (int i = 0; i < 2; i++) for (int j = -1; j <= 1; j += 2) for (int k = 0; k < 2; k++) {
+            double lz = b == 0 ? j * .44 : box[b][2] + j * .3;
+            Vec3 wp = party_table_to_world((Vec3){box[b][i], k ? box[b][3] : 0, lz});
+            double px, py;
+            if (!view_project(wp, 16.0 / 9, &px, &py)) continue;
+            sx0 = fmin(sx0, px); sx1 = fmax(sx1, px); sy0 = fmin(sy0, py); sy1 = fmax(sy1, py);
+        }
+        bool overlap = sx0 < fx1 && sx1 > fx0 && sy0 < fy1 && sy1 > fy0;
+        CHECK(!overlap, "16:9 inset (%.0f..%.0f, %.0f..%.0f) clears %s (%.0f..%.0f, %.0f..%.0f)", fx0, fx1, fy0, fy1,
+              b == 0 ? "the pong table" : b == 1 ? "the near pong player" : "the far pong player", sx0, sx1, sy0, sy1);
+    }
+    /* the centred scoreboard (360 wide at y 14) and the inset don't touch */
+    CHECK(fx1 < view_ui_width(16.0 / 9) / 2 - 180, "inset left of the scoreboard");
+}
 static void test_combined_arrow(void) {
     /* WG-3: one arrow, live during the forward swing, direction = launch, length = power. */
     practice_ready(131);
@@ -625,7 +654,7 @@ static void test_combined_arrow(void) {
         CHECK(arrow_shape(0, 0, 0.6, aspect, &s0) && arrow_shape(0, 0.05, 0.6, aspect, &sr) && arrow_shape(0, -0.05, 0.6, aspect, &sl) &&
               arrow_shape(0, 0.12, 0.6, aspect, &sh), "arrow projects");
         CHECK(fabs(s0.dx) < 1e-9 && s0.dy < -0.99, "straight from the centre stance points straight up-screen");
-        CHECK(fabs(s0.ox - 320) < 1e-6 && s0.oy > 240 && s0.oy < 480, "starts at the bag (%.1f, %.1f)", s0.ox, s0.oy);
+        CHECK(fabs(s0.ox - view_ui_width(aspect) / 2) < 1e-6 && s0.oy > 240 && s0.oy < 480, "starts at the bag (%.1f, %.1f)", s0.ox, s0.oy);
         CHECK(sr.dx > 0 && sl.dx < 0 && fabs(sr.dx + sl.dx) < 1e-9 && fabs(sr.dy - sl.dy) < 1e-9, "right/left mirror on screen");
         CHECK(sh.dx > sr.dx * 1.5, "hard right is clearly farther right (%g vs %g)", sh.dx, sr.dx);
         /* exact projected launch line: a point 9 m down the launch bearing lies on the arrow's line */
@@ -817,6 +846,7 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
+    test_widescreen_layout();
     test_unlimited_practice();
     test_music();
     test_wind_streaks();

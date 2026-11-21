@@ -220,7 +220,8 @@ int main(void) {
         scene_draw(&game, dip);
         if (hud_board_view_visible(&game)) {
             int x, y, w, h; hud_board_view_rect(&x, &y, &w, &h);
-            scene_draw_board_view(&game, x, y, w, h);
+            int x0 = (int)lroundf(gfx_ui_to_efb((float)x)), x1 = (int)lroundf(gfx_ui_to_efb((float)(x + w)));
+            scene_draw_board_view(&game, x0, y, x1 - x0, h);
         }
         hud_draw(&game, &input);
         if (input.debug_visible)
