@@ -39,7 +39,7 @@ typedef struct {
     double mean_e, speed, peak, lobe_peak, lobe_peak_e, dip_e, locked_aim, locked_spin, locked_roll;
     double roll_x, roll_z;
     uint64_t roll_since;
-    double lateral_sum, lateral_weight, motion_roll, fine_aim;
+    double lateral_sum, lateral_weight, motion_roll;
     SwingVector grip_g;
     uint64_t back_motion_ms, return_started_ms, return_ms;
     double back_pitch, previous_pitch, return_high_pitch, return_travel, return_peak;
@@ -63,7 +63,10 @@ const char *swing_phase_name(const Swing *s);
 /* Read-only HUD preview of the classified forward lobe (after the back-apex pause, before the
    toss is emitted): the power and aim a release right now would lock. Never changes the throw. */
 bool swing_preview(const Swing *s, const SwingProfile *profile, double *power, double *aim);
-SwingResult swing_feed(Swing *s, const SwingSample *sample, double aim, const SwingProfile *profile);
+/* Power comes only from forward swing speed, aim only from the sideways swing, curl from the
+   wrist twist. There is no button aim input (0.1.4). Height is not the swing's: the game's
+   lob/normal/slider picker chooses the arc, and release pitch never reaches the throw. */
+SwingResult swing_feed(Swing *s, const SwingSample *sample, const SwingProfile *profile);
 
 /* Supply P_TARGET from physics, and floor/ceiling from P1 measured rails. No invented defaults. */
 typedef struct { double target_power, full_speed_floor, clip_ceiling; } SwingCalibrationLimits;

@@ -164,14 +164,14 @@ bool hud_board_view_visible(const Game *g) {
 static void help_legend(const Game *g, const Input *in) {
     if (game_menu_screen(g) || g->phase == PH_MENU) return;
     int t = game_thrower(g);
-    static const char *const heights[3] = {"SLIDER", "NORMAL", "KOBE"};
-    char status[48];
+    /* the throw-type picker (D-pad UP/DOWN): the only source of the arc */
+    static const char *const heights[3] = {"SLIDER", "NORMAL", "LOB"};
+    char status[64];
     const char *state = "-";
-    if (in && g->phase == PH_AIM && game_is_human(g, t)) {
-        SwingPhase p = in->detector.phase;
-        state = p == SWING_READY ? "\x18" : "\x18\x1a";
-    }
-    snprintf(status, sizeof status, "%s %s " DOT " %s", state, heights[g->arc], g->side[t] == SIDE_STICKY ? "STICKY" : "SLICK");
+    if (in && g->phase == PH_AIM && game_is_human(g, t)) state = in->detector.phase == SWING_READY ? "HOLD B" : "SWING";
+    /* 0.1.4 bottom bar: B state, picker (D-pad up/down), surface (A), stance (D-pad left/right) */
+    snprintf(status, sizeof status, "%s  \x18\x19 %s  A %s  \x1b\x1a MOVE", state, heights[g->arc],
+             g->side[t] == SIDE_STICKY ? "STICKY" : "SLICK");
     float y = 480 - 40;
     if (g->help_shown) {
         /* input_help_text split into TV-safe lines at its ' | ' separators */
@@ -194,10 +194,11 @@ static void help_legend(const Game *g, const Input *in) {
     gfx_rect(22, y - 2, gfx_text_width(status, 1) + 12 + 56, 22, rgba(TEAL, 0xe8));
     gfx_text(28, y + 1, 1, rgb(GOLD), status);
     gfx_text(28 + gfx_text_width(status, 1) + 8, y + 1, 1, rgba(CREAM, 0xb0), g->help_shown ? "1:HIDE" : "1:HELP");
-    if (in && g->phase == PH_AIM && game_is_human(g, t) && fabs(in->slots[t].aim) > 1e-9) {
-        char aim[24]; snprintf(aim, sizeof aim, "AIM: %+d", (int)lround(in->slots[t].aim / SWING_AIM_NUDGE));
-        gfx_text_shadow(28, y - 22 - (g->help_shown ? 0 : 0), 1, rgb(GOLD), aim);
-    }
+}
+/* 0.1.4: the build is readable on the TV (Retro couldn't read it over ADB). */
+static void version_corner(void) {
+    const char *v = game_version_tag();
+    gfx_text_shadow(UI_W - 10 - gfx_text_width(v, 1), 480 - 22, 1, rgba(CREAM, 0xc0), v);
 }
 
 static void menu_list(const Game *g, float cx, float y, float w) {
@@ -237,6 +238,7 @@ static void panel(const Game *g) {
         gfx_text_center(UI_CX, y + 24, 3, rgb(GOLD), "STRAP ON!");
         gfx_text_center(UI_CX, y + 82, 1, rgb(CREAM), "HOLD B " DOT " BACK " DOT " FORWARD " DOT " LET GO");
         menu_list(g, UI_CX, y + 114, 120);
+        gfx_text(x + w - 10 - gfx_text_width(game_version_tag(), 1), y + h - 20, 1, rgba(CREAM, 0xc0), game_version_tag());
         break;
     }
     case UI_TITLE: {
@@ -402,6 +404,7 @@ void hud_draw(const Game *g, const Input *in) {
         callout(g);
         shot_arrow(g);
         help_legend(g, in);
+        version_corner();
     }
     if (g->ui != UI_NONE) {
         if (g->ui != UI_SETPOWER) gfx_rect(0, 0, UI_W, 480, rgba(0x000000, 0x50));
@@ -420,10 +423,10 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
     const Swing *s = &in->detector;
     unsigned ch = in->channels[in->active_slot];
     const InputStats *st = &in->stats;
-    /* Five lines for a phone photo of the TV: live accel; B and swing phase; report rate and
-       largest gap; the last throw's peak speed and power. */
-    float x = UI_W - 28 - 348, y = 480 - 24 - 5 * 18 - 10;
-    gfx_rect(x, y, 348, 5 * 18 + 10, rgba(TEAL, 0xf0));
+    /* Seven lines for a phone photo of the TV: live accel; B and swing phase; report rate and
+       largest gap; live and peak speed; the last throw's peak speed, power and aim. */
+    float x = UI_W - 28 - 348, y = 480 - 24 - 7 * 18 - 10;
+    gfx_rect(x, y, 348, 7 * 18 + 10, rgba(TEAL, 0xf0));
     char line[48];
     if (latest->motion.accel_valid) {
         SwingVector g = latest->motion.g;
@@ -438,8 +441,16 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
     snprintf(line, sizeof line, "SWING SPEED %.2f  PEAK %.2f M/S", s->speed, s->peak);
     gfx_text(x + 10, y + 59, 1, rgb(CREAM), line);
     if (st->have_toss)
-        snprintf(line, sizeof line, "LAST THROW PEAK %.2f POWER %.2f%s", st->last_toss.speed,
-                 st->last_toss.power, st->last_toss.fallback ? " LOB" : "");
+        snprintf(line, sizeof line, "LAST THROW PEAK %.2f M/S%s", st->last_toss.speed,
+                 st->last_toss.fallback ? " WEAK" : "");
     else snprintf(line, sizeof line, "LAST THROW  -");
     gfx_text(x + 10, y + 77, 1, rgb(GOLD), line);
+    /* 0.1.4: power is the swing speed, aim the sideways swing (the arc is the D-pad picker) */
+    if (st->have_toss) snprintf(line, sizeof line, "LAST POWER %.2f", st->last_toss.power);
+    else snprintf(line, sizeof line, "LAST POWER  -");
+    gfx_text(x + 10, y + 95, 1, rgb(GOLD), line);
+    if (st->have_toss) snprintf(line, sizeof line, "LAST AIM %+.3f RAD (%+.1f DEG)", st->last_toss.aim,
+                                st->last_toss.aim * 180 / SWING_PI);
+    else snprintf(line, sizeof line, "LAST AIM  -");
+    gfx_text(x + 10, y + 113, 1, rgb(GOLD), line);
 }

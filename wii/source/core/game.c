@@ -49,6 +49,7 @@ static void mark_save(Game *g) {
 
 int game_thrower(const Game *g) { return g->practice ? 0 : (g->k % 2 == 0 ? g->first : 1 - g->first); }
 bool game_is_human(const Game *g, int t) { return t == 0 || !g->vs_cpu; }
+const char *game_version_tag(void) { return "v" BYC_VERSION; }
 double game_release_x(const Game *g, int t) { return RX[t] + (game_is_human(g, t) ? g->position[t] : 0); }
 const char *game_team_name(const Game *g, int t) {
     if (!g->vs_cpu) return TEAM[t];
@@ -243,7 +244,7 @@ void game_start(Game *g, bool practice, bool vs_cpu, bool career) {
         input_start_match(g->input);
         for (int s = 0; s < 2; s++) {
             InputSlot *is = &g->input->slots[s];
-            is->stance = is->stance_from = is->aim = 0;
+            is->stance = is->stance_from = 0;
             sync_input_slot(g, s);
         }
         g->pass_and_play = !practice && !vs_cpu && g->input->channels[1] == g->input->channels[0];
@@ -261,7 +262,7 @@ static void next_turn(Game *g) {
     if (game_is_human(g, t)) {
         g->phase = PH_AIM;
         g->spin = 0;
-        if (g->input) { sync_input_slot(g, t); g->input->slots[t].aim = 0; input_next_turn(g->input, (unsigned)t); }
+        if (g->input) { sync_input_slot(g, t); input_next_turn(g->input, (unsigned)t); }
     } else {
         CpuShot c = cpu_casual(g->win, &g->wind, &g->rng);
         g->side[1] = c.side; g->arc = ARC_NORMAL; g->spin = 0;
@@ -632,7 +633,7 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
         if (g->phase == PH_AIM && game_is_human(g, game_thrower(g)) && g->ui == UI_NONE) {
             int t = game_thrower(g);
             g->position[t] = input_stance(in, (unsigned)t, now_ms);
-            g->aim = in->slots[t].aim;  /* fine trim preview (− / +) */
+            g->aim = 0;  /* no button aim: direction comes only from the sideways swing */
             /* 1.0.7 host.preview: while the forward swing is in progress the one arrow follows the
              * launch direction and power a release would give; a swing that ends without a throw
              * hides it again (finishStroke). */

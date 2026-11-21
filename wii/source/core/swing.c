@@ -176,8 +176,8 @@ static void restart_motion(Swing *s) {
 }
 
 /* ---------- grip ---------- */
-static void grip(Swing *s, double aim) {
-    s->fine_aim = s->locked_aim = clamp(aim, -SWING_AIM_MAX, SWING_AIM_MAX);
+static void grip(Swing *s) {
+    s->locked_aim = 0; /* straight until the sideways swing says otherwise */
     s->grip_g = grip_reference(s);
     /* Roll is measurable from gravity only when the remote is not pointing straight up or down
        (Bowling's remote-up start is exactly that case). Otherwise lock it from the first loaded
@@ -212,7 +212,7 @@ static SwingResult finish_fallback(Swing *s, const SwingProfile *profile) {
     double yaw=swing_yaw(lateral);
     double hand=profile->left_handed ? -1 : 1;
     SwingResult r=finish_weak(s, profile, swing_speed(s->return_peak));
-    r.aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
+    r.aim=clamp(hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
     r.spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1);
     return r;
 }
@@ -299,13 +299,13 @@ static void track_controls(Swing *s, const SwingSample *p, double mag, const Swi
     double lateral=s->lateral_weight>0 ? s->lateral_sum/s->lateral_weight : 0;
     double yaw=swing_yaw(lateral);
     double hand=profile->left_handed ? -1 : 1;
-    s->locked_aim=clamp(s->fine_aim+hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
+    s->locked_aim=clamp(hand*yaw*SWING_AIM_MAX,-SWING_AIM_MAX,SWING_AIM_MAX);
     s->motion_roll=s->roll_ref ? delta_degrees(atan2(p->g.x,p->g.z)*180/SWING_PI,s->locked_roll) : 0;
     s->locked_spin=clamp(swing_roll_spin(s->motion_roll,profile)-hand*yaw*profile->spin_strength,-1,1);
 }
 
 /* One report (real or bridged). motion=false: accel unusable, B still counts. */
-static SwingResult advance(Swing *s, const SwingSample *p, bool motion, double aim, const SwingProfile *profile) {
+static SwingResult advance(Swing *s, const SwingSample *p, bool motion, const SwingProfile *profile) {
     SwingResult r = {0};
     s->have_time = true;
     s->last_ms = p->ms;
@@ -325,7 +325,7 @@ static SwingResult advance(Swing *s, const SwingSample *p, bool motion, double a
         s->speed = span >= SWING_MIN_SPAN_MS && s->mean_e >= SWING_NOISE_G ? swing_speed(s->mean_e) : 0;
     }
     if (s->phase == SWING_READY) {
-        if (p->b && !s->require_b_up) grip(s, aim); /* this report: 0 ms from B down to grip */
+        if (p->b && !s->require_b_up) grip(s); /* this report: 0 ms from B down to grip */
         return r;
     }
     bool forward_finish = false;
@@ -373,7 +373,7 @@ static SwingResult advance(Swing *s, const SwingSample *p, bool motion, double a
     return r;
 }
 
-SwingResult swing_feed(Swing *s, const SwingSample *in, double aim, const SwingProfile *profile) {
+SwingResult swing_feed(Swing *s, const SwingSample *in, const SwingProfile *profile) {
     SwingResult r = {0};
     if (s->phase == SWING_SPENT) return r;
     SwingSample p = *in;
@@ -398,13 +398,13 @@ SwingResult swing_feed(Swing *s, const SwingSample *in, double aim, const SwingP
                     .g={g0.x+(p.g.x-g0.x)*u, g0.y+(p.g.y-g0.y)*u, g0.z+(p.g.z-g0.z)*u},
                     .b=s->previous_b, .clipped=clipped, .accel_valid=true,
                     .manual_release=p.manual_release};
-                r = advance(s, &q, true, aim, profile);
+                r = advance(s, &q, true, profile);
                 if (r.thrown) return r;
             }
             ++s->bridged;
         }
     }
-    return advance(s, &p, motion, aim, profile);
+    return advance(s, &p, motion, profile);
 }
 
 SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult *toss,
