@@ -542,7 +542,6 @@ void game_input(Game *g, const InputEvent *e) {
     case INPUT_HELP:
         g->help_shown = !g->help_shown; mark_save(g);
         return;
-    case INPUT_HOLD_STILL: g->hold_still_ms = 900; return;
     case INPUT_PROFILE_CHANGED: {
         if (!g->input || e->slot > 1) return;
         g->save.profile[e->slot] = g->input->slots[e->slot].profile;
@@ -690,7 +689,6 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
         music_update(g->music);
         if (g->music->dirty) { g->music->dirty = false; mark_save(g); if (g->ui == UI_MUSIC) menu_values(g); }
     }
-    if (g->hold_still_ms > 0) g->hold_still_ms -= dt * 1000;
 }
 
 double game_launch_yaw(const Game *g, int team, double aim) {

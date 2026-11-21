@@ -51,7 +51,8 @@ void input_next_turn(Input *i, unsigned slot) {
     if (slot>=2) return;
     if (slot!=i->active_slot) input_cancel_calibration(i);
     i->active_slot=slot;
-    swing_reset(&i->detector,true);
+    /* The turn is open: a B pressed during the bag flight or the turn change grips right away. */
+    swing_reset(&i->detector,false);
     if (!i->connected[i->channels[slot]]) {
         i->paused=i->disconnect_pause=true;
         action(i,INPUT_CONNECT_REMOTE,i->channels[slot],(double)(i->channels[slot]+1));
@@ -60,14 +61,14 @@ void input_next_turn(Input *i, unsigned slot) {
 void input_set_context(Input *i, InputContext context) {
     i->context=context;
     i->hand_option=false;
-    swing_reset(&i->detector,true);
+    swing_reset(&i->detector,context!=INPUT_PLAY || i->paused);
 }
 bool input_resume(Input *i) {
     unsigned ch=i->channels[i->active_slot];
     if (!i->connected[ch] || i->b_held[ch]) return false;
     i->paused=i->disconnect_pause=false;
     i->hand_option=false;
-    swing_reset(&i->detector,true);
+    swing_reset(&i->detector,false); /* B is known up here: the next press grips */
     return true;
 }
 bool input_set_profile(Input *i, unsigned slot, SwingProfile p) {
@@ -122,8 +123,32 @@ static void debug_chord(Input *i, unsigned ch, const InputSample *p, uint32_t *p
         i->debug_latched[ch]=true;
     }
 }
+static void track_stats(Input *i, const InputSample *p) {
+    InputStats *st=&i->stats;
+    uint64_t now=p->motion.ms;
+    if (st->have_last && now>st->last_ms) {
+        unsigned gap=(unsigned)fmin((double)(now-st->last_ms),99999);
+        if (gap>st->window_gap_ms) st->window_gap_ms=gap;
+    }
+    if (!st->have_last || now<st->window_ms) { st->window_ms=now; st->window_count=0; }
+    st->have_last=true;
+    st->last_ms=now;
+    ++st->window_count;
+    uint64_t elapsed=now-st->window_ms;
+    if (elapsed>=1000) {
+        st->rate=(unsigned)lround(1000.0*(st->window_count-1)/(double)elapsed);
+        st->window_count=1;
+        st->window_ms=now;
+        /* largest gap: published every other rate window (about 2 s) */
+        if (++st->windows%2==0) { st->gap_ms=st->window_gap_ms; st->window_gap_ms=0; }
+    }
+}
+unsigned input_largest_gap(const Input *i) {
+    return i->stats.gap_ms>i->stats.window_gap_ms ? i->stats.gap_ms : i->stats.window_gap_ms;
+}
 void input_feed(Input *i, unsigned ch, const InputSample *p) {
     if (ch>=2 || !i->connected[ch]) return;
+    if (ch==i->channels[i->active_slot]) track_stats(i,p);
     uint32_t pressed=0;
     if (p->buttons_valid) {
         pressed=p->buttons & ~i->held[ch];
@@ -198,17 +223,15 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
             return;
         }
     }
+    /* A report without valid buttons cannot move B; skip it rather than guess. */
+    if (!p->buttons_valid) return;
     SwingSample motion=p->motion;
     motion.b=b;
     motion.manual_release=true;
-    if (!p->buttons_valid) motion.accel_valid=false;
     SwingResult r=swing_feed(&i->detector,&motion,slot->aim,&slot->profile);
-    if (r.hold_still) action(i,INPUT_HOLD_STILL,ch,0);
-    if (i->calibrating && r.cancelled) {
-        i->calibration.count=0;
-        action(i,INPUT_CAL_RETRY,ch,0);
-    }
     if (r.thrown) {
+        i->stats.last_toss=r;
+        i->stats.have_toss=true;
         if (i->calibrating) {
             SwingCalibrationStatus status=swing_calibrate(&i->calibration,&r,i->calibration_limits,&slot->profile);
             InputAction a=status==SWING_CAL_DONE ? INPUT_CAL_DONE : status==SWING_CAL_MORE ? INPUT_CAL_MORE : INPUT_CAL_RETRY;

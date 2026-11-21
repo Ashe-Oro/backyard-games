@@ -245,6 +245,25 @@ static void aim_spin_and_hand_on_bowling_swing(void) {
     }
 }
 
+/* B used to leave the pause menu must not grip on the way back into play. */
+static void b_from_pause_menu_does_not_lob(void) {
+    Input in; Events ev; begin(&in,&ev);
+    SwingVector up={0,1,0};
+    feed(&in,1000,up,false,false,0);
+    InputSample home={.motion={.ms=1010,.g=up,.accel_valid=true},.buttons=INPUT_HOME,.buttons_valid=true};
+    input_feed(&in,0,&home);
+    CHECK(in.paused,"HOME did not pause");
+    input_set_context(&in,INPUT_MENU);
+    feed(&in,1020,up,true,false,0);          /* B = BACK in the pause menu */
+    input_set_context(&in,INPUT_PLAY);       /* the game resumes the play context */
+    CHECK(!input_resume(&in),"resume must wait for B up");
+    feed(&in,1030,up,true,false,0);
+    CHECK(!swing_armed(&in.detector),"B held from the menu gripped");
+    feed(&in,1040,up,false,false,0);
+    CHECK(input_resume(&in) && ev.throws==0,"letting go of the menu B threw %u bags",ev.throws);
+    feed(&in,1050,up,true,false,0);
+    CHECK(swing_armed(&in.detector),"a fresh press after resuming must grip at once");
+}
 int main(int argc, char **argv) {
     settled=argc==2 && strcmp(argv[1],"settled")==0;
     TEST(a_press_while_moving);
@@ -257,6 +276,7 @@ int main(int argc, char **argv) {
     TEST(long_gap_never_swallows_release);
     TEST(history_overflow_drops_oldest);
     TEST(aim_spin_and_hand_on_bowling_swing);
+    TEST(b_from_pause_menu_does_not_lob);
     printf("%u throw-trace tests, %u failed checks\n",tests,failures);
     return failures ? 1 : 0;
 }

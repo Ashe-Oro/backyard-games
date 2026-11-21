@@ -165,7 +165,7 @@ static void help_legend(const Game *g, const Input *in) {
     const char *state = "-";
     if (in && g->phase == PH_AIM && game_is_human(g, t)) {
         SwingPhase p = in->detector.phase;
-        state = p == SWING_SETTLING ? DOT : p == SWING_READY ? "\x18" : "\x18\x1a";
+        state = p == SWING_READY ? "\x18" : "\x18\x1a";
     }
     snprintf(status, sizeof status, "%s %s " DOT " %s", state, heights[g->arc], g->side[t] == SIDE_STICKY ? "STICKY" : "SLICK");
     float y = 480 - 40;
@@ -398,7 +398,6 @@ void hud_draw(const Game *g, const Input *in) {
         callout(g);
         shot_arrow(g);
         help_legend(g, in);
-        if (g->hold_still_ms > 0) gfx_text_center_shadow(320, 300, 2, rgb(GOLD), "HOLD STILL");
     }
     if (g->ui != UI_NONE) {
         if (g->ui != UI_SETPOWER) gfx_rect(0, 0, 640, 480, rgba(0x000000, 0x50));
@@ -416,20 +415,27 @@ void hud_draw(const Game *g, const Input *in) {
 void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
     const Swing *s = &in->detector;
     unsigned ch = in->channels[in->active_slot];
-    static const char *const phases[] = {"SETTLING", "READY", "GRIP", "RELEASE", "SPENT"};
-    const char *phase = phases[s->phase];
-    if (s->phase == SWING_GRIP) {
-        if (swing_forward_motion(s)) phase = "FORWARD";
-        else if (s->back_apex || s->back_motion_ms) phase = "BACKSWING";
-    }
-    gfx_rect(264, 414, 348, 43, rgba(TEAL, 0xf0));
+    const InputStats *st = &in->stats;
+    /* Five lines for a phone photo of the TV: live accel; B and swing phase; report rate and
+       largest gap; the last throw's peak speed and power. */
+    float x = 640 - 28 - 348, y = 480 - 24 - 5 * 18 - 10;
+    gfx_rect(x, y, 348, 5 * 18 + 10, rgba(TEAL, 0xf0));
     char line[48];
     if (latest->motion.accel_valid) {
         SwingVector g = latest->motion.g;
         snprintf(line, sizeof line, "ACCEL G  X %+.2f  Y %+.2f  Z %+.2f", g.x, g.y, g.z);
     } else snprintf(line, sizeof line, "ACCEL G  NO REPORT");
-    gfx_text(274, 419, 1, rgb(CREAM), line);
+    gfx_text(x + 10, y + 5, 1, rgb(CREAM), line);
     const char *b = !latest->buttons_valid ? "?" : latest->motion.b ? "HELD" : "UP";
-    snprintf(line, sizeof line, "REMOTE %u  B %s  %s", ch + 1, b, phase);
-    gfx_text(274, 437, 1, rgb(GOLD), line);
+    snprintf(line, sizeof line, "REMOTE %u  B %s  PHASE %s", ch + 1, b, swing_phase_name(s));
+    gfx_text(x + 10, y + 23, 1, rgb(GOLD), line);
+    snprintf(line, sizeof line, "REPORTS %u/S  MAX GAP %u MS", st->rate, input_largest_gap(in));
+    gfx_text(x + 10, y + 41, 1, rgb(CREAM), line);
+    snprintf(line, sizeof line, "SWING SPEED %.2f  PEAK %.2f M/S", s->speed, s->peak);
+    gfx_text(x + 10, y + 59, 1, rgb(CREAM), line);
+    if (st->have_toss)
+        snprintf(line, sizeof line, "LAST THROW PEAK %.2f POWER %.2f%s", st->last_toss.speed,
+                 st->last_toss.power, st->last_toss.fallback ? " LOB" : "");
+    else snprintf(line, sizeof line, "LAST THROW  -");
+    gfx_text(x + 10, y + 77, 1, rgb(GOLD), line);
 }

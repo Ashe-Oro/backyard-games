@@ -43,7 +43,6 @@ static void log_event(const InputEvent *e) {
     if (e->action == INPUT_THROW)
         SYS_Report("BYC: throw slot %u power %.3f speed %.2f aim %+.3f spin %+.2f roll %+.1f release %d%s%s\n", e->slot,
                    e->toss.power, e->toss.speed, e->toss.aim, e->toss.spin, e->toss.roll, (int)e->toss.release, e->toss.clipped ? " clipped" : "", e->toss.fallback ? " fallback" : "");
-    else if (e->action == INPUT_HOLD_STILL) SYS_Report("BYC: hold still (B pressed while moving)\n");
     else if (e->action == INPUT_CONNECT_REMOTE) SYS_Report("BYC: connect remote %d\n", (int)e->value);
     else if (e->action == INPUT_CAL_DONE) SYS_Report("BYC: SET POWER done slot %u\n", e->slot);
     else SYS_Report("BYC: input action %d value %g\n", (int)e->action, e->value);

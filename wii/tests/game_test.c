@@ -596,14 +596,17 @@ static void test_combined_arrow(void) {
     SwingSeen lh_straight = bowling_swing(0.8, 0, true);
     CHECK(fabs(lh_straight.yaw) < 1e-12 && fabs(lh_straight.power - straight.power) < 1e-9, "LEFT HAND: straight is straight, same power");
     lefty.left_handed = false; input_set_profile(&input, 0, lefty);
-    /* a forward swing that is not released (cancelled) hides the preview */
+    /* a forward swing that is not released hides the preview once it ends */
     next_bag();
     while (game.arrow_on) frames(1);
     int bags = game.nbags;
     SwingSeen held = bowling_swing(0.8, 12, false);
     CHECK(held.live_seen && game.nbags == bags, "held swing previews but does not throw");
-    for (int i = 0; i < 300 && game.arrow_on; i++) remote(0, 0, 0, false);
     CHECK(!game.arrow_on, "a swing that ends without a throw hides the arrow");
+    /* 0.1.3: letting go of B later is never silently nothing: a weak lob */
+    remote(0, -35, 0, false);
+    CHECK(game.nbags == bags + 1 && input.stats.last_toss.fallback && input.stats.last_toss.power <= SWING_FALLBACK_MAX_POWER,
+          "B released after the swing ended throws a weak lob (%d bags, power %g)", game.nbags - bags, input.stats.last_toss.power);
     /* shifted stance, straight swing: starts at the stance, still straight */
     next_bag();
     input.slots[0].stance = input.slots[0].stance_from = 0.3;

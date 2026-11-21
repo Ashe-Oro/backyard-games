@@ -16,7 +16,7 @@ static unsigned throws;
 static bool scan_consumes;
 static SwingResult shot;
 static FakeRemote remotes[2];
-static unsigned tests, traced, rejected, pauses;
+static unsigned tests, traced, pauses;
 static uint64_t trace_ms[512];
 static InputWpadTrace last_trace;
 static InputSample last_sample;
@@ -96,13 +96,12 @@ static void trace(void *user, const InputWpadTrace *row) {
     (void)user;
     assert(row->raw && row->sample && row->detector && row->timestamp_estimated);
     assert(traced<512); trace_ms[traced++]=row->estimated_ms;
-    rejected+=row->batch_rejected;
     last_trace=*row; last_trace.raw=NULL; last_trace.sample=NULL; last_trace.detector=NULL;
     last_sample=*row->sample;
 }
 static void setup(Input *i, InputWpad *w, bool two) {
     memset(remotes,0,sizeof(remotes));
-    traced=rejected=pauses=throws=0; scan_consumes=false; init_status=0;
+    traced=pauses=throws=0; scan_consumes=false; init_status=0;
     remotes[0].connected=true; remotes[1].connected=two;
     remotes[0].snapshot.err=WPAD_ERR_NO_CONTROLLER;
     remotes[1].snapshot.err=WPAD_ERR_NO_CONTROLLER;
@@ -119,7 +118,7 @@ static void both_channels_drained_in_order(void) {
     Input i; InputWpad w; setup(&i,&w,true);
     assert(remotes[0].registered_buffer==w.events[0] && remotes[1].registered_buffer==w.events[1]);
     queue(0,2,0); queue(1,2,0); input_wpad_poll(&w,1020);
-    assert(traced==4 && !rejected && remotes[0].read==2 && remotes[1].read==2);
+    assert(traced==4 && remotes[0].read==2 && remotes[1].read==2);
     assert(trace_ms[0]==1010 && trace_ms[1]==1020 && trace_ms[2]==1010 && trace_ms[3]==1020);
     assert(w.reports[0]==2 && w.reports[1]==2);
     assert(fabs(i.slots[0].aim)<1e-9 && !i.b_held[0] && !i.b_held[1]);
@@ -145,47 +144,53 @@ static void check_registration_and_read_errors(void) {
     Input i; InputWpad w; input_init(&i,NULL,NULL); init_status=-2;
     assert(input_wpad_init(&w,&i,NULL,NULL)==-2); init_status=0;
 }
+/* 0.1.3: dropped reports are counted, and the batch is still fed: the grip survives. */
 static void dropped_events_are_counts_not_cumulative(void) {
-    Input i; InputWpad w; setup(&i,&w,false); i.detector.phase=SWING_GRIP;
-    queue(0,2,INPUT_B); remotes[0].drops=3; input_wpad_poll(&w,1020);
-    assert(rejected==2 && w.dropped[0]==3 && !swing_armed(&i.detector));
-    assert(last_trace.batch_rejected && w.rejected_batches[0]==1);
-    queue(0,1,0); input_wpad_poll(&w,1030);
-    assert(w.dropped[0]==3 && !last_trace.batch_rejected);
-}
-static void stall_and_packet_gap_cancel(void) {
     Input i; InputWpad w; setup(&i,&w,false);
-    queue(0,1,INPUT_B); input_wpad_poll(&w,1010); i.detector.phase=SWING_GRIP;
+    queue(0,2,INPUT_B); remotes[0].drops=3; input_wpad_poll(&w,1020);
+    assert(traced==2 && w.dropped[0]==3 && swing_armed(&i.detector));
+    queue(0,1,INPUT_B); input_wpad_poll(&w,1030);
+    assert(w.dropped[0]==3 && swing_armed(&i.detector));
+}
+static void stall_and_packet_gap_keep_grip(void) {
+    Input i; InputWpad w; setup(&i,&w,false);
+    queue(0,1,INPUT_B); input_wpad_poll(&w,1010); assert(swing_armed(&i.detector));
     queue(0,1,INPUT_B); input_wpad_poll(&w,1050);
-    assert(rejected==1 && !swing_armed(&i.detector));
-    setup(&i,&w,false); queue(0,1,INPUT_B); input_wpad_poll(&w,1010);
-    i.detector.phase=SWING_GRIP; queue(0,0,0);
-    input_wpad_poll(&w,1030); input_wpad_poll(&w,1040);
-    assert(!swing_armed(&i.detector));
+    assert(swing_armed(&i.detector) && trace_ms[traced-1]==1050);
+    queue(0,0,0); input_wpad_poll(&w,1080); input_wpad_poll(&w,1110);
+    assert(swing_armed(&i.detector) && w.empty_polls[0]==2);
+    queue(0,1,0); input_wpad_poll(&w,1120); /* B up after the stall still throws */
+    assert(throws==1 && !swing_armed(&i.detector));
 }
 static void invalid_data_and_clipping_flags(void) {
     Input i; InputWpad w; setup(&i,&w,false);
     const uint16_t lo[]={10,20,30}, hi[]={900,910,920};
     assert(input_wpad_set_rails(&w,0,lo,hi));
     assert(!input_wpad_set_rails(&w,2,lo,hi));
+    queue(0,1,0); input_wpad_poll(&w,1005); /* new rails: B must be seen up before a grip */
     queue(0,1,INPUT_B); remotes[0].queue[0].accel.x=899;
     input_wpad_poll(&w,1010); assert(last_sample.motion.clipped);
+    assert(swing_armed(&i.detector));
     queue(0,1,0); remotes[0].queue[0].data_present=WPAD_DATA_BUTTONS;
-    i.detector.phase=SWING_GRIP; input_wpad_poll(&w,1020);
-    assert(!last_sample.motion.accel_valid && !swing_armed(&i.detector));
+    input_wpad_poll(&w,1020);
+    /* B up in a report without accel data is still the release: a weak lob, not nothing. */
+    assert(!last_sample.motion.accel_valid && !swing_armed(&i.detector) && throws==1 && shot.fallback);
     queue(0,1,INPUT_A); remotes[0].queue[0].err=WPAD_ERR_TRANSFER;
     input_wpad_poll(&w,1030); assert(!last_sample.buttons_valid && !i.slots[0].sticky);
 }
-static void batched_reports_fit_poll_window_and_full_buffer_is_rejected(void) {
+static void batched_reports_fit_poll_window_and_full_buffer_is_fed(void) {
     Input i; InputWpad w; setup(&i,&w,false);
     queue(0,1,0); input_wpad_poll(&w,1010);
     queue(0,3,INPUT_B); input_wpad_poll(&w,1020);
-    assert(rejected==0 && !last_trace.batch_rejected);
     assert(trace_ms[1]==1013 && trace_ms[2]==1016 && trace_ms[3]==1020);
     queue(0,4,INPUT_B); input_wpad_poll(&w,1060);
-    assert(rejected==0 && trace_ms[4]==1030 && trace_ms[7]==1060);
+    assert(trace_ms[4]==1030 && trace_ms[7]==1060);
+    /* After a stall the batch keeps at most SWING_GAP_MS spacing, ending now. */
+    queue(0,2,INPUT_B); input_wpad_poll(&w,1400);
+    assert(trace_ms[8]==1375 && trace_ms[9]==1400 && swing_armed(&i.detector));
+    /* A full 64-report buffer is fed, not rejected. */
     setup(&i,&w,false); queue(0,64,INPUT_B); input_wpad_poll(&w,1020);
-    assert(rejected==64 && w.rejected_batches[0]==1);
+    assert(traced==64 && swing_armed(&i.detector));
 }
 
 static void snapshot_fallback_accepts_buttons_without_accel(void) {
@@ -274,7 +279,7 @@ static unsigned replay_realistic(unsigned release, double strength, bool left, b
     }
     if (throws && (shot.release!=SWING_B_UP || shot.release_ms<1000+release*10-15))
         return 99;
-    if (tap && i.detector.phase!=SWING_READY) return 99;
+    if (tap && (i.detector.phase!=SWING_SPENT || !shot.fallback)) return 99;
     return throws;
 }
 static void pending_drain_preserves_edges_and_motion(void) {
@@ -287,7 +292,7 @@ static void pending_drain_preserves_edges_and_motion(void) {
     remotes[0].queue[0].btns_h=INPUT_B;
     remotes[0].queue[0].gforce.z=1.2f;
     input_wpad_poll(&w,1034);
-    assert(traced==before+2 && rejected==0 && !i.b_held[0]);
+    assert(traced==before+2 && !i.b_held[0]);
     assert(trace_ms[before]>1017 && trace_ms[before+1]==1034);
 }
 static const struct {
@@ -328,9 +333,10 @@ static void realistic_wiimote_releases(void) {
         }
     }
     unsigned tap=replay_realistic(56,0,false,true,true);
-    printf("trace B tap: %u throws\n",tap);
+    printf("trace B tap: %u throws (weak lob, power %.3f)\n",tap,shot.power);
     fflush(stdout);
-    assert(passed==sizeof(realistic_cases)/sizeof(realistic_cases[0]) && tap==0);
+    assert(passed==sizeof(realistic_cases)/sizeof(realistic_cases[0]) && tap==1);
+    assert(shot.power<=SWING_FALLBACK_MIN_POWER+1e-9);
     assert(powers[1]<powers[0] && powers[0]<powers[2] && powers[5]<powers[0]);
 }
 /* Wii 0.1.3: the remote-up Bowling trace delivered the way libogc hands it over on a
@@ -392,8 +398,8 @@ int main(int argc, char **argv) {
     if (argc==2 && strcmp(argv[1],"dump-realistic")==0) { dump_realistic_traces(); return 0; }
     TEST(both_channels_drained_in_order); TEST(reconnect_registers_persistent_buffer);
     TEST(check_registration_and_read_errors); TEST(dropped_events_are_counts_not_cumulative);
-    TEST(stall_and_packet_gap_cancel); TEST(invalid_data_and_clipping_flags);
-    TEST(batched_reports_fit_poll_window_and_full_buffer_is_rejected);
+    TEST(stall_and_packet_gap_keep_grip); TEST(invalid_data_and_clipping_flags);
+    TEST(batched_reports_fit_poll_window_and_full_buffer_is_fed);
     TEST(snapshot_fallback_accepts_buttons_without_accel); TEST(event_path_does_not_replay_stale_snapshot);
     TEST(pending_drain_preserves_edges_and_motion); TEST(realistic_wiimote_releases);
     TEST(bowling_through_jittery_wpad);
