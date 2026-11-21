@@ -26,6 +26,9 @@ hand for each player in SETTINGS. No IR or pointing is needed.
    [Controls]
    WiimoteSource0 = 2
    WiimoteSource1 = 2
+
+   [Video_Settings]
+   InternalResolution = 3
    ```
 
    The directory varies by Dolphin build and Android storage permissions.
@@ -42,9 +45,10 @@ hand for each player in SETTINGS. No IR or pointing is needed.
 3. Set the MAYFLASH DolphinBar to **mode 4**. Pair two Wii Remotes to the bar; in Dolphin,
    confirm Wii Remote 1 and 2 are **Real Wii Remote**. The ini is keyed to
    disc ID `BYCEAO`, independent of the ISO filename.
-4. Set graphics backend **Vulkan**, internal resolution **1× native**, and
-   confirm the game boots in NTSC / approximately 60 Hz. The game's frame rate
-   may report approximately 30 FPS for an interlaced framebuffer; VI should
+4. Set graphics backend **Vulkan**, confirm internal resolution is **3×**
+   (about 1080p) from `BYCEAO.ini`, and confirm the game boots in NTSC /
+   approximately 60 Hz. Do not override the ini back to 1×. The game's frame
+   rate may report approximately 30 FPS for an interlaced framebuffer; VI should
    remain approximately 60 Hz. If Vulkan is unavailable, record the device /
    driver issue before changing the test configuration.
 5. Launch the ISO from the Wii ROM list. For the stub, confirm
