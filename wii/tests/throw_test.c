@@ -245,6 +245,23 @@ static void aim_spin_and_hand_on_bowling_swing(void) {
     }
 }
 
+/* Power follows forward swing speed, from a hanging start and from the remote-up start. */
+static void power_follows_forward_speed(void) {
+    const double durations[]={1.1,.9,.75,.6,.5};
+    for (int start=0;start<2;++start) {
+        double last=0;
+        for (unsigned k=0;k<5;++k) {
+            Trace t=bowling(); t.start_deg=start ? 80 : 0; t.back_deg=35; t.fwd_deg=40;
+            t.back_s=.7; t.fwd_s=durations[k]; t.release_deg=5;
+            Outcome o=run(&t);
+            printf("  start %2.0f deg, forward %.2f s: power %.3f%s\n",t.start_deg,t.fwd_s,o.toss.power,
+                   o.toss.fallback ? " (weak)" : "");
+            CHECK(o.throws==1 && o.toss.power>last,"forward %.2f s: power %.3f not above %.3f",t.fwd_s,o.toss.power,last);
+            last=o.toss.power;
+        }
+        CHECK(last>.85,"a quick forward swing should be near full power (%.3f)",last);
+    }
+}
 /* B used to leave the pause menu must not grip on the way back into play. */
 static void b_from_pause_menu_does_not_lob(void) {
     Input in; Events ev; begin(&in,&ev);
@@ -277,6 +294,7 @@ int main(int argc, char **argv) {
     TEST(history_overflow_drops_oldest);
     TEST(aim_spin_and_hand_on_bowling_swing);
     TEST(b_from_pause_menu_does_not_lob);
+    TEST(power_follows_forward_speed);
     printf("%u throw-trace tests, %u failed checks\n",tests,failures);
     return failures ? 1 : 0;
 }

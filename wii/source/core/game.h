@@ -16,7 +16,7 @@
 #include "arrow.h"
 
 #ifndef BYC_VERSION
-#define BYC_VERSION "0.1.2"
+#define BYC_VERSION "0.1.3"
 #endif
 
 #define GAME_MENU_MAX 16
