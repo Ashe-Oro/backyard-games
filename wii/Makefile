@@ -95,8 +95,9 @@ soak: $(WII_SRC)
 	$(ELF2DOL) build/soak/boot-soak.elf build/soak/boot-soak.dol
 
 # ---------------- host tests ----------------
-host-test: build/input-test build/wpad-test build/physics-probe build/game-test build/party-test check-generated
+host-test: build/input-test build/throw-test build/wpad-test build/physics-probe build/game-test build/party-test check-generated
 	./build/input-test
+	./build/throw-test
 	./build/wpad-test
 	$(NODE) tests/physics_golden.mjs build/physics-probe
 	./build/game-test
@@ -106,7 +107,11 @@ build/input-test: tests/input_test.c $(INPUT_CORE) $(INPUT_HEADERS)
 	@mkdir -p build
 	$(HOST_CC) $(HOST_CFLAGS) -Isource/core tests/input_test.c $(INPUT_CORE) -lm -o $@
 
-build/wpad-test: tests/wpad_test.c tests/fake/wiiuse/wpad.h source/wii/input_wpad.c source/wii/input_wpad.h $(INPUT_CORE) $(INPUT_HEADERS)
+build/throw-test: tests/throw_test.c tests/bowling_trace.h $(INPUT_CORE) $(INPUT_HEADERS)
+	@mkdir -p build
+	$(HOST_CC) $(HOST_CFLAGS) -Isource/core tests/throw_test.c $(INPUT_CORE) -lm -o $@
+
+build/wpad-test: tests/wpad_test.c tests/bowling_trace.h tests/fake/wiiuse/wpad.h source/wii/input_wpad.c source/wii/input_wpad.h $(INPUT_CORE) $(INPUT_HEADERS)
 	@mkdir -p build
 	$(HOST_CC) $(HOST_CFLAGS) -Itests/fake -Isource/core tests/wpad_test.c source/wii/input_wpad.c $(INPUT_CORE) -lm -o $@
 

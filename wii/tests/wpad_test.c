@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include "bowling_trace.h"
 
 typedef struct {
     bool connected;
@@ -332,6 +333,58 @@ static void realistic_wiimote_releases(void) {
     assert(passed==sizeof(realistic_cases)/sizeof(realistic_cases[0]) && tap==0);
     assert(powers[1]<powers[0] && powers[0]<powers[2] && powers[5]<powers[0]);
 }
+/* Wii 0.1.3: the remote-up Bowling trace delivered the way libogc hands it over on a
+ * DolphinBar: 60 Hz polls with frame hitches (33 and 50 ms), bursts, a poll with two
+ * reports lost (WPAD_DroppedEvents 2) and a 45 ms Bluetooth stall with no reports at all.
+ * 0.1.2 rejected such batches or called input_report_loss, so the swing never threw. */
+static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
+    Input i; InputWpad w; setup(&i,&w,false);
+    Trace t=bowling(); t.rate_hz=rate_hz; t.jitter_ms=2; t.seed=60+rate_hz;
+    rng_state=t.seed;
+    WPADData reports[400]; uint64_t at[400]; unsigned total=0;
+    uint64_t release=0;
+    for (unsigned k=0;total<400;++k) {
+        double ms=k*(1000.0/rate_hz)+(uniform()*2-1)*t.jitter_ms;
+        if (ms<0) ms=0;
+        Pose p;
+        if (!pose(&t,ms,&p,&release)) break;
+        SwingVector f=specific_force(&p,false);
+        bool clipped=false;
+        unsigned x=raw_axis(f.x,&clipped), y=raw_axis(f.y,&clipped), z=raw_axis(f.z,&clipped);
+        reports[total]=(WPADData){.data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,
+            .btns_h=p.b ? INPUT_B : 0,.accel={(uint16_t)x,(uint16_t)y,(uint16_t)z},
+            .gforce={(x-512)/104.f,(y-512)/104.f,(z-512)/104.f}};
+        at[total++]=1000+(uint64_t)llround(ms);
+    }
+    unsigned next=0, frame=0;
+    uint64_t now=1000;
+    while (next<total) {
+        unsigned step=17;
+        if (hitches && (frame==20 || frame==61)) step=33;
+        if (hitches && frame==45) step=50;
+        now+=step; ++frame;
+        unsigned n=0; remotes[0].read=0;
+        bool stall=hitches && now>=1700 && now<1745;
+        bool lose=hitches && frame==70;
+        while (!stall && next<total && at[next]<=now) {
+            if (lose && n==0 && remotes[0].drops<2) { ++remotes[0].drops; ++next; continue; }
+            remotes[0].queue[n++]=reports[next++];
+        }
+        remotes[0].count=n;
+        input_wpad_poll(&w,now);
+    }
+    for (unsigned k=0;k<40;++k) { now+=17; queue(0,1,0); input_wpad_poll(&w,now); }
+    printf("  bowling via WPAD %u Hz%s: %u throws power %.3f fallback %d\n",
+           rate_hz,hitches ? " with hitches/drops/stall" : "",throws,shot.power,shot.fallback);
+    if (throws==1 && (shot.fallback || shot.power<.5)) return 98;
+    return throws;
+}
+static void bowling_through_jittery_wpad(void) {
+    assert(replay_bowling_frames(100,false)==1);
+    assert(replay_bowling_frames(200,false)==1);
+    assert(replay_bowling_frames(100,true)==1);
+    assert(replay_bowling_frames(200,true)==1);
+}
 #define TEST(fn) do { fn(); ++tests; printf("ok %u - %s\n",tests,#fn); } while (0)
 int main(int argc, char **argv) {
     if (argc==2 && strcmp(argv[1],"realistic")==0) { realistic_wiimote_releases(); return 0; }
@@ -343,5 +396,6 @@ int main(int argc, char **argv) {
     TEST(batched_reports_fit_poll_window_and_full_buffer_is_rejected);
     TEST(snapshot_fallback_accepts_buttons_without_accel); TEST(event_path_does_not_replay_stale_snapshot);
     TEST(pending_drain_preserves_edges_and_motion); TEST(realistic_wiimote_releases);
+    TEST(bowling_through_jittery_wpad);
     printf("%u WPAD adapter tests passed\n",tests); return 0;
 }
