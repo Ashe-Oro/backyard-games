@@ -38,11 +38,11 @@ static void on_input(void *user, const InputEvent *e) {
     (void)user;
     if (queued < 64) queue[queued++] = *e;   /* applied after input_wpad_poll returns */
 }
-/* Debug UART only (Dolphin OSReport / USB Gecko); never on screen. Helps P1 trace sessions. */
+/* OSReport diagnostics for Dolphin and USB Gecko. */
 static void log_event(const InputEvent *e) {
     if (e->action == INPUT_THROW)
-        SYS_Report("BYC: throw slot %u power %.3f speed %.2f aim %+.3f spin %+.2f roll %+.1f release %d%s\n", e->slot,
-                   e->toss.power, e->toss.speed, e->toss.aim, e->toss.spin, e->toss.roll, (int)e->toss.release, e->toss.clipped ? " clipped" : "");
+        SYS_Report("BYC: throw slot %u power %.3f speed %.2f aim %+.3f spin %+.2f roll %+.1f release %d%s%s\n", e->slot,
+                   e->toss.power, e->toss.speed, e->toss.aim, e->toss.spin, e->toss.roll, (int)e->toss.release, e->toss.clipped ? " clipped" : "", e->toss.fallback ? " fallback" : "");
     else if (e->action == INPUT_HOLD_STILL) SYS_Report("BYC: hold still (B pressed while moving)\n");
     else if (e->action == INPUT_CONNECT_REMOTE) SYS_Report("BYC: connect remote %d\n", (int)e->value);
     else if (e->action == INPUT_CAL_DONE) SYS_Report("BYC: SET POWER done slot %u\n", e->slot);
@@ -164,8 +164,7 @@ int main(void) {
 #ifdef BYC_SOAK
     WPAD_SetIdleTimeout(3600);   /* soak only: nobody presses buttons; release keeps the 5-minute default */
 #endif
-    if (gfx_mode) input_wpad_set_vres(&wpad, gfx_mode->fbWidth, gfx_mode->xfbHeight);
-    SYS_Report("BYC: WPAD init %d (buttons + accel + optional IR; A or 2 confirms menus)\n", status);
+    SYS_Report("BYC: WPAD init %d (buttons + accel; A or 2 confirms menus)\n", status);
 
     scene_init();
     game_init(&game, &input, &byc_win, (uint32_t)gettime(), &save, fat_ok);
@@ -185,7 +184,10 @@ int main(void) {
         if (dt <= 0 || dt > 0.25) dt = 1.0 / 60;
         last = now;
 
+        bool debug_was_visible = input.debug_visible;
         input_wpad_poll(&wpad, now);
+        if (input.debug_visible != debug_was_visible)
+            SYS_Report("BYC: wiimote debug %s\n", input.debug_visible ? "on" : "off");
         for (int i = 0; i < queued; i++) { log_event(&queue[i]); game_input(&game, &queue[i]); }
         queued = 0;
 #ifdef BYC_SOAK
@@ -222,11 +224,8 @@ int main(void) {
             scene_draw_board_view(&game, x, y, w, h);
         }
         hud_draw(&game, &input);
-        {
-            InputPointer ptr;
-            for (unsigned ch = 0; ch < 2; ch++)
-                if (input_wpad_pointer(&wpad, ch, &ptr)) { hud_draw_pointer(ptr.x, ptr.y); break; }
-        }
+        if (input.debug_visible)
+            hud_draw_wiimote_debug(&input, &wpad.latest[input.channels[input.active_slot]]);
 #ifdef BYC_SOAK
         double cpu = ticks_to_microsecs(diff_ticks(cpu0, gettime())) / 1000.0;
         soak_cpu_ms += cpu; if (cpu > soak_cpu_max) soak_cpu_max = cpu;

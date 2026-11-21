@@ -2,7 +2,7 @@
 #include <math.h>
 #include <string.h>
 
-const char input_help_text[] = "B HOLD, SWING, LET GO | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD HEIGHT/STEP | -/+ FINE AIM | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
+const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD HEIGHT/STEP | -/+ FINE AIM | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
 
 static double bound(double v, double lo, double hi) { return fmax(lo, fmin(hi,v)); }
 static void emit(Input *i, InputAction action, unsigned ch, double value, SwingResult toss) {
@@ -22,6 +22,7 @@ void input_connection(Input *i, unsigned ch, bool connected) {
     if (ch>=2 || i->connected[ch]==connected) return;
     i->connected[ch]=connected;
     i->held[ch]=0;
+    i->debug_holding[ch]=i->debug_latched[ch]=false;
     /* Unknown B state cannot satisfy the resume gate. */
     i->b_held[ch]=true;
     if (ch!=i->channels[i->active_slot]) return;
@@ -37,6 +38,7 @@ void input_report_loss(Input *i) {
         i->calibration.count=0;
         action(i,INPUT_CAL_RETRY,i->channels[i->active_slot],0);
     }
+    i->debug_holding[i->channels[i->active_slot]]=false;
     if (i->detector.phase!=SWING_SPENT) swing_reset(&i->detector,true);
 }
 void input_start_match(Input *i) {
@@ -102,6 +104,24 @@ bool input_focus_hand(Input *i, unsigned slot) {
     return true;
 }
 void input_blur_hand(Input *i) { i->hand_option=false; }
+static void debug_chord(Input *i, unsigned ch, const InputSample *p, uint32_t *pressed) {
+    const uint32_t chord=INPUT_ONE|INPUT_TWO;
+    if ((p->buttons&(chord|INPUT_B))!=chord) {
+        i->debug_holding[ch]=i->debug_latched[ch]=false;
+        return;
+    }
+    *pressed&=~chord;
+    if (ch!=i->channels[i->active_slot]) return;
+    uint64_t now=p->motion.ms;
+    if (!i->debug_holding[ch] || now<i->debug_hold_ms[ch]) {
+        i->debug_holding[ch]=true;
+        i->debug_hold_ms[ch]=now;
+    }
+    if (!i->debug_latched[ch] && now-i->debug_hold_ms[ch]>=2000) {
+        i->debug_visible=!i->debug_visible;
+        i->debug_latched[ch]=true;
+    }
+}
 void input_feed(Input *i, unsigned ch, const InputSample *p) {
     if (ch>=2 || !i->connected[ch]) return;
     uint32_t pressed=0;
@@ -109,6 +129,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
         pressed=p->buttons & ~i->held[ch];
         i->held[ch]=p->buttons;
         i->b_held[ch]=(p->buttons & INPUT_B)!=0;
+        debug_chord(i,ch,p,&pressed);
     }
     /* The slot-2 disconnect prompt offers A: USE REMOTE 1 even while channel 1 is absent. */
     if (i->disconnect_pause && i->active_slot==1 && ch==0 && (pressed & INPUT_A)) {
@@ -179,6 +200,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     }
     SwingSample motion=p->motion;
     motion.b=b;
+    motion.manual_release=true;
     if (!p->buttons_valid) motion.accel_valid=false;
     SwingResult r=swing_feed(&i->detector,&motion,slot->aim,&slot->profile);
     if (r.hold_still) action(i,INPUT_HOLD_STILL,ch,0);

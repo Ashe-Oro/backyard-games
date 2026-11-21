@@ -7,7 +7,7 @@
 #   make iso          dist/BackyardCornhole-BYCEAO.iso (WIT), main.dol == boot.dol check
 #   make release      dist/: HBC zip, ISO, GameSettings ini, install notes, SHA256SUMS
 
-VERSION := 0.1.1
+VERSION := 0.1.2
 GAME_ID := BYCEAO
 TITLE := Backyard Cornhole
 
@@ -165,7 +165,7 @@ smoke: release
 	./packaging/smoke.sh "$(OUT)/BackyardCornhole-$(GAME_ID).iso"
 
 wiimote-e2e: iso
-	./test/run-wiimote-e2e.sh "$(OUT)/BackyardCornhole-$(GAME_ID).iso"
+	./test/run-wiimote-e2e.sh "$(ISO)"
 
 clean:
 	@rm -rf build dist $(ISO_ROOT) $(HBC_DIR)/boot.dol

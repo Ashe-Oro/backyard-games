@@ -520,6 +520,34 @@ static void menu_a_or_two_from_any_remote(void) {
     input_sample(&i,0,50,INPUT_A,0,0);
     assert(i.slots[0].sticky);
 }
+static void bowling_waits_for_b_release_after_follow_through(void) {
+    Input i; Events e; input_ready(&i,&e,false);
+    input_sample(&i,0,510,INPUT_B,0,0);
+    for (unsigned t=520;t<700;t+=10) input_sample(&i,0,t,INPUT_B,.8,0);
+    for (unsigned t=700;t<840;t+=10) input_sample(&i,0,t,INPUT_B,0,25);
+    assert(!occurrences(&e,INPUT_THROW));
+    input_sample(&i,0,840,0,0,25);
+    assert(occurrences(&e,INPUT_THROW)==1 && e.events[e.count-1].toss.release==SWING_B_UP);
+    input_sample(&i,0,850,0,0,25);
+    assert(occurrences(&e,INPUT_THROW)==1);
+}
+static void debug_chord_requires_two_seconds_and_release(void) {
+    Input i; Events e; input_ready(&i,&e,true);
+    assert(!i.debug_visible);
+    uint32_t chord=INPUT_ONE|INPUT_TWO;
+    for (unsigned t=510;t<=2510;t+=10) input_sample(&i,1,t,chord,0,0);
+    assert(!i.debug_visible);
+    for (unsigned t=510;t<2510;t+=10) input_sample(&i,0,t,chord,0,0);
+    assert(!i.debug_visible);
+    input_sample(&i,0,2510,chord,0,0);
+    assert(i.debug_visible && !e.count && !i.help);
+    input_next_turn(&i,0);
+    for (unsigned t=2520;t<=5000;t+=10) input_sample(&i,0,t,chord,0,0);
+    assert(i.debug_visible && !e.count);
+    input_sample(&i,0,5010,0,0,0);
+    for (unsigned t=5020;t<=7020;t+=10) input_sample(&i,0,t,chord,0,0);
+    assert(!i.debug_visible && !e.count);
+}
 int main(void) {
     TEST(physical_backswing_never_throws); TEST(physical_bottom_releases_and_speed);
     TEST(subgravity_is_not_calm);
@@ -538,6 +566,8 @@ int main(void) {
     TEST(slots_and_disconnect_reassignment); TEST(pass_and_play_profile_is_slot_owned);
     TEST(input_throw_only_on_release_and_spent); TEST(calibration_route_does_not_throw_game_bags);
     TEST(menu_a_or_two_from_any_remote);
+    TEST(bowling_waits_for_b_release_after_follow_through);
+    TEST(debug_chord_requires_two_seconds_and_release);
     printf("%u input tests passed\n",tests);
     return 0;
 }

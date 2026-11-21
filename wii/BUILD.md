@@ -1,7 +1,7 @@
-# Build Backyard Cornhole Wii 0.1.1
+# Build Backyard Cornhole Wii 0.1.2
 
 Run the commands below from the repository root after cloning this repository
-and checking out `wii/game`. For playing on hardware, see [INSTALL-WII.md](INSTALL-WII.md).
+with the Wii source tree present. For playing on hardware, see [INSTALL-WII.md](INSTALL-WII.md).
 
 ## 1. Install the tools
 
@@ -128,8 +128,8 @@ make -C wii release OUT=dist
   make -C wii release OUT=/workspace/uploads/wii-game
   ```
 
-The HBC ZIP is `BackyardCornhole-HBC-v0.1.1.zip`; the full ZIP is
-`BackyardCornhole-BYCEAO-v0.1.1-release.zip`. The ISO and HBC ZIP are always
+The HBC ZIP is `BackyardCornhole-HBC-v0.1.2.zip`; the full ZIP is
+`BackyardCornhole-BYCEAO-v0.1.2-release.zip`. The ISO and HBC ZIP are always
 built in `wii/dist/` first, even with a different OUT. ZIP metadata is fixed
 and entries/checksums are sorted for repeatable packaging.
 
@@ -164,7 +164,7 @@ the title/menu; process survival alone is not a pass. See
 [packaging/README.md](packaging/README.md). This capture does not validate real
 Wii hardware or swing feel.
 
-Automated emulated-Wiimote end-to-end (required before a 0.1.1 tag):
+Automated emulated-Wiimote end-to-end:
 
 ```sh
 make -C wii iso
@@ -176,17 +176,16 @@ This boots the ISO in Dolphin (prefer `dolphin-emu-nogui`; `dolphin-emu -b` is
 fine) under Xvfb, using an isolated profile with an emulated Remote 1. The
 default `E2E_MODE=dtm` path (option 1) generates a TAS movie with
 `wii/test/gen_wiimote_dtm.py` and plays it with `-b -v Null -m movie.dtm` at
-~60 FPS. The movie taps A on the strap and Practice menus, then feeds the
-toss detector the same quiet / B-down / forward-lobe / 25° finish / B-up
-profile as the host tests, at energies that land in the NORMAL/SLICK board
-window. A pass requires OSREPORT `BYC: throw`, a scored callout (ON THE
-BOARD, HANGER! or CORNHOLE!), an FPS number, and no DSP ucode warning.
-`E2E_MODE=mouse` is the fallback that drives menus and the IMU with
-`xdotool` (needs `[Input] BackgroundInput=True`). The Null backend has no
-framebuffer; set `E2E_VIDEO=OGL` if you want stage screenshots at ~1 FPS on
-softpipe. Outputs (`result.txt`, `fps.txt`, `dolphin.log`, and screenshots
-when a renderer can present) go under `wii/build/wiimote-e2e/` (`E2E_OUT=`
-overrides). The run also fails if `wii/tools/check-ucode` does not see a
+~60 FPS. The movie taps A on the strap and Practice menus, toggles the 1+2
+overlay twice, then holds B through a backswing and forward swing before
+releasing into the NORMAL/SLICK board window. A pass requires a B-up throw,
+a scored callout (ON THE BOARD, HANGER! or CORNHOLE!), an FPS number and
+both overlay transitions. The Null backend has no framebuffer. For Practice,
+overlay and score screenshots, set `E2E_VIDEO=Vulkan` or `E2E_VIDEO=OGL`
+with a working renderer. `E2E_MODE=mouse` can drive menus and the IMU with
+`xdotool` on setups with suitable XInput mappings. Outputs go under
+`wii/build/wiimote-e2e/` unless you set `E2E_OUT`. The run checks for DSP
+warnings and checks that the DOL contains a
 5.0-19870-recognized ASND CRC in the DOL. Exit `2` means the environment
 blocked the harness (missing Dolphin, Xvfb failed to bind a display, and so
 on), not a game bug. Point `DOLPHIN=` at a local binary or AppImage if it is

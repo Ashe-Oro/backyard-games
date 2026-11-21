@@ -2,7 +2,7 @@
 
 Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, raw GX, WPAD).
 
-**Status: 0.1.1.** Practice, 2 Player and the 8-rival Tournament run on a GX
+**Status: 0.1.2.** Practice, 2 Player and the 8-rival Tournament run on a GX
 renderer; physics, scoring and the tournament CPU match the pinned 1.0.3 game on the host golden tests.
 Boots in Dolphin from the ISO (game ID `BYCEAO`) and as a bare DOL. Swing feel and hardware timing are
 not validated yet: that needs real Wii Remotes on a Wii, desktop Dolphin and the Kinhank (IMPL_PLAN P1).
@@ -24,10 +24,11 @@ make -C wii smoke OUT=/workspace/uploads/wii-game   # isolated 25-second NoGUI c
 
 ## Controls (Wii Sports Bowling style; no pointer, no sensor bar)
 
-Hold **B**, swing back, pause, swing through, **let go of B**. Swing speed sets power; swing left/right
+Hold **B**, swing back, swing forward, then **let go of B**. Swing speed sets power; swing left/right
 aims; wrist twist / lateral motion at release curls the bag (mirrored for LEFT HAND). **D-pad ←/→** steps
 along the foul line, **↑/↓** throw height, **A** SLICK/STICKY, **−/+** fine aim, **2** reset bag, **1** help,
-**HOME** pause (RESUME · CLEAR BOARD · HAND · SETTINGS · MAIN MENU · QUIT).
+**HOME** pause (RESUME · CLEAR BOARD · HAND · SETTINGS · MAIN MENU · QUIT). Hold **1+2** for two
+seconds to toggle swing diagnostics.
 
 ## Layout
 

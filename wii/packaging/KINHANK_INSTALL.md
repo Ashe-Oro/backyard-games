@@ -2,7 +2,7 @@
 
 These are manual installation instructions for Retro. Packaging and desktop
 smoke testing do not connect to the Kinhank or change its files.
-This is the playable Wii 0.1.1 release. Desktop smoke does not validate real
+This is the playable Wii 0.1.2 release. Desktop smoke does not validate real
 Wiimote feel or Android performance. Owner: Ashe.
 
 Verify `sha256sum -c SHA256SUMS` before copying. The release ZIP also includes
