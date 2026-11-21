@@ -44,7 +44,7 @@ Backyard Games has four explicit deployment targets. Kinhank is the current test
 - **Source:** [`kinhank/`](kinhank/), plus the ISO produced by the Wii build (same `BYCEAO` disc and DOL)
 - **Build:** `make -C kinhank` (packages that ISO with this target's `GameSettings`)
 - **Artifacts:** `BackyardCornhole-Kinhank-vX.Y.Z.zip` containing `BackyardCornhole-BYCEAO.iso`, `GameSettings/BYCEAO.ini` (`InternalResolution = 3`, about 1080p), [kinhank/INSTALL.md](kinhank/INSTALL.md) and `SHA256SUMS`. The ini in `kinhank/GameSettings/BYCEAO.ini` is the source of truth.
-- **Install path:** Retro copies the ISO to `/storage/3050BAA350BA6EEA0/Roms/wii/` and the ini into Dolphin's `GameSettings/` over ADB. See [kinhank/INSTALL.md](kinhank/INSTALL.md).
+- **Install path:** Retro copies the ISO to `/storage/3050BAA350BA6EEA0/Roms/wii/` and the ini to `/storage/emulated/0/Android/data/org.dolphinemu.dolphinemu/files/GameSettings/BYCEAO.ini` over ADB, then `chmod 666`s the ini and checks `ls -l` is world-readable. Use [kinhank/install-adb.sh](kinhank/install-adb.sh). Do not change Dolphin's global `GFX.ini` (keep it at 1× for other games). See [kinhank/INSTALL.md](kinhank/INSTALL.md).
 - **Who deploys it:** Retro. Developers never touch the Kinhank.
 - **Changelog:** [kinhank/CHANGELOG.md](kinhank/CHANGELOG.md)
 - **Tags:** `kinhank-vX.Y.Z`

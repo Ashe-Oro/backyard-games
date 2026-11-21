@@ -12,5 +12,8 @@ make -C wii iso
 make -C kinhank ISO=../wii/dist/BackyardCornhole-BYCEAO.iso
 ```
 
-Retro installs the zip over ADB. Developers never touch the Kinhank.
+Retro installs the zip over ADB with [install-adb.sh](install-adb.sh), which
+`chmod 666`s the ini and checks `ls -l` is world-readable. A 660 shell:shell
+copy is ignored by Dolphin. Leave the global `GFX.ini` at 1×; 3× comes only
+from this per-game ini. Developers never touch the Kinhank.
 Releases are tagged `kinhank-vX.Y.Z`.

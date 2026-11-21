@@ -19,6 +19,7 @@ From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.2.zip` release:
 BackyardCornhole-BYCEAO.iso
 GameSettings/BYCEAO.ini
 INSTALL.md
+install-adb.sh
 SHA256SUMS
 ```
 
@@ -27,17 +28,43 @@ the source of truth. It must contain `InternalResolution = 3`.
 
 ## Install
 
+Preferred: from the unzipped bundle (or this folder after `make -C kinhank`),
+run [install-adb.sh](install-adb.sh). It pushes the ISO and ini, runs
+`chmod 666` on the ini, and checks `ls -l` is world-readable.
+
+To do the same steps by hand:
+
 1. Check the files: `sha256sum -c SHA256SUMS`.
-2. Connect ADB to `192.168.4.59:5555` from a machine on the cabinet's network:
+2. Connect ADB to `192.168.4.59:5555` from a machine on the cabinet's network
+   and copy the ISO:
 
    ```sh
    adb connect 192.168.4.59:5555
    adb -s 192.168.4.59:5555 push BackyardCornhole-BYCEAO.iso /storage/3050BAA350BA6EEA0/Roms/wii/
    ```
 
-3. In Dolphin Android, use **Open User Folder** (or the app's user-data export /
-   import facility) to locate the active `GameSettings` directory. Copy
-   `GameSettings/BYCEAO.ini` there. The expected file content is:
+3. Copy the per-game ini to the path verified on this Kinhank, then
+   **`chmod 666` it**. A file copied over ADB is owned by `shell:shell` and
+   ends up `-rw-rw----`. Dolphin (the app uid) cannot read that, so it
+   silently falls back to global settings and 3× never applies. The ini
+   format in this repo is already correct; the missing step is the mode.
+
+   ```sh
+   ini=/storage/emulated/0/Android/data/org.dolphinemu.dolphinemu/files/GameSettings/BYCEAO.ini
+   adb -s 192.168.4.59:5555 shell mkdir -p "$(dirname "$ini")"
+   adb -s 192.168.4.59:5555 push GameSettings/BYCEAO.ini "$ini"
+   adb -s 192.168.4.59:5555 shell chmod 666 "$ini"
+   adb -s 192.168.4.59:5555 shell ls -l "$ini"
+   ```
+
+   The `ls -l` read-back must show a world-readable mode, for example
+   `-rw-rw-rw-`. If you still see `-rw-rw----`, Dolphin is ignoring the
+   file. Do not change Dolphin's global `GFX.ini` to get 3×; Ashe keeps
+   the global setting at 1× for other games. 3× comes only from this
+   per-game ini. With a world-readable ini, 3× has been verified at
+   59.95 FPS.
+
+   Expected file content (already in [GameSettings/BYCEAO.ini](GameSettings/BYCEAO.ini)):
 
    ```ini
    [Controls]
@@ -48,40 +75,28 @@ the source of truth. It must contain `InternalResolution = 3`.
    InternalResolution = 3
    ```
 
-   The directory varies by Dolphin build and Android storage permissions.
-   Common locations are `/sdcard/dolphin-emu/GameSettings/` on older builds or
-   `/sdcard/Android/data/org.dolphinemu.dolphinemu/files/GameSettings/` on newer
-   official builds ([Dolphin's user-directory guide](https://dolphin-emu.org/docs/guides/controlling-global-user-directory/)). Confirm the active location before copying; forks can use
-   a different app ID. If the active folder is accessible via ADB:
-
-   ```sh
-   # Substitute the confirmed active user directory; do not copy to both blindly.
-   adb -s 192.168.4.59:5555 push GameSettings/BYCEAO.ini "<active-user-dir>/GameSettings/BYCEAO.ini"
-   ```
-
 4. Set the MAYFLASH DolphinBar to **mode 4**. Pair two Wii Remotes to the bar; in Dolphin,
    confirm Wii Remote 1 and 2 are **Real Wii Remote**. The ini is keyed to
    disc ID `BYCEAO`, independent of the ISO filename. The game uses buttons and
    the accelerometer only (no sensor bar / pointer).
-5. Set graphics backend **Vulkan**, confirm internal resolution is **3×**
-   (about 1080p) from `BYCEAO.ini`, and confirm the game boots in NTSC /
-   approximately 60 Hz. Do not override the ini back to 1×. The game's frame
-   rate may report approximately 30 FPS for an interlaced framebuffer; VI should
-   remain approximately 60 Hz. If Vulkan is unavailable, record the device /
-   driver issue before changing the test configuration.
+5. Set graphics backend **Vulkan** and confirm the game boots in NTSC /
+   approximately 60 Hz. Leave the global internal resolution at 1×. Confirm
+   this game is running at 3× from `BYCEAO.ini`, not from a global change.
+   The game's frame rate may report approximately 30 FPS for an interlaced
+   framebuffer; VI should remain approximately 60 Hz. If Vulkan is
+   unavailable, record the device / driver issue before changing the test
+   configuration.
 6. Virtual SD: enable it and make sure it's writable. Saves go to
    `sd:/apps/backyardcornhole/data/save.dat`.
 7. Launch the ISO from the Wii ROM list. Properties must show game ID **BYCEAO**,
    region USA. Check both players' connection, menu input and tosses, including
    reconnects.
 
-Fallback: if the per-game ini isn't picked up, set the **global** Wii Remote 1
-(and 2) source to Real Wii Remote in Controller settings (affects every game).
-The 3× resolution still comes from this game's ini, so keep installing it.
-
-Record at the next check: the real `GameSettings/` path, whether the ini
-applied, virtual-SD writability, how to copy files off the SD, and Dolphin's
-speed % during a full match.
+Fallback: if the per-game ini still isn't picked up after a world-readable
+`ls -l`, set the **global** Wii Remote 1 (and 2) source to Real Wii Remote in
+Controller settings (affects every game). Do not raise the global internal
+resolution. The 3× setting still comes from this game's ini, so keep
+installing it with `chmod 666`.
 
 Controls: hold B, swing back, swing forward, then release B. D-pad left/right
 slides along the foul line; sideways motion and wrist twist add spin. Choose
