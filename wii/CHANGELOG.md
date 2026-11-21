@@ -8,6 +8,7 @@ Releases are tagged `wii-vX.Y.Z`. The version source is `VERSION` in `wii/Makefi
 which must match `hbc/apps/backyardcornhole/meta.xml`, the in-game footer and this file.
 
 ## [0.1.2] - 2026-11-21
+- Targets: original Wii (480p progressive with a component cable and 480p enabled in Wii Settings, otherwise 480i; 16:9 when the console is set to widescreen) and emulation (Dolphin on the Kinhank). Emulation's GameSettings `BYCEAO.ini` now renders at 3x internal resolution, about 1080p.
 
 - Preserve each Wii Remote report's B state and acceleration through the WPAD queue. Hold B, swing back and forward, then release to throw. Short or gentle forward swings use a low-power release in the measured direction. A stationary B tap cancels.
 - Hold 1+2 for two seconds to toggle live accelerometer, B state and swing diagnostics.
