@@ -40,6 +40,8 @@ typedef struct {
     Swing detector;
     bool connected[2], b_held[2], paused, disconnect_pause, help;
     uint32_t held[2];
+    uint64_t debug_hold_ms[2];
+    bool debug_holding[2], debug_latched[2], debug_visible;
     unsigned channels[2], active_slot;
     InputContext context;
     bool hand_option;

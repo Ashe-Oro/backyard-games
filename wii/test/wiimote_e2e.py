@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -13,12 +12,12 @@ from pathlib import Path
 
 # game.h: UI_STRAP=1, UI_TITLE=2, UI_NONE=0; PH_MENU=0, PH_WAIT=3, PH_AIM=4, PH_FLYING=6
 RE_SCREEN = re.compile(r"BYC: screen (\d+) phase (\d+)")
-RE_THROW = re.compile(r"BYC: throw slot")
+RE_THROW = re.compile(r"BYC: throw slot .* release (\d+)")
 RE_CALLOUT = re.compile(
     r"BYC: callout '([^']*)' '([^']*)' score (\d+)-(\d+) practice in=(\d+) on=(\d+) throws=(\d+)"
 )
 RE_FPS = re.compile(r"BYC: (\d+) frames rendered; ui (\d+) phase (\d+); fps ([0-9.]+)")
-RE_FPS_OLD = re.compile(r"BYC: 120 frames rendered")
+RE_DEBUG = re.compile(r"BYC: wiimote debug (on|off)")
 SCORE_BIG = ("CORNHOLE!", "ON THE BOARD", "HANGER!")
 
 
@@ -58,7 +57,7 @@ def combined_log(out: Path, user_dir: Path) -> str:
                 parts.append(p.read_text(errors="replace"))
             except OSError:
                 pass
-    return "\n".join(parts)
+    return max(parts, key=len, default="")
 
 
 def parse(log: str) -> dict:
@@ -206,7 +205,7 @@ def finish_pass(out: Path, info: dict, notes: list[str], method: str) -> None:
         fps_line = "FPS: not reported in OSREPORT (need a 120-frame window)"
     out.joinpath("fps.txt").write_text(fps_line + "\n")
     shots = [p.name for p in (out / "strap.png", out / "title.png", out / "aim.png",
-                               out / "throw.png", out / "score.png") if p.is_file()]
+                               out / "throw.png", out / "score.png", out / "debug.png") if p.is_file()]
     last = info["callouts"][-1]
     lines = [
         f"method={method}",
@@ -225,14 +224,19 @@ def finish_pass(out: Path, info: dict, notes: list[str], method: str) -> None:
 
 def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes: list[str]) -> None:
     """Option 1: .dtm playback already drives the emulated Wiimote. Only watch OSREPORT."""
-    del display  # Null has no framebuffer; OGL shots are a follow-up run.
-    notes.append("input: Dolphin TAS .dtm on the Null backend (option 1)")
+    notes.append(f"input: Dolphin TAS .dtm on the {video} backend")
+    capture = video != "Null"
     deadline = time.time() + 120
     info = parse("")
     saw_boot = False
     while time.time() < deadline:
         wait_alive(pid, out)
-        info = parse(combined_log(out, user))
+        log = combined_log(out, user)
+        info = parse(log)
+        if capture and not (out / "aim.png").exists() and info["ui"] == 0 and info["phase"] == 4:
+            wait_visible(display, out / "aim.png", 15)
+        if capture and not (out / "debug.png").exists() and "BYC: wiimote debug on" in log:
+            wait_visible(display, out / "debug.png", 15)
         if info["boot"] or info["remote_connected"] or info["ui"] is not None:
             saw_boot = True
         if info["throws"] and scored(info) and info["fps"]:
@@ -249,6 +253,10 @@ def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes
             f"last ui={info['ui']} phase={info['phase']}",
             f"remote_connected={info['remote_connected']}",
         ])
+    if any(release != "1" for release in info["throws"]):
+        fail(out, "throw did not come from the B-up edge", notes)
+    if RE_DEBUG.findall(log) != ["on", "off"]:
+        fail(out, "1+2 did not toggle the debug overlay on and off once each", notes)
     if not scored(info):
         fail(out, "threw bags but none scored (ON THE BOARD / HANGER / CORNHOLE!)", notes + [
             f"throws logged: {len(info['throws'])}",
@@ -264,7 +272,12 @@ def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes
             time.sleep(0.2)
     if not info["fps"]:
         fail(out, "toss scored but no FPS number was logged", notes)
-    finish_pass(out, info, notes, "dtm-null")
+    if capture:
+        if not (out / "aim.png").exists():
+            fail(out, "rendered run missed the Practice aim screenshot", notes)
+        wait_visible(display, out / "score.png", 15)
+    notes.append("B-up throws: " + str(len(info["throws"])) + "; 1+2 overlay: on, off")
+    finish_pass(out, info, notes, f"dtm-{video.lower()}")
 
 
 def main() -> None:

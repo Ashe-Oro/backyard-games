@@ -5,9 +5,9 @@ Wiimote packets follow SerializedWiimoteState from DesiredWiimoteState.cpp
 (length-prefixed, no extension, no MotionPlus). Accelerometer units match
 Dolphin's emulated rest pose (0g=0x200, 1g=0x268) and the game's swing_feed
 sample() helper: g = ((1+e) sin r cos p, (1+e) sin p, (1+e) cos r cos p).
-The toss itself is the host-tested replay(e=1.2, duration=180ms) profile:
-quiet rest, B down at rest, 180 ms of 2.2 g along Z, then a 25 degree
-forward pitch to confirm, then B up.
+The movie grips at rest, moves the remote into a backswing, swings through
+the bottom, and releases B while moving forward. The host suite covers
+additional graded and misfire traces at native sensor/frame cadence.
 """
 from __future__ import annotations
 
@@ -26,6 +26,8 @@ DEFAULT_ACCEL = (ZERO_G, ZERO_G, ONE_G)
 
 BUTTON_A = 1 << 0
 BUTTON_B = 1 << 1
+BUTTON_ONE = 1 << 4
+BUTTON_TWO = 1 << 5
 
 
 def g_to_raw(gx: float, gy: float, gz: float) -> tuple[int, int, int]:
@@ -120,18 +122,23 @@ def build_movie() -> bytes:
     hold(pkts, 0.80)
     # begin_inning(900 ms) + "THROWS FIRST" banner; wait until PH_AIM.
     hold(pkts, 4.00)
-    # Detector: same shape as tests/input_test.c replay() (quiet rest, B down,
-    # 180 ms forward lobe, 25° finish, B up). Energy is NOT the default 1.2 g
-    # "full" swing — that remaps to physics power ~1.0, which overshoots the
-    # board (GROUNDER). physical_power is a no-op for ARC_NORMAL, and the
-    # NORMAL/SLICK hole window is lo=0.655 hi=0.742 mid=0.699, so
-    # e = 1.2 * power^2. Several nearby values cover quantization.
+    for _ in range(2):
+        hold(pkts, 2.6, BUTTON_ONE | BUTTON_TWO)
+        hold(pkts, 0.4)
+
+    # The NORMAL/SLICK hole window is 0.655–0.742 normalized power.
+    # Several nearby values of e = 1.2 * power^2 cover quantization.
     def toss(energy: float) -> None:
         hold(pkts, 0.55)
         hold(pkts, 0.08, BUTTON_B)
-        hold(pkts, 0.180, BUTTON_B, energy=energy, pitch=0.0)
-        hold(pkts, 0.12, BUTTON_B, energy=0.0, pitch=25.0)
-        hold(pkts, 0.10, 0, energy=0.0, pitch=25.0)
+        for pitch in (-10, -22, -33, -39):
+            hold(pkts, 0.045, BUTTON_B, energy=0.10, pitch=pitch)
+        hold(pkts, 0.13, BUTTON_B, pitch=-39)
+        for pitch in (-31, -20, -9):
+            hold(pkts, 0.025, BUTTON_B, energy=0.24, pitch=pitch)
+        hold(pkts, 0.18, BUTTON_B, energy=energy)
+        hold(pkts, 0.025, 0, energy=0.30, pitch=12)
+        hold(pkts, 0.10, 0, pitch=25)
         # Flight ~2.2 s, GROUNDER/score callout, return to PH_AIM (~0.75 s).
         hold(pkts, 4.00)
 

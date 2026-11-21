@@ -231,7 +231,7 @@ static void panel(const Game *g) {
     case UI_STRAP: {
         float h = 150, y = 150; card(x, y, w, h);
         gfx_text_center(320, y + 24, 3, rgb(GOLD), "STRAP ON!");
-        gfx_text_center(320, y + 82, 1, rgb(CREAM), "HOLD B " DOT " SWING " DOT " LET GO");
+        gfx_text_center(320, y + 82, 1, rgb(CREAM), "HOLD B " DOT " BACK " DOT " FORWARD " DOT " LET GO");
         menu_list(g, 320, y + 114, 120);
         break;
     }
@@ -413,9 +413,23 @@ void hud_draw(const Game *g, const Input *in) {
     }
 }
 
-void hud_draw_pointer(float x, float y) {
-    /* Gold plus; drawn after the HUD so it stays visible on menus. */
-    gfx_rect(x - 10, y - 2, 20, 4, rgb(GOLD));
-    gfx_rect(x - 2, y - 10, 4, 20, rgb(GOLD));
-    gfx_rect(x - 3, y - 3, 6, 6, rgb(CREAM));
+void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
+    const Swing *s = &in->detector;
+    unsigned ch = in->channels[in->active_slot];
+    static const char *const phases[] = {"SETTLING", "READY", "GRIP", "RELEASE", "SPENT"};
+    const char *phase = phases[s->phase];
+    if (s->phase == SWING_GRIP) {
+        if (swing_forward_motion(s)) phase = "FORWARD";
+        else if (s->back_apex || s->back_motion_ms) phase = "BACKSWING";
+    }
+    gfx_rect(264, 414, 348, 43, rgba(TEAL, 0xf0));
+    char line[48];
+    if (latest->motion.accel_valid) {
+        SwingVector g = latest->motion.g;
+        snprintf(line, sizeof line, "ACCEL G  X %+.2f  Y %+.2f  Z %+.2f", g.x, g.y, g.z);
+    } else snprintf(line, sizeof line, "ACCEL G  NO REPORT");
+    gfx_text(274, 419, 1, rgb(CREAM), line);
+    const char *b = !latest->buttons_valid ? "?" : latest->motion.b ? "HELD" : "UP";
+    snprintf(line, sizeof line, "REMOTE %u  B %s  %s", ch + 1, b, phase);
+    gfx_text(274, 437, 1, rgb(GOLD), line);
 }

@@ -12,12 +12,13 @@ typedef struct {
     bool b, clipped;
     bool accel_valid;
     unsigned dropped;
+    bool manual_release; /* Bowling input uses B-up as the only release trigger. */
 } SwingSample;
 typedef struct { double full_speed, spin_strength; bool left_handed; } SwingProfile;
 typedef enum { SWING_SETTLING, SWING_READY, SWING_GRIP, SWING_PENDING, SWING_SPENT } SwingPhase;
 typedef enum { SWING_NO_RELEASE, SWING_B_UP, SWING_AUTO, SWING_TIMEOUT } SwingRelease;
 typedef struct {
-    bool thrown, cancelled, hold_still;
+    bool thrown, cancelled, hold_still, fallback;
     double power, speed, aim, spin, roll;
     bool clipped;
     SwingRelease release;
@@ -34,6 +35,9 @@ typedef struct {
     double mean_e, speed, peak, lobe_peak, locked_aim, locked_spin, locked_roll;
     double lateral_sum, lateral_weight, motion_roll, fine_aim;
     SwingVector grip_g;
+    uint64_t back_motion_ms, return_started_ms, return_ms;
+    double back_pitch, previous_pitch, return_high_pitch, return_travel, return_peak;
+    double return_lateral_sum;
 } Swing;
 
 SwingProfile swing_default_profile(void);
@@ -46,6 +50,7 @@ double swing_window_mean(const SwingPoint *points, unsigned count, uint64_t now,
 double swing_twist_relative(const SwingPoint *points, unsigned count, uint64_t release_ms);
 void swing_reset(Swing *s, bool require_b_up);
 bool swing_armed(const Swing *s);
+bool swing_forward_motion(const Swing *s);
 bool swing_calm_roll(const Swing *s, double *roll_degrees);
 /* Read-only HUD preview of the classified forward lobe (after the back-apex pause, before the
    toss is emitted): the power and aim a release right now would lock. Never changes the throw. */

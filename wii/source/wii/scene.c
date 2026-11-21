@@ -191,21 +191,6 @@ static void build_yard(void) {
     voxel(.59f, .2f, .46f, 0x303a37, gx, .54f, gz); voxel(.57f, .06f, .44f, 0x485550, gx, .675f, gz);
     for (int i = 0; i < 6; i++) voxel(.025f, .018f, .36f, 0x414f49, gx - .2f + i * .08f, .713f, gz);
     voxel(.3f, .045f, .39f, 0xbe8b54, gx + .49f, .57f, gz); voxel(.14f, .025f, .17f, 0xeee0ba, gx + .49f, .61f, gz + .05f);
-    /* string lanterns (bulbs; the wire is a thin dark box per span) */
-    static const unsigned bulbs[3] = {0xffe3a0, 0xe9977d, 0xb9d6bb};
-    for (int row = 0; row < 2; row++) {
-        float z = row ? nearZ - 1.15f : farZ + 1.15f;
-        for (int i = 0; i < 40; i++) {
-            float x0 = -5.7f + i * 11.4f / 40, x1 = x0 + 11.4f / 40, xm = (x0 + x1) / 2;
-            float y = 2.25f - .29f * (1 - (xm / 5.7f) * (xm / 5.7f));
-            gfx_box_unlit((V3){xm, y, z}, (V3){11.4f / 40 + .01f, .012f, .012f}, rgb(0x39463f));
-        }
-        for (int i = 0; i < 14; i++) {
-            float x = -5.4f + i * .83f, y = 2.25f - .29f * (1 - (x / 5.7f) * (x / 5.7f));
-            voxel(.015f, .09f, .015f, 0x414f49, x, y - .045f, z);
-            gfx_box_unlit((V3){x, y - .14f, z}, (V3){.07f, .11f, .07f}, rgb(bulbs[i % 3]));
-        }
-    }
     /* board: skirts, legs, dark floor under the hole (index.html makeBoard) */
     M3 r = board_rot3();
     const float W = (float)BYC_W, L = (float)BYC_L, sk = .09f;

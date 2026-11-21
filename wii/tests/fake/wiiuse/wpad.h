@@ -40,6 +40,7 @@ int32_t WPAD_Probe(int32_t channel, uint32_t *type);
 int32_t WPAD_SetDataFormat(int32_t channel, int32_t format);
 int32_t WPAD_SetVRes(int32_t channel, uint32_t xres, uint32_t yres);
 int32_t WPAD_ScanPads(void);
+int32_t WPAD_ReadPending(int32_t ch, void (*callback)(int32_t, const WPADData *));
 WPADData *WPAD_Data(int channel);
 uint32_t WPAD_ButtonsHeld(int channel);
 int32_t WPAD_SetIdleThresholds(int32_t channel, int32_t buttons, int32_t ir, int32_t accel,

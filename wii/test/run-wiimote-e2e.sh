@@ -22,7 +22,7 @@ python3 - "$E2E_OUT" <<'PY'
 from pathlib import Path
 import sys
 out = Path(sys.argv[1])
-for name in ("strap.png","title.png","aim.png","throw.png","score.png",
+for name in ("strap.png","title.png","aim.png","throw.png","score.png","debug.png",
              "result.txt","dolphin.log","dolphin-core.log","xvfb.log","fps.txt","wiimote-e2e.dtm"):
     (out / name).unlink(missing_ok=True)
 PY
@@ -61,18 +61,17 @@ sha256sum "$ISO"
 
 # Independent of emulator vintage: the DOL must carry a 5.0-19870-recognized ASND CRC.
 if [[ -x "$ROOT/build/check-ucode" ]]; then
-    TMPDOL=$(mktemp "$E2E_OUT/main.XXXXXX.dol")
-    if command -v wit >/dev/null && wit extract --files=+main.dol --dest "$E2E_OUT/iso-dol" "$ISO" >/dev/null 2>&1; then
-        DOL=$(find "$E2E_OUT/iso-dol" -name 'main.dol' -o -name 'boot.dol' | head -1)
-        [[ -n "$DOL" ]] || env_fail "WIT extracted the ISO but no DOL was found"
-        "$ROOT/build/check-ucode" "$DOL" | tee "$E2E_OUT/ucode.txt"
+    ISO_DOL_DIR=$(mktemp -d "$E2E_OUT/iso-dol.XXXXXX")
+    if command -v wit >/dev/null &&
+        wit extract "$ISO" "$ISO_DOL_DIR" --psel DATA --files +/sys/main.dol --overwrite >/dev/null 2>&1; then
+        "$ROOT/build/check-ucode" "$ISO_DOL_DIR/sys/main.dol" | tee "$E2E_OUT/ucode.txt"
     elif [[ -f "$ROOT/build/boot.dol" ]]; then
         "$ROOT/build/check-ucode" "$ROOT/build/boot.dol" | tee "$E2E_OUT/ucode.txt"
         printf 'NOTE: checked wii/build/boot.dol (ISO DOL extract unavailable)\n'
     else
         env_fail "check-ucode exists but no DOL could be extracted from the ISO"
     fi
-    rm -f "$TMPDOL"
+    rm -rf "$ISO_DOL_DIR"
     if rg -q '5dbf8bf1' "$E2E_OUT/ucode.txt"; then
         fail 'DOL still contains unknown-to-19870 ASND ucode 0x5dbf8bf1'
     fi
@@ -101,6 +100,9 @@ RenderWindowWidth = 640
 RenderWindowHeight = 480
 [Input]
 BackgroundInput = True
+[Analytics]
+Enabled = False
+PermissionAsked = True
 EOF
 cat > "$USER_DIR/Config/Logger.ini" <<'EOF'
 [Options]
@@ -182,24 +184,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Prefer a dedicated high display number. Reuse an already-running :99 rather than
-# starting a second Xvfb (this box is shared; only one heavy process at a time).
-if pgrep -a Xvfb | grep -q " :99 "; then
-    export DISPLAY=:99
-    : >"$E2E_OUT/xvfb.log"
-    echo "reusing existing Xvfb :99" >>"$E2E_OUT/xvfb.log"
-else
-    Xvfb :99 -screen 0 640x480x24 -nolisten tcp >"$E2E_OUT/xvfb.log" 2>&1 &
-    XVFB_PID=$!
-    export DISPLAY=:99
-fi
+# Allocate an isolated display so captures cannot include another job's window.
+DISPLAY_FILE=$(mktemp "$E2E_OUT/display.XXXXXX")
+Xvfb -displayfd 3 -screen 0 640x480x24 -nolisten tcp 3>"$DISPLAY_FILE" >"$E2E_OUT/xvfb.log" 2>&1 &
+XVFB_PID=$!
 for _ in {1..50}; do
-    if [[ -n "${XVFB_PID:-}" ]]; then
-        kill -0 "$XVFB_PID" 2>/dev/null || env_fail "Xvfb exited before a display was ready; see $E2E_OUT/xvfb.log"
-    fi
-    xwininfo -root >/dev/null 2>&1 && break
+    [[ -s "$DISPLAY_FILE" ]] && break
+    kill -0 "$XVFB_PID" 2>/dev/null || break
     sleep 0.1
 done
+DISPLAY_NUMBER=$(cat "$DISPLAY_FILE")
+rm -f "$DISPLAY_FILE"
+[[ -n "$DISPLAY_NUMBER" ]] || env_fail "Xvfb display did not become ready; see $E2E_OUT/xvfb.log"
+export DISPLAY=:$DISPLAY_NUMBER
 xwininfo -root >/dev/null 2>&1 || env_fail "Xvfb display did not become ready; see $E2E_OUT/xvfb.log"
 export LIBGL_ALWAYS_SOFTWARE=1
 export QT_QPA_PLATFORM=xcb
@@ -256,7 +253,7 @@ fi
 LOGS=("$E2E_OUT/dolphin.log")
 [[ -f "$E2E_OUT/dolphin-core.log" ]] && LOGS+=("$E2E_OUT/dolphin-core.log")
 if rg -i '5dbf8bf1|unknown ucode|unknown dsp|unrecognized ucode|this game uses an unknown' "${LOGS[@]}"; then
-    fail "Dolphin log still contains a DSP ucode warning (must be gone on 0.1.1)"
+    fail "Dolphin log still contains a DSP ucode warning (ASND HLE regression)"
 fi
 
 if [[ "$rc" -eq 2 ]]; then
