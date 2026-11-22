@@ -441,8 +441,7 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
     snprintf(line, sizeof line, "SWING SPEED %.2f  PEAK %.2f M/S", s->speed, s->peak);
     gfx_text(x + 10, y + 59, 1, rgb(CREAM), line);
     if (st->have_toss)
-        snprintf(line, sizeof line, "LAST THROW PEAK %.2f M/S%s", st->last_toss.speed,
-                 st->last_toss.fallback ? " WEAK" : "");
+        snprintf(line, sizeof line, "LAST THROW PEAK %.2f M/S", st->last_toss.speed);
     else snprintf(line, sizeof line, "LAST THROW  -");
     gfx_text(x + 10, y + 77, 1, rgb(GOLD), line);
     /* 0.1.4: power is the swing speed, aim the sideways swing (the arc is the D-pad picker) */

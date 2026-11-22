@@ -233,7 +233,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     SwingSample motion=p->motion;
     motion.b=b;
     motion.manual_release=true;
-    SwingResult r=swing_feed(&i->detector,&motion,&slot->profile);
+    SwingResult r=swing_feed(&i->detector,&motion,&slot->profile,slot->height);
     if (r.thrown) {
         i->stats.last_toss=r;
         i->stats.have_toss=true;

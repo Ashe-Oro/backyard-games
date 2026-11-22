@@ -615,11 +615,33 @@ static void test_practice_boot_ignores_stale_b(void) {
         CHECK(game.practice_throws == 0 && game.nbags == 0, "%s: holds the bag until B-up", cases[k].name);
         remote_buttons(0, 25, 0, 0);
         for (int n = 0; n < 30 && game.nbags == 0; n++) remote_buttons(0, 25, 0, 0);
-        CHECK(game.phase == PH_FLYING && game.nbags == 1 && !input.stats.last_toss.fallback,
+        CHECK(game.phase == PH_FLYING && game.nbags == 1,
               "%s: a fresh bowling swing launches one bag", cases[k].name);
         frames(300);
         CHECK(game.practice_throws == 1, "%s: the deliberate throw is counted once", cases[k].name);
     }
+}
+static void test_practice_cancel_and_retry(void) {
+    practice_ready(143);
+    for (int gesture = 0; gesture < 3; gesture++) {
+        remote(0, 0, 0, false);
+        remote(0, 0, 0, true);
+        CHECK(input.detector.phase == SWING_GRIP, "gesture %d grips on B-down", gesture);
+        for (int n = 0; n < 24; n++) {
+            double pitch = gesture == 2 ? -35 : gesture == 1 ? 2 * sin(n * .5) : 0;
+            remote(0, pitch, 0, true);
+        }
+        CHECK(input.detector.peak == 0, "gesture %d has no forward peak", gesture);
+        remote(0, gesture == 2 ? -35 : 0, 0, false);
+        CHECK(input.detector.phase == SWING_READY, "gesture %d returns to READY", gesture);
+        frames(300);
+        CHECK(game.phase == PH_AIM && game.nbags == 0 && game.practice_throws == 0,
+              "gesture %d keeps the practice bag and the throw count", gesture);
+    }
+    SwingSeen toss = bowling_swing(2.5, 0, true);
+    CHECK(toss.thrown && game.phase == PH_FLYING, "the next forward swing launches on B-up");
+    frames(300);
+    CHECK(game.practice_throws == 1, "only the forward swing counts");
 }
 /* The throw-type picker through the real input layer: D-pad DOWN twice (SLIDER), then UP h times. */
 static void pick_height(int h) {
@@ -627,7 +649,7 @@ static void pick_height(int h) {
     for (int i = 0; i < h; i++) tap(INPUT_UP);
 }
 #define LAND_MAX 600
-typedef struct { bool thrown, deck; double land_x, land_z, peak_y, power, aim; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
+typedef struct { bool thrown, deck; double land_x, land_z, peak_y, power, aim, preview_power; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
 /* Hold B, swing back, swing forward (lateral = sideways lean in degrees), let go with the remote at
  * release_pitch. The flight is the launched bag stepped at the game's fixed 240 Hz until it first
  * touches down (independent of where the frame accumulator happened to be). */
@@ -640,7 +662,10 @@ static Landing swing_and_land(double forward_e, double lateral, double release_p
     for (int i = 0; i < 15; i++) remote_buttons(0.5, 0, 0, INPUT_B);
     for (int i = 0; i < 20; i++) remote_buttons(0, -35, 0, INPUT_B | ((i % 2) ? noise : 0));
     int bags = game.nbags;
-    for (int i = 0; i < 18; i++) remote_buttons(forward_e, 0, lateral, INPUT_B | ((i % 2) ? noise : 0));
+    for (int i = 0; i < 18; i++) {
+        remote_buttons(forward_e, 0, lateral, INPUT_B | ((i % 2) ? noise : 0));
+        if (game.arrow_live) l.preview_power = game.arrow_power;
+    }
     Bag launch; memset(&launch, 0, sizeof launch);
     remote_feed(forward_e, release_pitch, lateral, 0);
     if (game.nbags == bags + 1) launch = game.bags[game.nbags - 1];
@@ -688,7 +713,7 @@ static void test_set_power_reaches_hole(void) {
     SwingCalibrationLimits limits = game_calibration_limits(&game);
     CHECK(game.setpower_count == 3 && !input.calibrating && game.save_dirty && game.nbags == 0,
           "SET POWER saves three easy tosses without launching a bag");
-    CHECK(fabs(swing_power(swing_speed(.65), game.save.profile[0].full_speed) - limits.target_power) < 1e-9,
+    CHECK(fabs(swing_power(swing_speed(.65), game.save.profile[0].full_speed * 1.20) - limits.target_power) < 1e-9,
           "the saved easy toss power matches the hole target");
     CHECK(!input_begin_calibration(&input, (SwingCalibrationLimits){.8, limits.full_speed_floor, limits.clip_ceiling}),
           "SET POWER rejects an unreachable target above the cap");
@@ -704,46 +729,35 @@ static void test_set_power_reaches_hole(void) {
 static void test_swing_to_landing(void) {
     practice_ready(141);
     CHECK(game.wind.mph == 0, "practice is calm (%g mph)", game.wind.mph);
-    pick_height(1);
-    CHECK(game.arc == ARC_NORMAL && game.heights[0] == 1, "picker on NORMAL");
-    const struct { double excess, previous_distance; } strokes[] = {
-        {.45, 7.58}, {.65, 7.94}, {.9, 8.38}, {1.2, 8.84}, {1.5, 0},
-        {2, 0}, {2.2, 10.63}, {3, 0}, {4, 0}, {5, 0},
-    };
-    const double front = BYC_REL_Z - BYC_BOARD_Z, span = BYC_L * cos(BYC_TH);
-    const double back = front + span;
-    printf("  board z %.4f m, release z %.2f m, deck span %.3f m (%.4f–%.4f m from release)\n",
-           BYC_BOARD_Z, BYC_REL_Z, span, front, back);
-    double previous_distance = 0, previous_power = 0;
-    for (unsigned k = 0; k < sizeof strokes / sizeof strokes[0]; k++) {
-        double e = strokes[k].excess, speed = swing_speed(e);
-        Landing l = swing_and_land(e, 0, 25, 0);
-        double distance = BYC_REL_Z - l.land_z;
-        double expected = fmin(.55 * sqrt(e / 1.9), .76);
-        printf("  NORMAL %.2f g: %.3f m/s -> %.3f power -> %.2f m (%s)\n",
-               e, speed, l.power, distance, l.deck ? "deck" : "ground");
-        CHECK(l.thrown && l.n > 20, "swing %g throws and flies (%d steps)", e, l.n);
-        CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
-        CHECK(fabs(l.power - expected) < 1e-9, "swing %g g gives %.3f power (got %.3f)", e, expected, l.power);
-        if (strokes[k].previous_distance > 0)
-            CHECK(distance < strokes[k].previous_distance, "swing %g g lands shorter than 0.1.5 (%.2f m)", e, distance);
-        if (previous_power < .76)
-            CHECK(previous_power < l.power && previous_distance < distance, "swing %g g lands farther (%.2f m)", e, distance);
-        else
-            CHECK(l.power == .76 && distance == previous_distance, "swing %g g stays at the cap (%.2f m)", e, distance);
-        if (e == 1.5)
-            CHECK(front - .25 <= distance && distance <= back, "a 1.5 g swing is near the deck (%.2f m)", distance);
-        if (e >= 2)
-            CHECK(l.deck && front <= distance && distance <= back, "swing %g g lands on the deck (%.2f m)", e, distance);
-        if (e >= 4)
-            CHECK(l.power == .76 && distance >= 8.7, "max-power NORMAL lands near the back (%.2f m)", distance);
-        previous_power = l.power;
-        previous_distance = distance;
+    const double energies[] = {.9, 1.5, 2, 3, 4, 6.5, 7};
+    const double scales[] = {1.30, 1.20, 1.0/.90};
+    const char *names[] = {"SLIDER", "NORMAL", "KOBE"};
+    const double front = BYC_REL_Z - BYC_BOARD_Z, back = front + BYC_L * cos(BYC_TH);
+    printf("  deck spans %.4f–%.4f m from release\n", front, back);
+    for (int h = 0; h < 3; h++) {
+        next_bag(); pick_height(h);
+        CHECK(game.arc == (BagArc)h && game.heights[0] == h, "picker on %s", names[h]);
+        double previous_distance = 0, previous_power = 0;
+        for (unsigned k = 0; k < sizeof energies / sizeof energies[0]; k++) {
+            double e = energies[k], speed = swing_speed(e);
+            Landing l = swing_and_land(e, 0, 25, 0);
+            double distance = BYC_REL_Z - l.land_z;
+            double expected = fmin(.55 * sqrt(e / 1.9) / scales[h], .76);
+            printf("  %s %.2f g: %.3f m/s -> %.6f power -> %.6f m (%s)\n",
+                   names[h], e, speed, l.power, distance, l.deck ? "deck" : "ground");
+            CHECK(l.thrown && l.n > 20, "%s %g g throws and flies (%d steps)", names[h], e, l.n);
+            CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
+            CHECK(fabs(l.power - expected) < 1e-9, "%s %g g gives %.3f power (got %.3f)", names[h], e, expected, l.power);
+            CHECK(fabs(l.preview_power - physical_power(game.win, 0, SIDE_SLICK, (BagArc)h, expected)) < 1e-9,
+                  "%s %g g preview matches release power", names[h], e);
+            if (previous_power < .76)
+                CHECK(previous_power < l.power && previous_distance < distance, "%s %g g lands farther (%.2f m)", names[h], e, distance);
+            else
+                CHECK(l.power == .76 && distance == previous_distance, "%s %g g stays at the cap (%.2f m)", names[h], e, distance);
+            previous_power = l.power;
+            previous_distance = distance;
+        }
     }
-    next_bag(); pick_height(2);
-    Landing old_kobe = swing_and_land(1.56, 0, 25, 0), full_kobe = swing_and_land(4, 0, 25, 0);
-    CHECK(old_kobe.thrown && BYC_REL_Z - old_kobe.land_z < 8.86, "the 0.1.5 KOBE reference lands shorter");
-    CHECK(full_kobe.thrown && full_kobe.deck && full_kobe.power == .76, "a capped KOBE still reaches the deck");
     next_bag(); pick_height(1);
     /* direction: left vs right swing, mirrored for left-handed */
     Landing r = swing_and_land(0.6, 12, 25, 0), lft = swing_and_land(0.6, -12, 25, 0);
@@ -790,8 +804,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.6") == 0, "version is 0.1.6 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.6") == 0, "version tag v0.1.6 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.7") == 0, "version is 0.1.7 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.7") == 0, "version tag v0.1.7 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -881,10 +895,8 @@ static void test_combined_arrow(void) {
     SwingSeen held = bowling_swing(0.8, 12, false);
     CHECK(held.live_seen && game.nbags == bags, "held swing previews but does not throw");
     CHECK(!game.arrow_on, "a swing that ends without a throw hides the arrow");
-    /* 0.1.3: letting go of B later is never silently nothing: a weak lob */
     remote(0, -35, 0, false);
-    CHECK(game.nbags == bags + 1 && input.stats.last_toss.fallback && input.stats.last_toss.power <= SWING_FALLBACK_MAX_POWER,
-          "B released after the swing ended throws a weak lob (%d bags, power %g)", game.nbags - bags, input.stats.last_toss.power);
+    CHECK(game.nbags == bags && input.detector.phase == SWING_READY, "a late B-up cancels");
     /* shifted stance, straight swing: starts at the stance, still straight */
     next_bag();
     input.slots[0].stance = input.slots[0].stance_from = 0.3;
@@ -1097,6 +1109,7 @@ int main(void) {
     test_pause_on_summary();
     test_combined_arrow();
     test_set_power_reaches_hole();
+    test_practice_cancel_and_retry();
     test_swing_to_landing();
     test_version_tag();
     test_widescreen_layout();

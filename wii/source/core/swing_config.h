@@ -2,27 +2,27 @@
 #define BYC_SWING_CONFIG_H
 
 /* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
-#define SWING_VERSION "bowling-grip-0.1.6"
+#define SWING_VERSION "bowling-grip-0.1.7"
 #define SWING_WINDOW_MS 80
 #define SWING_MIN_SPAN_MS 16
-#define SWING_NOISE_G 0.15
-/* Calm-attitude test for the optional back-apex / follow-through cues only. Never gates the grip. */
-#define SWING_STABLE_G 0.10
-#define SWING_STABLE_DEG 5.0
 #define SWING_HISTORY_MS 150
-#define SWING_GRIP_MS 100        /* grip reference: mean gravity over the last 100 ms, whatever the pose */
-#define SWING_APEX_MS 40
-#define SWING_FORWARD_G 0.35
-#define SWING_LOBE_MS 40
-#define SWING_RELEASE_MS 250
+#define SWING_GRIP_MS 100
+#define SWING_DIRECTION_FILTER_MS 6
+#define SWING_GRIP_LOAD_G 1.20
+#define SWING_BACK_TANGENT_G 0.115
+#define SWING_REVERSAL_DROP_G 0.09
+#define SWING_REVERSAL_RISE_G 0.035
+#define SWING_DIRECTION_MS 10
+#define SWING_FORWARD_G 0.22
+#define SWING_FORWARD_MS 24
+#define SWING_RELEASE_MS 140
 #define SWING_TIMEOUT_MS 2500
 #define SWING_AUTO_RATIO 0.6
 #define SWING_GAP_MS 25          /* report spacing above this is a gap */
 #define SWING_BRIDGE_MS 100      /* gaps up to this are bridged by interpolated samples */
 #define SWING_BRIDGE_STEP_MS 10
 #define SWING_RESET_GAP_MS 250   /* longer gaps restart the motion measurement; a held grip is kept */
-#define SWING_DIP_RATIO 0.5      /* excess g falling below half the stroke's peak is the back apex */
-#define SWING_RISE_RATIO 1.25    /* ...and rising 25% (and SWING_NOISE_G) above the dip starts the next stroke */
+#define SWING_ROLL_LOAD_G 0.35
 #define SWING_ROLL_REF_G 0.5     /* grip roll needs this much gravity in the remote's X-Z plane */
 #define SWING_ROLL_REF_MS 60     /* otherwise the roll reference is the first 60 ms of loaded swing */
 #define SWING_RADIUS_M 0.6
@@ -41,15 +41,7 @@
 #define SWING_STEP_CLAMP 0.45
 #define SWING_STEP_EASE_MS 70
 #define SWING_FINISH_DEG 15.0
-#define SWING_RETURN_DEG 12.0
-#define SWING_RETURN_STEP_DEG 0.5
-#define SWING_RETURN_MAX_STEP_DEG 16.0
-#define SWING_RETURN_BACKTRACK_DEG 5.0
-#define SWING_RETURN_MS 24
-#define SWING_RETURN_BACK_G 0.18
-#define SWING_FALLBACK_POWER_SCALE 0.65
-#define SWING_FALLBACK_MIN_POWER (0.12 * SWING_POWER_GAIN) /* B tap with no swing */
-#define SWING_FALLBACK_MAX_POWER (0.35 * SWING_POWER_GAIN)
+#define SWING_STABLE_G 0.10
 #define SWING_TWIST_MS 133
 #define SWING_HISTORY 192
 #define SWING_PI 3.14159265358979323846

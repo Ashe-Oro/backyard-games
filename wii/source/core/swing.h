@@ -16,10 +16,10 @@ typedef struct {
 } SwingSample;
 typedef struct { double full_speed, spin_strength; bool left_handed; } SwingProfile;
 /* READY grips on the very report B reads down: no settle or stillness step, any pose. */
-typedef enum { SWING_READY, SWING_GRIP, SWING_PENDING, SWING_SPENT } SwingPhase;
+typedef enum { SWING_READY, SWING_GRIP, SWING_BACKSWING, SWING_FORWARD, SWING_PENDING, SWING_SPENT } SwingPhase;
 typedef enum { SWING_NO_RELEASE, SWING_B_UP, SWING_AUTO, SWING_TIMEOUT } SwingRelease;
 typedef struct {
-    bool thrown, fallback; /* fallback: weak throw (no classified forward stroke), never nothing */
+    bool thrown;
     double power, speed, aim, spin, roll;
     bool clipped;
     SwingRelease release;
@@ -30,24 +30,24 @@ typedef struct {
     SwingPhase phase;
     SwingPoint history[SWING_HISTORY];
     unsigned count;
-    uint64_t last_ms, armed_ms, lobe_start, lobe_end, release_ms;
+    uint64_t last_ms, armed_ms, forward_ms, loaded_since, last_loaded;
     bool have_time, have_g, last_clipped, previous_b, require_b_up;
-    bool in_lobe, lobe_valid, lobe_clipped, confirmed, back_apex, dipping, roll_ref;
-    unsigned lobes;                      /* strokes since the grip; the second and later are forward */
-    unsigned bridged, restarts;          /* gaps interpolated / long gaps that restarted motion */
-    SwingVector last_g;
-    double mean_e, speed, peak, lobe_peak, lobe_peak_e, dip_e, locked_aim, locked_spin, locked_roll;
+    bool loaded, qualified, forward_clipped, roll_ref;
+    unsigned bridged, restarts;
+    SwingVector last_g, grip_g;
+    double mean_e, speed, peak, locked_aim, locked_spin, locked_roll;
     double roll_x, roll_z;
     uint64_t roll_since;
     double lateral_sum, lateral_weight, motion_roll;
-    SwingVector grip_g;
-    uint64_t back_motion_ms, return_started_ms, return_ms;
-    double back_pitch, previous_pitch, return_high_pitch, return_travel, return_peak;
-    double return_lateral_sum;
+    uint64_t direction_ms, direction_since;
+    double tangent, radial, radial_high, radial_low;
+    bool descending, grip_loaded;
 } Swing;
 
 SwingProfile swing_default_profile(void);
 double swing_speed(double mean_excess_g);
+/* Picker order is SLIDER, NORMAL, KOBE. Scale applies before the common cap. */
+double swing_type_scale(int height);
 double swing_power(double peak_speed, double full_speed);
 double swing_roll_spin(double roll_degrees, const SwingProfile *profile);
 /* Computes an exactly clipped, trapezoidal 80 ms window. Does not integrate distance. */
@@ -57,16 +57,11 @@ double swing_twist_relative(const SwingPoint *points, unsigned count, uint64_t r
 /* require_b_up: a B already held must be let go before it can grip (pause, menus, buttons). */
 void swing_reset(Swing *s, bool require_b_up);
 bool swing_armed(const Swing *s);
-bool swing_forward_motion(const Swing *s);
 /* READY, GRIP, BACKSWING, FORWARD, RELEASE or SPENT, for the debug overlay. */
 const char *swing_phase_name(const Swing *s);
-/* Read-only HUD preview of the classified forward lobe (after the back-apex pause, before the
-   toss is emitted): the power and aim a release right now would lock. Never changes the throw. */
-bool swing_preview(const Swing *s, const SwingProfile *profile, double *power, double *aim);
-/* Power comes only from forward swing speed, aim only from the sideways swing, curl from the
-   wrist twist. There is no button aim input (0.1.4). Height is not the swing's: the game's
-   lob/normal/slider picker chooses the arc, and release pitch never reaches the throw. */
-SwingResult swing_feed(Swing *s, const SwingSample *sample, const SwingProfile *profile);
+/* Read-only preview of release power and aim during a qualifying forward swing. */
+bool swing_preview(const Swing *s, const SwingProfile *profile, int height, double *power, double *aim);
+SwingResult swing_feed(Swing *s, const SwingSample *sample, const SwingProfile *profile, int height);
 
 /* Supply P_TARGET from physics, and floor/ceiling from P1 measured rails. No invented defaults. */
 typedef struct { double target_power, full_speed_floor, clip_ceiling; } SwingCalibrationLimits;

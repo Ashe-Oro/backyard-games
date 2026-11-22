@@ -161,8 +161,8 @@ static void stall_and_packet_gap_keep_grip(void) {
     assert(swing_armed(&i.detector) && trace_ms[traced-1]==1050);
     queue(0,0,0); input_wpad_poll(&w,1080); input_wpad_poll(&w,1110);
     assert(swing_armed(&i.detector) && w.empty_polls[0]==2);
-    queue(0,1,0); input_wpad_poll(&w,1120); /* B up after the stall still throws */
-    assert(throws==1 && !swing_armed(&i.detector));
+    queue(0,1,0); input_wpad_poll(&w,1120); /* B up ends the stationary grip. */
+    assert(throws==0 && i.detector.phase==SWING_READY);
 }
 static void invalid_data_and_clipping_flags(void) {
     Input i; InputWpad w; setup(&i,&w,false);
@@ -175,8 +175,8 @@ static void invalid_data_and_clipping_flags(void) {
     assert(swing_armed(&i.detector));
     queue(0,1,0); remotes[0].queue[0].data_present=WPAD_DATA_BUTTONS;
     input_wpad_poll(&w,1020);
-    /* B up in a report without accel data is still the release: a weak lob, not nothing. */
-    assert(!last_sample.motion.accel_valid && !swing_armed(&i.detector) && throws==1 && shot.fallback);
+    /* A buttons-only B-up still cancels the stationary grip. */
+    assert(!last_sample.motion.accel_valid && !swing_armed(&i.detector) && throws==0 && i.detector.phase==SWING_READY);
     queue(0,1,INPUT_A); remotes[0].queue[0].err=WPAD_ERR_TRANSFER;
     input_wpad_poll(&w,1030); assert(!last_sample.buttons_valid && !i.slots[0].sticky);
 }
@@ -260,7 +260,7 @@ static WPADData realistic_report(unsigned frame, unsigned release, double streng
     uint16_t z=(uint16_t)(2*lround((512+104*mag*cos(radians))/2));
     return (WPADData){.data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,
         .btns_h=frame>=53 && frame<release ? INPUT_B : 0, .accel={x,y,z},
-        .gforce={(x-512)/104.f,(y-512)/104.f,(z-512)/104.f}};
+        .gforce={(x-512.f)/104.f,(y-512.f)/104.f,(z-512.f)/104.f}};
 }
 static unsigned replay_realistic(unsigned release, double strength, bool left, bool tap,
                                  bool batched) {
@@ -282,7 +282,7 @@ static unsigned replay_realistic(unsigned release, double strength, bool left, b
     }
     if (throws && (shot.release!=SWING_B_UP || shot.release_ms<1000+release*10-15))
         return 99;
-    if (tap && (i.detector.phase!=SWING_SPENT || !shot.fallback)) return 99;
+    if (tap && (i.detector.phase!=SWING_READY)) return 99;
     return throws;
 }
 static void pending_drain_preserves_edges_and_motion(void) {
@@ -321,7 +321,6 @@ static void dump_realistic_traces(void) {
     }
 }
 static void realistic_wiimote_releases(void) {
-    unsigned passed=0;
     double powers[sizeof(realistic_cases)/sizeof(realistic_cases[0])];
     for (unsigned n=0;n<sizeof(realistic_cases)/sizeof(realistic_cases[0]);++n) {
         unsigned uniform=replay_realistic(realistic_cases[n].release,realistic_cases[n].strength,realistic_cases[n].left,false,false);
@@ -329,17 +328,16 @@ static void realistic_wiimote_releases(void) {
         powers[n]=batched==1 ? shot.power : 0;
         printf("trace %s: %u uniform, %u batched throws (power %.3f)\n",
                realistic_cases[n].name,uniform,batched,powers[n]);
-        passed+=uniform==1 && batched==1;
+        unsigned expected=(n==1 || n==5) ? 0 : 1;
+        assert(uniform==expected && batched==expected);
         if (batched==1) {
             assert(realistic_cases[n].left ? shot.aim<0 : shot.aim>0);
-            if (n==1 || n==5) assert(shot.fallback && shot.power<=SWING_FALLBACK_MAX_POWER);
         }
     }
     unsigned tap=replay_realistic(56,0,false,true,true);
-    printf("trace B tap: %u throws (weak lob, power %.3f)\n",tap,shot.power);
+    printf("trace B tap: %u throws\n",tap);
     fflush(stdout);
-    assert(passed==sizeof(realistic_cases)/sizeof(realistic_cases[0]) && tap==1);
-    assert(shot.power<=SWING_FALLBACK_MIN_POWER+1e-9);
+    assert(tap==0);
     assert(powers[1]<powers[0] && powers[0]<powers[2] && powers[5]<powers[0]);
 }
 /* Wii 0.1.3: the remote-up Bowling trace delivered the way libogc hands it over on a
@@ -359,10 +357,12 @@ static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
         if (!pose(&t,ms,&p,&release)) break;
         SwingVector f=specific_force(&p,false);
         bool clipped=false;
-        unsigned x=raw_axis(f.x,&clipped), y=raw_axis(f.y,&clipped), z=raw_axis(f.z,&clipped);
+        unsigned x=raw_axis(f.x,&clipped);
+        unsigned y=raw_tilt_axis(f.y,&clipped);
+        unsigned z=raw_tilt_axis(f.z,&clipped);
         reports[total]=(WPADData){.data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,
             .btns_h=p.b ? INPUT_B : 0,.accel={(uint16_t)x,(uint16_t)y,(uint16_t)z},
-            .gforce={(x-512)/104.f,(y-512)/104.f,(z-512)/104.f}};
+            .gforce={(x-512.f)/104.f,(y-512.f)/104.f,(z-512.f)/104.f}};
         at[total++]=1000+(uint64_t)llround(ms);
     }
     unsigned next=0, frame=0;
@@ -383,9 +383,9 @@ static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
         input_wpad_poll(&w,now);
     }
     for (unsigned k=0;k<40;++k) { now+=17; queue(0,1,0); input_wpad_poll(&w,now); }
-    printf("  bowling via WPAD %u Hz%s: %u throws power %.3f fallback %d\n",
-           rate_hz,hitches ? " with hitches/drops/stall" : "",throws,shot.power,shot.fallback);
-    if (throws==1 && (shot.fallback || shot.speed<swing_speed(.3))) return 98;
+    printf("  bowling via WPAD %u Hz%s: %u throws power %.3f\n",
+           rate_hz,hitches ? " with hitches/drops/stall" : "",throws,shot.power);
+    if (throws==1 && shot.speed<swing_speed(.3)) return 98;
     return throws;
 }
 static void bowling_through_jittery_wpad(void) {
