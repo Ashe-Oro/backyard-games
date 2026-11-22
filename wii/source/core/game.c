@@ -68,11 +68,10 @@ Lie game_lie(const Game *g) {
 bool game_menu_screen(const Game *g) { return g->ui != UI_NONE; }
 
 SwingCalibrationLimits game_calibration_limits(const Game *g) {
-    /* target: the NORMAL/SLICK centre-of-hole power from the ported physics (WIN mid).
-     * floor/ceiling are PROVISIONAL until P1 hardware traces: 0.5 g and 2.0 g excess (the ±3 g rail
-     * including gravity) through the same pendulum speed proxy. */
-    SwingCalibrationLimits l = {g->win->w[0][SIDE_SLICK][ARC_NORMAL].mid, swing_speed(0.5), swing_speed(2.0)};
-    return l;
+    double target = g->win->w[0][SIDE_SLICK][ARC_NORMAL].mid;
+    /* Provisional limits until P1 hardware traces. Allow a classified 0.5 g
+     * reference toss to reach the hole, and keep the 2.0 g profile ceiling. */
+    return (SwingCalibrationLimits){target, SWING_POWER_GAIN * swing_speed(0.5) / target, swing_speed(2.0)};
 }
 
 /* ---------------- menus ---------------- */

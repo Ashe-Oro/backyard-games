@@ -2,7 +2,7 @@
 #define BYC_SWING_CONFIG_H
 
 /* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
-#define SWING_VERSION "bowling-grip-0.1.5"
+#define SWING_VERSION "bowling-grip-0.1.6"
 #define SWING_WINDOW_MS 80
 #define SWING_MIN_SPAN_MS 16
 #define SWING_NOISE_G 0.15
@@ -27,8 +27,9 @@
 #define SWING_ROLL_REF_MS 60     /* otherwise the roll reference is the first 60 ms of loaded swing */
 #define SWING_RADIUS_M 0.6
 #define SWING_GRAVITY 9.80665
-#define SWING_DEFAULT_E_G 1.2
-#define SWING_POWER_GAIN 0.75   /* scale speed before saturation, leaving 1.0 reachable */
+#define SWING_DEFAULT_E_G 1.9
+#define SWING_POWER_GAIN 0.55
+#define SWING_POWER_CAP 0.76    /* calm, centered NORMAL lands 8.90 m from release */
 #define SWING_CAL_TOSSES 3
 #define SWING_CAL_SPREAD 0.30
 #define SWING_ROLL_DEAD_DEG 10.0

@@ -18,7 +18,7 @@ double swing_speed(double e) {
     return isfinite(e) && e > 0 ? sqrt(SWING_RADIUS_M*SWING_GRAVITY*e) : 0;
 }
 double swing_power(double peak, double full) {
-    return isfinite(peak) && isfinite(full) && full > 0 ? clamp(SWING_POWER_GAIN * (peak/full), 0, 1) : 0;
+    return isfinite(peak) && isfinite(full) && full > 0 ? clamp(SWING_POWER_GAIN * (peak/full), 0, SWING_POWER_CAP) : 0;
 }
 double swing_roll_spin(double roll, const SwingProfile *p) {
     if (!isfinite(roll) || !isfinite(p->spin_strength)) return 0;
@@ -87,7 +87,7 @@ bool swing_preview(const Swing *s, const SwingProfile *profile, double *power, d
     if (!swing_armed(s) || !s->confirmed || !(s->in_lobe || s->lobe_valid)) return false;
     double peak = fmax(s->peak, s->lobe_peak);
     if (!(peak > 0)) return false;
-    *power = s->lobe_clipped ? 1 : swing_power(peak, profile->full_speed);
+    *power = s->lobe_clipped ? SWING_POWER_CAP : swing_power(peak, profile->full_speed);
     *aim = s->locked_aim;
     return true;
 }
@@ -223,7 +223,7 @@ static SwingResult finish(Swing *s, const SwingProfile *profile, SwingRelease ca
     if (recent && s->confirmed) {
         s->phase = SWING_SPENT;
         return (SwingResult){.thrown=true, .speed=s->peak,
-            .power=s->lobe_clipped ? 1 : swing_power(s->peak, profile->full_speed),
+            .power=s->lobe_clipped ? SWING_POWER_CAP : swing_power(s->peak, profile->full_speed),
             .aim=s->locked_aim, .spin=s->locked_spin, .roll=s->motion_roll,
             .clipped=s->lobe_clipped, .release=cause, .release_ms=reference_ms};
     }
@@ -409,7 +409,7 @@ SwingResult swing_feed(Swing *s, const SwingSample *in, const SwingProfile *prof
 
 SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult *toss,
                                       SwingCalibrationLimits lim, SwingProfile *profile) {
-    if (!isfinite(lim.target_power) || lim.target_power <= 0 || lim.target_power > 1 ||
+    if (!isfinite(lim.target_power) || lim.target_power <= 0 || lim.target_power > SWING_POWER_CAP ||
         !isfinite(lim.full_speed_floor) || lim.full_speed_floor <= 0 ||
         !isfinite(lim.clip_ceiling) || lim.clip_ceiling < lim.full_speed_floor)
         return SWING_CAL_BAD_LIMITS;

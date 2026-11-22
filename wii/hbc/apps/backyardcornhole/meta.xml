@@ -2,7 +2,7 @@
 <app version="1">
   <name>Backyard Cornhole</name>
   <coder>Ashe</coder>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <release_date>20261121000000</release_date>
   <short_description>Toss bags. First to 21.</short_description>
   <long_description>Backyard cornhole for the Wii Remote, Wii Sports style. Hold B, swing back, swing through and let go. Swing speed is power, swing left or right to aim, twist to curl; the D-pad picks lob, normal or slider. Practice, 2 Player, or take on eight tournament rivals.</long_description>

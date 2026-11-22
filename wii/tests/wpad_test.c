@@ -147,13 +147,15 @@ static void check_registration_and_read_errors(void) {
 /* 0.1.3: dropped reports are counted, and the batch is still fed: the grip survives. */
 static void dropped_events_are_counts_not_cumulative(void) {
     Input i; InputWpad w; setup(&i,&w,false);
+    queue(0,1,0); input_wpad_poll(&w,1010);
     queue(0,2,INPUT_B); remotes[0].drops=3; input_wpad_poll(&w,1020);
-    assert(traced==2 && w.dropped[0]==3 && swing_armed(&i.detector));
+    assert(traced==3 && w.dropped[0]==3 && swing_armed(&i.detector));
     queue(0,1,INPUT_B); input_wpad_poll(&w,1030);
     assert(w.dropped[0]==3 && swing_armed(&i.detector));
 }
 static void stall_and_packet_gap_keep_grip(void) {
     Input i; InputWpad w; setup(&i,&w,false);
+    queue(0,1,0); input_wpad_poll(&w,1005);
     queue(0,1,INPUT_B); input_wpad_poll(&w,1010); assert(swing_armed(&i.detector));
     queue(0,1,INPUT_B); input_wpad_poll(&w,1050);
     assert(swing_armed(&i.detector) && trace_ms[traced-1]==1050);
@@ -189,8 +191,9 @@ static void batched_reports_fit_poll_window_and_full_buffer_is_fed(void) {
     queue(0,2,INPUT_B); input_wpad_poll(&w,1400);
     assert(trace_ms[8]==1375 && trace_ms[9]==1400 && swing_armed(&i.detector));
     /* A full 64-report buffer is fed, not rejected. */
-    setup(&i,&w,false); queue(0,64,INPUT_B); input_wpad_poll(&w,1020);
-    assert(traced==64 && swing_armed(&i.detector));
+    setup(&i,&w,false); queue(0,1,0); input_wpad_poll(&w,1010);
+    queue(0,64,INPUT_B); input_wpad_poll(&w,1020);
+    assert(traced==65 && swing_armed(&i.detector));
 }
 
 static void snapshot_fallback_accepts_buttons_without_accel(void) {
@@ -382,7 +385,7 @@ static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
     for (unsigned k=0;k<40;++k) { now+=17; queue(0,1,0); input_wpad_poll(&w,now); }
     printf("  bowling via WPAD %u Hz%s: %u throws power %.3f fallback %d\n",
            rate_hz,hitches ? " with hitches/drops/stall" : "",throws,shot.power,shot.fallback);
-    if (throws==1 && (shot.fallback || shot.power<.375)) return 98;
+    if (throws==1 && (shot.fallback || shot.speed<swing_speed(.3))) return 98;
     return throws;
 }
 static void bowling_through_jittery_wpad(void) {

@@ -325,6 +325,17 @@ static void test_save_roundtrip(void) {
     CHECK(!save_decode(&d, buf, n) && d.career_fight == 0 && !d.wind_on, "CRC failure falls back to defaults");
     s.career_fight = 6; s.career_wins = 2; n = save_encode(&s, buf, sizeof buf);
     CHECK(save_decode(&d, buf, n) && d.career_fight == 0 && d.career_wins == 0 && d.profile[1].left_handed, "invalid career field defaults alone");
+    s.profile[1].full_speed = swing_speed(1.2);
+    n = save_encode(&s, buf, sizeof buf);
+    CHECK(save_decode(&d, buf, n) && d.profile[1].full_speed == s.profile[1].full_speed,
+          "current saves keep a custom speed equal to the old default");
+    buf[5] = 2;   /* version 2 has the same field layout */
+    uint32_t crc = save_crc32(buf, n - 4);
+    for (int i = 0; i < 4; i++) buf[n - 4 + i] = (uint8_t)(crc >> (24 - i * 8));
+    CHECK(save_decode(&d, buf, n) && d.profile[0].full_speed == 3.1 &&
+          d.profile[1].full_speed == swing_default_profile().full_speed &&
+          d.profile[1].left_handed && d.profile[1].spin_strength == .4,
+          "older saves update the factory speed and keep custom speed, hand and curl");
     CHECK(save_crc32((const uint8_t *)"123456789", 9) == 0xCBF43926u, "CRC-32 check value");
 }
 
@@ -545,19 +556,71 @@ static SwingSeen bowling_swing(double forward_e, double lateral, bool release) {
 }
 static void next_bag(void) { int guard = 0; while (game.phase != PH_AIM && guard++ < 6000) frames(1); frames(1); }
 /* ---------------- Swing speed and direction, picker-only height ---------------- */
-static void remote_feed(double e, double pitch, double roll, uint32_t buttons) {
+static void remote_feed_channel(unsigned ch, double e, double pitch, double roll, uint32_t buttons) {
     now_ms += 10;
     double p = pitch * SWING_PI / 180, r = roll * SWING_PI / 180;
     InputSample s; memset(&s, 0, sizeof s);
     s.motion.ms = now_ms; s.motion.g = (SwingVector){(1 + e) * sin(r) * cos(p), (1 + e) * sin(p), (1 + e) * cos(r) * cos(p)};
     s.motion.accel_valid = true; s.motion.b = (buttons & INPUT_B) != 0; s.buttons_valid = true; s.buttons = buttons;
-    input_feed(&input, 0, &s); drain();
+    input_feed(&input, ch, &s); drain();
+}
+static void remote_feed(double e, double pitch, double roll, uint32_t buttons) {
+    remote_feed_channel(0, e, pitch, roll, buttons);
 }
 static void remote_buttons(double e, double pitch, double roll, uint32_t buttons) {
     remote_feed(e, pitch, roll, buttons);
     game_update(&game, 0.01, now_ms); drain();
 }
 static void tap(uint32_t button) { remote_buttons(0, 0, 0, button); remote_buttons(0, 0, 0, 0); }
+
+static void test_practice_boot_ignores_stale_b(void) {
+    const struct {
+        const char *name;
+        uint32_t confirm;
+        bool menu_b, first_play_b, unknown_b;
+    } cases[] = {
+        {"B held across A and into play", INPUT_A, true, true, false},
+        {"B-up on the first play report after 2", INPUT_TWO, true, false, false},
+        {"first report from the active remote is B held", INPUT_TWO, false, true, true},
+        {"accelerometer motion with B up", INPUT_A, false, false, false},
+    };
+    for (unsigned k = 0; k < sizeof cases / sizeof cases[0]; k++) {
+        boot(140, NULL);
+        CHECK(game.ui == UI_STRAP, "%s: starts at the strap screen", cases[k].name);
+        unsigned menu_ch = cases[k].unknown_b ? 1 : 0;
+        if (menu_ch == 1) input_connection(&input, menu_ch, true);
+        uint32_t held = cases[k].menu_b ? INPUT_B : 0;
+        remote_feed_channel(menu_ch, 0, 0, 0, cases[k].confirm | held);
+        CHECK(game.ui == UI_TITLE, "%s: confirms strap", cases[k].name);
+        remote_feed_channel(menu_ch, 0, 0, 0, held);
+        remote_feed_channel(menu_ch, .7, -30, 0, cases[k].confirm | held);
+        frames(60);
+        CHECK(game.practice && game.phase == PH_AIM && input.context == INPUT_PLAY,
+              "%s: enters Practice through the title", cases[k].name);
+
+        if (cases[k].first_play_b) remote_buttons(.8, 0, 0, INPUT_B);
+        CHECK(!swing_armed(&input.detector), "%s: no grip from a stale B", cases[k].name);
+        remote_buttons(.8, 25, 0, 0);
+        CHECK(game.nbags == 0 && game.phase == PH_AIM, "%s: no bag on B-up", cases[k].name);
+        for (int n = 0; n < 20; n++) remote_buttons(1.5, n % 2 ? 25 : -35, 12, 0);
+        frames(300);
+        CHECK(game.nbags == 0 && game.phase == PH_AIM && game.practice_throws == 0,
+              "%s: no phantom throw after motion or B-up (throws %d)", cases[k].name, game.practice_throws);
+
+        remote_buttons(.25, -5, 0, INPUT_B);
+        CHECK(swing_armed(&input.detector), "%s: a fresh moving B-down grips at once", cases[k].name);
+        for (int n = 0; n < 15; n++) remote_buttons(.5, 0, 0, INPUT_B);
+        for (int n = 0; n < 20; n++) remote_buttons(0, -35, 0, INPUT_B);
+        for (int n = 0; n < 18; n++) remote_buttons(2.5, 0, 0, INPUT_B);
+        CHECK(game.practice_throws == 0 && game.nbags == 0, "%s: holds the bag until B-up", cases[k].name);
+        remote_buttons(0, 25, 0, 0);
+        for (int n = 0; n < 30 && game.nbags == 0; n++) remote_buttons(0, 25, 0, 0);
+        CHECK(game.phase == PH_FLYING && game.nbags == 1 && !input.stats.last_toss.fallback,
+              "%s: a fresh bowling swing launches one bag", cases[k].name);
+        frames(300);
+        CHECK(game.practice_throws == 1, "%s: the deliberate throw is counted once", cases[k].name);
+    }
+}
 /* The throw-type picker through the real input layer: D-pad DOWN twice (SLIDER), then UP h times. */
 static void pick_height(int h) {
     tap(INPUT_DOWN); tap(INPUT_DOWN);
@@ -609,49 +672,79 @@ static bool same_flight(const Landing *a, const Landing *b, bool vertical_only) 
     }
     return true;
 }
+static void test_set_power_reaches_hole(void) {
+    boot(142, NULL);
+    tap(INPUT_A);
+    game_menu_select(&game, MI_SETTINGS);
+    game_menu_select(&game, MI_SETPOWER_RED);
+    remote_buttons(0, 0, 0, 0);
+    for (int toss = 0; toss < 3; toss++) {
+        remote_buttons(0, 0, 0, INPUT_B);
+        for (int n = 0; n < 15; n++) remote_buttons(.5, 0, 0, INPUT_B);
+        for (int n = 0; n < 20; n++) remote_buttons(0, -35, 0, INPUT_B);
+        for (int n = 0; n < 18; n++) remote_buttons(.65, 0, 0, INPUT_B);
+        for (int n = 0; n < 30; n++) remote_buttons(0, 25, 0, 0);
+    }
+    SwingCalibrationLimits limits = game_calibration_limits(&game);
+    CHECK(game.setpower_count == 3 && !input.calibrating && game.save_dirty && game.nbags == 0,
+          "SET POWER saves three easy tosses without launching a bag");
+    CHECK(fabs(swing_power(swing_speed(.65), game.save.profile[0].full_speed) - limits.target_power) < 1e-9,
+          "the saved easy toss power matches the hole target");
+    CHECK(!input_begin_calibration(&input, (SwingCalibrationLimits){.8, limits.full_speed_floor, limits.clip_ceiling}),
+          "SET POWER rejects an unreachable target above the cap");
+
+    game_menu_select(&game, MI_OK);
+    game_menu_select(&game, MI_BACK);
+    tap(INPUT_A);
+    Landing l = swing_and_land(.65, 0, 25, 0);
+    CHECK(l.thrown && fabs(l.power - limits.target_power) < 1e-9 && game.practice_in == 1,
+          "a calibrated easy toss scores a NORMAL/SLICK cornhole in Practice (power %.3f, in %d)",
+          l.power, game.practice_in);
+}
 static void test_swing_to_landing(void) {
     practice_ready(141);
     CHECK(game.wind.mph == 0, "practice is calm (%g mph)", game.wind.mph);
     pick_height(1);
     CHECK(game.arc == ARC_NORMAL && game.heights[0] == 1, "picker on NORMAL");
-    const double speeds[3] = {0.45, 0.65, 0.9};   /* 0.1.4 reference strokes in excess g */
-    const double old_dist[3] = {8.21, 8.77, 9.85};
+    const struct { double excess, previous_distance; } strokes[] = {
+        {.45, 7.58}, {.65, 7.94}, {.9, 8.38}, {1.2, 8.84}, {1.5, 0},
+        {2, 0}, {2.2, 10.63}, {3, 0}, {4, 0}, {5, 0},
+    };
     const double front = BYC_REL_Z - BYC_BOARD_Z, span = BYC_L * cos(BYC_TH);
     const double back = front + span;
-    double dist[3], pw[3];
-    for (int k = 0; k < 3; k++) {
-        Landing l = swing_and_land(speeds[k], 0, 25, 0);
-        CHECK(l.thrown && l.n > 20, "swing %g throws and flies (%d frames)", speeds[k], l.n);
-        dist[k] = -(l.land_z - BYC_REL_Z); pw[k] = l.power;
-        CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
-        CHECK(fabs(pw[k] - 0.75 * sqrt(speeds[k] / 1.2)) < 1e-9,
-              "swing %g g gives 75%% of 0.1.4 power (%.3f)", speeds[k], pw[k]);
-        CHECK(dist[k] < old_dist[k], "swing %g g lands shorter (%.2f < %.2f m)", speeds[k], dist[k], old_dist[k]);
-        if (k > 0) CHECK(l.deck && front <= dist[k] && dist[k] <= back,
-                         "swing %g g lands on the deck (%.2f m)", speeds[k], dist[k]);
-    }
     printf("  board z %.4f m, release z %.2f m, deck span %.3f m (%.4f–%.4f m from release)\n",
            BYC_BOARD_Z, BYC_REL_Z, span, front, back);
-    printf("  swing 0.45 / 0.65 / 0.90 g -> power %.3f / %.3f / %.3f -> landing %.2f / %.2f / %.2f m\n",
-           pw[0], pw[1], pw[2], dist[0], dist[1], dist[2]);
-    CHECK(pw[0] < pw[1] && pw[1] < pw[2], "faster swing -> more power");
-    CHECK(dist[0] + 0.3 < dist[1] && dist[1] + 0.3 < dist[2], "faster swing lands measurably farther (%.2f < %.2f < %.2f m)", dist[0], dist[1], dist[2]);
-    Landing strong = swing_and_land(1.2, 0, 25, 0);
-    double strong_dist = BYC_REL_Z - strong.land_z;
-    CHECK(strong.thrown && strong.deck && fabs(strong.power - .75) < 1e-9 && dist[2] < strong_dist &&
-          front <= strong_dist && strong_dist <= back, "previous full-speed NORMAL swing lands farther on the deck (%.2f m)", strong_dist);
+    double previous_distance = 0, previous_power = 0;
+    for (unsigned k = 0; k < sizeof strokes / sizeof strokes[0]; k++) {
+        double e = strokes[k].excess, speed = swing_speed(e);
+        Landing l = swing_and_land(e, 0, 25, 0);
+        double distance = BYC_REL_Z - l.land_z;
+        double expected = fmin(.55 * sqrt(e / 1.9), .76);
+        printf("  NORMAL %.2f g: %.3f m/s -> %.3f power -> %.2f m (%s)\n",
+               e, speed, l.power, distance, l.deck ? "deck" : "ground");
+        CHECK(l.thrown && l.n > 20, "swing %g throws and flies (%d steps)", e, l.n);
+        CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
+        CHECK(fabs(l.power - expected) < 1e-9, "swing %g g gives %.3f power (got %.3f)", e, expected, l.power);
+        if (strokes[k].previous_distance > 0)
+            CHECK(distance < strokes[k].previous_distance, "swing %g g lands shorter than 0.1.5 (%.2f m)", e, distance);
+        if (previous_power < .76)
+            CHECK(previous_power < l.power && previous_distance < distance, "swing %g g lands farther (%.2f m)", e, distance);
+        else
+            CHECK(l.power == .76 && distance == previous_distance, "swing %g g stays at the cap (%.2f m)", e, distance);
+        if (e == 1.5)
+            CHECK(front - .25 <= distance && distance <= back, "a 1.5 g swing is near the deck (%.2f m)", distance);
+        if (e >= 2)
+            CHECK(l.deck && front <= distance && distance <= back, "swing %g g lands on the deck (%.2f m)", e, distance);
+        if (e >= 4)
+            CHECK(l.power == .76 && distance >= 8.7, "max-power NORMAL lands near the back (%.2f m)", distance);
+        previous_power = l.power;
+        previous_distance = distance;
+    }
     next_bag(); pick_height(2);
-    Landing near_full = swing_and_land(1.56, 0, 25, 0);
-    double near_dist = BYC_REL_Z - near_full.land_z;
-    CHECK(near_full.thrown && near_full.deck && near_full.power > .85 && near_full.power < 1 &&
-          front <= near_dist && near_dist <= back, "near-full KOBE reaches the deck (power %.3f, %.2f m)", near_full.power, near_dist);
+    Landing old_kobe = swing_and_land(1.56, 0, 25, 0), full_kobe = swing_and_land(4, 0, 25, 0);
+    CHECK(old_kobe.thrown && BYC_REL_Z - old_kobe.land_z < 8.86, "the 0.1.5 KOBE reference lands shorter");
+    CHECK(full_kobe.thrown && full_kobe.deck && full_kobe.power == .76, "a capped KOBE still reaches the deck");
     next_bag(); pick_height(1);
-    Landing full = swing_and_land(2.2, 0, 25, 0);
-    double full_dist = BYC_REL_Z - full.land_z;
-    CHECK(full.thrown && full.power == 1 && full_dist > strong_dist,
-          "unclipped full-power NORMAL can reach board range (power %.3f, %.2f m)", full.power, full_dist);
-    printf("  strong NORMAL 1.20 g: %.3f at %.2f m; near-full KOBE 1.56 g: %.3f at %.2f m; full NORMAL 2.20 g: %.3f at %.2f m\n",
-           strong.power, strong_dist, near_full.power, near_dist, full.power, full_dist);
     /* direction: left vs right swing, mirrored for left-handed */
     Landing r = swing_and_land(0.6, 12, 25, 0), lft = swing_and_land(0.6, -12, 25, 0);
     printf("  swing right -> x %+.3f m, swing left -> x %+.3f m\n", r.land_x, lft.land_x);
@@ -697,8 +790,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.5") == 0, "version is 0.1.5 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.5") == 0, "version tag v0.1.5 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.6") == 0, "version is 0.1.6 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.6") == 0, "version tag v0.1.6 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -990,6 +1083,7 @@ int main(void) {
     physics_init();
     win_compute(&win);
     test_boot_and_menus();
+    test_practice_boot_ignores_stale_b();
     test_save_roundtrip();
     test_scoring();
     test_wind_policy();
@@ -1002,6 +1096,7 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
+    test_set_power_reaches_hole();
     test_swing_to_landing();
     test_version_tag();
     test_widescreen_layout();

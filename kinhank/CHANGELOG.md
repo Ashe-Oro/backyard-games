@@ -9,6 +9,17 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.6] - 2026-11-22
+
+### Changed
+
+- Updated to the Wii v0.1.6 disc (BYCEAO). Strong NORMAL swings use a lower gain, a higher speed reference and a cap that puts a centered throw near the back of the board.
+- The STRAP ON! screen and HUD show v0.1.6.
+
+### Fixed
+
+- A held or unknown B state at startup no longer produces a phantom Practice throw.
+
 ## [0.1.5] - 2026-11-22
 
 ### Changed
