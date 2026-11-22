@@ -51,6 +51,7 @@ typedef struct {
     bool debug_holding[2], debug_latched[2], debug_visible;
     unsigned channels[2], active_slot;
     InputContext context;
+    bool opening_turn;
     bool hand_option;
     unsigned hand_slot;
     bool calibrating;
@@ -64,8 +65,8 @@ typedef struct {
 void input_init(Input *input, InputSink sink, void *user);
 void input_connection(Input *input, unsigned channel, bool connected);
 void input_report_loss(Input *input); /* packet timing/queue loss: discard gesture, preserve spent */
-void input_start_match(Input *input); /* snapshots Remote 2 availability */
-void input_next_turn(Input *input, unsigned slot); /* a B already held grips at once */
+void input_start_match(Input *input); /* snapshots Remote 2 availability and requires a fresh opening grip */
+void input_next_turn(Input *input, unsigned slot); /* after the opening, a B already held grips at once */
 void input_set_context(Input *input, InputContext context);
 bool input_resume(Input *input); /* reconnect/reassign AND B up required */
 void input_feed(Input *input, unsigned channel, const InputSample *sample);

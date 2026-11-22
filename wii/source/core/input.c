@@ -46,23 +46,27 @@ void input_start_match(Input *i) {
     i->channels[0]=0;
     i->channels[1]=i->connected[1] ? 1 : 0;
     i->paused=i->disconnect_pause=false;
+    i->opening_turn=true;
     input_next_turn(i,0);
 }
 void input_next_turn(Input *i, unsigned slot) {
     if (slot>=2) return;
     if (slot!=i->active_slot) input_cancel_calibration(i);
     i->active_slot=slot;
-    /* The turn is open: a B pressed during the bag flight or the turn change grips right away. */
-    swing_reset(&i->detector,false);
-    if (!i->connected[i->channels[slot]]) {
+    unsigned ch=i->channels[slot];
+    /* A held or unknown B from the menu cannot grip the opening bag. Later turns
+     * can use a B pressed during bag flight or a turn change. */
+    swing_reset(&i->detector,i->opening_turn && i->b_held[ch]);
+    if (!i->connected[ch]) {
         i->paused=i->disconnect_pause=true;
-        action(i,INPUT_CONNECT_REMOTE,i->channels[slot],(double)(i->channels[slot]+1));
+        action(i,INPUT_CONNECT_REMOTE,ch,(double)(ch+1));
     }
 }
 void input_set_context(Input *i, InputContext context) {
     i->context=context;
     i->hand_option=false;
-    swing_reset(&i->detector,context!=INPUT_PLAY || i->paused);
+    swing_reset(&i->detector,context!=INPUT_PLAY || i->paused ||
+                (i->opening_turn && i->b_held[i->channels[i->active_slot]]));
 }
 bool input_resume(Input *i) {
     unsigned ch=i->channels[i->active_slot];
@@ -80,7 +84,7 @@ bool input_set_profile(Input *i, unsigned slot, SwingProfile p) {
     return true;
 }
 bool input_begin_calibration(Input *i, SwingCalibrationLimits limits) {
-    if (!isfinite(limits.target_power) || limits.target_power<=0 || limits.target_power>1 ||
+    if (!isfinite(limits.target_power) || limits.target_power<=0 || limits.target_power>SWING_POWER_CAP ||
         !isfinite(limits.full_speed_floor) || limits.full_speed_floor<=0 ||
         !isfinite(limits.clip_ceiling) || limits.clip_ceiling<limits.full_speed_floor) return false;
     i->calibration=(SwingCalibration){0};
@@ -195,8 +199,12 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     if (pressed & INPUT_ONE) { i->help=!i->help; action(i,INPUT_HELP,ch,i->help); }
     if (i->context==INPUT_DISABLED && !i->paused) return;
     if (i->context==INPUT_MENU || i->paused) return;
+    /* A report without valid buttons cannot move B. */
+    if (!p->buttons_valid) return;
     bool armed=swing_armed(&i->detector);
     bool b=i->b_held[ch];
+    /* Keep the opening gate until play sees a release or can accept a fresh grip. */
+    if (!b || !i->detector.require_b_up) i->opening_turn=false;
     if (i->detector.phase==SWING_SPENT) return;
     if (!armed && !b) {
         /* -/+ are not gameplay controls (0.1.4): they neither aim nor reset the swing. */
@@ -222,8 +230,6 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
             return;
         }
     }
-    /* A report without valid buttons cannot move B; skip it rather than guess. */
-    if (!p->buttons_valid) return;
     SwingSample motion=p->motion;
     motion.b=b;
     motion.manual_release=true;

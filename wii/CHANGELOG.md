@@ -10,6 +10,17 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.6] - 2026-11-22
+
+### Changed
+
+- Raised the default swing-speed reference to 3.344 m/s (1.9 g excess), lowered the power gain to 0.55, and capped power at 0.760. A calm, centered NORMAL throw at the cap lands 8.90 m from release.
+- SET POWER can still tune an easy toss to the hole. Existing saves at the previous factory speed pick up the new default.
+
+### Fixed
+
+- Starting Practice with B held, or before the active remote reports its B state, no longer grips a bag. Once B is up, a fresh B-down in play grips immediately.
+
 ## [0.1.5] - 2026-11-22
 
 ### Changed

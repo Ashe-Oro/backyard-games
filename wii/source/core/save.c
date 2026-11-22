@@ -76,6 +76,7 @@ bool save_decode(SaveData *s, const uint8_t *in, size_t len) {
         SwingProfile p = {getf64(&r), getf64(&r), false};
         uint8_t hand = get8(&r);
         SwingProfile d = swing_default_profile();
+        if (version < 3 && p.full_speed == swing_speed(1.2)) p.full_speed = d.full_speed;
         s->profile[i].full_speed = isfinite(p.full_speed) && p.full_speed > 0.05 && p.full_speed < 20 ? p.full_speed : d.full_speed;
         s->profile[i].spin_strength = isfinite(p.spin_strength) && p.spin_strength >= 0 && p.spin_strength <= 1 ? p.spin_strength : d.spin_strength;
         s->profile[i].left_handed = hand == 1;

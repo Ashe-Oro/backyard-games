@@ -133,7 +133,7 @@ def build_movie() -> bytes:
         hold(pkts, 0.4)
 
     # The NORMAL/SLICK hole window is 0.655–0.742 normalized power.
-    # Several nearby values of e = 1.2 * (power / 0.75)^2 cover quantization.
+    # Nearby values of e = 1.9 * (power / 0.55)^2 cover quantization.
     def toss(energy: float) -> None:
         hold(pkts, 0.55)
         hold(pkts, 0.08, BUTTON_B)
@@ -148,7 +148,7 @@ def build_movie() -> bytes:
         # Flight ~2.2 s, GROUNDER/score callout, return to PH_AIM (~0.75 s).
         hold(pkts, 4.00)
 
-    for energy in (0.95, 1.00, 1.06, 1.12, 1.20, 1.30):
+    for energy in (3.05, 2.85, 2.95, 3.15, 3.30, 3.45):
         toss(energy)
     hold(pkts, 3.00)
     return b"".join(pkts)

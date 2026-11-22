@@ -45,12 +45,14 @@ static SwingResult replay(double e, unsigned duration, unsigned release_delay, b
     return shot;
 }
 static void power_equation(void) {
-    near(swing_speed(1.2),sqrt(.6*9.80665*1.2));
-    near(swing_power(swing_speed(.3),swing_speed(1.2)),.375);
-    near(swing_power(swing_speed(.048),swing_speed(1.2)),.15);
-    near(swing_power(swing_speed(1.2),swing_speed(1.2)),.75);
-    near(swing_power(swing_speed(2),swing_speed(1.2)),.75 * sqrt(2.0/1.2));
-    near(swing_power(swing_speed(12),swing_speed(1.2)),1);
+    double full=profile().full_speed;
+    near(full,sqrt(.6*9.80665*1.9));
+    near(swing_power(.2*full,full),.11);
+    near(swing_power(.5*full,full),.275);
+    near(swing_power(full,full),.55);
+    near(swing_power(swing_speed(3),full),.55 * sqrt(3.0/1.9));
+    near(swing_power(swing_speed(4),full),.76);
+    near(swing_power(swing_speed(12),full),.76);
     near(swing_power(-1,3),0); near(swing_power(1,0),0);
     near(swing_power(NAN,3),0); near(swing_speed(INFINITY),0);
 }
@@ -77,7 +79,7 @@ static void speed_never_duration(void) {
     /* .36 is just over the qualifying threshold, yet remains much softer than a fast toss. */
     assert(short_fast.thrown && long_fast.thrown && long_slow.thrown);
     near(short_fast.power,long_fast.power);
-    assert(long_slow.power<.45 && short_fast.power>.675);
+    assert(long_slow.power<.25 && short_fast.power>.42);
 }
 static void release_latency_retains_peak(void) {
     SwingResult a=replay(1.0,180,0,false,false,false);
@@ -106,7 +108,8 @@ static void tap_b_is_one_weak_lob(void) {
         if (r.thrown) { ++throws; shot=r; }
     }
     assert(throws==1 && shot.fallback && shot.release_ms==520);
-    near(shot.power,.09);
+    near(shot.power,.066);
+    assert(SWING_FALLBACK_MAX_POWER < SWING_POWER_CAP);
 }
 /* 0.1.2 answered these presses with HOLD STILL and no grip. */
 static void moving_press_grips_immediately(void) {
@@ -160,7 +163,7 @@ static void clipping_never_validates(void) {
     /* Saturated-only motion never validates a stroke: B-up gives the weak lob. */
     assert(lob.thrown && lob.fallback && lob.power<=SWING_FALLBACK_MAX_POWER);
     SwingResult r=replay(.8,180,0,false,false,true);
-    assert(r.thrown && r.clipped); near(r.power,1);
+    assert(r.thrown && r.clipped); near(r.power,SWING_POWER_CAP);
     SwingResult back=replay(.8,180,0,false,true,true);
     assert(back.thrown && back.fallback && back.power<=SWING_FALLBACK_MAX_POWER);
 }
@@ -179,7 +182,7 @@ static void last_lobe_not_backswing_peak(void) {
         SwingSample v=sample(t,e,pitch,0,t<1030);
         SwingResult r=swing_feed(&s,&v,&p); if (r.thrown) shot=r;
     }
-    assert(shot.thrown); near(shot.power,.75 * sqrt(.6/1.2));
+    assert(shot.thrown); near(shot.power,SWING_POWER_GAIN * sqrt(.6/SWING_DEFAULT_E_G));
 }
 static void back_apex_then_slow_return_cannot_reuse_peak(void) {
     Swing s; arm(&s,0); SwingProfile p=profile(); SwingResult shot={0};
@@ -193,7 +196,7 @@ static void back_apex_then_slow_return_cannot_reuse_peak(void) {
 static void calibration_median_floor_clip_outlier(void) {
     SwingCalibration c={0}; SwingProfile p=profile();
     SwingCalibrationLimits lim={.target_power=.6,.full_speed_floor=1.5,.clip_ceiling=3};
-    const double sets[][3]={{1.6,1.7,1.5},{.1,.11,.1},{2.5,2.4,2.6},{.1,1.2,1.3}};
+    const double sets[][3]={{1.8,1.9,1.7},{.1,.11,.1},{3.5,3.4,3.6},{.1,1.2,1.3}};
     for (unsigned set=0;set<4;++set) {
         double before=p.full_speed;
         for (unsigned n=0;n<3;++n) {
@@ -201,7 +204,7 @@ static void calibration_median_floor_clip_outlier(void) {
             SwingCalibrationStatus status=swing_calibrate(&c,&r,lim,&p);
             assert(status==(n<2?SWING_CAL_MORE:(set==3?SWING_CAL_RETRY:SWING_CAL_DONE)));
         }
-        if (set==0) { near(p.full_speed,2); near(swing_power(1.6,p.full_speed),lim.target_power); }
+        if (set==0) { near(p.full_speed,1.65); near(swing_power(1.8,p.full_speed),lim.target_power); }
         if (set==1) near(p.full_speed,1.5);
         if (set==2) near(p.full_speed,3);
         if (set==3) near(p.full_speed,before);
@@ -209,6 +212,7 @@ static void calibration_median_floor_clip_outlier(void) {
     SwingResult bad={.thrown=true,.speed=1,.clipped=true};
     assert(swing_calibrate(&c,&bad,lim,&p)==SWING_CAL_RETRY);
     lim.target_power=0; assert(swing_calibrate(&c,&bad,lim,&p)==SWING_CAL_BAD_LIMITS);
+    lim.target_power=.8; assert(swing_calibrate(&c,&bad,lim,&p)==SWING_CAL_BAD_LIMITS);
 }
 static void trace_twist_uses_release_window_without_changing_curl(void) {
     SwingPoint points[]={
@@ -329,7 +333,7 @@ static void pass_and_play_profile_is_slot_owned(void) {
     SwingProfile p={3,.2,true}; assert(input_set_profile(&i,1,p));
     input_next_turn(&i,1); input_connection(&i,1,true);
     assert(i.channels[1]==0); near(i.slots[1].profile.full_speed,3);
-    near(i.slots[0].profile.full_speed,swing_speed(1.2));
+    near(i.slots[0].profile.full_speed,swing_speed(SWING_DEFAULT_E_G));
     input_connection(&i,0,false); input_connection(&i,0,true);
     assert(!input_resume(&i));
     input_sample(&i,0,510,INPUT_B,0,0); assert(!input_resume(&i));
@@ -422,7 +426,7 @@ static void backswing_direction_does_not_leak_to_forward(void) {
         if (result.thrown) shot=result;
     }
     assert(shot.thrown); near(shot.aim,0); near(shot.spin,0);
-    near(shot.power,.75 * sqrt(.8/1.2));
+    near(shot.power,SWING_POWER_GAIN * sqrt(.8/SWING_DEFAULT_E_G));
 }
 static void straight_swing_from_shifted_stance(void) {
     Input i; Events e; input_ready(&i,&e,false);
@@ -447,13 +451,13 @@ static void setup_pause_hand_selection_and_calibration(void) {
         SwingResult toss={.thrown=true,.speed=1.2};
         swing_calibrate(&c,&toss,(SwingCalibrationLimits){.6,1,3},&saved);
     }
-    assert(saved.left_handed); near(saved.full_speed,1.5);
+    assert(saved.left_handed); near(saved.full_speed,1.1);
     assert(input_set_profile(&i,1,saved));
     input_set_context(&i,INPUT_DISABLED); /* pause also works during flight */
     input_sample(&i,0,520,INPUT_HOME,0,0); assert(i.paused);
     assert(input_focus_hand(&i,1));
     input_sample(&i,0,530,INPUT_RIGHT,0,0);
-    assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.full_speed,1.5);
+    assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.full_speed,1.1);
     input_blur_hand(&i); assert(!i.hand_option);
     assert(strstr(input_help_text,"SWING LEFT/RIGHT TO AIM"));
     /* 0.1.4 help matches the controls: speed = power, D-pad up/down = arc, no -/+ fine aim. */

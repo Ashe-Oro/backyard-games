@@ -104,7 +104,7 @@ static void full_throw_checks(const char *name, const Outcome *o) {
     CHECK(o->gripped,"%s: B down did not grip on the same report",name);
     CHECK(o->throws==1,"%s: %u throws",name,o->throws);
     CHECK(o->throws!=1 || !o->toss.fallback,"%s: full swing fell back to a lob",name);
-    CHECK(o->throws!=1 || o->toss.power>=.375,"%s: power %.3f",name,o->toss.power);
+    CHECK(o->throws!=1 || o->toss.speed>=swing_speed(.3),"%s: speed %.3f",name,o->toss.speed);
 }
 
 /* (a) B pressed while the remote is still moving into the start pose. */
@@ -183,7 +183,7 @@ static void f_back_to_back(void) {
         report(name,&o);
         CHECK(first.throws==1,"(f): first throw %u",first.throws);
         CHECK(o.throws==1,"%s: %u throws",name,o.throws);
-        CHECK(o.throws!=1 || o.toss.power>=.375,"%s: power %.3f",name,o.toss.power);
+        CHECK(o.throws!=1 || o.toss.speed>=swing_speed(.3),"%s: speed %.3f",name,o.toss.speed);
     }
 }
 
@@ -204,7 +204,9 @@ static void single_late_or_dropped_sample_keeps_grip(void) {
     }
     /* A report with an accel error inside the swing does not reset either. */
     Input in; Events ev; begin(&in,&ev);
+    feed(&in,990,(SwingVector){0,1,0},false,false,0);
     feed(&in,1000,(SwingVector){0,1,0},true,false,0);
+    CHECK(swing_armed(&in.detector),"no grip before the invalid accel report");
     InputSample bad={.motion={.ms=1010,.b=true,.accel_valid=false},.buttons=INPUT_B,.buttons_valid=true};
     input_feed(&in,0,&bad);
     CHECK(swing_armed(&in.detector),"invalid accel report reset the armed swing");
@@ -212,6 +214,7 @@ static void single_late_or_dropped_sample_keeps_grip(void) {
 static void long_gap_never_swallows_release(void) {
     Input in; Events ev; begin(&in,&ev);
     SwingVector up={0,1,0};
+    feed(&in,990,up,false,false,0);
     feed(&in,1000,up,true,false,0);
     feed(&in,1010,up,true,false,0);
     feed(&in,1400,up,true,false,0); /* 390 ms stall with B still held */
@@ -221,6 +224,7 @@ static void long_gap_never_swallows_release(void) {
 static void history_overflow_drops_oldest(void) {
     Input in; Events ev; begin(&in,&ev);
     SwingVector up={0,1,0};
+    feed(&in,990,up,false,false,0);
     feed(&in,1000,up,true,false,0);
     /* 1 kHz bursts with near-identical timestamps overflow the 192-sample ring. */
     uint64_t t=1001;
@@ -259,7 +263,7 @@ static void power_follows_forward_speed(void) {
             CHECK(o.throws==1 && o.toss.power>last,"forward %.2f s: power %.3f not above %.3f",t.fwd_s,o.toss.power,last);
             last=o.toss.power;
         }
-        CHECK(last>.6375,"a quick forward swing should produce strong power (%.3f)",last);
+        CHECK(last>.39,"a quick forward swing should produce at least 0.39 power (%.3f)",last);
     }
 }
 /* B used to leave the pause menu must not grip on the way back into play. */

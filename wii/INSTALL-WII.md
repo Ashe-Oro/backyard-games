@@ -1,4 +1,4 @@
-# Play Backyard Cornhole 0.1.5 on Wii
+# Play Backyard Cornhole 0.1.6 on Wii
 
 You need a Wii that already has the **Homebrew Channel**, a synced Wii Remote,
 and an SD card formatted as **FAT32**. If you need the Homebrew Channel, follow
@@ -7,7 +7,7 @@ This release uses NTSC video (480i/480p); real-Wii playtesting is still pending.
 
 ## Install and play
 
-1. Download `BackyardCornhole-HBC-v0.1.5.zip` from the release.
+1. Download `BackyardCornhole-HBC-v0.1.6.zip` from the release.
 2. Unzip it to the **root of the SD card**. The files should be:
 
    ```text
@@ -16,7 +16,7 @@ This release uses NTSC video (480i/480p); real-Wii playtesting is still pending.
    sd:/apps/backyardcornhole/icon.png
    ```
 
-   Avoid an extra `BackyardCornhole-HBC-v0.1.5/` folder around `apps/`.
+   Avoid an extra `BackyardCornhole-HBC-v0.1.6/` folder around `apps/`.
    `INSTALL-WII.md` at the card root is just this guide.
 3. Safely eject the card, insert it into the Wii, and open the **Homebrew Channel**.
 4. Pick **Backyard Cornhole**, then **Load**.
