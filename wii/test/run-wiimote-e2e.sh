@@ -22,7 +22,7 @@ python3 - "$E2E_OUT" <<'PY'
 from pathlib import Path
 import sys
 out = Path(sys.argv[1])
-for name in ("strap.png","title.png","aim.png","throw.png","score.png","debug.png",
+for name in ("strap.png","title.png","aim.png","help.png","throw.png","score.png","debug.png",
              "result.txt","dolphin.log","dolphin-core.log","xvfb.log","fps.txt","wiimote-e2e.dtm"):
     (out / name).unlink(missing_ok=True)
 PY
@@ -155,6 +155,8 @@ Shake/X = `Click 3`
 Extension = None
 Extension/Attach MotionPlus = 0
 EOF
+# 0.1.4: buttons + accelerometer only. The pointer is never bound or used.
+if rg -qi '^(IR|Pointer)/' "$USER_DIR/Config/WiimoteNew.ini"; then fail "e2e Wiimote profile binds IR"; fi
 cat > "$USER_DIR/Config/GFX.ini" <<'EOF'
 [Settings]
 Backend = OGL

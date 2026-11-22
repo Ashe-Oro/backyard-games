@@ -7,7 +7,7 @@
 #   make iso          dist/BackyardCornhole-BYCEAO.iso (WIT), main.dol == boot.dol check
 #   make release      dist/: HBC zip, ISO, INSTALL-WII.md, SHA256SUMS (real Wii only)
 
-VERSION := 0.1.3
+VERSION := 0.1.4
 GAME_ID := BYCEAO
 TITLE := Backyard Cornhole
 

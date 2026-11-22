@@ -6,6 +6,19 @@ Source of the cabinet controls: Backyard Cornhole Arcade **1.0.3**, `arcade/cabi
 
 > **Standing rule:** toss power comes from swing **SPEED**, the peak of an accelerometer-derived speed signal over a short window. **Never** stroke distance, swing length or swing duration. A long slow swing stays soft; a short quick swing can be full power.
 >
+> **Current Wii mapping (0.1.4, Ashe 2026-11-21, supersedes the button rows below):** like Wii Sports Bowling, the D-pad only sets up the throw and the Wii Remote's accelerometer does the rest. The pointer (IR) is never enabled (`WPAD_FMT_BTNS_ACC`); menus run on the D-pad, −/+, A/2 and B.
+>
+> | Control | Gameplay (PH_AIM, human thrower) |
+> |---|---|
+> | Hold **B**, swing back and forward, let go | Throws. **Swing speed = power** (`swing_power(peak, full_speed)`), **sideways swing = aim** (`lateral_sum / lateral_weight` → `locked_aim`), wrist twist = curl. Mirrored for LEFT HAND. |
+> | **D-pad ↑ / ↓** | Throw-type picker **LOB / NORMAL / SLIDER** (`InputSlot.height` → `g->heights` → `g->arc`). The **only** source of the arc; the remote's release pitch never reaches the throw. |
+> | **D-pad ← / →** | Step the starting position along the foul line (0.05, clamp ±0.45). |
+> | **A** | SLICK / STICKY surface |
+> | **2** | Reset bag (stance back to centre) |
+> | **1** | Help on/off. Hold **1+2** for 2 s: debug overlay (accel, B, phase, reports/s, max gap, speed, last throw's peak, power and aim) |
+> | **HOME** | Pause |
+> | **− / +** | **Nothing in gameplay** (0.1.4 removed the 0.01 rad fine-aim nudge and the `AIM: +N` label). Menu adjust only. |
+>
 > The **rule** is fixed. The **estimator** that turns plain-Wiimote acceleration into speed is a *candidate* that IMPL_PLAN P1 must validate (SPEC §4.4). Nothing in §2's precedents validates the power equation or the direction classifier.
 
 ---
@@ -71,7 +84,7 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 
 1. **Same verbs, same outcomes.** Every cabinet action gets exactly one Wiimote action, and the game logic behind it (`host.throw({power, aim, spin})`, height, surface, nudge, reset) stays identical. Only the input layer changes.
 2. **Same power rules, different measurement.** Peak of an 80 ms windowed speed signal, linear to a calibratable full-power value, capped at 100%, peak retained to release, 40% *speed*-drop auto-release. Distance, duration and arc size never feed power. The cabinet measures speed directly (counts ÷ time); a plain Wiimote can only *estimate* it from acceleration, so the estimator is validated in P1, not assumed.
-3. **Capture neutral grip, then read the swing.** Stable B-down captures neutral attitude and fine trim. Lateral forward-swing motion sets direction; lateral motion and release twist set spin, frozen at release. Both mirror for LEFT HAND.
+3. **Capture neutral grip, then read the swing.** B-down captures neutral attitude (0.1.3: any pose; 0.1.4: no fine trim, aim starts straight). Lateral forward-swing motion sets direction; lateral motion and release twist set spin, frozen at release. Both mirror for LEFT HAND.
 4. **Backswing stays optional.** It's never required, and backswing samples never count toward power.
 5. **Same anti-misfire guarantees, plus conservative cancellation.** A quiet period after each turn and after any legal button action; one throw per gesture; jitter or a B tap can't throw; residual motion can't fire the next bag; packet gaps, disconnects and HOME cancel the gesture rather than guess.
 6. **Buttons: one action per press, no auto-repeat**, as on the cabinet. Any button that changes the throw (height, surface, step, reset) is **ignored while B is held** and otherwise resets the detector to `settling`, mirroring `machine.reset()`.
@@ -89,7 +102,7 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 | Valid sample: ≥ 16 ms window, ≥ 8 counts | Window **elapsed span ≥ 16 ms** (≥ 3 samples at 100 Hz) and `ē ≥ 0.15 g` | Span, not sample count |
 | Release on roll end / 160 ms idle / 40% drop | **Release B** (primary) / auto-release at `v ≤ 0.6·peak_v` (≡ `ē ≤ 0.36·peak_ē`) after a full window, with follow-through confirmation / 2.5 s timeout | Same *speed* ratio as the cabinet |
 | `releaseGate` (stroke length bound) | No equivalent needed | Swing length is never measured |
-| Forward roll **angle** → aim | Lateral forward-swing acceleration → aim | SPEC §4.6: grip-relative, lobe-local proxy; straight from stance, no auto-target; −/+ fine trim |
+| Forward roll **angle** → aim | Lateral forward-swing acceleration → aim | SPEC §4.6: grip-relative, lobe-local proxy; straight from stance, no auto-target. The only aim input (0.1.4 removed the −/+ fine trim) |
 | Backswing A / C / B → spin | Lateral swing + wrist twist at release → spin | SPEC §4.7: signed landing curl, mirrored for LEFT HAND |
 | Sideways-only roll → ignored | No confirmed forward lobe → cancel | Lateral input changes direction only within a valid toss |
 | 450 ms quiet after each turn | 450 ms with `ē < 0.15 g` before B can arm, after each turn **and** after any legal button action | Same constant |
@@ -110,17 +123,17 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 
 | Cabinet | Wiimote | Why this button |
 |---|---|---|
-| Top 1 — cycle height | **D-pad ↑ / ↓** — height up/down (SLIDER ⇄ NORMAL ⇄ KOBE) | Up = higher arc reads naturally; direct up/down instead of a cycle avoids overshoot |
+| Top 1 — cycle height | **D-pad ↑ / ↓** — throw type up/down (SLIDER ⇄ NORMAL ⇄ LOB; LOB is the cabinet's KOBE) | Up = higher arc reads naturally; direct up/down instead of a cycle avoids overshoot. The only source of the arc (0.1.4) |
 | Top 2 — SLICK/STICKY | **A** — flip surface | Big thumb button, one press = one flip |
 | Top 3 / Bottom 3 — reset bag | **2** — reset bag | Out of the way of the grip, so it's hard to hit by accident |
 | Top 4 / Bottom 4 — KEYS legend | **1** — help on/off (remembered) | Same "tuck/pop" behavior |
 | Bottom 1 / 2 — nudge ±0.05 | **D-pad ← / →** — step left/right on the foul line (0.05, clamp ±0.45, 70 ms ease) | Wii Sports precedent: D-pad positions before the throw (S1) |
 | Start/Select — pause/confirm | **HOME** — pause (RESUME · CLEAR BOARD in practice · HAND per player · SETTINGS · MAIN MENU · QUIT); **A** confirm, **B** back in menus | Wii convention; HOME returns to HBC from QUIT. Practice **CLEAR BOARD** (1.0.3's "clear bags; keep stats") is separate from RESET BAG |
 | CABINET SETUP | SETTINGS (SET POWER, CURL, HAND, WIND, RESET) | Cabinet-only items (sensitivity, bindings, stroke length, diagnostics) are dropped. WIND follows the arcade policy (calm by default in Practice/2 Player) |
-| (no cabinet equivalent) | **− / +** — fine aim trim | 0.01 rad per press, captured at grip |
+| (no cabinet equivalent) | **− / +** — nothing in gameplay (0.1.4; was a 0.01 rad fine aim trim) | Menus only: adjust the focused setting |
 | Keyboard fallback, F2 | Dev builds only: hold **1+2** at boot → dev overlay (not built yet; the game logs throws and state to the OSReport/USB Gecko UART instead) | Never in release builds |
 
-**Legality while armed** (SPEC §4.3): while B is held, A, D-pad, 2 and −/+ are **ignored** (discrete settings are frozen; swing direction and release twist remain live). 1 toggles help (UI only). HOME pauses and **cancels** the gesture. When not armed, A/D-pad/2 apply and return the detector to `settling`, matching the cabinet's `machine.reset()` on height, surface, nudge and reset.
+**Legality while armed** (SPEC §4.3): while B is held, A, D-pad and 2 are **ignored** (−/+ are never gameplay controls since 0.1.4) (discrete settings are frozen; swing direction and release twist remain live). 1 toggles help (UI only). HOME pauses and **cancels** the gesture. When not armed, A/D-pad/2 apply and return the detector to `settling`, matching the cabinet's `machine.reset()` on height, surface, nudge and reset.
 
 ### 4.3 Player slots, pass-and-play and disconnects
 
@@ -134,14 +147,14 @@ Each row is tagged by **kind**: **[API/sensor fact]** (what the hardware/library
 
 ```
 settling ──(ē<NOISE for 450 ms)──► ready
-ready ──(B down AND last 150 ms stable: ē<0.10g, Δattitude<5°)──► grip  [capture fine trim + neutral grip; read swing until release]
+ready ──(B down AND last 150 ms stable: ē<0.10g, Δattitude<5°)──► grip  [capture neutral grip; read swing until release]  (0.1.3: any B down grips)
 ready ──(B down but unstable)──► ready, show HOLD STILL (no arm)
 grip ──(lobes detected per chosen classifier C1–C3)──► forward lobe tracked: peak_forward_v (80 ms, span ≥16 ms)
 grip/forward ──(B up)──► valid forward lobe? THROW → spent : cancel → ready (bag stays)
 forward ──(v ≤ 0.6·peak_v after full window AND C2 confirms)──► THROW → spent
 armed ──(2.5 s timeout)──► valid lobe? THROW : cancel
 armed ──(gap >25 ms | dropped events | disconnect | HOME)──► cancel → settling (pause for HOME/disconnect)
-ready ──(A / D-pad / 2 / −+)──► apply → settling      armed ──(A / D-pad / 2 / −+)──► ignored
+ready ──(A / D-pad / 2)──► apply → settling      armed ──(A / D-pad / 2)──► ignored      (−/+: no effect, 0.1.4)
 spent ──(next turn)──► settling
 ```
 
@@ -185,7 +198,7 @@ Speed is judged against **independent labels** (≥ 120 fps video of a hand mark
 | T13 | Point left/right of the hole, swing with wobble | Landing left/right; aim unchanged by the wobble |
 | T14 | Twist right + SLICK; twist left; neutral | Curl right; curl left; straight |
 | T15 | Left-handed mode, twist toward/away from the body | Mirrored correctly |
-| T16 | Straight / left / right swing, then −/+ before grip and while armed | Straight launches from stance without targeting; yaw changes aim; trim ignored while armed |
+| T16 | Straight / left / right swing, then −/+ before grip and while armed | Straight launches from stance without targeting; yaw changes aim; −/+ change nothing (0.1.4) |
 | T17 | Press A / D-pad / 2 while holding B | Ignored; the gesture continues |
 | T18 | Press A / D-pad / 2 while not holding B | Applied; B can't arm for 450 ms of calm |
 | T19 | Throw, then shake the remote during the next turn's first 450 ms | No throw fires |

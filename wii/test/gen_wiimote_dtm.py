@@ -93,7 +93,7 @@ def pack_header(input_count: int, author: bytes = b"BYC e2e") -> bytes:
         struct.pack_into("<I", buf, off, v)
 
     # Generous bounds so CheckInputEnd does not stop on tickCount before inputs are used.
-    put_u64(13, 60 * 60 * 2)          # frameCount: two minutes at 60
+    put_u64(13, 60 * 60 * 2)          # frameCount: two minutes at 60 (the movie is ~64 s)
     put_u64(21, input_count)
     put_u64(29, 0)                    # lagCount
     put_u64(37, 0)                    # uniqueID
@@ -122,6 +122,12 @@ def build_movie() -> bytes:
     hold(pkts, 0.80)
     # begin_inning(900 ms) + "THROWS FIRST" banner; wait until PH_AIM.
     hold(pkts, 4.00)
+    # 0.1.4: a fresh save shows the help panel; 1 tucks it, 1 again brings it back
+    # (the new control list stays up for the rest of the run, for the help.png shot).
+    hold(pkts, 0.20, BUTTON_ONE)
+    hold(pkts, 3.00)
+    hold(pkts, 0.20, BUTTON_ONE)
+    hold(pkts, 0.60)
     for _ in range(2):
         hold(pkts, 2.6, BUTTON_ONE | BUTTON_TWO)
         hold(pkts, 0.4)

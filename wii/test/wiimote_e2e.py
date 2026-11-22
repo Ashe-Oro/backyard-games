@@ -18,6 +18,9 @@ RE_CALLOUT = re.compile(
 )
 RE_FPS = re.compile(r"BYC: (\d+) frames rendered; ui (\d+) phase (\d+); fps ([0-9.]+)")
 RE_DEBUG = re.compile(r"BYC: wiimote debug (on|off)")
+# main.c logs other input events as "input action N value V"; INPUT_HELP is 5 (input.h).
+# V is the input layer's own toggle, not the panel: a fresh save starts with the panel shown.
+RE_HELP = re.compile(r"BYC: input action 5 value ([01])")
 SCORE_BIG = ("CORNHOLE!", "ON THE BOARD", "HANGER!")
 
 
@@ -204,7 +207,7 @@ def finish_pass(out: Path, info: dict, notes: list[str], method: str) -> None:
     else:
         fps_line = "FPS: not reported in OSREPORT (need a 120-frame window)"
     out.joinpath("fps.txt").write_text(fps_line + "\n")
-    shots = [p.name for p in (out / "strap.png", out / "title.png", out / "aim.png",
+    shots = [p.name for p in (out / "strap.png", out / "title.png", out / "aim.png", out / "help.png",
                                out / "throw.png", out / "score.png", out / "debug.png") if p.is_file()]
     last = info["callouts"][-1]
     lines = [
@@ -233,6 +236,11 @@ def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes
         wait_alive(pid, out)
         log = combined_log(out, user)
         info = parse(log)
+        if capture and not (out / "strap.png").exists() and info["ui"] == 1:
+            wait_visible(display, out / "strap.png", 15)   # 0.1.4: shows the v0.1.4 tag
+        if capture and not (out / "help.png").exists() and len(RE_HELP.findall(log)) >= 2:
+            time.sleep(2.0)   # the X grab lags the game by a few seconds
+            wait_visible(display, out / "help.png", 15)    # 0.1.4: the new help text, back on screen
         if capture and not (out / "aim.png").exists() and info["ui"] == 0 and info["phase"] == 4:
             wait_visible(display, out / "aim.png", 15)
         if capture and not (out / "debug.png").exists() and "BYC: wiimote debug on" in log:
@@ -255,6 +263,8 @@ def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes
         ])
     if any(release != "1" for release in info["throws"]):
         fail(out, "throw did not come from the B-up edge", notes)
+    if RE_HELP.findall(log) != ["1", "0"]:
+        fail(out, "1 did not toggle the help panel twice (tuck, show)", notes)
     if RE_DEBUG.findall(log) != ["on", "off"]:
         fail(out, "1+2 did not toggle the debug overlay on and off once each", notes)
     if not scored(info):
@@ -273,10 +283,11 @@ def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes
     if not info["fps"]:
         fail(out, "toss scored but no FPS number was logged", notes)
     if capture:
-        if not (out / "aim.png").exists():
-            fail(out, "rendered run missed the Practice aim screenshot", notes)
+        for shot, what in (("aim.png", "Practice aim"), ("strap.png", "STRAP ON! (version tag)"), ("help.png", "help panel")):
+            if not (out / shot).exists():
+                fail(out, f"rendered run missed the {what} screenshot", notes)
         wait_visible(display, out / "score.png", 15)
-    notes.append("B-up throws: " + str(len(info["throws"])) + "; 1+2 overlay: on, off")
+    notes.append("B-up throws: " + str(len(info["throws"])) + "; help (1): tucked, shown; 1+2 overlay: on, off")
     finish_pass(out, info, notes, f"dtm-{video.lower()}")
 
 

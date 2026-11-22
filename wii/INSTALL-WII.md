@@ -1,4 +1,4 @@
-# Play Backyard Cornhole 0.1.3 on Wii
+# Play Backyard Cornhole 0.1.4 on Wii
 
 You need a Wii that already has the **Homebrew Channel**, a synced Wii Remote,
 and an SD card formatted as **FAT32**. If you need the Homebrew Channel, follow
@@ -7,7 +7,7 @@ This release uses NTSC video (480i/480p); real-Wii playtesting is still pending.
 
 ## Install and play
 
-1. Download `BackyardCornhole-HBC-v0.1.3.zip` from the release.
+1. Download `BackyardCornhole-HBC-v0.1.4.zip` from the release.
 2. Unzip it to the **root of the SD card**. The files should be:
 
    ```text
@@ -16,16 +16,18 @@ This release uses NTSC video (480i/480p); real-Wii playtesting is still pending.
    sd:/apps/backyardcornhole/icon.png
    ```
 
-   Avoid an extra `BackyardCornhole-HBC-v0.1.3/` folder around `apps/`.
+   Avoid an extra `BackyardCornhole-HBC-v0.1.4/` folder around `apps/`.
    `INSTALL-WII.md` at the card root is just this guide.
 3. Safely eject the card, insert it into the Wii, and open the **Homebrew Channel**.
 4. Pick **Backyard Cornhole**, then **Load**.
 
 Hold **B**, swing back, swing forward, then **release B** to throw. Swing speed
-sets power and swing direction aims. Twist your wrist to curl the bag.
-**D-pad left/right** slides along the foul line. Press **1** for help or **HOME**
+sets power and swinging left or right aims. Twist your wrist to curl the bag.
+**D-pad up/down** picks LOB, NORMAL or SLIDER (how high the bag flies).
+**D-pad left/right** slides along the foul line. **A** flips SLICK/STICKY. Press **1** for help or **HOME**
 to pause. Choose handedness and SET POWER in settings. Hold **1+2** for two
-seconds to show live acceleration, B state and swing phase. Hold them again
+seconds to show live acceleration, B state, swing phase and the last throw's
+power and aim. Hold them again
 for two seconds to hide the overlay.
 
 ## Music and saves

@@ -6,7 +6,7 @@
 # The ISO is produced by `make -C wii iso`. GameSettings/BYCEAO.ini here is
 # the source of truth and must set InternalResolution = 3.
 
-VERSION := 0.1.3
+VERSION := 0.1.4
 ISO ?= ../wii/dist/BackyardCornhole-BYCEAO.iso
 OUT ?= dist
 PYTHON ?= python3
