@@ -10,6 +10,17 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.7] - 2026-11-22
+
+### Changed
+
+- SLIDER and NORMAL need 30% and 20% more swing speed respectively for the same power in the linear range. KOBE makes 10% less power at the same speed in that range. Each picker reaches the 0.76 cap at its own speed.
+- The swing overlay detects backswing onset and the reversal into forward motion. Only forward reports contribute to throw power.
+
+### Fixed
+
+- Releasing B without a qualifying forward swing returns to READY and keeps the bag. This covers stationary grips, tiny wiggles and backswing-only releases.
+
 ## [0.1.6] - 2026-11-22
 
 ### Changed

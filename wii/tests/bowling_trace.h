@@ -18,6 +18,7 @@ typedef struct {
     bool gaps;              /* 30-60 ms holes: at grip, in the backswing, at the bottom, across release */
     bool press_moving;      /* remote still travelling into the start pose when B goes down */
     bool tap;               /* B down and up with no swing */
+    bool back_only;
     double start_deg, back_deg, fwd_deg, back_s, fwd_s, release_deg;
     double lateral_g, twist_deg;
     bool left;
@@ -32,6 +33,8 @@ static inline double ease(double from, double to, double u, double dur, double *
 }
 #define T_PRESS 200
 #define T_SWING 600
+static inline double backswing_start_ms(void) { return T_SWING; }
+static inline double forward_start_ms(const Trace *t) { return T_SWING + 1000*t->back_s; }
 /* Kinematics at time ms (relative to the turn opening). Returns false once the trace is over. */
 static inline bool pose(const Trace *t, double ms, Pose *p, uint64_t *release_ms) {
     double s=ms/1000, deg=SWING_PI/180;
@@ -44,18 +47,19 @@ static inline bool pose(const Trace *t, double ms, Pose *p, uint64_t *release_ms
         if (release_ms && ms>=T_PRESS+150 && !*release_ms) *release_ms=(uint64_t)ms;
         return ms<1400;
     }
-    double t_back=T_SWING/1000.0, t_fwd=t_back+t->back_s, t_end=t_fwd+t->fwd_s;
+    double t_back=backswing_start_ms()/1000, t_fwd=forward_start_ms(t)/1000, t_end=t_fwd+t->fwd_s;
     if (s<.4) {
         if (t->press_moving) p->theta=ease(20*deg,start,s,.4,&p->omega,&p->alpha);
         else p->theta=start+tremor;
     } else if (s<t_back) p->theta=start+tremor;
     else if (s<t_fwd) p->theta=ease(start,back,s-t_back,t->back_s,&p->omega,&p->alpha);
+    else if (t->back_only) p->theta=back;
     else if (s<t_end) {
         p->theta=ease(back,fwd,s-t_fwd,t->fwd_s,&p->omega,&p->alpha);
         p->lateral=t->lateral_g*sin(SWING_PI*(s-t_fwd)/t->fwd_s);
     } else p->theta=fwd;
     bool forward=s>=t_fwd;
-    if (forward && p->theta>=t->release_deg*deg && release_ms && !*release_ms) *release_ms=(uint64_t)ms;
+    if (forward && (p->theta>=t->release_deg*deg || (t->back_only && s>=t_fwd+.1)) && release_ms && !*release_ms) *release_ms=(uint64_t)ms;
     if (release_ms && *release_ms) p->roll=t->twist_deg;
     p->b=ms>=T_PRESS && !(release_ms && *release_ms);
     return s<t_end+.6;
@@ -83,7 +87,9 @@ static inline unsigned raw_axis(double g, bool *clipped) {
     if (raw<=0 || raw>=1023) *clipped=true;
     return (unsigned)raw;
 }
-static inline double quantize(double g, bool *clipped) { return ((double)raw_axis(g,clipped)-512)/104; }
+static inline unsigned raw_tilt_axis(double g, bool *clipped) {
+    return raw_axis(g,clipped) & ~1u; /* Buttons + accelerometer reports omit the Y/Z LSB. */
+}
 
 static inline Trace bowling(void) {
     return (Trace){.rate_hz=100,.start_deg=80,.back_deg=55,.fwd_deg=60,.back_s=.55,.fwd_s=.45,

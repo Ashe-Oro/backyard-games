@@ -2,7 +2,7 @@
 
 Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, raw GX, WPAD).
 
-**Status: 0.1.6.** Practice, 2 Player and the 8-rival Tournament run on a GX
+**Status: 0.1.7.** Practice, 2 Player and the 8-rival Tournament run on a GX
 renderer; physics, scoring and the tournament CPU match the pinned 1.0.3 game on the host golden tests.
 Boots in Dolphin from the ISO (game ID `BYCEAO`) and as a bare DOL. Swing feel and hardware timing are
 not validated yet: that needs a physical Wii Remote retest on a real Wii and on the Kinhank (IMPL_PLAN P1).

@@ -9,6 +9,17 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.7] - 2026-11-22
+
+### Changed
+
+- Updated to Wii v0.1.7 (BYCEAO) with picker-specific swing power and improved backswing and forward labels.
+- STRAP ON! and the in-game HUD show v0.1.7.
+
+### Fixed
+
+- Releasing B without a qualifying forward swing keeps the bag and leaves the throw count alone.
+
 ## [0.1.6] - 2026-11-22
 
 ### Changed

@@ -36,6 +36,9 @@ typedef struct {
     SwingResult toss;
     uint64_t press_ms, release_ms, grip_delay_ms, throw_at_ms;
     bool gripped;
+    uint64_t backswing_ms, forward_ms;
+    double peak;
+    bool ready;
 } Outcome;
 static void begin(Input *in, Events *ev) {
     *ev=(Events){0};
@@ -53,7 +56,7 @@ static void feed(Input *in, uint64_t ms, SwingVector g, bool b, bool clipped, un
         .buttons=b ? INPUT_B : 0,.buttons_valid=true};
     input_feed(in,0,&p);
 }
-static Outcome run_into(Input *in, Events *ev, const Trace *t, uint64_t base) {
+static Outcome run_into(Input *in, Events *ev, const Trace *t, uint64_t base, unsigned start_ms) {
     Outcome o={0};
     rng_state=t->seed;
     in->slots[in->active_slot].profile.left_handed=t->left;
@@ -62,7 +65,7 @@ static Outcome run_into(Input *in, Events *ev, const Trace *t, uint64_t base) {
     unsigned period=1000/t->rate_hz;
     unsigned throws_before=ev->throws;
     bool drop_flag=false;
-    for (unsigned k=0;;++k) {
+    for (unsigned k=start_ms/period;;++k) {
         double ms=k*period+(t->jitter_ms ? (uniform()*2-1)*t->jitter_ms : 0);
         if (ms<0) ms=0;
         Pose p;
@@ -73,9 +76,16 @@ static Outcome run_into(Input *in, Events *ev, const Trace *t, uint64_t base) {
         first=false; last=at;
         SwingVector f=specific_force(&p,t->left);
         bool clipped=false;
-        SwingVector g={quantize(f.x,&clipped),quantize(f.y,&clipped),quantize(f.z,&clipped)};
+        unsigned x=raw_axis(f.x,&clipped);
+        unsigned y=raw_tilt_axis(f.y,&clipped);
+        unsigned z=raw_tilt_axis(f.z,&clipped);
+        SwingVector g={(x-512.0)/104,(y-512.0)/104,(z-512.0)/104};
         feed(in,at,g,p.b,clipped,drop_flag ? 1 : 0);
         drop_flag=false;
+        const char *phase=swing_phase_name(&in->detector);
+        if (!o.backswing_ms && !strcmp(phase,"BACKSWING")) o.backswing_ms=at-base;
+        if (!o.forward_ms && !strcmp(phase,"FORWARD")) o.forward_ms=at-base;
+        o.peak=fmax(o.peak,in->detector.peak);
         ++o.samples;
         if (p.b && !had_b) {
             o.press_ms=at;
@@ -86,24 +96,24 @@ static Outcome run_into(Input *in, Events *ev, const Trace *t, uint64_t base) {
         had_b=p.b;
         if (ev->throws>throws_before && !o.throw_at_ms) o.throw_at_ms=at;
     }
+    o.ready=in->detector.phase==SWING_READY;
     o.throws=ev->throws-throws_before;
     o.toss=ev->toss;
     return o;
 }
 static Outcome run(const Trace *t) {
     Input in; Events ev; begin(&in,&ev);
-    return run_into(&in,&ev,t,1000);
+    return run_into(&in,&ev,t,1000,0);
 }
 static void report(const char *name, const Outcome *o) {
-    printf("  %-34s throws %u power %.3f speed %.2f aim %+.3f spin %+.3f fallback %d grip %s release->throw %lld ms\n",
-           name,o->throws,o->toss.power,o->toss.speed,o->toss.aim,o->toss.spin,o->toss.fallback,
+    printf("  %-34s throws %u power %.3f speed %.2f aim %+.3f spin %+.3f grip %s release->throw %lld ms\n",
+           name,o->throws,o->toss.power,o->toss.speed,o->toss.aim,o->toss.spin,
            o->gripped ? "0 ms" : "NO",o->throw_at_ms ? (long long)(o->throw_at_ms-o->release_ms) : -1LL);
 }
 static void full_throw_checks(const char *name, const Outcome *o) {
     report(name,o);
     CHECK(o->gripped,"%s: B down did not grip on the same report",name);
     CHECK(o->throws==1,"%s: %u throws",name,o->throws);
-    CHECK(o->throws!=1 || !o->toss.fallback,"%s: full swing fell back to a lob",name);
     CHECK(o->throws!=1 || o->toss.speed>=swing_speed(.3),"%s: speed %.3f",name,o->toss.speed);
 }
 
@@ -141,7 +151,7 @@ static void c_gaps_and_jitter(void) {
 }
 /* (d) Slow, gentle swing: still a throw, softer than (b). */
 static void d_gentle_swing(void) {
-    Trace t=bowling(); t.back_deg=25; t.fwd_deg=30; t.back_s=1.1; t.fwd_s=.9; t.release_deg=5; t.seed=31;
+    Trace t=bowling(); t.back_deg=25; t.fwd_deg=30; t.back_s=1.1; t.fwd_s=.7; t.release_deg=5; t.seed=31;
     Outcome o=run(&t);
     Trace full=bowling(); Outcome strong=run(&full);
     report("(d) gentle swing",&o);
@@ -150,15 +160,16 @@ static void d_gentle_swing(void) {
     CHECK(o.throws!=1 || (o.toss.power>0 && o.toss.power<strong.toss.power),
           "(d): power %.3f vs full %.3f",o.toss.power,strong.toss.power);
 }
-/* (e) B pressed and released with no swing: a weak lob, never nothing. */
-static void e_tap_is_weak_lob(void) {
+/* (e) A B tap with tremor cancels and the next swing can throw. */
+static void e_tap_cancels(void) {
+    Input in; Events ev; begin(&in,&ev);
     Trace t=bowling(); t.tap=true; t.seed=41;
-    Outcome o=run(&t);
+    Outcome o=run_into(&in,&ev,&t,1000,0);
     report("(e) B tap, no swing",&o);
-    CHECK(o.gripped,"(e): no grip");
-    CHECK(o.throws==1,"(e): %u throws",o.throws);
-    CHECK(o.throws!=1 || (o.toss.power>0 && o.toss.power<=.2),"(e): power %.3f",o.toss.power);
-    CHECK(o.throws!=1 || o.throw_at_ms==o.release_ms,"(e): lob waited after B up");
+    CHECK(o.gripped && o.throws==0 && in.detector.phase==SWING_READY,"(e): tap did not cancel");
+    t=bowling();
+    o=run_into(&in,&ev,&t,2500,0);
+    full_throw_checks("(e) next swing",&o);
 }
 /* (f) Two throws back to back: the game takes the first bag, the next turn opens, and the
  * player is already swinging again (B pressed during the flight, and B pressed the instant
@@ -167,7 +178,7 @@ static void f_back_to_back(void) {
     for (unsigned variant=0;variant<2;++variant) {
         Input in; Events ev; begin(&in,&ev);
         Trace t=bowling();
-        Outcome first=run_into(&in,&ev,&t,1000);
+        Outcome first=run_into(&in,&ev,&t,1000,0);
         /* Bag flight: the game disables throw input, then opens the next turn. */
         input_set_context(&in,INPUT_DISABLED);
         uint64_t now=1000+2200;
@@ -176,13 +187,13 @@ static void f_back_to_back(void) {
         input_next_turn(&in,0);
         input_set_context(&in,INPUT_PLAY);
         Trace second=bowling(); second.seed=52;
-        if (variant==0) second.press_moving=false;
-        Outcome o=run_into(&in,&ev,&second,now-T_PRESS+(variant==0 ? 0 : 0));
+        CHECK(in.b_held[0]==(variant==0),"(f): flight B state did not carry into the turn");
+        Outcome o=run_into(&in,&ev,&second,now-T_PRESS,T_PRESS);
         char name[48]; snprintf(name,sizeof name,"(f) second throw, B %s",variant==0 ? "held over" : "fresh press");
         report("(f) first throw",&first);
         report(name,&o);
         CHECK(first.throws==1,"(f): first throw %u",first.throws);
-        CHECK(o.throws==1,"%s: %u throws",name,o.throws);
+        CHECK(o.gripped && o.throws==1,"%s: immediate grip %d, throws %u",name,o.gripped,o.throws);
         CHECK(o.throws!=1 || o.toss.speed>=swing_speed(.3),"%s: speed %.3f",name,o.toss.speed);
     }
 }
@@ -200,7 +211,7 @@ static void single_late_or_dropped_sample_keeps_grip(void) {
         feed(&in,1020+gaps[k],up,true,false,1);
         CHECK(swing_armed(&in.detector),"gap %u ms reset the armed swing",gaps[k]);
         feed(&in,1030+gaps[k],up,false,false,0);
-        CHECK(ev.throws==1,"gap %u ms: release after the gap gave %u throws",gaps[k],ev.throws);
+        CHECK(ev.throws==0 && in.detector.phase==SWING_READY,"gap %u ms: release after the gap gave %u throws",gaps[k],ev.throws);
     }
     /* A report with an accel error inside the swing does not reset either. */
     Input in; Events ev; begin(&in,&ev);
@@ -219,7 +230,7 @@ static void long_gap_never_swallows_release(void) {
     feed(&in,1010,up,true,false,0);
     feed(&in,1400,up,true,false,0); /* 390 ms stall with B still held */
     feed(&in,1410,up,false,false,0);
-    CHECK(ev.throws==1,"release after a 390 ms stall gave %u throws",ev.throws);
+    CHECK(ev.throws==0 && in.detector.phase==SWING_READY,"release after a 390 ms stall gave %u throws",ev.throws);
 }
 static void history_overflow_drops_oldest(void) {
     Input in; Events ev; begin(&in,&ev);
@@ -231,7 +242,7 @@ static void history_overflow_drops_oldest(void) {
     for (unsigned k=0;k<SWING_HISTORY*2;++k) feed(&in,t++,up,true,false,0);
     CHECK(swing_armed(&in.detector),"history overflow reset the armed swing");
     feed(&in,t+5,up,false,false,0);
-    CHECK(ev.throws==1,"release after overflow gave %u throws",ev.throws);
+    CHECK(ev.throws==0 && in.detector.phase==SWING_READY,"release after overflow gave %u throws",ev.throws);
 }
 /* Aim and curl survive the new path: lateral swing aims, wrist twist curls, mirrored for lefties. */
 static void aim_spin_and_hand_on_bowling_swing(void) {
@@ -251,7 +262,7 @@ static void aim_spin_and_hand_on_bowling_swing(void) {
 
 /* Power follows forward swing speed, from a hanging start and from the remote-up start. */
 static void power_follows_forward_speed(void) {
-    const double durations[]={1.1,.9,.75,.6,.5};
+    const double durations[]={.9,.75,.6,.5,.4};
     for (int start=0;start<2;++start) {
         double last=0;
         for (unsigned k=0;k<5;++k) {
@@ -259,7 +270,7 @@ static void power_follows_forward_speed(void) {
             t.back_s=.7; t.fwd_s=durations[k]; t.release_deg=5;
             Outcome o=run(&t);
             printf("  start %2.0f deg, forward %.2f s: power %.3f%s\n",t.start_deg,t.fwd_s,o.toss.power,
-                   o.toss.fallback ? " (weak)" : "");
+                   o.throws ? "" : " (cancelled)");
             CHECK(o.throws==1 && o.toss.power>last,"forward %.2f s: power %.3f not above %.3f",t.fwd_s,o.toss.power,last);
             last=o.toss.power;
         }
@@ -285,13 +296,60 @@ static void b_from_pause_menu_does_not_lob(void) {
     feed(&in,1050,up,true,false,0);
     CHECK(swing_armed(&in.detector),"a fresh press after resuming must grip at once");
 }
+/* Timing against the model with synthetic sensor noise, quantization and report jitter. */
+static void phase_timing(void) {
+    const struct { double start, back, fwd, back_s, fwd_s; bool moving; } cases[]={
+        {80,55,60,.55,.45,false},
+        {80,55,60,.55,.45,true},
+        {0,45,60,.50,.50,false},
+        {80,55,60,.40,.65,false},
+        {0,45,60,.50,.50*sqrt(105.0/45),false},
+    };
+    double back_sum=0, forward_sum=0, back_worst=0, forward_worst=0;
+    unsigned back_count=0, forward_count=0;
+    for (unsigned i=0;i<sizeof cases/sizeof cases[0];++i) {
+        Trace t=bowling();
+        t.start_deg=cases[i].start; t.back_deg=cases[i].back; t.fwd_deg=cases[i].fwd;
+        t.back_s=cases[i].back_s; t.fwd_s=cases[i].fwd_s; t.press_moving=cases[i].moving;
+        t.seed=7+i; t.jitter_ms=i%2 ? 2 : 0;
+        Outcome o=run(&t);
+        double back_error=o.backswing_ms ? (double)o.backswing_ms-backswing_start_ms() : NAN;
+        double forward_error=o.forward_ms ? (double)o.forward_ms-forward_start_ms(&t) : NAN;
+        printf("  phase fixture %u: BACKSWING %+.0f ms, FORWARD %+.0f ms\n",i+1,back_error,forward_error);
+        if (isfinite(back_error)) {
+            back_sum+=fabs(back_error); back_worst=fmax(back_worst,fabs(back_error)); ++back_count;
+        }
+        if (isfinite(forward_error)) {
+            forward_sum+=fabs(forward_error); forward_worst=fmax(forward_worst,fabs(forward_error)); ++forward_count;
+        }
+        CHECK(back_error>=0 && back_error<=30,"fixture %u: backswing outside 30 ms",i+1);
+        CHECK(forward_error>=0 && forward_error<=50,"fixture %u: forward outside 50 ms",i+1);
+    }
+    printf("  timing mean/worst absolute errors: BACKSWING %.1f/%.0f ms (%u), FORWARD %.1f/%.0f ms (%u)\n",
+           back_sum/back_count,back_worst,back_count,forward_sum/forward_count,forward_worst,forward_count);
+}
+static void subthreshold_and_backswing_cancel(void) {
+    Input in; Events ev; begin(&in,&ev);
+    Trace t=bowling();
+    t.start_deg=0; t.back_deg=2; t.fwd_deg=2; t.release_deg=1;
+    Outcome tiny=run_into(&in,&ev,&t,1000,0);
+    CHECK(tiny.gripped && tiny.ready && tiny.throws==0 && tiny.peak==0,"tiny wiggle did not cancel");
+    t=bowling(); t.back_only=true;
+    Outcome back=run_into(&in,&ev,&t,3500,0);
+    CHECK(back.gripped && back.ready && back.throws==0 && back.peak==0 && !back.forward_ms,
+          "backswing-only was treated as forward (peak %.3f m/s)",back.peak);
+    t.back_only=false;
+    Outcome full=run_into(&in,&ev,&t,6000,0);
+    full_throw_checks("after two cancelled swings",&full);
+}
+
 int main(int argc, char **argv) {
     settled=argc==2 && strcmp(argv[1],"settled")==0;
     TEST(a_press_while_moving);
     TEST(b_bowling_swing);
     TEST(c_gaps_and_jitter);
     TEST(d_gentle_swing);
-    TEST(e_tap_is_weak_lob);
+    TEST(e_tap_cancels);
     TEST(f_back_to_back);
     TEST(single_late_or_dropped_sample_keeps_grip);
     TEST(long_gap_never_swallows_release);
@@ -299,6 +357,8 @@ int main(int argc, char **argv) {
     TEST(aim_spin_and_hand_on_bowling_swing);
     TEST(b_from_pause_menu_does_not_lob);
     TEST(power_follows_forward_speed);
+    TEST(phase_timing);
+    TEST(subthreshold_and_backswing_cancel);
     printf("%u throw-trace tests, %u failed checks\n",tests,failures);
     return failures ? 1 : 0;
 }

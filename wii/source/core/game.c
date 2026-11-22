@@ -71,7 +71,7 @@ SwingCalibrationLimits game_calibration_limits(const Game *g) {
     double target = g->win->w[0][SIDE_SLICK][ARC_NORMAL].mid;
     /* Provisional limits until P1 hardware traces. Allow a classified 0.5 g
      * reference toss to reach the hole, and keep the 2.0 g profile ceiling. */
-    return (SwingCalibrationLimits){target, SWING_POWER_GAIN * swing_speed(0.5) / target, swing_speed(2.0)};
+    return (SwingCalibrationLimits){target, SWING_POWER_GAIN * swing_speed(0.5) / (target * swing_type_scale(1)), swing_speed(2.0)};
 }
 
 /* ---------------- menus ---------------- */
@@ -637,7 +637,7 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
              * launch direction and power a release would give; a swing that ends without a throw
              * hides it again (finishStroke). */
             double power, aim;
-            if (!g->paused && !g->connect_prompt && !in->calibrating && swing_preview(&in->detector, &in->slots[t].profile, &power, &aim)) {
+            if (!g->paused && !g->connect_prompt && !in->calibrating && swing_preview(&in->detector, &in->slots[t].profile, in->slots[t].height, &power, &aim)) {
                 g->arrow_on = g->arrow_live = true; g->arrow_age_ms = 0;
                 g->arrow_power = physical_power(g->win, t, g->side[t], g->arc, clampd(power, 0, 1));
                 g->arrow_yaw = game_launch_yaw(g, t, aim); g->arrow_x = game_release_x(g, t);
