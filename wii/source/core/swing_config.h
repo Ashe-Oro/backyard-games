@@ -2,7 +2,7 @@
 #define BYC_SWING_CONFIG_H
 
 /* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
-#define SWING_VERSION "bowling-grip-0.1.4"
+#define SWING_VERSION "bowling-grip-0.1.5"
 #define SWING_WINDOW_MS 80
 #define SWING_MIN_SPAN_MS 16
 #define SWING_NOISE_G 0.15
@@ -28,6 +28,7 @@
 #define SWING_RADIUS_M 0.6
 #define SWING_GRAVITY 9.80665
 #define SWING_DEFAULT_E_G 1.2
+#define SWING_POWER_GAIN 0.75   /* scale speed before saturation, leaving 1.0 reachable */
 #define SWING_CAL_TOSSES 3
 #define SWING_CAL_SPREAD 0.30
 #define SWING_ROLL_DEAD_DEG 10.0
@@ -46,8 +47,8 @@
 #define SWING_RETURN_MS 24
 #define SWING_RETURN_BACK_G 0.18
 #define SWING_FALLBACK_POWER_SCALE 0.65
-#define SWING_FALLBACK_MIN_POWER 0.12 /* a B tap with no swing: the weak lob */
-#define SWING_FALLBACK_MAX_POWER 0.35
+#define SWING_FALLBACK_MIN_POWER (0.12 * SWING_POWER_GAIN) /* B tap with no swing */
+#define SWING_FALLBACK_MAX_POWER (0.35 * SWING_POWER_GAIN)
 #define SWING_TWIST_MS 133
 #define SWING_HISTORY 192
 #define SWING_PI 3.14159265358979323846

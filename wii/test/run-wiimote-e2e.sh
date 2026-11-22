@@ -157,15 +157,16 @@ Extension/Attach MotionPlus = 0
 EOF
 # 0.1.4: buttons + accelerometer only. The pointer is never bound or used.
 if rg -qi '^(IR|Pointer)/' "$USER_DIR/Config/WiimoteNew.ini"; then fail "e2e Wiimote profile binds IR"; fi
-cat > "$USER_DIR/Config/GFX.ini" <<'EOF'
+cat > "$USER_DIR/Config/GFX.ini" <<EOF
 [Settings]
 Backend = OGL
-InternalResolution = 1
+InternalResolution = ${E2E_INTERNAL_RESOLUTION:-1}
 ShowFPS = True
 DumpFrames = False
 [Hacks]
 EFBAccessEnable = True
 EOF
+printf 'InternalResolution=%s\n' "${E2E_INTERNAL_RESOLUTION:-1}"
 
 XVFB_PID=
 DOLPHIN_PID=

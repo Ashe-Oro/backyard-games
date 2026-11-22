@@ -9,6 +9,13 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.5] - 2026-11-22
+
+### Changed
+
+- Updated to the Wii v0.1.5 disc (BYCEAO) with 25% softer default throws and rounded keg and beer pong props.
+- The STRAP ON! screen and HUD show v0.1.5. The Dolphin profile uses 3× internal resolution.
+
 ## [0.1.4] - 2026-11-21
 
 Wii Sports Bowling controls on the Kinhank. The pointer is not used; the

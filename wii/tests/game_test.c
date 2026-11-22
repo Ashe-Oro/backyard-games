@@ -544,7 +544,7 @@ static SwingSeen bowling_swing(double forward_e, double lateral, bool release) {
     return seen;
 }
 static void next_bag(void) { int guard = 0; while (game.phase != PH_AIM && guard++ < 6000) frames(1); frames(1); }
-/* ---------------- 0.1.4: swing = power + direction, picker = height ---------------- */
+/* ---------------- Swing speed and direction, picker-only height ---------------- */
 static void remote_feed(double e, double pitch, double roll, uint32_t buttons) {
     now_ms += 10;
     double p = pitch * SWING_PI / 180, r = roll * SWING_PI / 180;
@@ -564,7 +564,7 @@ static void pick_height(int h) {
     for (int i = 0; i < h; i++) tap(INPUT_UP);
 }
 #define LAND_MAX 600
-typedef struct { bool thrown; double land_x, land_z, peak_y, power, aim; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
+typedef struct { bool thrown, deck; double land_x, land_z, peak_y, power, aim; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
 /* Hold B, swing back, swing forward (lateral = sideways lean in degrees), let go with the remote at
  * release_pitch. The flight is the launched bag stepped at the game's fixed 240 Hz until it first
  * touches down (independent of where the frame accumulator happened to be). */
@@ -597,6 +597,7 @@ static Landing swing_and_land(double forward_e, double lateral, double release_p
         physics_substep(&launch, 1, &calm);
     }
     l.land_x = launch.p.x; l.land_z = launch.p.z;
+    l.deck = bag_on_deck(&launch) || launch.state == BAG_HOLE;
     frames(300);
     return l;
 }
@@ -613,18 +614,44 @@ static void test_swing_to_landing(void) {
     CHECK(game.wind.mph == 0, "practice is calm (%g mph)", game.wind.mph);
     pick_height(1);
     CHECK(game.arc == ARC_NORMAL && game.heights[0] == 1, "picker on NORMAL");
-    /* power: three swing speeds, strictly increasing distance */
-    const double speeds[3] = {0.45, 0.65, 0.9};   /* all above the 0.35 g stroke threshold */
+    const double speeds[3] = {0.45, 0.65, 0.9};   /* 0.1.4 reference strokes in excess g */
+    const double old_dist[3] = {8.21, 8.77, 9.85};
+    const double front = BYC_REL_Z - BYC_BOARD_Z, span = BYC_L * cos(BYC_TH);
+    const double back = front + span;
     double dist[3], pw[3];
     for (int k = 0; k < 3; k++) {
         Landing l = swing_and_land(speeds[k], 0, 25, 0);
         CHECK(l.thrown && l.n > 20, "swing %g throws and flies (%d frames)", speeds[k], l.n);
         dist[k] = -(l.land_z - BYC_REL_Z); pw[k] = l.power;
         CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
+        CHECK(fabs(pw[k] - 0.75 * sqrt(speeds[k] / 1.2)) < 1e-9,
+              "swing %g g gives 75%% of 0.1.4 power (%.3f)", speeds[k], pw[k]);
+        CHECK(dist[k] < old_dist[k], "swing %g g lands shorter (%.2f < %.2f m)", speeds[k], dist[k], old_dist[k]);
+        if (k > 0) CHECK(l.deck && front <= dist[k] && dist[k] <= back,
+                         "swing %g g lands on the deck (%.2f m)", speeds[k], dist[k]);
     }
-    printf("  swing speed -> power %.3f %.3f %.3f -> landing %.2f %.2f %.2f m\n", pw[0], pw[1], pw[2], dist[0], dist[1], dist[2]);
+    printf("  board z %.4f m, release z %.2f m, deck span %.3f m (%.4f–%.4f m from release)\n",
+           BYC_BOARD_Z, BYC_REL_Z, span, front, back);
+    printf("  swing 0.45 / 0.65 / 0.90 g -> power %.3f / %.3f / %.3f -> landing %.2f / %.2f / %.2f m\n",
+           pw[0], pw[1], pw[2], dist[0], dist[1], dist[2]);
     CHECK(pw[0] < pw[1] && pw[1] < pw[2], "faster swing -> more power");
     CHECK(dist[0] + 0.3 < dist[1] && dist[1] + 0.3 < dist[2], "faster swing lands measurably farther (%.2f < %.2f < %.2f m)", dist[0], dist[1], dist[2]);
+    Landing strong = swing_and_land(1.2, 0, 25, 0);
+    double strong_dist = BYC_REL_Z - strong.land_z;
+    CHECK(strong.thrown && strong.deck && fabs(strong.power - .75) < 1e-9 && dist[2] < strong_dist &&
+          front <= strong_dist && strong_dist <= back, "previous full-speed NORMAL swing lands farther on the deck (%.2f m)", strong_dist);
+    next_bag(); pick_height(2);
+    Landing near_full = swing_and_land(1.56, 0, 25, 0);
+    double near_dist = BYC_REL_Z - near_full.land_z;
+    CHECK(near_full.thrown && near_full.deck && near_full.power > .85 && near_full.power < 1 &&
+          front <= near_dist && near_dist <= back, "near-full KOBE reaches the deck (power %.3f, %.2f m)", near_full.power, near_dist);
+    next_bag(); pick_height(1);
+    Landing full = swing_and_land(2.2, 0, 25, 0);
+    double full_dist = BYC_REL_Z - full.land_z;
+    CHECK(full.thrown && full.power == 1 && full_dist > strong_dist,
+          "unclipped full-power NORMAL can reach board range (power %.3f, %.2f m)", full.power, full_dist);
+    printf("  strong NORMAL 1.20 g: %.3f at %.2f m; near-full KOBE 1.56 g: %.3f at %.2f m; full NORMAL 2.20 g: %.3f at %.2f m\n",
+           strong.power, strong_dist, near_full.power, near_dist, full.power, full_dist);
     /* direction: left vs right swing, mirrored for left-handed */
     Landing r = swing_and_land(0.6, 12, 25, 0), lft = swing_and_land(0.6, -12, 25, 0);
     printf("  swing right -> x %+.3f m, swing left -> x %+.3f m\n", r.land_x, lft.land_x);
@@ -657,7 +684,7 @@ static void test_swing_to_landing(void) {
         next_bag();
         CHECK(game.arc == (BagArc)h, "picker stays on %d for the next bag", h);
     }
-    printf("  SLIDER / NORMAL / LOB peak height %.2f / %.2f / %.2f m\n", arc[0].peak_y, arc[1].peak_y, arc[2].peak_y);
+    printf("  SLIDER / NORMAL / KOBE peak height %.2f / %.2f / %.2f m\n", arc[0].peak_y, arc[1].peak_y, arc[2].peak_y);
     CHECK(arc[0].peak_y + 0.1 < arc[1].peak_y && arc[1].peak_y + 0.1 < arc[2].peak_y, "slider < normal < lob: three distinct trajectories");
     CHECK(!same_flight(&arc[0], &arc[1], true) && !same_flight(&arc[1], &arc[2], true), "and the flights differ");
     /* D-pad left/right still steps the stance */
@@ -670,8 +697,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.4") == 0, "version is 0.1.4 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.4") == 0, "version tag v0.1.4 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.5") == 0, "version is 0.1.5 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.5") == 0, "version tag v0.1.5 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */

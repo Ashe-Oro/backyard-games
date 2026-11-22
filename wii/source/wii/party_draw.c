@@ -1,8 +1,7 @@
 /* Renderer for the 1.0.3 party NPCs (arcade/party.mjs): keg + pump + hose + picnic tap, the keg
  * guest and friend (with the keg-stand gag), the beer pong table with its scripted match, the
  * grill cook flipping food and tossing a burger to the dog, and the perimeter cacti. All motion
- * comes from source/core/party.c; this file only turns that state into lit voxel boxes. Eight-sided
- * cylinders are drawn as two boxes 45 degrees apart (same octagonal silhouette). */
+ * comes from source/core/party.c; this file only draws the props and voxel characters. */
 #include "party_draw.h"
 #include <math.h>
 
@@ -20,11 +19,13 @@ static void cube(const Xf *p, float w, float h, float d, unsigned col, float x, 
     V3 c = add3(p->t, m3_apply(&p->r, (V3){x, y * p->sy, z}));
     gfx_box(c, (V3){w, h * p->sy, d}, rgb(col), &p->r);
 }
-static void cyl8(const Xf *p, float r, float h, unsigned col, float x, float y, float z) {
-    float s = 1.848f * r;   /* inscribed octagon side-to-side */
-    cube(p, s, h, s, col, x, y, z);
-    Xf q = xf_child(p, (V3){x, y, z}, m3_euler_xyz(0, (float)M_PI / 4, 0));
-    cube(&q, s, h, s, col, 0, 0, 0);
+static void cylinder(const Xf *p, float radius, float inner, float h, unsigned col, float y, float z) {
+    V3 c = add3(p->t, m3_apply(&p->r, (V3){0, y * p->sy, z}));
+    gfx_cylinder(c, radius, inner, h * p->sy, rgb(col), &p->r);
+}
+static void keg_cup(const Xf *p, float y, float z, float lip_h) {
+    cylinder(p, .045f, 0, .11f, 0xd15a49, y, z);
+    cylinder(p, .0475f, .039f, lip_h, 0xfff1d1, y + .06f, z);
 }
 
 /* person(): torso, head, hair, eyes, legs, free arm group, other arm, optional cup in hand.
@@ -57,10 +58,7 @@ static void person(const Xf *g, const PersonLook *l) {
     } else cube(&arm, .075f, .15f, .075f, l->skin, 0, -.23f, 0);
     cube(g, .085f, .29f, .09f, l->shirt, -.175f * l->handedness, .65f, 0);
     cube(g, .075f, .06f, .075f, l->skin, -.175f * l->handedness, .48f, 0);
-    if (l->cup) {
-        cube(&arm, .09f, .11f, .09f, 0xd15a49, 0, -.29f, .035f);
-        cube(&arm, .095f, .018f, .095f, 0xfff1d1, 0, -.23f, .035f);
-    }
+    if (l->cup) keg_cup(&arm, -.29f, .035f, .018f);
 }
 
 /* Static props (recorded into the yard display list): keg stand + shell, pong table, cacti. */
@@ -69,12 +67,12 @@ void party_draw_static(void) {
     Xf keg = xf_root((V3){(float)PARTY_KEG_X, 0, (float)PARTY_KEG_Z}, I);
     cube(&keg, .68f, .13f, .62f, 0x7a5338, 0, .13f, 0);
     cube(&keg, .09f, .24f, .48f, 0x624730, -.23f, .12f, 0); cube(&keg, .09f, .24f, .48f, 0x624730, .23f, .12f, 0);
-    cyl8(&keg, .29f, .65f, 0xaebcb5, 0, .585f, 0);
+    cylinder(&keg, .29f, 0, .65f, 0xaebcb5, .585f, 0);
     static const float bands[4] = {.30f, .42f, .76f, .88f};
-    for (int i = 0; i < 4; i++) cyl8(&keg, .31f, .07f, 0x647b78, 0, bands[i], 0);
-    cyl8(&keg, .27f, .05f, 0xd8decb, 0, .93f, 0);          /* coupler rim (torus) */
+    for (int i = 0; i < 4; i++) cylinder(&keg, .31f, 0, .07f, 0x647b78, bands[i], 0);
+    cylinder(&keg, .27f, 0, .05f, 0xd8decb, .93f, 0);         /* coupler rim */
     cube(&keg, .16f, .065f, .15f, 0x647b78, 0, .965f, 0);
-    cyl8(&keg, .043f, .23f, 0xd8decb, 0, 1.11f, 0);         /* pump */
+    cylinder(&keg, .043f, 0, .23f, 0xd8decb, 1.11f, 0);        /* pump */
     cube(&keg, .13f, .04f, .06f, 0x647b78, .105f, .98f, .015f);
 
     Xf table = xf_root((V3){(float)PARTY_TABLE_X, 0, (float)PARTY_TABLE_Z}, m3_euler_xyz(0, (float)PARTY_TABLE_ROT_Y, 0));
@@ -129,10 +127,7 @@ void party_draw(const Party *p, V3 dog_mouth) {
     cube(&squeeze, .025f, .08f, .065f, 0x445750, 0, 0, 0);
     for (int i = 0; i < PARTY_HOSE_SEGMENTS; i++) hose_segment(&keg, p->hose[i], p->hose[i + 1]);
     if (p->stream_visible) cube(&keg, .018f, .13f, .018f, 0xe9be59, 0, .655f, .58f);
-    if (p->serving_visible) {
-        cube(&keg, .09f, .11f, .09f, 0xd15a49, 0, .53f, .58f);
-        cube(&keg, .095f, .015f, .095f, 0xfff1d1, 0, .59f, .58f);
-    }
+    if (p->serving_visible) keg_cup(&keg, .53f, .58f, .015f);
 
     /* keg guest and friend */
     Xf guest = xf_root(v3f(p->guest_pos), m3_euler_xyz((float)p->guest_rot_x, (float)p->guest_rot_y, 0));
@@ -157,10 +152,10 @@ void party_draw(const Party *p, V3 dog_mouth) {
         for (int i = 0; i < PONG_CUPS; i++) {
             if (!p->cup_visible[side][i]) continue;
             Xf cup = xf_child(&table, v3f(party_rack_cup(side, i)), I);
-            cyl8(&cup, .058f, .13f, side ? 0x387dce : 0xdd493c, 0, .065f, 0);
-            cyl8(&cup, .066f, .016f, 0xfff2ce, 0, .13f, 0);
+            cylinder(&cup, .058f, 0, .13f, side ? 0x387dce : 0xdd493c, .065f, 0);
+            cylinder(&cup, .066f, .051f, .016f, 0xfff2ce, .13f, 0);
         }
-    if (p->ball_visible) gfx_box_unlit(v3f(p->ball_world), (V3){.064f, .064f, .064f}, rgb(0xfff8d9));
+    if (p->ball_visible) gfx_sphere(v3f(p->ball_world), (float)PARTY_BALL_RADIUS, rgb(0xfff8d9));
 
     /* grill cook */
     Xf cook = xf_root((V3){(float)PARTY_COOK_X, 0, (float)PARTY_COOK_Z}, m3_euler_xyz(0, (float)PARTY_COOK_ROT_Y, 0));

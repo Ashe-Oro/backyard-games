@@ -18,7 +18,7 @@ double swing_speed(double e) {
     return isfinite(e) && e > 0 ? sqrt(SWING_RADIUS_M*SWING_GRAVITY*e) : 0;
 }
 double swing_power(double peak, double full) {
-    return isfinite(peak) && isfinite(full) && full > 0 ? clamp(peak/full, 0, 1) : 0;
+    return isfinite(peak) && isfinite(full) && full > 0 ? clamp(SWING_POWER_GAIN * (peak/full), 0, 1) : 0;
 }
 double swing_roll_spin(double roll, const SwingProfile *p) {
     if (!isfinite(roll) || !isfinite(p->spin_strength)) return 0;
@@ -425,6 +425,6 @@ SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult 
     cal->count = 0;
     for (unsigned i=0; i<SWING_CAL_TOSSES; ++i)
         if (fabs(cal->peaks[i]-median) > SWING_CAL_SPREAD*median) return SWING_CAL_RETRY;
-    profile->full_speed = clamp(median/lim.target_power, lim.full_speed_floor, lim.clip_ceiling);
+    profile->full_speed = clamp(SWING_POWER_GAIN * median/lim.target_power, lim.full_speed_floor, lim.clip_ceiling);
     return SWING_CAL_DONE;
 }

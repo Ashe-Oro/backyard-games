@@ -382,7 +382,7 @@ static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
     for (unsigned k=0;k<40;++k) { now+=17; queue(0,1,0); input_wpad_poll(&w,now); }
     printf("  bowling via WPAD %u Hz%s: %u throws power %.3f fallback %d\n",
            rate_hz,hitches ? " with hitches/drops/stall" : "",throws,shot.power,shot.fallback);
-    if (throws==1 && (shot.fallback || shot.power<.5)) return 98;
+    if (throws==1 && (shot.fallback || shot.power<.375)) return 98;
     return throws;
 }
 static void bowling_through_jittery_wpad(void) {

@@ -237,7 +237,7 @@ def watch_movie(out: Path, user: Path, pid: int, display: str, video: str, notes
         log = combined_log(out, user)
         info = parse(log)
         if capture and not (out / "strap.png").exists() and info["ui"] == 1:
-            wait_visible(display, out / "strap.png", 15)   # 0.1.4: shows the v0.1.4 tag
+            wait_visible(display, out / "strap.png", 15)   # shows the version tag
         if capture and not (out / "help.png").exists() and len(RE_HELP.findall(log)) >= 2:
             time.sleep(2.0)   # the X grab lags the game by a few seconds
             wait_visible(display, out / "help.png", 15)    # 0.1.4: the new help text, back on screen

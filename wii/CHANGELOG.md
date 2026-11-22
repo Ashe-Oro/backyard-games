@@ -10,6 +10,13 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.5] - 2026-11-22
+
+### Changed
+
+- Reduced Wii Remote throw power by 25% across the previous linear range. Stronger swings can still reach full power.
+- Rounded the keg, beer pong cups and ball, and the cups at the keg.
+
 ## [0.1.4] - 2026-11-21
 
 Wii Sports Bowling controls: the D-pad sets up the throw, the Wii Remote's swing does the rest, and the pointer is never used.

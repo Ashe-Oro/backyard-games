@@ -56,6 +56,9 @@ M3 m3_mul(const M3 *a, const M3 *b);
 V3 m3_apply(const M3 *m, V3 v);
 void gfx_box(V3 center, V3 size, Rgba color, const M3 *rot);   /* lit, world-space rotation */
 void gfx_box_unlit(V3 center, V3 size, Rgba color);
+/* A zero inner radius gives a solid cylinder. A positive one opens the centre for a rim. */
+void gfx_cylinder(V3 center, float radius, float inner_radius, float height, Rgba color, const M3 *rot);
+void gfx_sphere(V3 center, float radius, Rgba color);
 void gfx_quad3(V3 a, V3 b, V3 c, V3 d, Rgba color);
 void gfx_quad3_tex(V3 a, V3 b, V3 c, V3 d, Rgba color, float s0, float t0, float s1, float t1);
 
