@@ -2,7 +2,8 @@
 #include <math.h>
 #include <string.h>
 
-const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD HEIGHT/STEP | -/+ FINE AIM | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
+/* 0.1.4: one line per control, split at " | " by the HUD. -/+ do nothing in play. */
+const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING SPEED = POWER | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD UP/DOWN KOBE-NORMAL-SLIDER | D-PAD LEFT/RIGHT MOVE | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
 
 static double bound(double v, double lo, double hi) { return fmax(lo, fmin(hi,v)); }
 static void emit(Input *i, InputAction action, unsigned ch, double value, SwingResult toss) {
@@ -198,7 +199,8 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     bool b=i->b_held[ch];
     if (i->detector.phase==SWING_SPENT) return;
     if (!armed && !b) {
-        uint32_t changes=pressed & (INPUT_A|INPUT_UP|INPUT_DOWN|INPUT_LEFT|INPUT_RIGHT|INPUT_TWO|INPUT_MINUS|INPUT_PLUS);
+        /* -/+ are not gameplay controls (0.1.4): they neither aim nor reset the swing. */
+        uint32_t changes=pressed & (INPUT_A|INPUT_UP|INPUT_DOWN|INPUT_LEFT|INPUT_RIGHT|INPUT_TWO);
         if (changes) {
             if (changes & INPUT_A) { slot->sticky=!slot->sticky; action(i,INPUT_SURFACE,ch,slot->sticky); }
             if (changes & (INPUT_UP|INPUT_DOWN)) {
@@ -212,11 +214,8 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
                 slot->stance_ms=p->motion.ms;
                 action(i,INPUT_STEP,ch,slot->stance);
             }
-            if (changes & (INPUT_MINUS|INPUT_PLUS))
-                slot->aim=bound(slot->aim+((changes&INPUT_PLUS)?SWING_AIM_NUDGE:0)-
-                                ((changes&INPUT_MINUS)?SWING_AIM_NUDGE:0),-SWING_AIM_MAX,SWING_AIM_MAX);
             if (changes & INPUT_TWO) {
-                slot->aim=slot->stance=slot->stance_from=0;
+                slot->stance=slot->stance_from=0;
                 action(i,INPUT_RESET_BAG,ch,0);
             }
             swing_reset(&i->detector,true);
@@ -228,7 +227,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     SwingSample motion=p->motion;
     motion.b=b;
     motion.manual_release=true;
-    SwingResult r=swing_feed(&i->detector,&motion,slot->aim,&slot->profile);
+    SwingResult r=swing_feed(&i->detector,&motion,&slot->profile);
     if (r.thrown) {
         i->stats.last_toss=r;
         i->stats.have_toss=true;

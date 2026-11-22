@@ -544,6 +544,135 @@ static SwingSeen bowling_swing(double forward_e, double lateral, bool release) {
     return seen;
 }
 static void next_bag(void) { int guard = 0; while (game.phase != PH_AIM && guard++ < 6000) frames(1); frames(1); }
+/* ---------------- 0.1.4: swing = power + direction, picker = height ---------------- */
+static void remote_feed(double e, double pitch, double roll, uint32_t buttons) {
+    now_ms += 10;
+    double p = pitch * SWING_PI / 180, r = roll * SWING_PI / 180;
+    InputSample s; memset(&s, 0, sizeof s);
+    s.motion.ms = now_ms; s.motion.g = (SwingVector){(1 + e) * sin(r) * cos(p), (1 + e) * sin(p), (1 + e) * cos(r) * cos(p)};
+    s.motion.accel_valid = true; s.motion.b = (buttons & INPUT_B) != 0; s.buttons_valid = true; s.buttons = buttons;
+    input_feed(&input, 0, &s); drain();
+}
+static void remote_buttons(double e, double pitch, double roll, uint32_t buttons) {
+    remote_feed(e, pitch, roll, buttons);
+    game_update(&game, 0.01, now_ms); drain();
+}
+static void tap(uint32_t button) { remote_buttons(0, 0, 0, button); remote_buttons(0, 0, 0, 0); }
+/* The throw-type picker through the real input layer: D-pad DOWN twice (SLIDER), then UP h times. */
+static void pick_height(int h) {
+    tap(INPUT_DOWN); tap(INPUT_DOWN);
+    for (int i = 0; i < h; i++) tap(INPUT_UP);
+}
+#define LAND_MAX 600
+typedef struct { bool thrown; double land_x, land_z, peak_y, power, aim; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
+/* Hold B, swing back, swing forward (lateral = sideways lean in degrees), let go with the remote at
+ * release_pitch. The flight is the launched bag stepped at the game's fixed 240 Hz until it first
+ * touches down (independent of where the frame accumulator happened to be). */
+static Landing swing_and_land(double forward_e, double lateral, double release_pitch, uint32_t noise) {
+    static Landing l; memset(&l, 0, sizeof l);
+    next_bag();
+    game_clear_board(&game); frames(1);   /* an empty board: no earlier bag to land on */
+    for (int i = 0; i < 30; i++) remote_buttons(0, 0, 0, (i % 2) ? noise : 0);
+    for (int i = 0; i < 8; i++) remote_buttons(0, 0, 0, INPUT_B | ((i % 2) ? noise : 0));
+    for (int i = 0; i < 15; i++) remote_buttons(0.5, 0, 0, INPUT_B);
+    for (int i = 0; i < 20; i++) remote_buttons(0, -35, 0, INPUT_B | ((i % 2) ? noise : 0));
+    int bags = game.nbags;
+    for (int i = 0; i < 18; i++) remote_buttons(forward_e, 0, lateral, INPUT_B | ((i % 2) ? noise : 0));
+    Bag launch; memset(&launch, 0, sizeof launch);
+    remote_feed(forward_e, release_pitch, lateral, 0);
+    if (game.nbags == bags + 1) launch = game.bags[game.nbags - 1];
+    game_update(&game, 0.01, now_ms); drain();
+    for (int i = 0; i < 3 && game.nbags == bags; i++) {
+        remote_feed(0, release_pitch, 0, 0);
+        if (game.nbags == bags + 1) launch = game.bags[game.nbags - 1];
+        game_update(&game, 0.01, now_ms); drain();
+    }
+    l.thrown = game.nbags == bags + 1;
+    if (!l.thrown) return l;
+    l.power = input.stats.last_toss.power; l.aim = input.stats.last_toss.aim;
+    Wind calm = game.wind;
+    while (launch.state == BAG_FLY && l.n < LAND_MAX) {
+        l.x[l.n] = launch.p.x; l.y[l.n] = launch.p.y; l.z[l.n] = launch.p.z; l.n++;
+        l.peak_y = fmax(l.peak_y, launch.p.y);
+        physics_substep(&launch, 1, &calm);
+    }
+    l.land_x = launch.p.x; l.land_z = launch.p.z;
+    frames(300);
+    return l;
+}
+static bool same_flight(const Landing *a, const Landing *b, bool vertical_only) {
+    if (a->n != b->n) return false;
+    for (int i = 0; i < a->n; i++) {
+        if (fabs(a->y[i] - b->y[i]) > 1e-12) return false;
+        if (!vertical_only && (fabs(a->x[i] - b->x[i]) > 1e-12 || fabs(a->z[i] - b->z[i]) > 1e-12)) return false;
+    }
+    return true;
+}
+static void test_swing_to_landing(void) {
+    practice_ready(141);
+    CHECK(game.wind.mph == 0, "practice is calm (%g mph)", game.wind.mph);
+    pick_height(1);
+    CHECK(game.arc == ARC_NORMAL && game.heights[0] == 1, "picker on NORMAL");
+    /* power: three swing speeds, strictly increasing distance */
+    const double speeds[3] = {0.45, 0.65, 0.9};   /* all above the 0.35 g stroke threshold */
+    double dist[3], pw[3];
+    for (int k = 0; k < 3; k++) {
+        Landing l = swing_and_land(speeds[k], 0, 25, 0);
+        CHECK(l.thrown && l.n > 20, "swing %g throws and flies (%d frames)", speeds[k], l.n);
+        dist[k] = -(l.land_z - BYC_REL_Z); pw[k] = l.power;
+        CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
+    }
+    printf("  swing speed -> power %.3f %.3f %.3f -> landing %.2f %.2f %.2f m\n", pw[0], pw[1], pw[2], dist[0], dist[1], dist[2]);
+    CHECK(pw[0] < pw[1] && pw[1] < pw[2], "faster swing -> more power");
+    CHECK(dist[0] + 0.3 < dist[1] && dist[1] + 0.3 < dist[2], "faster swing lands measurably farther (%.2f < %.2f < %.2f m)", dist[0], dist[1], dist[2]);
+    /* direction: left vs right swing, mirrored for left-handed */
+    Landing r = swing_and_land(0.6, 12, 25, 0), lft = swing_and_land(0.6, -12, 25, 0);
+    printf("  swing right -> x %+.3f m, swing left -> x %+.3f m\n", r.land_x, lft.land_x);
+    CHECK(r.thrown && lft.thrown && r.land_x > 0.1 && lft.land_x < -0.1, "right swing lands right, left swing lands left (%g, %g)", r.land_x, lft.land_x);
+    CHECK(fabs(r.land_x + lft.land_x) < 1e-9, "mirror images");
+    SwingProfile lefty = input.slots[0].profile; lefty.left_handed = true; input_set_profile(&input, 0, lefty);
+    Landing lr = swing_and_land(0.6, 12, 25, 0), ll = swing_and_land(0.6, -12, 25, 0);
+    CHECK(lr.land_x < -0.1 && ll.land_x > 0.1 && fabs(lr.land_x + r.land_x) < 1e-9, "LEFT HAND mirrors (%g, %g)", lr.land_x, ll.land_x);
+    lefty.left_handed = false; input_set_profile(&input, 0, lefty);
+    /* -/+ pressed throughout the swing change nothing */
+    Landing base = swing_and_land(0.6, 12, 25, 0), plus = swing_and_land(0.6, 12, 25, INPUT_PLUS), minus = swing_and_land(0.6, 12, 25, INPUT_MINUS);
+    CHECK(plus.thrown && minus.thrown && same_flight(&base, &plus, false) && same_flight(&base, &minus, false), "-/+ during play leave the flight identical");
+    /* height: release pitch never changes the arc; only the picker does */
+    const double pitches[4] = {-30, 0, 25, 80};
+    Landing straight[4], lean[4];
+    for (int k = 0; k < 4; k++) { straight[k] = swing_and_land(0.6, 0, pitches[k], 0); }
+    for (int k = 0; k < 4; k++) { lean[k] = swing_and_land(0.6, 12, pitches[k], 0); }
+    bool same = true, same_lean = true;
+    for (int k = 1; k < 4; k++) {
+        same = same && straight[k].thrown && same_flight(&straight[0], &straight[k], false);
+        same_lean = same_lean && lean[k].thrown && same_flight(&lean[0], &lean[k], true) && fabs(lean[k].peak_y - lean[0].peak_y) < 1e-12;
+    }
+    CHECK(same, "release pitch -30/0/25/80 deg: identical flight");
+    CHECK(same_lean, "with a sideways swing too: identical arc (height profile)");
+    Landing arc[3];
+    for (int h = 0; h < 3; h++) {
+        next_bag(); pick_height(h);
+        CHECK(game.heights[0] == h, "picker set to %d", h);
+        arc[h] = swing_and_land(0.6, 0, 25, 0);
+        next_bag();
+        CHECK(game.arc == (BagArc)h, "picker stays on %d for the next bag", h);
+    }
+    printf("  SLIDER / NORMAL / LOB peak height %.2f / %.2f / %.2f m\n", arc[0].peak_y, arc[1].peak_y, arc[2].peak_y);
+    CHECK(arc[0].peak_y + 0.1 < arc[1].peak_y && arc[1].peak_y + 0.1 < arc[2].peak_y, "slider < normal < lob: three distinct trajectories");
+    CHECK(!same_flight(&arc[0], &arc[1], true) && !same_flight(&arc[1], &arc[2], true), "and the flights differ");
+    /* D-pad left/right still steps the stance */
+    next_bag(); pick_height(1);
+    double before = input.slots[0].stance;
+    tap(INPUT_RIGHT); frames(10);
+    CHECK(fabs(input.slots[0].stance - before - SWING_STEP) < 1e-9 && fabs(game.position[0] - input.slots[0].stance) < 1e-9, "D-pad RIGHT steps the stance (%g)", game.position[0]);
+    tap(INPUT_LEFT); tap(INPUT_LEFT); frames(10);
+    CHECK(fabs(game.position[0] - (before - SWING_STEP)) < 1e-9, "D-pad LEFT steps back (%g)", game.position[0]);
+    tap(INPUT_TWO); frames(10);
+}
+static void test_version_tag(void) {
+    CHECK(strcmp(BYC_VERSION, "0.1.4") == 0, "version is 0.1.4 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.4") == 0, "version tag v0.1.4 (%s)", game_version_tag());
+}
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
 static void test_widescreen_layout(void) {
@@ -846,6 +975,8 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
+    test_swing_to_landing();
+    test_version_tag();
     test_widescreen_layout();
     test_unlimited_practice();
     test_music();

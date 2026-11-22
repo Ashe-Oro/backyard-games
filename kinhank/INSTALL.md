@@ -7,13 +7,13 @@ The original Wii hardware target is separate: see [../wii/INSTALL-WII.md](../wii
 and [../TARGETS.md](../TARGETS.md). Do not put this bundle's `GameSettings` on
 a real Wii; that hardware ignores it and tops out at 480p.
 
-This is the playable 0.1.3 Bowling-throw build, rendered at 3× (about 1080p) in
+This is the playable 0.1.4 Bowling-throw build, rendered at 3× (about 1080p) in
 Dolphin. Desktop smoke does not validate real Wiimote feel or Android
 performance. Owner: Ashe.
 
 ## Bundle
 
-From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.3.zip` release:
+From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.4.zip` release:
 
 ```text
 BackyardCornhole-BYCEAO.iso
@@ -98,7 +98,10 @@ Controller settings (affects every game). Do not raise the global internal
 resolution. The 3× setting still comes from this game's ini, so keep
 installing it with `chmod 666`.
 
-Controls: hold B, swing back, swing forward, then release B. D-pad left/right
-slides along the foul line; sideways motion and wrist twist add spin. Choose
+Controls: hold B, swing back, swing forward, then release B. Swing speed is
+power, swinging left/right aims, and wrist twist curls. D-pad up/down picks
+LOB / NORMAL / SLIDER (the only control for height); D-pad left/right slides
+along the foul line. -/+ do nothing in play. The pointer is never used. The
+version (v0.1.4) shows on the STRAP ON! screen and in the bottom-right corner. Choose
 LEFT/RIGHT hand for each player in SETTINGS. Hold 1+2 for two seconds to
 toggle live swing diagnostics.

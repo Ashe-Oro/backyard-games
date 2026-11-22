@@ -16,7 +16,7 @@
 #include "arrow.h"
 
 #ifndef BYC_VERSION
-#define BYC_VERSION "0.1.3"
+#define BYC_VERSION "0.1.4"
 #endif
 
 #define GAME_MENU_MAX 16
@@ -138,6 +138,8 @@ bool game_throw(Game *g, double power, double aim, double spin);  /* as a human 
 void game_menu_select(Game *g, MenuItemId id);
 void game_clear_board(Game *g);
 /* Launch yaw and physical power the HUD arrow shows for a toss (same maths as the throw). */
+/* "v" BYC_VERSION: drawn on the strap screen and in a corner of the in-game HUD. */
+const char *game_version_tag(void);
 double game_launch_yaw(const Game *g, int team, double aim);
 
 #endif

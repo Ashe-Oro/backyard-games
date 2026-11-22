@@ -2,7 +2,7 @@
 #define BYC_SWING_CONFIG_H
 
 /* Candidate constants, not hardware-validated tuning. Units are ms, g, m/s, degrees. */
-#define SWING_VERSION "bowling-grip-0.1.3"
+#define SWING_VERSION "bowling-grip-0.1.4"
 #define SWING_WINDOW_MS 80
 #define SWING_MIN_SPAN_MS 16
 #define SWING_NOISE_G 0.15
@@ -35,7 +35,6 @@
 #define SWING_AIM_MAX 0.12
 #define SWING_LATERAL_FULL 0.5
 #define SWING_LATERAL_DEAD 0.03
-#define SWING_AIM_NUDGE 0.01
 #define SWING_STEP 0.05
 #define SWING_STEP_CLAMP 0.45
 #define SWING_STEP_EASE_MS 70

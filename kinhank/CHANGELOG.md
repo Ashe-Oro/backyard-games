@@ -9,6 +9,24 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.4] - 2026-11-21
+
+Wii Sports Bowling controls on the Kinhank. The pointer is not used; the
+DolphinBar only passes buttons and the accelerometer through.
+
+- Same ISO and DOL as `wii-v0.1.4` (`BYCEAO`); `GameSettings/BYCEAO.ini` is
+  unchanged (real Wii Remotes, `InternalResolution = 3`, `chmod 666` after
+  ADB).
+- Swing speed is the power and swinging left/right is the aim. The −/+
+  fine-aim nudge and its `AIM: +N` label are gone; −/+ do nothing in play.
+- D-pad up/down picks LOB / NORMAL / SLIDER, the only control for the arc.
+  Release pitch never changes it. D-pad left/right still moves along the
+  foul line.
+- New in-game help text and bottom bar to match. The 1+2 overlay adds the
+  last throw's power and aim.
+- The version shows on the STRAP ON! screen and in the bottom-right corner
+  during play (v0.1.4), so it can be checked on the TV.
+
 ## [0.1.3] - 2026-11-21
 
 The 0.1.3 Bowling throw, packaged for Dolphin on the Kinhank at 3x internal

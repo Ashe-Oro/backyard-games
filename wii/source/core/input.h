@@ -30,9 +30,9 @@ typedef struct {
 } InputSample;
 typedef struct {
     SwingProfile profile;
-    double aim, stance, stance_from;
+    double stance, stance_from; /* D-pad LEFT/RIGHT steps along the foul line */
     uint64_t stance_ms;
-    int height; /* 0 SLIDER, 1 NORMAL, 2 KOBE */
+    int height; /* throw-type picker, D-pad UP/DOWN: 0 SLIDER, 1 NORMAL, 2 LOB (ARC_KOBE) */
     bool sticky;
 } InputSlot;
 typedef struct {
