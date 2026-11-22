@@ -104,7 +104,7 @@ static void full_throw_checks(const char *name, const Outcome *o) {
     CHECK(o->gripped,"%s: B down did not grip on the same report",name);
     CHECK(o->throws==1,"%s: %u throws",name,o->throws);
     CHECK(o->throws!=1 || !o->toss.fallback,"%s: full swing fell back to a lob",name);
-    CHECK(o->throws!=1 || o->toss.power>=.5,"%s: power %.3f",name,o->toss.power);
+    CHECK(o->throws!=1 || o->toss.power>=.375,"%s: power %.3f",name,o->toss.power);
 }
 
 /* (a) B pressed while the remote is still moving into the start pose. */
@@ -183,7 +183,7 @@ static void f_back_to_back(void) {
         report(name,&o);
         CHECK(first.throws==1,"(f): first throw %u",first.throws);
         CHECK(o.throws==1,"%s: %u throws",name,o.throws);
-        CHECK(o.throws!=1 || o.toss.power>=.5,"%s: power %.3f",name,o.toss.power);
+        CHECK(o.throws!=1 || o.toss.power>=.375,"%s: power %.3f",name,o.toss.power);
     }
 }
 
@@ -259,7 +259,7 @@ static void power_follows_forward_speed(void) {
             CHECK(o.throws==1 && o.toss.power>last,"forward %.2f s: power %.3f not above %.3f",t.fwd_s,o.toss.power,last);
             last=o.toss.power;
         }
-        CHECK(last>.85,"a quick forward swing should be near full power (%.3f)",last);
+        CHECK(last>.6375,"a quick forward swing should produce strong power (%.3f)",last);
     }
 }
 /* B used to leave the pause menu must not grip on the way back into play. */

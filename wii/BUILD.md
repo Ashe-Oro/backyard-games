@@ -1,4 +1,4 @@
-# Build Backyard Cornhole Wii 0.1.4
+# Build Backyard Cornhole Wii 0.1.5
 
 Run the commands below from the repository root after cloning this repository
 with the Wii source tree present. For playing on hardware, see [INSTALL-WII.md](INSTALL-WII.md).
@@ -130,8 +130,8 @@ make -C wii release OUT=dist
   make -C wii release OUT=/workspace/uploads/wii-game
   ```
 
-The HBC ZIP is `BackyardCornhole-HBC-v0.1.4.zip`; the full ZIP is
-`BackyardCornhole-BYCEAO-v0.1.4-release.zip`. The ISO and HBC ZIP are always
+The HBC ZIP is `BackyardCornhole-HBC-v0.1.5.zip`; the full ZIP is
+`BackyardCornhole-BYCEAO-v0.1.5-release.zip`. The ISO and HBC ZIP are always
 built in `wii/dist/` first, even with a different OUT. ZIP metadata is fixed
 and entries/checksums are sorted for repeatable packaging.
 
@@ -184,7 +184,8 @@ releasing into the NORMAL/SLICK board window. A pass requires a B-up throw,
 a scored callout (ON THE BOARD, HANGER! or CORNHOLE!), an FPS number and
 both overlay transitions. The Null backend has no framebuffer. For Practice,
 overlay and score screenshots, set `E2E_VIDEO=Vulkan` or `E2E_VIDEO=OGL`
-with a working renderer. `E2E_MODE=mouse` can drive menus and the IMU with
+with a working renderer. Set `E2E_INTERNAL_RESOLUTION=3` to match the Kinhank
+profile. `E2E_MODE=mouse` can drive menus and the IMU with
 `xdotool` on setups with suitable XInput mappings. Outputs go under
 `wii/build/wiimote-e2e/` unless you set `E2E_OUT`. The run checks for DSP
 warnings and checks that the DOL contains a

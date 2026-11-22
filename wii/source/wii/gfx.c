@@ -287,6 +287,95 @@ static void box_impl(V3 c, V3 s, Rgba color, const M3 *rot, bool lit) {
 }
 void gfx_box(V3 c, V3 s, Rgba color, const M3 *rot) { box_impl(c, s, color, rot, true); }
 void gfx_box_unlit(V3 c, V3 s, Rgba color) { box_impl(c, s, color, NULL, false); }
+
+enum { ROUND_SIDES = 32, SPHERE_BANDS = 12 };
+static V3 round_circle[ROUND_SIDES + 1];
+static float sphere_cos[SPHERE_BANDS + 1], sphere_sin[SPHERE_BANDS + 1];
+
+static void init_round_mesh(void) {
+    static bool ready;
+    if (ready) return;
+    for (int i = 0; i < ROUND_SIDES; i++) {
+        float a = (float)(2 * M_PI) * i / ROUND_SIDES;
+        round_circle[i] = (V3){cosf(a), 0, sinf(a)};
+    }
+    round_circle[ROUND_SIDES] = round_circle[0];  /* identical positions and lighting at the seam */
+    for (int i = 1; i < SPHERE_BANDS; i++) {
+        float a = (float)M_PI * i / SPHERE_BANDS;
+        sphere_cos[i] = cosf(a);
+        sphere_sin[i] = sinf(a);
+    }
+    sphere_cos[0] = 1;
+    sphere_cos[SPHERE_BANDS] = -1;
+    ready = true;
+}
+static void cylinder_vertex(V3 c, const M3 *rot, V3 p, Rgba color) {
+    if (rot) p = m3_apply(rot, p);
+    vtx((V3){c.x + p.x, c.y + p.y, c.z + p.z}, color);
+}
+static void cylinder_wall(V3 c, float radius, float half, Rgba color, const M3 *rot, float normal_dir) {
+    GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, 2 * (ROUND_SIDES + 1));
+    for (int i = 0; i <= ROUND_SIDES; i++) {
+        V3 u = round_circle[i], n = {normal_dir * u.x, 0, normal_dir * u.z};
+        Rgba lit = shade(color, rot ? m3_apply(rot, n) : n);
+        cylinder_vertex(c, rot, (V3){radius * u.x, -normal_dir * half, radius * u.z}, lit);
+        cylinder_vertex(c, rot, (V3){radius * u.x, normal_dir * half, radius * u.z}, lit);
+    }
+    GX_End();
+}
+static void cylinder_cap(V3 c, float radius, float inner, float y, Rgba color, const M3 *rot) {
+    V3 n = {0, copysignf(1, y), 0};
+    Rgba lit = shade(color, rot ? m3_apply(rot, n) : n);
+    if (inner > 0) {
+        GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, 2 * (ROUND_SIDES + 1));
+    } else {
+        GX_Begin(GX_TRIANGLEFAN, GX_VTXFMT0, ROUND_SIDES + 2);
+        cylinder_vertex(c, rot, (V3){0, y, 0}, lit);
+    }
+    for (int i = 0; i <= ROUND_SIDES; i++) {
+        V3 u = round_circle[y < 0 ? i : ROUND_SIDES - i];
+        if (inner > 0) cylinder_vertex(c, rot, (V3){inner * u.x, y, inner * u.z}, lit);
+        cylinder_vertex(c, rot, (V3){radius * u.x, y, radius * u.z}, lit);
+    }
+    GX_End();
+}
+void gfx_cylinder(V3 c, float radius, float inner, float height, Rgba color, const M3 *rot) {
+    init_round_mesh();
+    tex_bind(NULL);
+    float half = height * .5f;
+    cylinder_wall(c, radius, half, color, rot, 1);
+    if (inner > 0) cylinder_wall(c, inner, half, color, rot, -1);
+    cylinder_cap(c, radius, inner, half, color, rot);
+    cylinder_cap(c, radius, inner, -half, color, rot);
+}
+
+static void sphere_vertex(V3 c, float r, Rgba color, int latitude, int longitude) {
+    V3 u = round_circle[longitude];
+    float ring = sphere_sin[latitude];
+    V3 normal = {u.x * ring, sphere_cos[latitude], u.z * ring};
+    vtx((V3){c.x + r * normal.x, c.y + r * normal.y, c.z + r * normal.z}, shade(color, normal));
+}
+void gfx_sphere(V3 c, float radius, Rgba color) {
+    init_round_mesh();
+    tex_bind(NULL);
+    GX_Begin(GX_TRIANGLEFAN, GX_VTXFMT0, ROUND_SIDES + 2);
+    sphere_vertex(c, radius, color, 0, 0);
+    for (int i = ROUND_SIDES; i >= 0; i--) sphere_vertex(c, radius, color, 1, i);
+    GX_End();
+    for (int lat = 1; lat < SPHERE_BANDS - 1; lat++) {
+        GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, 2 * (ROUND_SIDES + 1));
+        for (int i = 0; i <= ROUND_SIDES; i++) {
+            sphere_vertex(c, radius, color, lat + 1, i);
+            sphere_vertex(c, radius, color, lat, i);
+        }
+        GX_End();
+    }
+    GX_Begin(GX_TRIANGLEFAN, GX_VTXFMT0, ROUND_SIDES + 2);
+    sphere_vertex(c, radius, color, SPHERE_BANDS, 0);
+    for (int i = 0; i <= ROUND_SIDES; i++) sphere_vertex(c, radius, color, SPHERE_BANDS - 1, i);
+    GX_End();
+}
+
 void gfx_quad3(V3 a, V3 b, V3 c, V3 d, Rgba color) {
     tex_bind(NULL);
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4); vtx(a, color); vtx(b, color); vtx(c, color); vtx(d, color); GX_End();
