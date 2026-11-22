@@ -3,7 +3,7 @@
 #include <string.h>
 
 /* 0.1.4: one line per control, split at " | " by the HUD. -/+ do nothing in play. */
-const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING SPEED = POWER | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD UP/DOWN LOB-NORMAL-SLIDER | D-PAD LEFT/RIGHT MOVE | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
+const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING SPEED = POWER | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD UP/DOWN KOBE-NORMAL-SLIDER | D-PAD LEFT/RIGHT MOVE | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
 
 static double bound(double v, double lo, double hi) { return fmax(lo, fmin(hi,v)); }
 static void emit(Input *i, InputAction action, unsigned ch, double value, SwingResult toss) {

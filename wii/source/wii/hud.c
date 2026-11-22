@@ -165,7 +165,7 @@ static void help_legend(const Game *g, const Input *in) {
     if (game_menu_screen(g) || g->phase == PH_MENU) return;
     int t = game_thrower(g);
     /* the throw-type picker (D-pad UP/DOWN): the only source of the arc */
-    static const char *const heights[3] = {"SLIDER", "NORMAL", "LOB"};
+    static const char *const heights[3] = {"SLIDER", "NORMAL", "KOBE"};
     char status[64];
     const char *state = "-";
     if (in && g->phase == PH_AIM && game_is_human(g, t)) state = in->detector.phase == SWING_READY ? "HOLD B" : "SWING";

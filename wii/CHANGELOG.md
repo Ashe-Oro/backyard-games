@@ -18,7 +18,7 @@ Wii Sports Bowling controls: the D-pad sets up the throw, the Wii Remote's swing
 - Removed the −/+ fine-aim nudge and its `AIM: +N` label. In play, −/+ now do nothing (they no longer reset the swing either). In menus they still adjust settings.
 - The arc comes only from the throw-type picker, D-pad up/down: LOB / NORMAL / SLIDER (the bottom bar now says LOB where it said KOBE). The remote's pitch at release never changes the arc.
 - D-pad left/right still steps along the foul line. A (surface), 2 (reset), 1 (help), HOME (pause) and the 1+2 overlay are unchanged.
-- New help text, one control per line: B HOLD, SWING BACK & FORWARD, LET GO / SWING SPEED = POWER / SWING LEFT/RIGHT TO AIM / TWIST TO CURL / D-PAD UP/DOWN LOB-NORMAL-SLIDER / D-PAD LEFT/RIGHT MOVE / A SURFACE / 2 RESET / 1 HELP / HOME PAUSE. The bottom bar shows the B state, the picker, the surface and D-pad MOVE.
+- New help text, one control per line: B HOLD, SWING BACK & FORWARD, LET GO / SWING SPEED = POWER / SWING LEFT/RIGHT TO AIM / TWIST TO CURL / D-PAD UP/DOWN KOBE-NORMAL-SLIDER / D-PAD LEFT/RIGHT MOVE / A SURFACE / 2 RESET / 1 HELP / HOME PAUSE. The bottom bar shows the B state, the picker, the surface and D-pad MOVE.
 - The 1+2 overlay adds the last throw's power and aim.
 - The version (v0.1.4) shows on the STRAP ON! screen and in the bottom-right corner during play.
 

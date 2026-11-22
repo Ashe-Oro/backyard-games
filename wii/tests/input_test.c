@@ -456,7 +456,7 @@ static void setup_pause_hand_selection_and_calibration(void) {
     assert(strstr(input_help_text,"SWING LEFT/RIGHT TO AIM"));
     /* 0.1.4 help matches the controls: speed = power, D-pad up/down = arc, no -/+ fine aim. */
     const char *want[]={"B HOLD, SWING BACK & FORWARD, LET GO","SWING SPEED = POWER","TWIST TO CURL",
-        "D-PAD UP/DOWN LOB-NORMAL-SLIDER","D-PAD LEFT/RIGHT MOVE","A SURFACE","2 RESET","1 HELP","HOME PAUSE"};
+        "D-PAD UP/DOWN KOBE-NORMAL-SLIDER","D-PAD LEFT/RIGHT MOVE","A SURFACE","2 RESET","1 HELP","HOME PAUSE"};
     for (unsigned n=0;n<sizeof want/sizeof want[0];++n) assert(strstr(input_help_text,want[n]));
     assert(!strstr(input_help_text,"-/+") && !strstr(input_help_text,"FINE AIM") && !strstr(input_help_text,"POINT"));
 }

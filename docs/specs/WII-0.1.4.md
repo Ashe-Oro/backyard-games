@@ -12,7 +12,7 @@ In gameplay (PH_AIM, human thrower):
 - Power stays the forward swing speed (swing_power(peak, full_speed), swing.c about line 226).
 - Keep D-pad LEFT/RIGHT stepping the starting position along the foul line, exactly as now.
 - Keep A (sticky/slick surface), 1 (help), 2 (reset), HOME (pause) and the 1+2 debug overlay. Menus keep their D-pad, -/+ and A/2 navigation; this change is gameplay-only.
-- Update the in-game help text and the bottom help bar to match. For example: "B HOLD, SWING BACK & FORWARD, LET GO / SWING SPEED = POWER / SWING LEFT/RIGHT TO AIM / TWIST TO CURL / D-PAD UP/DOWN LOB-NORMAL-SLIDER / D-PAD LEFT/RIGHT MOVE / A SURFACE / 2 RESET / 1 HELP / HOME PAUSE". Keep the lob/normal/slider indicator.
+- Update the in-game help text and the bottom help bar to match. For example: "B HOLD, SWING BACK & FORWARD, LET GO / SWING SPEED = POWER / SWING LEFT/RIGHT TO AIM / TWIST TO CURL / D-PAD UP/DOWN KOBE-NORMAL-SLIDER / D-PAD LEFT/RIGHT MOVE / A SURFACE / 2 RESET / 1 HELP / HOME PAUSE". Keep the lob/normal/slider indicator.
 - Add these debug overlay lines: the last throw's power and aim.
 - Show the version: draw a small "v0.1.4" on the Wiimote strap screen and in a corner of the in-game HUD (Retro couldn't read it over ADB).
 - Update docs (docs/wii-port/WIIMOTE_ARCADE_MAPPING.md, TARGETS.md if it lists controls) to the new mapping.
