@@ -1,2 +1,42 @@
 # Web test screenshots (written relative to web/ by web/tests/run_all.py); never committed or deployed.
 /web/shots/
+
+# Agent and process clutter. Write run logs, reviews, Codex/Claude task
+# prompts, summaries, and QA scratch here (or outside the repo entirely).
+# Do not commit these files.
+/agent-logs/
+/logs/
+/runs/
+/run-logs/
+/out/
+/reviews/
+/codex-tasks/
+/prompts/
+/tasks/
+
+# Root-level Codex / Claude task, review, summary, and output files.
+/CODEX_*.md
+/CLAUDE_*.md
+/codex-*.md
+/codex-*.txt
+/codex-*.log
+/claude-*.log
+/claude-*.txt
+/chain-*.log
+/*_PROMPT.md
+/*_TASK.md
+/*-review.md
+/REVIEW*.md
+
+# Generic log / tool output (does not ignore WII-0.1.x-LOG.md release notes).
+*.log
+*.out
+*.jsonl
+
+# Leftover git bundles
+/*.bundle
+
+# Agent QA screenshot dumps (product/owner shots in shots/ stay trackable).
+/shots/review*/
+/shots/task*.png
+/shots/task*.json

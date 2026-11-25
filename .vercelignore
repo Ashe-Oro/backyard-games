@@ -13,3 +13,22 @@ web/shots
 node_modules
 dist
 .cache
+
+# Agent and process clutter — never deploy.
+agent-logs
+logs
+runs
+run-logs
+out
+reviews
+codex-tasks
+prompts
+tasks
+*.log
+*.out
+*.jsonl
+*.bundle
+CODEX_*.md
+CLAUDE_*.md
+codex-*.md
+codex-*.txt

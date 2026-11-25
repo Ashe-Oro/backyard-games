@@ -17,3 +17,8 @@ gameplay values is logged in **each** affected platform's changelog and gets an 
 
 **Tags:** `v1.0.0` through `v1.0.5` are arcade releases. Entries 1.0.0–1.0.3 moved from this file to [arcade/CHANGELOG.md](arcade/CHANGELOG.md) unchanged; 1.0.4 and 1.0.5 are recorded there too
 (`git log --follow arcade/CHANGELOG.md`). Those tags are never moved or deleted.
+
+## Unreleased
+
+### Changed
+- Removed committed agent run logs, Codex/Claude task and review markdown, Codex output files, a leftover git bundle, and agent QA screenshots (`shots/task*`, `shots/review2/`) from the tree, and gitignored that class of files. Going forward, agents should write this material to `/agent-logs/` (ignored) or outside the repo. Release notes (`WII-0.1.x-LOG.md`), product docs, tests, and non-task screenshots stay. History is not rewritten, so the files remain in earlier commits.
