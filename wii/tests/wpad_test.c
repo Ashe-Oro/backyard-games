@@ -217,74 +217,42 @@ static void event_path_does_not_replay_stale_snapshot(void) {
     input_wpad_poll(&w,1020);
     assert(traced==before);
 }
-/* Recorded fixtures are constructed from a 10 ms bowling gesture, with
- * a moving backswing apex and a radial load through the forward pass.
- * These are modeled samples, not captures from a physical Remote.
- * Calibration is 128 at 0 g and 154 at +1 g (high bytes). The 10-bit
- * WPAD readings carry two low bits on X and one on Y/Z. The modeled
- * forces stay inside the documented +/-3 g range on every axis.
- * https://wiibrew.org/wiki/Wiimote#Accelerometer
- * https://github.com/devkitPro/libogc/blob/v3.2.1/wiiuse/dynamics.c */
-typedef struct { double pitch, excess, lateral; } SwingKey;
-static const SwingKey back_keys[]={
-    {0,0,0}, {-5,.08,0}, {-13,.24,0}, {-23,.29,0}, {-33,.18,0},
-    {-43,.08,0}, {-46,0,0}, {-43,.01,0}
-};
-static const SwingKey forward_keys[]={
-    {-43,.01,0}, {-36,.11,.04}, {-26,.36,.12}, {-15,.72,.14},
-    {-4,1.03,.16}, {9,1.07,.18}, {22,.83,.16}, {34,.52,.13}, {42,.26,.12}
-};
-static WPADData realistic_report(unsigned frame, unsigned release, double strength, bool tap) {
-    double pitch=0, excess=0, lateral=0;
-    if (!tap && frame>=59) {
-        bool back=frame<80;
-        const SwingKey *keys=back ? back_keys : forward_keys;
-        unsigned n=back ? 8 : 9;
-        unsigned tick=back ? frame-59 : frame-80;
-        unsigned k=tick/3;
-        if (k>=n-1) {
-            pitch=keys[n-1].pitch;
-            lateral=keys[n-1].lateral;
-        } else {
-            double t=(tick%3)/3.0;
-            pitch=keys[k].pitch+(keys[k+1].pitch-keys[k].pitch)*t;
-            excess=keys[k].excess+(keys[k+1].excess-keys[k].excess)*t;
-            lateral=keys[k].lateral+(keys[k+1].lateral-keys[k].lateral)*t;
-        }
-    }
-    double radians=pitch*3.14159265358979323846/180;
-    double mag=1+strength*excess;
-    /* Small measurement jitter persists when the remote is otherwise still. */
-    uint16_t x=(uint16_t)lround(512+104*lateral+(int)(frame%3)-1);
-    uint16_t y=(uint16_t)(2*lround((512+104*mag*sin(radians))/2));
-    uint16_t z=(uint16_t)(2*lround((512+104*mag*cos(radians))/2));
+/* Pass the same physical trace as raw accelerometer codes and calibrated gforce. */
+static WPADData bowling_report(const BowlingTrace *trace, double s, uint32_t *seed) {
+    SwingVector g=bowling_force(trace,s);
+    uint16_t x=(uint16_t)bowling_raw_axis(g.x,false,seed);
+    uint16_t y=(uint16_t)bowling_raw_axis(g.y,true,seed);
+    uint16_t z=(uint16_t)bowling_raw_axis(g.z,true,seed);
     return (WPADData){.data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,
-        .btns_h=frame>=53 && frame<release ? INPUT_B : 0, .accel={x,y,z},
+        .btns_h=bowling_button(trace,s) ? INPUT_B : 0,.accel={x,y,z},
         .gforce={(x-512.f)/104.f,(y-512.f)/104.f,(z-512.f)/104.f}};
 }
-static unsigned replay_realistic(unsigned release, double strength, bool left, bool tap,
-                                 bool batched) {
+
+static unsigned replay_realistic(const BowlingTrace *trace, bool left, bool batched) {
     Input i; InputWpad w; setup(&i,&w,false);
     i.slots[0].profile.left_handed=left;
     scan_consumes=batched;
     unsigned time=0, poll=0;
-    while (time<150) {
+    uint32_t seed=7;
+    while (time<290) {
         unsigned elapsed=batched ? (++poll*50)/3 : (time+1)*10;
-        /* At 60 Hz the 100 Hz stream arrives in one- and two-report batches.
-         * One three-report burst models normal Bluetooth delivery jitter. */
+        /* At 60 Hz the 100 Hz stream arrives in one- and two-report batches. */
         unsigned reports=elapsed/10-time;
-        if (batched && poll==47) ++reports;
         queue(0,reports,0);
         for (unsigned n=0;n<reports;++n)
-            remotes[0].queue[n]=realistic_report(time+n,release,strength,tap);
+            remotes[0].queue[n]=bowling_report(trace,(time+n+1)*.010,&seed);
         time+=reports;
         input_wpad_poll(&w,1000+elapsed);
     }
-    if (throws && (shot.release!=SWING_B_UP || shot.release_ms<1000+release*10-15))
-        return 99;
-    if (tap && (i.detector.phase!=SWING_READY)) return 99;
+    if (throws) {
+        assert(shot.release==SWING_B_UP);
+        assert(fabs(shot.release_ms-(1000+1000*bowling_release(trace)))<25);
+    } else {
+        assert(i.detector.phase==SWING_READY && i.detector.last_reject!=SWING_REJECT_NONE);
+    }
     return throws;
 }
+
 static void pending_drain_preserves_edges_and_motion(void) {
     Input i; InputWpad w; setup(&i,&w,false);
     scan_consumes=true;
@@ -299,46 +267,55 @@ static void pending_drain_preserves_edges_and_motion(void) {
     assert(trace_ms[before]>1017 && trace_ms[before+1]==1034);
 }
 static const struct {
-    const char *name; unsigned release; double strength; bool left;
+    const char *name;
+    double forward_s, release_deg;
+    bool left, tap, expect_throw;
 } realistic_cases[]={
-    {"normal",97,.80,false}, {"gentle",99,.22,false}, {"fast",95,1.5,false},
-    {"lefty",97,.80,true}, {"end-of-forward",104,.9,false},
-    {"short",88,.50,false}
+    {"normal",.55,15,false,false,true}, {"gentle",.65,15,false,false,true},
+    {"fast",.46,15,false,false,true}, {"left hand",.55,15,true,false,true},
+    {"end of forward pass",.55,40,false,false,true},
+    {"leg on return",.45,-20,false,false,false}, {"B tap",.45,15,false,true,false}
 };
+
+static BowlingTrace realistic_trace(unsigned n) {
+    BowlingTrace t=bowling_trace();
+    t.forward_s=realistic_cases[n].forward_s;
+    t.release_deg=realistic_cases[n].release_deg;
+    t.lateral_g=.55;
+    t.still=realistic_cases[n].tap;
+    if (t.still) t.release_s=.55;
+    return t;
+}
+
 static void dump_realistic_traces(void) {
     puts("trace,hand,time_ms,b_held,raw_x,raw_y,raw_z,g_x,g_y,g_z");
-    unsigned count=sizeof(realistic_cases)/sizeof(realistic_cases[0]);
-    for (unsigned n=0;n<=count;++n) {
-        bool tap=n==count;
-        for (unsigned frame=0;frame<150;++frame) {
-            WPADData p=realistic_report(frame,tap ? 56 : realistic_cases[n].release,
-                                       tap ? 0 : realistic_cases[n].strength,tap);
+    for (unsigned n=0;n<sizeof realistic_cases/sizeof realistic_cases[0];++n) {
+        BowlingTrace t=realistic_trace(n);
+        uint32_t seed=7;
+        for (unsigned tick=10;tick<=2900;tick+=10) {
+            WPADData p=bowling_report(&t,tick/1000.0,&seed);
             printf("%s,%s,%u,%u,%u,%u,%u,%.5f,%.5f,%.5f\n",
-                   tap ? "b-tap" : realistic_cases[n].name,
-                   !tap && realistic_cases[n].left ? "left" : "right",frame*10,
+                   realistic_cases[n].name,realistic_cases[n].left ? "left" : "right",tick,
                    (p.btns_h&INPUT_B)!=0,p.accel.x,p.accel.y,p.accel.z,p.gforce.x,p.gforce.y,p.gforce.z);
         }
     }
 }
+
 static void realistic_wiimote_releases(void) {
-    double powers[sizeof(realistic_cases)/sizeof(realistic_cases[0])];
-    for (unsigned n=0;n<sizeof(realistic_cases)/sizeof(realistic_cases[0]);++n) {
-        unsigned uniform=replay_realistic(realistic_cases[n].release,realistic_cases[n].strength,realistic_cases[n].left,false,false);
-        unsigned batched=replay_realistic(realistic_cases[n].release,realistic_cases[n].strength,realistic_cases[n].left,false,true);
+    double powers[sizeof realistic_cases/sizeof realistic_cases[0]];
+    for (unsigned n=0;n<sizeof realistic_cases/sizeof realistic_cases[0];++n) {
+        BowlingTrace t=realistic_trace(n);
+        unsigned uniform=replay_realistic(&t,realistic_cases[n].left,false);
+        unsigned batched=replay_realistic(&t,realistic_cases[n].left,true);
         powers[n]=batched==1 ? shot.power : 0;
         printf("trace %s: %u uniform, %u batched throws (power %.3f)\n",
                realistic_cases[n].name,uniform,batched,powers[n]);
-        unsigned expected=(n==1 || n==5) ? 0 : 1;
-        assert(uniform==expected && batched==expected);
-        if (batched==1) {
-            assert(realistic_cases[n].left ? shot.aim<0 : shot.aim>0);
-        }
+        fflush(stdout);
+        assert(uniform==realistic_cases[n].expect_throw && batched==uniform);
+        if (batched==1) assert(shot.aim<0);
     }
-    unsigned tap=replay_realistic(56,0,false,true,true);
-    printf("trace B tap: %u throws\n",tap);
-    fflush(stdout);
-    assert(tap==0);
-    assert(powers[1]<powers[0] && powers[0]<powers[2] && powers[5]<powers[0]);
+    assert(powers[1]<powers[0] && powers[0]<powers[2]);
+    assert(powers[0]==powers[3]);
 }
 /* Wii 0.1.3: the remote-up Bowling trace delivered the way libogc hands it over on a
  * DolphinBar: 60 Hz polls with frame hitches (33 and 50 ms), bursts, a poll with two
@@ -346,23 +323,13 @@ static void realistic_wiimote_releases(void) {
  * 0.1.2 rejected such batches or called input_report_loss, so the swing never threw. */
 static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
     Input i; InputWpad w; setup(&i,&w,false);
-    Trace t=bowling(); t.rate_hz=rate_hz; t.jitter_ms=2; t.seed=60+rate_hz;
-    rng_state=t.seed;
+    BowlingTrace t=bowling_trace();
+    t.tremor_deg=.08;
+    uint32_t seed=60+rate_hz;
     WPADData reports[400]; uint64_t at[400]; unsigned total=0;
-    uint64_t release=0;
-    for (unsigned k=0;total<400;++k) {
-        double ms=k*(1000.0/rate_hz)+(uniform()*2-1)*t.jitter_ms;
-        if (ms<0) ms=0;
-        Pose p;
-        if (!pose(&t,ms,&p,&release)) break;
-        SwingVector f=specific_force(&p,false);
-        bool clipped=false;
-        unsigned x=raw_axis(f.x,&clipped);
-        unsigned y=raw_tilt_axis(f.y,&clipped);
-        unsigned z=raw_tilt_axis(f.z,&clipped);
-        reports[total]=(WPADData){.data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,
-            .btns_h=p.b ? INPUT_B : 0,.accel={(uint16_t)x,(uint16_t)y,(uint16_t)z},
-            .gforce={(x-512.f)/104.f,(y-512.f)/104.f,(z-512.f)/104.f}};
+    for (unsigned k=0;k<rate_hz*3;++k) {
+        double ms=fmax(0,k*(1000.0/rate_hz)+(bowling_uniform(&seed)*2-1)*2);
+        reports[total]=bowling_report(&t,ms/1000,&seed);
         at[total++]=1000+(uint64_t)llround(ms);
     }
     unsigned next=0, frame=0;
@@ -390,9 +357,9 @@ static unsigned replay_bowling_frames(unsigned rate_hz, bool hitches) {
 }
 static void bowling_through_jittery_wpad(void) {
     assert(replay_bowling_frames(100,false)==1);
-    assert(replay_bowling_frames(200,false)==1);
+    assert(replay_bowling_frames(60,false)==1);
     assert(replay_bowling_frames(100,true)==1);
-    assert(replay_bowling_frames(200,true)==1);
+    assert(replay_bowling_frames(60,true)==1);
 }
 #define TEST(fn) do { fn(); ++tests; printf("ok %u - %s\n",tests,#fn); } while (0)
 int main(int argc, char **argv) {

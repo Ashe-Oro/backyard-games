@@ -28,7 +28,6 @@ void input_connection(Input *i, unsigned ch, bool connected) {
     i->b_held[ch]=true;
     if (ch!=i->channels[i->active_slot]) return;
     input_report_loss(i);
-    swing_reset(&i->detector,true);
     if (!connected && i->context!=INPUT_DISABLED) {
         i->paused=i->disconnect_pause=true;
         action(i,INPUT_CONNECT_REMOTE,ch,(double)(ch+1));
@@ -40,7 +39,7 @@ void input_report_loss(Input *i) {
         action(i,INPUT_CAL_RETRY,i->channels[i->active_slot],0);
     }
     i->debug_holding[i->channels[i->active_slot]]=false;
-    if (i->detector.phase!=SWING_SPENT) swing_reset(&i->detector,true);
+    swing_report_gap(&i->detector);
 }
 void input_start_match(Input *i) {
     i->channels[0]=0;
@@ -56,7 +55,7 @@ void input_next_turn(Input *i, unsigned slot) {
     unsigned ch=i->channels[slot];
     /* A held or unknown B from the menu cannot grip the opening bag. Later turns
      * can use a B pressed during bag flight or a turn change. */
-    swing_reset(&i->detector,i->opening_turn && i->b_held[ch]);
+    swing_cancel(&i->detector,i->opening_turn && i->b_held[ch]);
     if (!i->connected[ch]) {
         i->paused=i->disconnect_pause=true;
         action(i,INPUT_CONNECT_REMOTE,ch,(double)(ch+1));
@@ -65,7 +64,8 @@ void input_next_turn(Input *i, unsigned slot) {
 void input_set_context(Input *i, InputContext context) {
     i->context=context;
     i->hand_option=false;
-    swing_reset(&i->detector,context!=INPUT_PLAY || i->paused ||
+    if (context==INPUT_DISABLED && i->detector.phase==SWING_SPENT) return;
+    swing_cancel(&i->detector,context!=INPUT_PLAY || i->paused ||
                 (i->opening_turn && i->b_held[i->channels[i->active_slot]]));
 }
 bool input_resume(Input *i) {
@@ -73,14 +73,14 @@ bool input_resume(Input *i) {
     if (!i->connected[ch] || i->b_held[ch]) return false;
     i->paused=i->disconnect_pause=false;
     i->hand_option=false;
-    swing_reset(&i->detector,false); /* B is known up here: the next press grips */
+    swing_cancel(&i->detector,false); /* B is known up here: the next press grips */
     return true;
 }
 bool input_set_profile(Input *i, unsigned slot, SwingProfile p) {
     if (slot>=2 || !isfinite(p.full_speed) || p.full_speed<=0 ||
         !isfinite(p.spin_strength) || p.spin_strength<0 || p.spin_strength>1) return false;
     i->slots[slot].profile=p;
-    if (slot==i->active_slot) swing_reset(&i->detector,true);
+    if (slot==i->active_slot) swing_cancel(&i->detector,true);
     return true;
 }
 bool input_begin_calibration(Input *i, SwingCalibrationLimits limits) {
@@ -90,13 +90,13 @@ bool input_begin_calibration(Input *i, SwingCalibrationLimits limits) {
     i->calibration=(SwingCalibration){0};
     i->calibration_limits=limits;
     i->calibrating=true;
-    swing_reset(&i->detector,true);
+    swing_cancel(&i->detector,true);
     return true;
 }
 void input_cancel_calibration(Input *i) {
     i->calibrating=false;
     i->calibration=(SwingCalibration){0};
-    swing_reset(&i->detector,true);
+    swing_cancel(&i->detector,true);
 }
 double input_stance(const Input *i, unsigned slot, uint64_t now) {
     if (slot>=2) return 0;
@@ -192,7 +192,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
     InputSlot *slot=&i->slots[i->active_slot];
     if (pressed & INPUT_HOME) {
         i->paused=true;
-        swing_reset(&i->detector,true);
+        swing_cancel(&i->detector,true);
         action(i,INPUT_PAUSE,ch,0);
         return;
     }
@@ -226,13 +226,12 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
                 slot->stance=slot->stance_from=0;
                 action(i,INPUT_RESET_BAG,ch,0);
             }
-            swing_reset(&i->detector,true);
+            swing_cancel(&i->detector,true);
             return;
         }
     }
     SwingSample motion=p->motion;
     motion.b=b;
-    motion.manual_release=true;
     SwingResult r=swing_feed(&i->detector,&motion,&slot->profile,slot->height);
     if (r.thrown) {
         i->stats.last_toss=r;
@@ -242,7 +241,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
             InputAction a=status==SWING_CAL_DONE ? INPUT_CAL_DONE : status==SWING_CAL_MORE ? INPUT_CAL_MORE : INPUT_CAL_RETRY;
             emit(i,a,ch,i->calibration.count,r);
             if (status==SWING_CAL_DONE) i->calibrating=false;
-            swing_reset(&i->detector,true);
+            swing_cancel(&i->detector,true);
         } else emit(i,INPUT_THROW,ch,r.power,r);
     }
 }

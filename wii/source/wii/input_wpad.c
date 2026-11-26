@@ -30,7 +30,7 @@ bool input_wpad_set_rails(InputWpad *w, unsigned ch, const uint16_t lo[3], const
     for (unsigned a=0;a<3;++a) if (hi[a]<=lo[a]+4 || hi[a]>1023) return false;
     memcpy(w->raw_low[ch],lo,sizeof(w->raw_low[ch]));
     memcpy(w->raw_high[ch],hi,sizeof(w->raw_high[ch]));
-    if (ch==w->input->channels[w->input->active_slot]) swing_reset(&w->input->detector,true);
+    if (ch==w->input->channels[w->input->active_slot]) swing_cancel(&w->input->detector,true);
     return true;
 }
 static int register_channel(InputWpad *w, unsigned ch) {
@@ -70,7 +70,10 @@ static void feed_report(InputWpad *w, unsigned ch, WPADData *d, unsigned n, unsi
         if (raw[a]<=w->raw_low[ch][a]+2 || raw[a]>=w->raw_high[ch][a]-2)
             sample.motion.clipped=true;
     w->latest[ch]=sample;
-    input_feed(i,ch,&sample);
+    InputSample controls=sample;
+    if (w->button_filter)
+        controls.buttons&=~(w->button_filter(ch,&sample)&~INPUT_B);
+    input_feed(i,ch,&controls);
     if (w->trace) {
         InputWpadTrace row={ch,n,i->active_slot,now,sample.motion.ms,
             sample.motion.dropped,true,d,&sample,&i->detector};

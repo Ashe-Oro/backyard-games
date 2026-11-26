@@ -3,11 +3,10 @@
 
 Wiimote packets follow SerializedWiimoteState from DesiredWiimoteState.cpp
 (length-prefixed, no extension, no MotionPlus). Accelerometer units match
-Dolphin's emulated rest pose (0g=0x200, 1g=0x268) and the game's swing_feed
-sample() helper: g = ((1+e) sin r cos p, (1+e) sin p, (1+e) cos r cos p).
-The movie grips at rest, moves the remote into a backswing, swings through
-the bottom, and releases B while moving forward. The host suite covers
-additional graded and misfire traces at native sensor/frame cadence.
+Dolphin's emulated calibration (0g=0x200, 1g=0x268). The toss uses the
+tip-forward shoulder-pivot motion from wii/tests/bowling_trace.h, starting
+upright at (0,-1,0) g and releasing B after the forward pass crosses the
+bottom. The host suite covers the other grips and misfires.
 """
 from __future__ import annotations
 
@@ -32,17 +31,59 @@ BUTTON_TWO = 1 << 5
 
 def g_to_raw(gx: float, gy: float, gz: float) -> tuple[int, int, int]:
     def conv(v: float) -> int:
-        return max(0, min(0x3FF, int(round(ZERO_G + v * G_UNITS))))
+        return max(ZERO_G - 374, min(ZERO_G + 374, int(round(ZERO_G + v * G_UNITS))))
 
     return conv(gx), conv(gy), conv(gz)
 
 
-def sample_g(energy: float, pitch_deg: float, roll_deg: float = 0.0) -> tuple[float, float, float]:
-    """Same construction as wii/tests/input_test.c sample()."""
-    p = pitch_deg * math.pi / 180.0
-    r = roll_deg * math.pi / 180.0
-    s = 1.0 + energy
-    return (s * math.sin(r) * math.cos(p), s * math.sin(p), s * math.cos(r) * math.cos(p))
+SWING_START = 0.80
+BACK_DURATION = 0.55
+FORWARD_START = SWING_START + BACK_DURATION
+BACK_ANGLE = -50
+START_ANGLE = 45
+END_ANGLE = 70
+GRAVITY = 9.80665
+
+
+def fraction(u: float) -> float:
+    return max(0.0, min(1.0, u))
+
+
+def ease(u: float) -> float:
+    return (1 - math.cos(math.pi * fraction(u))) / 2
+
+
+def release_time(forward_duration: float) -> float:
+    release_fraction = (40 - BACK_ANGLE) / (END_ANGLE - BACK_ANGLE)
+    return FORWARD_START + forward_duration * math.acos(1 - 2 * release_fraction) / math.pi
+
+
+def position(seconds: float, forward_duration: float) -> tuple[float, float, float]:
+    if seconds < FORWARD_START:
+        arm = START_ANGLE + (BACK_ANGLE - START_ANGLE) * ease((seconds - SWING_START) / BACK_DURATION)
+    else:
+        arm = BACK_ANGLE + (END_ANGLE - BACK_ANGLE) * ease((seconds - FORWARD_START) / forward_duration)
+    bottom = math.acos(1 - 2 * START_ANGLE / (START_ANGLE - BACK_ANGLE)) / math.pi
+    u = fraction((seconds - SWING_START) / (1.3 * bottom * BACK_DURATION))
+    blend = u**3 * (10 + u * (-15 + 6 * u))
+    radius = 0.50 + 0.12 * blend
+    return (
+        radius * math.sin(math.radians(arm)),
+        -radius * math.cos(math.radians(arm)),
+        math.radians(arm + (90 - START_ANGLE) * (1 - blend)),
+    )
+
+
+def sample_g(seconds: float, forward_duration: float) -> tuple[float, float, float]:
+    # Differentiate hand position and add the 1 g upward static reading.
+    h = 0.001
+    f0, u0, _ = position(seconds - h, forward_duration)
+    f1, u1, tip = position(seconds, forward_duration)
+    f2, u2, _ = position(seconds + h, forward_duration)
+    forward = (f2 - 2 * f1 + f0) / (h * h * GRAVITY)
+    up = 1 + (u2 - 2 * u1 + u0) / (h * h * GRAVITY)
+    return (0, -(forward * math.cos(tip) + up * math.sin(tip)),
+            up * math.cos(tip) - forward * math.sin(tip))
 
 
 def pack_state(buttons: int = 0, accel: tuple[int, int, int] | None = None) -> bytes:
@@ -68,14 +109,9 @@ def pack_state(buttons: int = 0, accel: tuple[int, int, int] | None = None) -> b
     return bytes([len(data)]) + bytes(data)
 
 
-def hold(packets: list[bytes], seconds: float, buttons: int = 0,
-         energy: float = 0.0, pitch: float = 0.0) -> None:
+def hold(packets: list[bytes], seconds: float, buttons: int = 0) -> None:
     n = max(1, int(round(seconds * UPDATE_HZ)))
-    if energy == 0.0 and pitch == 0.0:
-        pkt = pack_state(buttons, None if buttons == 0 else DEFAULT_ACCEL)
-    else:
-        pkt = pack_state(buttons, g_to_raw(*sample_g(energy, pitch)))
-    packets.extend([pkt] * n)
+    packets.extend([pack_state(buttons)] * n)
 
 
 def pack_header(input_count: int, author: bytes = b"BYC e2e") -> bytes:
@@ -132,26 +168,16 @@ def build_movie() -> bytes:
         hold(pkts, 2.6, BUTTON_ONE | BUTTON_TWO)
         hold(pkts, 0.4)
 
-    # The NORMAL/SLICK hole window is 0.655–0.742 normalized power.
-    # Nearby values of e = 1.9 * (1.20 * power / 0.55)^2 cover quantization.
-    def toss(energy: float) -> None:
-        hold(pkts, 0.55)
-        hold(pkts, 0.08, BUTTON_B)
-        for pitch in (-10, -22, -33, -39):
-            hold(pkts, 0.045, BUTTON_B, energy=0.10, pitch=pitch)
-        hold(pkts, 0.13, BUTTON_B, pitch=-39)
-        for pitch in (-31, -20, -9):
-            hold(pkts, 0.025, BUTTON_B, energy=0.24, pitch=pitch)
-        # Share the higher forward load between Y and Z to stay inside the
-        # packet rails. X stays centered throughout the throw.
-        hold(pkts, 0.18, BUTTON_B, energy=energy, pitch=36)
-        hold(pkts, 0.025, 0, energy=0.30, pitch=12)
-        hold(pkts, 0.10, 0, pitch=25)
-        # Flight ~2.2 s, GROUNDER/score callout, return to PH_AIM (~0.75 s).
+    # Vary forward speed around the NORMAL/SLICK scoring window.
+    for duration in (0.53, 0.50, 0.56, 0.48, 0.58, 0.45):
+        release = release_time(duration)
+        end = FORWARD_START + duration + 0.25
+        for tick in range(round(end * UPDATE_HZ)):
+            seconds = tick / UPDATE_HZ
+            buttons = BUTTON_B if 0.50 <= seconds < release else 0
+            pkts.append(pack_state(buttons, g_to_raw(*sample_g(seconds, duration))))
+        # Flight, score callout, and return to PH_AIM.
         hold(pkts, 4.00)
-
-    for energy in (4.39, 4.10, 4.25, 4.54, 4.70, 4.88):
-        toss(energy)
     hold(pkts, 3.00)
     return b"".join(pkts)
 

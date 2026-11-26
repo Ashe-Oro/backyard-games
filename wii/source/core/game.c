@@ -582,6 +582,8 @@ void game_input(Game *g, const InputEvent *e) {
     if (g->phase != PH_AIM || !game_is_human(g, t) || g->paused) return;
     switch (e->action) {
     case INPUT_THROW:
+        if (g->input && e->toss.release == SWING_B_UP)
+            g->position[t] = input_stance(g->input, (unsigned)t, e->toss.release_ms);
         game_throw(g, e->toss.power, e->toss.aim, e->toss.spin);
         break;
     case INPUT_HEIGHT: g->arc = (BagArc)(int)e->value; g->heights[t] = (int)e->value; g->arrow_on = false; break;
@@ -619,6 +621,7 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
     Input *in = g->input;
 
     if (in) {
+        swing_expire(&in->detector, now_ms);
         if (g->connect_prompt) {
             if (!in->disconnect_pause) g->connect_prompt = false;                /* reassigned: USE REMOTE 1 */
             else if (in->connected[in->channels[in->active_slot]] && input_resume(in)) g->connect_prompt = false;

@@ -7,7 +7,7 @@
 #   make iso          dist/BackyardCornhole-BYCEAO.iso (WIT), main.dol == boot.dol check
 #   make release      dist/: HBC zip, ISO, INSTALL-WII.md, SHA256SUMS (real Wii only)
 
-VERSION := 0.1.7
+VERSION := 0.1.8
 GAME_ID := BYCEAO
 TITLE := Backyard Cornhole
 
@@ -104,7 +104,7 @@ host-test: build/input-test build/throw-test build/wpad-test build/physics-probe
 	./build/party-test
 	./tools/check-no-ir.sh
 
-build/input-test: tests/input_test.c $(INPUT_CORE) $(INPUT_HEADERS)
+build/input-test: tests/input_test.c tests/bowling_trace.h $(INPUT_CORE) $(INPUT_HEADERS)
 	@mkdir -p build
 	$(HOST_CC) $(HOST_CFLAGS) -Isource/core tests/input_test.c $(INPUT_CORE) -lm -o $@
 
@@ -120,7 +120,7 @@ build/physics-probe: tests/physics_probe.c source/core/physics.c source/core/rng
 	@mkdir -p build
 	$(HOST_CC) $(HOST_CFLAGS) -Isource/core tests/physics_probe.c source/core/physics.c source/core/rng.c source/core/cpu.c -lm -o $@
 
-build/game-test: tests/game_test.c $(GAME_CORE) $(INPUT_CORE) $(CORE_HEADERS)
+build/game-test: tests/game_test.c tests/bowling_trace.h $(GAME_CORE) $(INPUT_CORE) $(CORE_HEADERS)
 	@mkdir -p build
 	$(HOST_CC) $(HOST_CFLAGS) -DBYC_VERSION=\"$(VERSION)\" -Isource/core tests/game_test.c $(GAME_CORE) $(INPUT_CORE) -lm -o $@
 
