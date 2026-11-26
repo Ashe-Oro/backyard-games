@@ -50,11 +50,31 @@ static void power_equation(void) {
         double effective=full*swing_type_scale(h);
         assert(fabs(pow(scales[h]/previous_scales[h],exponent[h])-ratio[h]) < .0001);
         near(swing_power(swing_speed(12),effective),.76);
-        const double powers[]={.03,.25,.50,.70,.76};
+        const double powers[]={.03,.15*.76,.25,.50,.57,.70,.76};
         for (unsigned p=0;p<sizeof powers/sizeof powers[0];++p) {
             double peak=swing_speed(.8);
             double reference=swing_full_speed_for_power(peak,powers[p],h);
-            near(swing_power(peak,reference*scales[h]),powers[p]);
+            near(swing_power_for_height(peak,reference,h),powers[p]);
+        }
+    }
+}
+static void normal_power_anchors(void) {
+    double full=profile().full_speed;
+    double old_cap=1.30*full*1.4216;
+    double new_cap=swing_speed(2*SWING_RAIL_G-1);
+    near(swing_power(old_cap,full*1.4216),.76);
+    near(swing_power_for_height(old_cap,full,1),.57);
+    near(swing_power_for_height(new_cap,full,1),.76);
+    double previous=0;
+    for (int i=1;i<100;++i) {
+        double peak=new_cap*i/100;
+        double normal=swing_power_for_height(peak,full,1);
+        assert(normal>previous && normal<.76);
+        previous=normal;
+        for (int h=0;h<=2;h+=2) {
+            double scale=h==0 ? 1.7637 : 1.1618;
+            assert(swing_power_for_height(peak,full,h)==swing_power(peak,full*scale));
+            assert(swing_power_for_height(peak,3.1,h)==swing_power(peak,3.1*scale));
         }
     }
 }
@@ -109,7 +129,7 @@ static void roll_sign_deadzone_and_hand(void) {
 }
 static void calibration_median_floor_clip_outlier(void) {
     SwingCalibration c={0}; SwingProfile p=profile();
-    SwingCalibrationLimits lim={.target_power=.6,.full_speed_floor=1.25,.clip_ceiling=3};
+    SwingCalibrationLimits lim={.target_power=.6,.full_speed_floor=1,.clip_ceiling=2};
     const double sets[][3]={{2.1,2.2,2},{.1,.11,.1},{4.8,4.7,4.9},{.1,1.2,1.3}};
     for (unsigned set=0;set<4;++set) {
         double before=p.full_speed;
@@ -119,12 +139,11 @@ static void calibration_median_floor_clip_outlier(void) {
             assert(status==(n<2?SWING_CAL_MORE:(set==3?SWING_CAL_RETRY:SWING_CAL_DONE)));
         }
         if (set==0) {
-            double reference=swing_type_scale(1);
             near(p.full_speed,swing_full_speed_for_power(2.1,lim.target_power,1));
-            near(swing_power(2.1,p.full_speed*reference),lim.target_power);
+            near(swing_power_for_height(2.1,p.full_speed,1),lim.target_power);
         }
-        if (set==1) near(p.full_speed,1.25);
-        if (set==2) near(p.full_speed,3);
+        if (set==1) near(p.full_speed,lim.full_speed_floor);
+        if (set==2) near(p.full_speed,lim.clip_ceiling);
         if (set==3) near(p.full_speed,before);
     }
     SwingResult bad={.thrown=true,.speed=1,.clipped=true};
@@ -304,9 +323,9 @@ static void setup_pause_hand_selection_and_calibration(void) {
     SwingCalibration c={0};
     for (unsigned n=0;n<3;++n) {
         SwingResult toss={.thrown=true,.speed=1.2};
-        swing_calibrate(&c,&toss,(SwingCalibrationLimits){.6,1,3},&saved);
+        swing_calibrate(&c,&toss,(SwingCalibrationLimits){.6,.5,3},&saved);
     }
-    assert(saved.left_handed); near(swing_power(1.2,saved.full_speed*swing_type_scale(1)),.6);
+    assert(saved.left_handed); near(swing_power_for_height(1.2,saved.full_speed,1),.6);
     assert(input_set_profile(&i,1,saved));
     input_set_context(&i,INPUT_DISABLED); /* pause also works during flight */
     input_sample(&i,0,520,INPUT_HOME,0,0); assert(i.paused);
@@ -381,7 +400,7 @@ static void debug_chord_requires_two_seconds_and_release(void) {
 }
 int main(void) {
     TEST(subgravity_press_still_grips); TEST(straight_swing_from_shifted_stance);
-    TEST(setup_pause_hand_selection_and_calibration); TEST(power_equation);
+    TEST(setup_pause_hand_selection_and_calibration); TEST(power_equation); TEST(normal_power_anchors);
     TEST(moving_press_grips_immediately); TEST(gaps_drops_and_bad_samples_keep_grip);
     TEST(ready_at_once_and_one_throw); TEST(roll_sign_deadzone_and_hand);
     TEST(calibration_median_floor_clip_outlier); TEST(plus_minus_change_nothing_in_play);

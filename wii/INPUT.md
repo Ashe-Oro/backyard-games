@@ -59,12 +59,12 @@ e = max(0, radial - 1)
 v = sqrt(0.60 * 9.80665 * mean_40ms(e))
 r = clamp(forward_peak_v / (slot.full_speed * type_scale), 0, 1.30)
 q = r / (r + 0.47 * (1.30 - r))
-power = 0.76 * q*q * (3 - 2*q)
+base_fraction = q*q * (3 - 2*q)
 ```
 
 Power uses the peak of the 40 ms average through B-up. A forward crest must reach **1.17 g** radial load and the smoothed excess must reach **0.14 g** (about **0.91 m/s** with the 0.60 m shoulder radius). A lighter crest needs a smaller drop to confirm the bottom. A sample near the rail triggers a fit to the unclipped lobe shoulders from the turnaround through B-up. The default rail estimate is 3.55 g. With insufficient shoulders, power uses the measured peak. `input_wpad_set_rails` accepts measured raw rails per remote. Its raw defaults span 0–1023 counts with a two-count margin.
 
-The default speed reference is **2.45 m/s**. SLIDER, NORMAL and KOBE multiply it by **1.7637**, **1.4216** and **1.1618**, respectively. The shared 0.76 cap corresponds to **5.62**, **4.53** and **3.70 m/s**, respectively, after any clipped-peak reconstruction.
+The default speed reference is **2.45 m/s**. SLIDER, NORMAL and KOBE multiply it by **1.7637**, **1.4216** and **1.1618**, respectively. SLIDER and KOBE use `0.76 * base_fraction` directly. NORMAL progressively compresses the base fraction above 15% so ratio 1.30 gives 75%. From ratio 1.30 through 1.720115, NORMAL eases up from 75% to 100% using the unclamped ratio. After any clipped-peak reconstruction, the shared 0.76 cap corresponds to **5.62**, **5.99** and **3.70 m/s** at factory settings.
 
 The upper-right **LAST SHOT** card shows the controller power of the most recent throw. It stays up through scoring and the next aim phase until another bag launches. The fill and label use `round(100 * power / 0.76)`, clamped to 100%. The combined arrow uses the physical launch power, including the KOBE remap.
 

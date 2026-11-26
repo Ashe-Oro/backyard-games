@@ -10,6 +10,13 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.10] - 2026-11-25
+
+### Changed
+
+- A Normal swing that reached full power in v0.1.9 now reads 75% on LAST SHOT and follows the previous 75% trajectory. A stronger swing can still reach 100%.
+- Normal SET POWER calibration now uses the revised curve.
+
 ## [0.1.9] - 2026-11-25
 
 ### Added

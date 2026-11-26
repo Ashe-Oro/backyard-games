@@ -8,6 +8,10 @@ static double norm(SwingVector v) { return sqrt(v.x*v.x + v.y*v.y + v.z*v.z); }
 static double degrees(double radians) { return radians*180/SWING_PI; }
 static double tip_pitch(SwingVector g) { return degrees(atan2(-g.y, hypot(g.x, g.z))); }
 
+static const double normal_type_scale = 1.4216;
+static const double normal_soft_fraction = 0.15;
+static const double normal_hard_fraction = 0.75;
+
 SwingProfile swing_default_profile(void) {
     return (SwingProfile){SWING_DEFAULT_FULL_SPEED, 1, false};
 }
@@ -18,7 +22,7 @@ double swing_type_scale(int height) {
     /* 0.1.8 scale * (27 / felt feet)^(1 / measured launch-speed exponent). */
     if (height == 0) return 1.7637;
     if (height == 2) return 1.1618;
-    return 1.4216;
+    return normal_type_scale;
 }
 double swing_power(double peak, double full) {
     if (!isfinite(peak) || !isfinite(full) || peak <= 0 || full <= 0) return 0;
@@ -28,13 +32,57 @@ double swing_power(double peak, double full) {
     double x = ratio/(ratio + SWING_POWER_CURVE_BIAS*(SWING_POWER_CAP_RATIO-ratio));
     return SWING_POWER_CAP*x*x*(3-2*x);
 }
+
+static double normal_cap_ratio(void) {
+    /* At factory settings, both 60 and 100 Hz replays reach the fit ceiling. */
+    return swing_speed(2*SWING_RAIL_G-1)/(SWING_DEFAULT_FULL_SPEED*normal_type_scale);
+}
+
+static double normal_compression(void) {
+    double span = 1-normal_soft_fraction;
+    return (1-normal_hard_fraction)/(span*span);
+}
+
+double swing_power_for_height(double peak, double full_speed, int height) {
+    double full = full_speed*swing_type_scale(height);
+    if (height == 0 || height == 2) return swing_power(peak, full);
+    if (!isfinite(peak) || !isfinite(full) || peak <= 0 || full <= 0) return 0;
+    double ratio = peak/full;
+    if (ratio >= normal_cap_ratio()) return SWING_POWER_CAP;
+    if (ratio >= SWING_POWER_CAP_RATIO) {
+        double x = (ratio-SWING_POWER_CAP_RATIO)/(normal_cap_ratio()-SWING_POWER_CAP_RATIO);
+        return SWING_POWER_CAP*(normal_hard_fraction+(1-normal_hard_fraction)*x*x*(3-2*x));
+    }
+    /* Keep the lightest input intact and compress progressively toward 75%. */
+    double power = swing_power(peak, full);
+    double excess = fmax(0, power/SWING_POWER_CAP-normal_soft_fraction);
+    return power-SWING_POWER_CAP*normal_compression()*excess*excess;
+}
+
+static double inverse_smoothstep(double fraction) {
+    return 0.5-sin(asin(1-2*fraction)/3);
+}
+
 double swing_full_speed_for_power(double peak, double power, int height) {
     if (!isfinite(peak) || !isfinite(power) || peak <= 0 || power <= 0 || power > SWING_POWER_CAP)
         return 0;
+    double fraction = power/SWING_POWER_CAP;
+    double scale = swing_type_scale(height);
+    if (height != 0 && height != 2) {
+        if (fraction >= normal_hard_fraction) {
+            double x = inverse_smoothstep((fraction-normal_hard_fraction)/(1-normal_hard_fraction));
+            double ratio = SWING_POWER_CAP_RATIO+x*(normal_cap_ratio()-SWING_POWER_CAP_RATIO);
+            return peak/(ratio*scale);
+        }
+        if (fraction > normal_soft_fraction) {
+            double excess = fraction-normal_soft_fraction;
+            fraction = normal_soft_fraction+2*excess/(1+sqrt(1-4*normal_compression()*excess));
+        }
+    }
     /* Invert smoothstep, then invert the bias above. */
-    double x = 0.5-sin(asin(1-2*power/SWING_POWER_CAP)/3);
+    double x = inverse_smoothstep(fraction);
     double ratio = x*SWING_POWER_CURVE_BIAS*SWING_POWER_CAP_RATIO/(1-x*(1-SWING_POWER_CURVE_BIAS));
-    return peak/(ratio*swing_type_scale(height));
+    return peak/(ratio*scale);
 }
 double swing_roll_spin(double roll, const SwingProfile *profile) {
     if (!isfinite(roll) || !isfinite(profile->spin_strength)) return 0;
@@ -130,7 +178,7 @@ static double throw_speed(const Swing *s) {
 }
 
 static double throw_power(const Swing *s, const SwingProfile *profile, int height) {
-    return swing_power(throw_speed(s), profile->full_speed*swing_type_scale(height));
+    return swing_power_for_height(throw_speed(s), profile->full_speed, height);
 }
 
 static void fit_forward(Swing *s);

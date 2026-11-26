@@ -388,6 +388,39 @@ static void test_last_shot_gauge(void) {
           game_last_shot_percent(&game) == 100, "KOBE LAST SHOT reaches 100%% at the controller cap");
 }
 
+static void test_normal_power_landings(void) {
+    /* 0.1.9 calm, centered Normal/SLICK Practice, measured at 240 Hz. */
+    enum { MAX_STEPS = 600 };
+    const double first[]={8.017794244725,8.897736501173};
+    const double rest[]={8.298957158400,9.471015853601};
+    const double peak[]={4.527796,swing_speed(2*SWING_RAIL_G-1)};
+    const double expected_power[]={.57,.76};
+    const int percent[]={75,100};
+    for (int i=0;i<2;++i) {
+        practice_ready(114);
+        CHECK(game.arc==ARC_NORMAL && game.side[0]==SIDE_SLICK && game.wind.mph==0,
+              "baseline fixture uses calm Normal/SLICK Practice");
+        double power=swing_power_for_height(peak[i],input.slots[0].profile.full_speed,game.arc);
+        CHECK(fabs(power-expected_power[i])<1e-9, "peak %.6f gives controller power %.9f",peak[i],power);
+        InputEvent launch={.action=INPUT_THROW,.toss={.thrown=true,.speed=peak[i],.power=power}};
+        game_input(&game,&launch);
+        CHECK(game.phase==PH_FLYING && game.last_shot_power==power && game_last_shot_percent(&game)==percent[i],
+              "LAST SHOT uses the %.9f controller power for %d%%",power,percent[i]);
+        if (game.phase!=PH_FLYING) continue;
+        Bag bag=game.bags[game.active];
+        for (int step=0;step<MAX_STEPS && bag.state==BAG_FLY;++step) bag_step(&bag,&game.wind,BYC_PHYSICS_DT);
+        Vec3 contact=board_to_world(bag.lp);
+        double distance=BYC_REL_Z-contact.z;
+        CHECK(bag.state==BAG_SLIDE && hypot(contact.x,distance-first[i])<.001,
+              "Normal %d%% first contact %.6f m matches 0.1.9 within 1 mm",percent[i],distance);
+        for (int step=0;step<MAX_STEPS && !bag_is_final(&bag);++step) bag_step(&bag,&game.wind,BYC_PHYSICS_DT);
+        double final=BYC_REL_Z-bag.p.z;
+        CHECK(bag.state==(i==0 ? BAG_BOARD : BAG_GRASS) && hypot(bag.p.x,final-rest[i])<.001,
+              "Normal %d%% rest %.6f m matches 0.1.9 within 1 mm",percent[i],final);
+        printf("  Normal %d%% at %.6f m/s: contact %.6f m, rest %.6f m\n",percent[i],peak[i],distance,final);
+    }
+}
+
 static void test_deferred_release_stance(void) {
     practice_ready(109);
     InputSlot *slot = &input.slots[0];
@@ -794,7 +827,7 @@ static void test_set_power_reaches_hole(void) {
     SwingCalibrationLimits limits = game_calibration_limits(&game);
     CHECK(game.setpower_count == 3 && !input.calibrating && game.save_dirty && game.nbags == 0,
           "SET POWER saves three easy tosses without launching a bag");
-    CHECK(fabs(swing_power(calibrated_speed, game.save.profile[0].full_speed * swing_type_scale(1)) - limits.target_power) < 1e-9,
+    CHECK(fabs(swing_power_for_height(calibrated_speed, game.save.profile[0].full_speed, 1) - limits.target_power) < 1e-9,
           "the saved easy toss power matches the hole target");
     CHECK(!input_begin_calibration(&input, (SwingCalibrationLimits){.8, limits.full_speed_floor, limits.clip_ceiling}),
           "SET POWER rejects an unreachable target above the cap");
@@ -822,8 +855,7 @@ static void test_swing_to_landing(void) {
             double duration=durations[k];
             Landing l=swing_and_land(duration,0,NAN,0);
             double distance=BYC_REL_Z-l.land_z;
-            double expected=swing_power(input.stats.last_toss.speed,
-                                        SWING_DEFAULT_FULL_SPEED*swing_type_scale(h));
+            double expected=swing_power_for_height(input.stats.last_toss.speed, SWING_DEFAULT_FULL_SPEED, h);
             printf("  %s %.2f s: %.6f power -> %.6f m (%s)\n",
                    names[h],duration,l.power,distance,l.deck ? "deck" : "ground");
             CHECK(l.thrown && l.n>20,"%s %.2f s throws and flies (%d steps)",names[h],duration,l.n);
@@ -887,8 +919,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.9") == 0, "version is 0.1.9 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.9") == 0, "version tag v0.1.9 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.10") == 0, "version is 0.1.10 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.10") == 0, "version tag v0.1.10 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -1218,6 +1250,7 @@ int main(void) {
     test_combined_arrow();
     test_held_bag_footprint();
     test_last_shot_gauge();
+    test_normal_power_landings();
     test_medium_slider_rest();
     test_deferred_release_stance();
     test_set_power_reaches_hole();
