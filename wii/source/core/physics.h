@@ -21,7 +21,7 @@ typedef enum { EV_NONE, EV_HOLE, EV_LAND, EV_GROUND, EV_OFF, EV_REST, EV_REMOVED
 typedef struct {
     int team;
     BagSide side;
-    double spin, tumble, english, curl, t, rest_t, hy;
+    double spin, tumble, english, curl, t, rest_t, hy, land_keep;
     BagArc arc;
     BagState state;
     Vec3 p, v, lp, lv, prev;

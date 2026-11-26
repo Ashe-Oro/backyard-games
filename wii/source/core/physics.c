@@ -49,6 +49,7 @@ double arc_degrees(BagArc arc) {
 void bag_new(Bag *b, int team, BagSide side) {
     memset(b, 0, sizeof(*b));
     b->team = team; b->side = side; b->tumble = 1; b->arc = ARC_NORMAL; b->state = BAG_FLY;
+    b->land_keep = 1;
 }
 
 static double surf_mu(BagSide s) { return s == SIDE_STICKY ? BYC_STICKY_MU : BYC_SLICK_MU; }
@@ -79,6 +80,7 @@ void bag_launch_yaw(Bag *b, double rx, double yaw_base, double power, double aim
     b->p = (Vec3){rx, BYC_REL_Y, BYC_REL_Z};
     b->v = (Vec3){sin(y) * cos(elev) * velocity, sin(elev) * velocity, -cos(y) * cos(elev) * velocity};
     b->arc = arc; b->english = spin; b->spin = spin * BYC_AIR_SPIN_RATE; b->curl = BYC_FLIGHT_CURL; b->state = BAG_FLY;
+    b->land_keep = arc == ARC_KOBE ? BYC_LAND_KEEP_KOBE : arc == ARC_SLIDER ? BYC_LAND_KEEP_PUSH : 1;
     b->prev = board_to_local(b->p);
 }
 void bag_launch(Bag *b, double rx, double power, double aim, double drift, BagArc arc, double spin) {
@@ -104,7 +106,7 @@ StepEvent bag_step(Bag *b, const Wind *wind, double dt) {
                 b->lv = board_rot_inv(b->v);
                 b->touched = true;
                 if (hole_dist(lp) < BYC_HOLE_R * BYC_SWISH_R_FRAC) { b->state = BAG_HOLE; b->swish = true; b->hy = BYC_BAG_H; return EV_HOLE; }
-                double k = surf_keep(b->side) * (b->arc == ARC_KOBE ? BYC_LAND_KEEP_KOBE : b->arc == ARC_SLIDER ? BYC_LAND_KEEP_PUSH : 1);
+                double k = surf_keep(b->side) * b->land_keep;
                 b->lv.y = 0; b->lv.x *= k; b->lv.y *= k; b->lv.z *= k;
                 b->lp.y = BYC_BAG_H; b->state = BAG_SLIDE; b->curl = landing_curl(b->english, b->side);
                 return EV_LAND;

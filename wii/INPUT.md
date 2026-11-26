@@ -57,14 +57,16 @@ The learned plane axis is `n = (ny, nz)`. At the bottom it is near +Z for a tip-
 radial = Y*ny + Z*nz
 e = max(0, radial - 1)
 v = sqrt(0.60 * 9.80665 * mean_40ms(e))
-power = clamp(0.55 * forward_peak_v / (slot.full_speed * type_scale), 0, 0.76)
+r = clamp(forward_peak_v / (slot.full_speed * type_scale), 0, 1.30)
+q = r / (r + 0.47 * (1.30 - r))
+power = 0.76 * q*q * (3 - 2*q)
 ```
 
-Power uses the peak of the 40 ms average through B-up. A forward peak must reach **0.30 g** excess (about **1.33 m/s** with the 0.60 m shoulder radius). A sample near the rail triggers a fit to the unclipped lobe shoulders from the turnaround through B-up. The default rail estimate is 3.55 g. With insufficient shoulders, power uses the measured peak. `input_wpad_set_rails` accepts measured raw rails per remote. Its raw defaults span 0–1023 counts with a two-count margin.
+Power uses the peak of the 40 ms average through B-up. A forward crest must reach **1.17 g** radial load and the smoothed excess must reach **0.14 g** (about **0.91 m/s** with the 0.60 m shoulder radius). A lighter crest needs a smaller drop to confirm the bottom. A sample near the rail triggers a fit to the unclipped lobe shoulders from the turnaround through B-up. The default rail estimate is 3.55 g. With insufficient shoulders, power uses the measured peak. `input_wpad_set_rails` accepts measured raw rails per remote. Its raw defaults span 0–1023 counts with a two-count margin.
 
-The default speed reference is **2.45 m/s**. SLIDER, NORMAL and KOBE multiply it by **1.69**, **1.38** and **1.00**, respectively. The shared 0.76 cap corresponds to **5.72**, **4.67** and **3.39 m/s**, respectively, after any clipped-peak reconstruction.
+The default speed reference is **2.45 m/s**. SLIDER, NORMAL and KOBE multiply it by **1.7637**, **1.4216** and **1.1618**, respectively. The shared 0.76 cap corresponds to **5.62**, **4.53** and **3.70 m/s**, respectively, after any clipped-peak reconstruction.
 
-The upper-right **LAST SHOT** card shows the most recent launched power. It stays up through scoring and the next aim phase until another bag launches. The fill and label use `round(100 * power / 0.76)`, clamped to 100%.
+The upper-right **LAST SHOT** card shows the controller power of the most recent throw. It stays up through scoring and the next aim phase until another bag launches. The fill and label use `round(100 * power / 0.76)`, clamped to 100%. The combined arrow uses the physical launch power, including the KOBE remap.
 
 Every rejected release returns to READY and keeps the bag. The diagnostics show **NO SWING**, **LET GO ON BACKSWING**, **LET GO BEFORE BOTTOM**, **FORWARD TOO WEAK**, **LET GO TOO LATE** or **REPORT GAP**. Reports spaced more than 25 ms apart and up to 100 ms apart can be bridged with interpolated acceleration. Longer gaps break continuity. A gap over 250 ms discards an active stroke. Invalid accelerometer reports can still carry button edges. Duplicate or backward timestamps are advanced and history overflow drops the oldest report.
 
@@ -72,7 +74,7 @@ Every rejected release returns to READY and keeps the bag. The diagnostics show 
 
 Profiles belong to player slots: `full_speed`, `spin_strength` (0..1), `left_handed`. Load validated saved fields with `input_set_profile`; serialize them field by field in the game's save layer. Save version 4 keeps the existing field layout and migrates earlier factory references to 2.45 m/s. Custom SET POWER values carry over. The input layer performs no storage I/O.
 
-Enter a play context, resume if needed, and call `input_begin_calibration` for the active slot with `target_power` from the physics branch's NORMAL/SLICK board-center calculation, plus the profile limits. The current game uses a provisional floor of `0.55 * swing_speed(0.5) / (1.38 * target_power)` and a ceiling of `swing_speed(2.0)`. A target above the cap or invalid limits return false. Show `TOSS EASY ×3`. Three classifier-valid, unclipped throws produce `clamp(0.55 * median_peak / (1.38 * target_power), floor, clip_ceiling)`. Any peak more than 30% from the median, a clipped toss, or a disconnect discards the set and emits `INPUT_CAL_RETRY` (`TRY AGAIN`). A cancelled release keeps calibration progress. `INPUT_CAL_MORE` reports progress; `INPUT_CAL_DONE` updates the active slot profile (`POWER SET!`). These tosses never emit a game throw. Save on DONE. Slot changes cancel setup; `input_cancel_calibration` exits explicitly.
+Enter a play context, resume if needed, and call `input_begin_calibration` for the active slot with `target_power` from the NORMAL/SLICK hole window, plus the profile limits. Show `TOSS EASY ×3`. Three classifier-valid, unclipped throws give a median peak. `swing_full_speed_for_power(median_peak, target_power, 1)` inverts the NORMAL curve to compute the slot reference. The game clamps the reference between the value calculated from a 0.5 g reference toss and `swing_speed(2.0)`. Invalid limits and targets above the cap return false. Any peak more than 30% from the median, a clipped toss, or a disconnect discards the set and emits `INPUT_CAL_RETRY` (`TRY AGAIN`). A cancelled release keeps calibration progress. `INPUT_CAL_MORE` reports progress. `INPUT_CAL_DONE` updates the active slot profile (`POWER SET!`). These tosses never emit a game throw. Save on DONE. Slot changes cancel setup. `input_cancel_calibration` exits explicitly.
 
 ## Trace hooks and timing limits
 
@@ -84,7 +86,7 @@ The live **1+2** overlay shows measured current and peak swing speeds and the la
 
 With the overlay up and B released, **A** opens the calibration page. Close the overlay with **1+2** to restore **A** for SURFACE. Use **left/right** to select a pose, **A** to capture a 300 ms average and **2** to return to live diagnostics. The capture starts after the A-press report and requires readings within 0.10 g of 1 g. Capture tip up, flat at the TV, roll right 90° with the right side down, tip down, and tip-up leaned 30° toward the TV. The page shows the vector, magnitude, signed dominant axis and whether the reading matches within 0.15 g. In the 30° pose, negative Z means the face points toward the TV and positive Z means it points toward the player. A flat turn to the right leaves gravity on +Z. A right roll moves it onto +X.
 
-While the overlay is on, the Wii frontend buffers active-remote CSV reports in RAM and flushes only in READY or DONE. Each overlay session starts with a header. The active file at `sd:/apps/backyardcornhole/data/swing-trace.csv` rotates at 1 MiB and keeps one previous file, `swing-trace.1.csv`. Without writable SD it sends `BYC-SWING` rows to OSReport. The rows include report and drain times, raw counts and signed g, report validity, clipping, phase, radial and tangential load, excess, B and reject reason. Closing the overlay queues the remaining rows for the next idle flush. A full RAM buffer skips new reports and logs their count.
+The Wii frontend records active-remote CSV reports during play and SET POWER, including with the debug overlay closed. The overlay also records reports while using menus. Each app run starts its trace with a session header. The frontend buffers reports in RAM and flushes only in READY or DONE. The active file at `sd:/apps/backyardcornhole/data/swing-trace.csv` rotates at 1 MiB and keeps one previous file, `swing-trace.1.csv`. Without writable SD it sends `BYC-SWING` rows to OSReport. The rows include report and drain times, raw counts and signed g, report validity, clipping, phase, radial and tangential load, excess, B and reject reason. A full RAM buffer skips new reports and logs their count.
 
 ## Host verification
 

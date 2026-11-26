@@ -83,6 +83,7 @@ double swing_speed(double mean_excess_g);
 /* Picker order is SLIDER, NORMAL, KOBE. Scale applies before the common cap. */
 double swing_type_scale(int height);
 double swing_power(double peak_speed, double full_speed);
+double swing_full_speed_for_power(double peak_speed, double power, int height);
 double swing_roll_spin(double roll_degrees, const SwingProfile *profile);
 /* require_b_up: a B already held must be let go before it can grip (pause, menus, buttons). */
 void swing_reset(Swing *s, bool require_b_up);

@@ -33,27 +33,29 @@ static void arm(Swing *s, double roll) {
 static void power_equation(void) {
     double full=profile().full_speed;
     near(full,SWING_DEFAULT_FULL_SPEED);
-    near(swing_power(.2*full,full),.11);
-    near(swing_power(.5*full,full),.275);
-    near(swing_power(full,full),.55);
-    near(swing_power(swing_speed(.8),full),.55 * swing_speed(.8)/full);
+    near(swing_power(.1*full,full),.0465208198);
+    near(swing_power(.2*full,full),.1444116608);
+    near(swing_power(.5*full,full),.4601460338);
+    near(swing_power(full,full),.7280505916);
     near(swing_power(swing_speed(4),full),.76);
     near(swing_power(swing_speed(12),full),.76);
     near(swing_power(-1,3),0); near(swing_power(1,0),0);
     near(swing_power(NAN,3),0); near(swing_speed(INFINITY),0);
-    const double scales[]={1.69,1.38,1.00};
+    const double scales[]={1.7637,1.4216,1.1618};
     const double previous_scales[]={1.30,1.20,1.0/.90};
-    const double effort[]={1.30,1.15,.90};
+    const double ratio[]={27.0/18,27.0/21,27.0/25};
+    const double exponent[]={1.3291,1.4833,1.7257};
     for (int h=0;h<3;++h) {
         near(swing_type_scale(h),scales[h]);
         double effective=full*swing_type_scale(h);
-        near(swing_power(full,effective),.55/scales[h]);
-        near(swing_power(swing_speed(.8),effective),.55*swing_speed(.8)/effective);
+        assert(fabs(pow(scales[h]/previous_scales[h],exponent[h])-ratio[h]) < .0001);
         near(swing_power(swing_speed(12),effective),.76);
-        double old_speed=.50*full*previous_scales[h]/SWING_POWER_GAIN;
-        double new_speed=.50*effective/SWING_POWER_GAIN;
-        near(new_speed/old_speed,effort[h]);
-        near(swing_power(new_speed,effective),.50);
+        const double powers[]={.03,.25,.50,.70,.76};
+        for (unsigned p=0;p<sizeof powers/sizeof powers[0];++p) {
+            double peak=swing_speed(.8);
+            double reference=swing_full_speed_for_power(peak,powers[p],h);
+            near(swing_power(peak,reference*scales[h]),powers[p]);
+        }
     }
 }
 /* 0.1.2 answered these presses with HOLD STILL and no grip. */
@@ -118,7 +120,7 @@ static void calibration_median_floor_clip_outlier(void) {
         }
         if (set==0) {
             double reference=swing_type_scale(1);
-            near(p.full_speed,SWING_POWER_GAIN*2.1/(lim.target_power*reference));
+            near(p.full_speed,swing_full_speed_for_power(2.1,lim.target_power,1));
             near(swing_power(2.1,p.full_speed*reference),lim.target_power);
         }
         if (set==1) near(p.full_speed,1.25);
@@ -304,13 +306,13 @@ static void setup_pause_hand_selection_and_calibration(void) {
         SwingResult toss={.thrown=true,.speed=1.2};
         swing_calibrate(&c,&toss,(SwingCalibrationLimits){.6,1,3},&saved);
     }
-    assert(saved.left_handed); near(saved.full_speed,1);
+    assert(saved.left_handed); near(swing_power(1.2,saved.full_speed*swing_type_scale(1)),.6);
     assert(input_set_profile(&i,1,saved));
     input_set_context(&i,INPUT_DISABLED); /* pause also works during flight */
     input_sample(&i,0,520,INPUT_HOME,0,0); assert(i.paused);
     assert(input_focus_hand(&i,1));
     input_sample(&i,0,530,INPUT_RIGHT,0,0);
-    assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.full_speed,1);
+    assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.full_speed,saved.full_speed);
     input_blur_hand(&i); assert(!i.hand_option);
     assert(strstr(input_help_text,"SWING LEFT/RIGHT TO AIM"));
     /* 0.1.4 help matches the controls: speed = power, D-pad up/down = arc, no -/+ fine aim. */

@@ -14,13 +14,19 @@ The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tag
 
 ### Added
 
-- Restored the teal LAST SHOT bar and percent in the gameplay HUD alongside the combined aim and power arrow. The bar holds the launched power until the next throw. The controller cap of 0.76 is 100%.
+- Restored the teal LAST SHOT bar and percent in the gameplay HUD alongside the combined aim and power arrow. The bar holds the previous throw’s power until the next launch. The controller cap of 0.76 is 100%.
 - The 1+2 overlay again shows live and last-throw swing speeds in m/s, plus the selected throw type's calibrated speed reference and live and last-throw power percentages.
 
 ### Changed
 
-- For the same power below the cap, SLIDER takes 30% more swing speed, NORMAL takes 15% more and KOBE takes 10% less. The factory reference stays at 2.45 m/s, and saved custom SET POWER references carry over as stored. The shared power cap remains 0.76.
+- Soft swings get a gentler onset and more usable power steps. Per-type scales use the measured launch-speed conversion for Ashe’s 27/18, 27/21 and 27/25 distance targets. The 2.45 m/s factory reference, custom SET POWER references and shared 0.76 cap carry over.
+- Medium SLICK Slider throws leave less speed on landing so they can stop beside the hole. KOBE can reach the back with a full swing. LAST SHOT uses controller power so KOBE keeps its upper range on the bar.
 - Forward aim uses sideways motion from the forward stroke. LEFT HAND continues to mirror curl.
+- Gameplay records buffered Wiimote reports to `sd:/apps/backyardcornhole/data/swing-trace.csv` by default, including with the 1+2 overlay closed. The file rotates at 1 MiB.
+
+### Fixed
+
+- Clipped the foreground held-bag draw to its screen footprint so a stretched mesh cannot cover the lane.
 
 ## [0.1.8] - 2026-11-25
 

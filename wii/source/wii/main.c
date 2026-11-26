@@ -43,7 +43,7 @@ static unsigned debug_channel, pose_reports;
 static uint32_t debug_held[2], debug_blocked[2];
 static SwingVector pose_sum;
 static uint64_t pose_start_ms, pose_report_ms, static_start_ms, static_report_ms;
-static bool static_tracking, static_pose, tracing, trace_sd_failed;
+static bool static_tracking, static_pose, trace_started, trace_sd_failed;
 static char trace_buffer[64 * 1024];
 static size_t trace_used;
 static unsigned trace_dropped;
@@ -170,8 +170,7 @@ static bool write_trace_sd(const char *dropped) {
     return fclose(file) == 0 && ok;
 }
 
-/* Called outside the WPAD drain. Keep writes off the swing path, even if the
- * overlay closes while B is held. A full buffer drops new rows until idle. */
+/* Called outside the WPAD drain. A full buffer drops new rows until idle. */
 static void flush_swing_trace(bool force) {
     if (!trace_used || swing_armed(&input.detector) || (!force && trace_used < SWING_TRACE_FLUSH)) return;
     char dropped[64] = "";
@@ -189,30 +188,33 @@ static void flush_swing_trace(bool force) {
     trace_used = trace_dropped = 0;
 }
 
+static bool trace_active(void) {
+    return input.debug_visible || game.ui == UI_SETPOWER ||
+           (game.ui == UI_NONE && game.phase >= PH_WAIT && game.phase <= PH_SETTLE);
+}
+
 static void on_wiimote_report(void *user, const InputWpadTrace *row) {
     (void)user;
-    if (!input.debug_visible) {
-        tracing = false;
-        return;
-    }
-    if (row->channel != input.channels[row->player_slot]) return;
-    if (row->channel != debug_channel) clear_pose_cal(row->channel);
+    if (row->channel != input.channels[row->player_slot] || !trace_active()) return;
     const SwingSample *p = &row->sample->motion;
     const Swing *s = row->detector;
     double length = sqrt(p->g.x * p->g.x + p->g.y * p->g.y + p->g.z * p->g.z);
-    if (p->accel_valid && fabs(length - 1) < SWING_STATIC_G) {
-        if (!static_tracking || p->ms - static_report_ms > SWING_GAP_MS) static_start_ms = p->ms;
-        static_tracking = true;
-        static_report_ms = p->ms;
-        static_pose = p->ms - static_start_ms >= SWING_STATIC_MS;
-    } else static_tracking = static_pose = false;
-    capture_pose(p, length);
+    if (input.debug_visible) {
+        if (row->channel != debug_channel) clear_pose_cal(row->channel);
+        if (p->accel_valid && fabs(length - 1) < SWING_STATIC_G) {
+            if (!static_tracking || p->ms - static_report_ms > SWING_GAP_MS) static_start_ms = p->ms;
+            static_tracking = true;
+            static_report_ms = p->ms;
+            static_pose = p->ms - static_start_ms >= SWING_STATIC_MS;
+        } else static_tracking = static_pose = false;
+        capture_pose(p, length);
+    }
 
     char line[256];
-    if (!tracing) {
+    if (!trace_started) {
         int size = snprintf(line, sizeof line, "# session %s at %llu ms\n%s", SWING_VERSION,
                             (unsigned long long)row->estimated_ms, trace_columns);
-        tracing = size > 0 && (size_t)size < sizeof line && buffer_trace(line, (size_t)size);
+        trace_started = size > 0 && (size_t)size < sizeof line && buffer_trace(line, (size_t)size);
     }
     int size = snprintf(line, sizeof line, "%s,%llu,%llu,%u,%u,%u,%u,%u,%u,%u,%d,%d,%d,"
              "%+.5f,%+.5f,%+.5f,%.5f,%s,%+.5f,%+.5f,%+.5f,%d,%s\n",
@@ -222,7 +224,7 @@ static void on_wiimote_report(void *user, const InputWpadTrace *row) {
              p->accel_valid, row->sample->buttons_valid, p->clipped,
              p->g.x, p->g.y, p->g.z, length, swing_phase_name(s), s->radial, s->tangent, s->excess,
              p->b, swing_reject_name(s->last_reject));
-    if (!tracing || size <= 0 || (size_t)size >= sizeof line || !buffer_trace(line, (size_t)size))
+    if (!trace_started || size <= 0 || (size_t)size >= sizeof line || !buffer_trace(line, (size_t)size))
         ++trace_dropped;
 }
 
@@ -367,7 +369,6 @@ int main(void) {
             pose_cal.active = false;
             pose_cal.status = HUD_POSE_IDLE;
             static_tracking = static_pose = false;
-            tracing = false;
         }
         if (input.debug_visible != debug_was_visible)
             SYS_Report("BYC: wiimote debug %s\n", input.debug_visible ? "on" : "off");
@@ -382,7 +383,7 @@ int main(void) {
         queued = 0;
         unsigned active_ch = input.channels[input.active_slot];
         if (active_ch != debug_channel || !input.connected[active_ch]) clear_pose_cal(active_ch);
-        flush_swing_trace(!input.debug_visible);
+        flush_swing_trace(!trace_active());
 
         Fx fx;
         while (game_pop_fx(&game, &fx)) {

@@ -20,6 +20,10 @@ bool view_project(Vec3 w, double aspect, double *sx, double *sy) {
     return true;
 }
 
+Vec3 view_held_bag_center(double release_x, double dip) {
+    return (Vec3){release_x, BYC_REL_Y - dip * .05, BYC_REL_Z + dip * .04};
+}
+
 void view_board_inset(double aspect, int *x, int *y, int *w, int *h) {
     if (aspect > 1.5) { *x = 12; *y = 28; *w = 136; *h = 100; }
     else { *x = 28; *y = 92; *w = 132; *h = 150; }

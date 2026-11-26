@@ -83,7 +83,7 @@ typedef struct {
     char msg_big[24], msg_small[48];
     bool msg_on;
     bool last_shot;
-    double last_shot_power;       /* physical power of the most recent launch */
+    double last_shot_power;       /* controller power of the most recent launch */
     /* The combined direction + power arrow (arcade 1.0.7) previews the forward swing,
      * then holds ARROW_HOLD_MS after release and fades. */
     double arrow_yaw, arrow_power, arrow_x, arrow_age_ms;

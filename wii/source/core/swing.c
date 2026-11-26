@@ -15,13 +15,26 @@ double swing_speed(double e) {
     return isfinite(e) && e > 0 ? sqrt(SWING_RADIUS_M*SWING_GRAVITY*e) : 0;
 }
 double swing_type_scale(int height) {
-    if (height == 0) return 1.69;
-    if (height == 2) return 1.00;
-    return 1.38;
+    /* 0.1.8 scale * (27 / felt feet)^(1 / measured launch-speed exponent). */
+    if (height == 0) return 1.7637;
+    if (height == 2) return 1.1618;
+    return 1.4216;
 }
 double swing_power(double peak, double full) {
-    return isfinite(peak) && isfinite(full) && full > 0 ?
-        clamp(SWING_POWER_GAIN * (peak/full), 0, SWING_POWER_CAP) : 0;
+    if (!isfinite(peak) || !isfinite(full) || peak <= 0 || full <= 0) return 0;
+    double ratio = clamp(peak/full, 0, SWING_POWER_CAP_RATIO);
+    /* Bias the midpoint toward a comfortable toss. Smoothstep eases in from
+       zero and preserves headroom through the measured hard swings. */
+    double x = ratio/(ratio + SWING_POWER_CURVE_BIAS*(SWING_POWER_CAP_RATIO-ratio));
+    return SWING_POWER_CAP*x*x*(3-2*x);
+}
+double swing_full_speed_for_power(double peak, double power, int height) {
+    if (!isfinite(peak) || !isfinite(power) || peak <= 0 || power <= 0 || power > SWING_POWER_CAP)
+        return 0;
+    /* Invert smoothstep, then invert the bias above. */
+    double x = 0.5-sin(asin(1-2*power/SWING_POWER_CAP)/3);
+    double ratio = x*SWING_POWER_CURVE_BIAS*SWING_POWER_CAP_RATIO/(1-x*(1-SWING_POWER_CURVE_BIAS));
+    return peak/(ratio*swing_type_scale(height));
 }
 double swing_roll_spin(double roll, const SwingProfile *profile) {
     if (!isfinite(roll) || !isfinite(profile->spin_strength)) return 0;
@@ -453,12 +466,13 @@ static void track_motion(Swing *s, const SwingSample *p, double magnitude, uint6
         s->forward_peak = fmax(s->forward_peak, s->radial);
         if (s->phase == SWING_FORWARD && p->b)
             measure_forward(s, read_point(s, s->count-1), dt, s->count);
-        if (s->forward_peak >= SWING_LOBE_ON_G &&
-            s->radial <= s->forward_peak-crest_drop(s->forward_peak)) {
-            if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G) confirm_bottom(s);
+        double drop = fmin(crest_drop(s->forward_peak),
+                           fmax(SWING_CREST_MIN_DROP_G, 0.5*(s->forward_peak-1)));
+        if (s->forward_peak >= SWING_FORWARD_ON_G && s->radial <= s->forward_peak-drop) {
+            if (s->forward_peak >= SWING_FORWARD_MIN_PEAK_G) confirm_bottom(s);
             else s->weak_crest = true;
         }
-        if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G) s->weak_crest = false;
+        if (s->forward_peak >= SWING_FORWARD_MIN_PEAK_G) s->weak_crest = false;
         return;
     }
     if (s->phase == SWING_PAST_BOTTOM && p->ms != s->phase_ms) {
@@ -599,6 +613,7 @@ SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult 
     cal->count = 0;
     for (unsigned i=0; i<SWING_CAL_TOSSES; ++i)
         if (fabs(cal->peaks[i]-median) > SWING_CAL_SPREAD*median) return SWING_CAL_RETRY;
-    profile->full_speed = clamp(SWING_POWER_GAIN * median/(lim.target_power * swing_type_scale(1)), lim.full_speed_floor, lim.clip_ceiling);
+    profile->full_speed = clamp(swing_full_speed_for_power(median, lim.target_power, 1),
+                                lim.full_speed_floor, lim.clip_ceiling);
     return SWING_CAL_DONE;
 }

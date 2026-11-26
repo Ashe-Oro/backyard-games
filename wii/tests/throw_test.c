@@ -15,7 +15,7 @@ typedef struct {
     SwingResult toss;
     SwingReject reject;
     bool ready, gripped, have_axis, resolved;
-    double ny, nz, backswing_peak, fitted_speed;
+    double ny, nz, backswing_peak, fitted_speed, forward_peak_g;
     uint64_t release_ms, throw_ms, back_ms, forward_ms, bottom_ms;
 } Outcome;
 
@@ -72,6 +72,7 @@ static void replay_into(Input *in, Outcome *out, const BowlingTrace *trace, unsi
         if (phase==SWING_FORWARD && !out->forward_ms) out->forward_ms=at-base;
         if (phase==SWING_RESOLVE) out->resolved=true;
         out->fitted_speed=detector->fitted_speed;
+        out->forward_peak_g=detector->forward_peak;
         if (detector->have_bottom) out->bottom_ms=detector->bottom_ms-base;
         if (detector->have_axis) {
             out->have_axis=true;
@@ -261,7 +262,7 @@ static void forward_power_and_clip_reconstruction(void) {
 
 static void throw_type_power_and_cap(void) {
     const double previous_scales[]={1.30,1.20,1.0/.90};
-    const double effort[]={1.30,1.15,.90};
+    const double effort[]={1.3567,1.1846,1.0456};
     BowlingTrace mid=bowling_trace(), strong=bowling_trace();
     mid.forward_s=.75;
     mid.release_deg=40;
@@ -282,20 +283,63 @@ static void throw_type_power_and_cap(void) {
     for (int height=0;height<3;++height) {
         Outcome toss=replay_height(&mid,100,7,false,false,height);
         check_result("unclipped mid-range power",&toss,SWING_REJECT_NONE);
-        double old_power=swing_power(toss.toss.speed,SWING_DEFAULT_FULL_SPEED*previous_scales[height]);
-        CHECK(!toss.toss.clipped && old_power>0 && old_power<SWING_POWER_CAP &&
-              toss.toss.power<SWING_POWER_CAP && fabs(toss.toss.power-old_power/effort[height])<1e-12,
-              "type %d: mid-range power %.3f vs 0.1.8 power %.3f",height,toss.toss.power,old_power);
+        double base_power=swing_power(toss.toss.speed/effort[height],SWING_DEFAULT_FULL_SPEED*previous_scales[height]);
+        CHECK(!toss.toss.clipped && toss.toss.power>0 && toss.toss.power<SWING_POWER_CAP &&
+              fabs(toss.toss.power-base_power)<.00003,
+              "type %d: mid-range power %.3f vs feel-adjusted reference %.3f",height,toss.toss.power,base_power);
 
         for (unsigned rate=60;rate<=100;rate+=40) {
             Outcome cap=replay_height(rate==60 ? &strong_60 : &strong,rate,rate==60 ? 33 : 7,false,false,height);
             check_result("strong clipped forward swing",&cap,SWING_REJECT_NONE);
-            double uncapped=SWING_POWER_GAIN*cap.toss.speed/(SWING_DEFAULT_FULL_SPEED*swing_type_scale(height));
+            double cap_speed=SWING_POWER_CAP_RATIO*SWING_DEFAULT_FULL_SPEED*swing_type_scale(height);
             CHECK(cap.toss.clipped && cap.fitted_speed>swing_speed(SWING_RAIL_G-1) &&
-                  uncapped>SWING_POWER_CAP && cap.toss.power==SWING_POWER_CAP,
-                  "type %d at %u Hz: fitted speed %.3f m/s, uncapped power %.3f, result %.3f",
-                  height,rate,cap.fitted_speed,uncapped,cap.toss.power);
+                  cap.toss.speed>=cap_speed && cap.toss.power==SWING_POWER_CAP,
+                  "type %d at %u Hz: fitted speed %.3f m/s, cap speed %.3f, result %.3f",
+                  height,rate,cap.fitted_speed,cap_speed,cap.toss.power);
         }
+    }
+}
+
+static void soft_swing_resolution(void) {
+    const double durations[]={1.85,1.55,1.31,1.15,1.06,.98,.92,.86,.81};
+    enum { REPEATS = 12 };
+    puts("  peak radial g | controller power % (mean ± SD): SLIDER, NORMAL, KOBE");
+    double previous[3]={0}, smallest[]={1,1,1}, largest[3]={0};
+    for (unsigned i=0;i<sizeof durations/sizeof durations[0];++i) {
+        BowlingTrace t=bowling_trace();
+        t.forward_s=durations[i]; t.release_deg=40;
+        for (int h=0;h<3;++h) {
+            double g=0, power=0, squares=0;
+            for (unsigned rep=0;rep<REPEATS;++rep) {
+                Outcome out=replay_height(&t,rep%2 ? 60 : 100,37+rep,false,rep%3==0,h);
+                CHECK(out.throws==1 && !out.toss.clipped && out.fitted_speed==0,
+                      "soft row %u, type %d, repeat %u: unexpected reject or clipped fit",i,h,rep);
+                g+=out.forward_peak_g;
+                power+=out.toss.power;
+                squares+=out.toss.power*out.toss.power;
+            }
+            double mean=power/REPEATS;
+            double sd=sqrt(fmax(0,squares/REPEATS-mean*mean));
+            if (h==0) printf("  %.3f g",g/REPEATS);
+            printf(" | %.1f ± %.1f",100*mean/SWING_POWER_CAP,100*sd/SWING_POWER_CAP);
+            CHECK(mean>0 && sd <= .06*mean,"soft row %u, type %d: excessive power variation %.5f",i,h,sd);
+            if (i>0) {
+                double step=mean-previous[h];
+                CHECK(step>=.014,"soft row %u, type %d: power step %.5f",i,h,step);
+                smallest[h]=fmin(smallest[h],step);
+                largest[h]=fmax(largest[h],step);
+            }
+            previous[h]=mean;
+        }
+        putchar('\n');
+    }
+    for (int h=0;h<3;++h) {
+        CHECK(largest[h]<=4*smallest[h],"type %d: soft steps %.5f–%.5f",h,smallest[h],largest[h]);
+        double full=SWING_DEFAULT_FULL_SPEED*swing_type_scale(h);
+        double soft=swing_speed(.50), center=swing_power(soft,full);
+        double low=swing_power(.9*soft,full)/center, high=swing_power(1.1*soft,full)/center;
+        CHECK(low>=.86 && low<=.95 && high>=1.05 && high<=1.14,
+              "type %d: ±10%% soft speed produces %.3f–%.3f times the center power",h,low,high);
     }
 }
 
@@ -315,14 +359,14 @@ static void crooked_backswing_does_not_aim(void) {
 
 static void low_radial_load_rejects_as_too_weak(void) {
     BowlingTrace trace=bowling_trace();
-    trace.back_deg=-35; trace.forward_deg=35; trace.forward_s=.88;
+    trace.back_deg=-35; trace.forward_deg=35; trace.forward_s=1.40;
     Outcome out=replay(&trace,100,7,false,false);
-    check_result("weak forward radial lobe",&out,SWING_REJECT_TOO_WEAK);
-    CHECK(out.bottom_ms>0,"weak lobe did not get a bottom marker");
-    trace.forward_s=.98;
-    out=replay(&trace,100,7,false,false);
-    check_result("forward crest below 1.30 g",&out,SWING_REJECT_TOO_WEAK);
+    check_result("forward crest below 1.17 g",&out,SWING_REJECT_TOO_WEAK);
     CHECK(out.resolved && !out.bottom_ms,"subthreshold lobe did not use the deferred reject path");
+    trace.forward_s=1.55;
+    out=replay(&trace,100,7,false,false);
+    check_result("no detectable forward crest",&out,SWING_REJECT_BEFORE_BOTTOM);
+    CHECK(out.resolved && !out.bottom_ms,"no bottom should be inferred from low radial load");
 }
 
 static void release_during_turn_confirmation(void) {
@@ -467,6 +511,7 @@ int main(void) {
     TEST(named_bowling_scenarios);
     TEST(forward_power_and_clip_reconstruction);
     TEST(throw_type_power_and_cap);
+    TEST(soft_swing_resolution);
     TEST(crooked_backswing_does_not_aim);
     TEST(low_radial_load_rejects_as_too_weak);
     TEST(release_during_turn_confirmation);
