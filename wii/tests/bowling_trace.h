@@ -10,7 +10,7 @@ typedef struct {
     double start_deg, back_deg, forward_deg;
     double back_s, forward_s, pause_s;
     double pitch_at_bottom, release_deg, release_s;
-    double lateral_g, twist_deg, tremor_deg;
+    double backswing_lateral_g, lateral_g, twist_deg, tremor_deg;
     bool inline_grip, rolled, back_only, still, held, release_going_back;
 } BowlingTrace;
 
@@ -89,6 +89,8 @@ static inline SwingVector bowling_force(const BowlingTrace *t, double s) {
     SwingVector g={0,-(forward*cos(tip)+up*sin(tip)),up*cos(tip)-forward*sin(tip)};
     double velocity=(f2-f0)/(2*h);
     g.x=t->lateral_g*bowling_fraction((velocity-.3)/2);
+    if (s<bowling_forward(t))
+        g.x+=t->backswing_lateral_g*bowling_fraction((-velocity-.3)/2);
     if (t->twist_deg!=0) {
         double release=bowling_release(t);
         double twist=t->twist_deg*bowling_fraction((s-release+.12)/.12)*SWING_PI/180;

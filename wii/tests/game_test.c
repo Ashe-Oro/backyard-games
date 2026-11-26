@@ -319,7 +319,9 @@ static void test_save_roundtrip(void) {
     s.career_fight = 5; s.career_wins = 7; s.profile[1].left_handed = true; s.profile[0].full_speed = 3.1;
     s.profile[1].spin_strength = 0.4; s.help_tucked = true; s.wind_on = true;
     uint8_t buf[SAVE_MAX_BYTES]; size_t n = save_encode(&s, buf, sizeof buf);
-    CHECK(n > 12 && memcmp(buf, "BYCS", 4) == 0 && buf[4] == 0 && buf[5] == SAVE_VERSION, "magic + big-endian version");
+    CHECK(n > 12 && memcmp(buf, "BYCS", 4) == 0 && buf[4] == 0 && buf[5] == 4, "magic + big-endian version 4");
+    CHECK(save_decode(&d, buf, n) && d.profile[0].full_speed == 3.1 && d.profile[1].full_speed == 2.45,
+          "version 4 preserves custom SET POWER and factory speed references");
     CHECK(save_decode(&d, buf, n) && d.career_fight == 5 && d.career_wins == 7 && d.profile[1].left_handed &&
           d.profile[0].full_speed == 3.1 && d.profile[1].spin_strength == 0.4 && d.help_tucked && d.wind_on, "round trip");
     buf[8] ^= 1;
@@ -334,9 +336,13 @@ static void test_save_roundtrip(void) {
     uint32_t crc = save_crc32(buf, n - 4);
     for (int i = 0; i < 4; i++) buf[n - 4 + i] = (uint8_t)(crc >> (24 - i * 8));
     CHECK(save_decode(&d, buf, n) && d.profile[0].full_speed == 3.1 &&
-          d.profile[1].full_speed == swing_default_profile().full_speed &&
+          d.profile[1].full_speed == 2.45 &&
           d.profile[1].left_handed && d.profile[1].spin_strength == .4,
           "older saves update the factory speed and keep custom speed, hand and curl");
+    double scale=swing_type_scale(0), peak=swing_speed(.8);
+    CHECK(swing_power(peak,d.profile[1].full_speed*scale)==swing_power(peak,swing_default_profile().full_speed*scale) &&
+          swing_power(peak,d.profile[0].full_speed*scale)<swing_power(peak,d.profile[1].full_speed*scale),
+          "a migrated factory and a preserved custom profile feed the new curve once");
     s.profile[1].full_speed=swing_speed(1.9);
     n=save_encode(&s,buf,sizeof buf);
     CHECK(save_decode(&d,buf,n) && d.profile[1].full_speed==s.profile[1].full_speed,
@@ -345,7 +351,7 @@ static void test_save_roundtrip(void) {
     crc=save_crc32(buf,n-4);
     for (int i=0;i<4;i++) buf[n-4+i]=(uint8_t)(crc>>(24-i*8));
     CHECK(save_decode(&d,buf,n) && d.profile[0].full_speed==3.1 &&
-          d.profile[1].full_speed==SWING_DEFAULT_FULL_SPEED && d.profile[1].left_handed,
+          d.profile[1].full_speed==2.45 && d.profile[1].left_handed,
           "version 3 migrates the 0.1.7 factory speed and keeps custom power and hand");
     CHECK(save_crc32((const uint8_t *)"123456789", 9) == 0xCBF43926u, "CRC-32 check value");
 }
@@ -356,6 +362,30 @@ static void practice_ready(uint32_t seed) {
     game_start(&game, true, false, false);
     while (game.phase != PH_AIM) frames(1);
     frames(1);
+}
+
+static void test_last_shot_gauge(void) {
+    practice_ready(113);
+    CHECK(!game.last_shot, "no LAST SHOT until a bag launches");
+    CHECK(game_throw(&game, SWING_POWER_CAP, 0, 0), "cap throw launches");
+    CHECK(game.phase == PH_FLYING && game.last_shot && game_last_shot_percent(&game) == 100,
+          "LAST SHOT shows 100%% in flight at the cap");
+    CHECK(!game_throw(&game, .25, 0, 0) && game_last_shot_percent(&game) == 100,
+          "a rejected throw leaves LAST SHOT in place");
+    frames(300);
+    CHECK(game.phase == PH_AIM && game.practice_throws == 1 && !game.arrow_on &&
+          game.last_shot && game.last_shot_power == SWING_POWER_CAP && game_last_shot_percent(&game) == 100,
+          "LAST SHOT survives scoring, the next aim phase and the arrow fading");
+    CHECK(game_throw(&game, .40, 0, 0) && game.last_shot && game.last_shot_power == .40 &&
+          game_last_shot_percent(&game) == 53, "the next launch replaces LAST SHOT with its rounded percent");
+    frames(300);
+    game.arc = ARC_KOBE;
+    CHECK(game_throw(&game, .72, 0, 0) && game.arrow_power > SWING_POWER_CAP &&
+          game_last_shot_percent(&game) == 95, "KOBE keeps the remaining controller headroom in LAST SHOT");
+    frames(300);
+    game.arc = ARC_KOBE;
+    CHECK(game_throw(&game, SWING_POWER_CAP, 0, 0) && game.last_shot_power == SWING_POWER_CAP &&
+          game_last_shot_percent(&game) == 100, "KOBE LAST SHOT reaches 100%% at the controller cap");
 }
 
 static void test_deferred_release_stance(void) {
@@ -684,7 +714,7 @@ static void pick_height(int h) {
     for (int i = 0; i < h; i++) tap(INPUT_UP);
 }
 #define LAND_MAX 600
-typedef struct { bool thrown, deck; double land_x, land_z, peak_y, power, aim, preview_power; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
+typedef struct { bool thrown, deck; double land_x, land_z, peak_y, power, aim, preview_power, launch_power; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
 /* Step the launched bag from release at the game's fixed 240 Hz until touchdown. */
 static Landing swing_and_land(double forward_s, double lateral, double release_pitch, uint32_t noise) {
     static Landing l; memset(&l,0,sizeof l);
@@ -699,6 +729,7 @@ static Landing swing_and_land(double forward_s, double lateral, double release_p
     l.thrown=seen.thrown;
     if (!l.thrown) return l;
     l.preview_power=seen.live_power;
+    l.launch_power=game.arrow_power;
     l.power = input.stats.last_toss.power; l.aim = input.stats.last_toss.aim;
     Wind calm = game.wind;
     while (launch.state == BAG_FLY && l.n < LAND_MAX) {
@@ -719,6 +750,37 @@ static bool same_flight(const Landing *a, const Landing *b, bool vertical_only) 
     }
     return true;
 }
+static void test_medium_slider_rest(void) {
+    practice_ready(145);
+    pick_height(0);
+    CHECK(game.side[0]==SIDE_SLICK && game.arc==ARC_SLIDER, "practice starts on slick Slider");
+    const double powers[]={.45,.555,.595};
+    for (unsigned i=0;i<sizeof powers/sizeof powers[0];++i) {
+        game_clear_board(&game);
+        /* Pass 10 cm beside the hole so a bag must actually stop on the deck. */
+        CHECK(game_throw(&game,powers[i],.012,0), "Slider %.3f launches",powers[i]);
+        frames(300);
+        CHECK(game.nbags==1 && game.bags[0].state==BAG_BOARD && !game.bags[0].off_board,
+              "Slider %.3f can rest without falling in the hole or off the deck",powers[i]);
+    }
+    game_clear_board(&game);
+    tap(INPUT_A);
+    CHECK(game.side[0]==SIDE_STICKY && game_throw(&game,.555,.012,0) &&
+          game.bags[game.active].land_keep==BYC_LAND_KEEP_PUSH, "a Sticky Slider retains its landing multiplier");
+
+    practice_ready(146);
+    for (int height=0;height<=2;++height) {
+        pick_height(height);
+        double power=height==0 ? .69 : SWING_POWER_CAP;
+        CHECK(game_throw(&game,power,0,0), "type %d launches with %.2f power",height,power);
+        Bag b=game.bags[game.active];
+        for (unsigned i=0;i<LAND_MAX && b.state==BAG_FLY;++i) bag_step(&b,&game.wind,BYC_PHYSICS_DT);
+        CHECK(b.state==BAG_SLIDE && -b.lp.z>BYC_L-.17 &&
+              game_last_shot_percent(&game)==(int)lround(100*power/SWING_POWER_CAP),
+              "type %d can contact the back with %.2f power",height,power);
+        frames(300);
+    }
+}
 static void test_set_power_reaches_hole(void) {
     boot(142, NULL);
     tap(INPUT_A);
@@ -732,7 +794,7 @@ static void test_set_power_reaches_hole(void) {
     SwingCalibrationLimits limits = game_calibration_limits(&game);
     CHECK(game.setpower_count == 3 && !input.calibrating && game.save_dirty && game.nbags == 0,
           "SET POWER saves three easy tosses without launching a bag");
-    CHECK(fabs(swing_power(calibrated_speed, game.save.profile[0].full_speed * 1.20) - limits.target_power) < 1e-9,
+    CHECK(fabs(swing_power(calibrated_speed, game.save.profile[0].full_speed * swing_type_scale(1)) - limits.target_power) < 1e-9,
           "the saved easy toss power matches the hole target");
     CHECK(!input_begin_calibration(&input, (SwingCalibrationLimits){.8, limits.full_speed_floor, limits.clip_ceiling}),
           "SET POWER rejects an unreachable target above the cap");
@@ -767,7 +829,7 @@ static void test_swing_to_landing(void) {
             CHECK(l.thrown && l.n>20,"%s %.2f s throws and flies (%d steps)",names[h],duration,l.n);
             CHECK(fabs(l.land_x)<1e-9,"a straight swing lands on the centre line (x=%g)",l.land_x);
             CHECK(fabs(l.power-expected)<1e-9,"%s %.2f s gives %.3f power (got %.3f)",names[h],duration,expected,l.power);
-            CHECK(fabs(l.preview_power-physical_power(game.win,0,SIDE_SLICK,(BagArc)h,expected))<1e-9,
+            CHECK(fabs(l.preview_power-l.launch_power)<1e-9,
                   "%s %.2f s preview matches release power",names[h],duration);
             if (previous_power<SWING_POWER_CAP)
                 CHECK(previous_power<l.power && previous_distance<distance,
@@ -825,8 +887,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.8") == 0, "version is 0.1.8 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.8") == 0, "version tag v0.1.8 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.9") == 0, "version is 0.1.9 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.9") == 0, "version tag v0.1.9 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -955,6 +1017,31 @@ static void test_combined_arrow(void) {
     }
     CHECK(arrow_alpha(0, false) == 1 && arrow_alpha(ARROW_HOLD_MS, false) == 1 && arrow_alpha(ARROW_HOLD_MS + ARROW_FADE_MS / 2, false) == 0.5 &&
           arrow_alpha(ARROW_HOLD_MS + ARROW_FADE_MS, false) == 0 && arrow_alpha(99999, true) == 1, "2 s hold, 0.4 s fade; live preview never fades");
+}
+
+static void test_held_bag_footprint(void) {
+    /* The radius contains every rotated mesh vertex. Check its enclosing cube for
+     * the full stance/dip range and both supported aspect ratios. */
+    double radius = sqrt(BYC_BAG * BYC_BAG / 2 + BYC_BAG_H * BYC_BAG_H);
+    double max_extent = 0;
+    for (int wide = 0; wide < 2; wide++) {
+        double aspect = wide ? 16.0 / 9 : 4.0 / 3;
+        for (int stance = -1; stance <= 1; stance += 2) for (int dip = 0; dip < 2; dip++) {
+            Vec3 center = view_held_bag_center(stance * SWING_STEP_CLAMP, dip);
+            double cx = 0, cy = 0;
+            CHECK(view_project(center, aspect, &cx, &cy), "held bag center projects into the main view");
+            for (unsigned corner = 0; corner < 8; corner++) {
+                Vec3 vertex = {center.x + (corner & 1 ? radius : -radius),
+                               center.y + (corner & 2 ? radius : -radius),
+                               center.z + (corner & 4 ? radius : -radius)};
+                double x = 0, y = 0;
+                CHECK(view_project(vertex, aspect, &x, &y), "held bag bound projects into the main view");
+                max_extent = fmax(max_extent, fmax(fabs(x - cx), fabs(y - cy)));
+            }
+        }
+    }
+    CHECK(max_extent + 1 <= VIEW_HELD_BAG_PAD && VIEW_HELD_BAG_PAD <= 30,
+          "held bag scissor covers its projected footprint (%.1f px) and stays compact", max_extent);
 }
 
 /* ---------------- WG-4: MUSIC, wind streaks ---------------- */
@@ -1129,6 +1216,9 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
+    test_held_bag_footprint();
+    test_last_shot_gauge();
+    test_medium_slider_rest();
     test_deferred_release_stance();
     test_set_power_reaches_hole();
     test_practice_cancel_and_retry();

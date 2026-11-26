@@ -386,12 +386,25 @@ static void draw_held(const Game *g, float dip) {
     double rx = game_release_x(g, t);
     double yaw = (game_is_human(g, t) ? base_yaw(0) : base_yaw(rx)) + g->aim;
     M3 r = m3_euler_xyz(.7f + dip * .35f, (float)-yaw, 0);
-    V3 p = {(float)rx, (float)BYC_REL_Y - dip * .05f, (float)BYC_REL_Z + dip * .04f};
+    Vec3 center = view_held_bag_center(rx, dip);
+    V3 p = {(float)center.x, (float)center.y, (float)center.z};
+    /* Confine the foreground mesh to its camera footprint so a stretched primitive
+     * cannot cover the lane. The pad includes the rotated bag and the armed dip. */
+    float x, y;
+    if (!gfx_project(p, &x, &y)) return;
+    const float pad = VIEW_HELD_BAG_PAD;
+    int x0 = (int)fmaxf(0, floorf(gfx_ui_to_efb(x - pad)));
+    int x1 = (int)fminf(gfx_mode->fbWidth, ceilf(gfx_ui_to_efb(x + pad)));
+    int y0 = (int)fmaxf(0, floorf(y - pad));
+    int y1 = (int)fminf(gfx_mode->efbHeight, ceilf(y + pad));
+    if (x0 >= x1 || y0 >= y1) return;
+    GX_SetScissor((u32)x0, (u32)y0, (u32)(x1 - x0), (u32)(y1 - y0));
     /* held = TEAM_MATS[t][side=='slick' ? 'sticky' : 'slick'] on every face */
     gfx_model(p, &r, (V3){1, 1, 1});
     tex_bind(&tex_bag[t][g->side[t] == SIDE_SLICK ? 1 : 0]);
     draw_bag_faces(&r, (Rgba){255, 255, 255, 255}, false, false, true);
     gfx_model_identity();
+    GX_SetScissor(0, 0, gfx_mode->fbWidth, gfx_mode->efbHeight);
 }
 
 /* ---------------- board deck with a real hole ---------------- */

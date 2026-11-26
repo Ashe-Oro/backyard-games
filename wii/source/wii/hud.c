@@ -17,6 +17,8 @@
 #define UI_W gfx_ui_w
 #define UI_CX (gfx_ui_w * 0.5f)
 
+static const char *const throw_type_names[] = {"SLIDER", "NORMAL", "KOBE"};
+
 static Rgba power_color(double p) {
     static const unsigned stops[5] = {0x8fc6ee, 0xa7efb1, 0xffe16b, 0xf6a35c, 0xf1755f};
     p = fmax(0, fmin(1, p));
@@ -118,10 +120,27 @@ static void callout(const Game *g) {
     if (g->msg_small[0]) gfx_text_center_shadow(cx, 166 + 16 * s + 8, 1, rgb(GOLD), g->msg_small);
 }
 
-/* The one combined direction + power arrow (arcade 1.0.7 / COMBINED_ARROW_NOTES.md). Geometry comes
+static void power_gauge(const Game *g) {
+    if (!g->last_shot || game_menu_screen(g) || g->connect_prompt) return;
+    /* The upper-right space clears the turn banner even at 4:3. Wind and diagnostics sit below. */
+    const float w = gfx_aspect > 1.5 ? 168 : 124, h = 46, x = UI_W - 20 - w, y = 94;
+    const int percent = game_last_shot_percent(g);
+    const double fill = percent / 100.0;
+    char label[8];
+    snprintf(label, sizeof label, "%d%%", percent);
+    card(x, y, w, h);
+    gfx_text(x + 8, y + 6, 1, rgb(CREAM), "LAST SHOT");
+    gfx_text(x + w - 8 - gfx_text_width(label, 1), y + 6, 1, rgb(GOLD), label);
+    float tx = x + 10, ty = y + 26, tw = w - 20, th = 12;
+    gfx_rect(tx - 2, ty - 2, tw + 4, th + 4, rgb(0x769184));
+    gfx_rect(tx, ty, tw, th, rgb(INK));
+    gfx_rect(tx, ty, tw * (float)fill, th, power_color(fill));
+    for (int i = 1; i < 5; i++) gfx_rect(tx + tw * i / 5 - 1, ty, 2, th, rgb(TEAL));
+}
+
+/* The combined direction + power arrow (arcade 1.0.7 / COMBINED_ARROW_NOTES.md). Geometry comes
  * from core/arrow.c (host-tested): origin at the bag, direction = the launch bearing projected
- * through the main camera, coloured shaft length = power on a faint full-power track. There is no
- * separate power meter or LAST SHOT gauge. */
+ * through the main camera, coloured shaft length = power on a faint full-power track. */
 static void line2(float x0, float y0, float x1, float y1, float half, float nx, float ny, Rgba c) {
     gfx_tri2(x0 + nx * half, y0 + ny * half, x1 + nx * half, y1 + ny * half, x1 - nx * half, y1 - ny * half, c);
     gfx_tri2(x0 + nx * half, y0 + ny * half, x1 - nx * half, y1 - ny * half, x0 - nx * half, y0 - ny * half, c);
@@ -164,13 +183,11 @@ bool hud_board_view_visible(const Game *g) {
 static void help_legend(const Game *g, const Input *in) {
     if (game_menu_screen(g) || g->phase == PH_MENU) return;
     int t = game_thrower(g);
-    /* the throw-type picker (D-pad UP/DOWN): the only source of the arc */
-    static const char *const heights[3] = {"SLIDER", "NORMAL", "KOBE"};
     char status[64];
     const char *state = "-";
     if (in && g->phase == PH_AIM && game_is_human(g, t)) state = in->detector.phase == SWING_READY ? "HOLD B" : "SWING";
     /* 0.1.4 bottom bar: B state, picker (D-pad up/down), surface (A), stance (D-pad left/right) */
-    snprintf(status, sizeof status, "%s  \x18\x19 %s  A %s  \x1b\x1a MOVE", state, heights[g->arc],
+    snprintf(status, sizeof status, "%s  \x18\x19 %s  A %s  \x1b\x1a MOVE", state, throw_type_names[g->arc],
              g->side[t] == SIDE_STICKY ? "STICKY" : "SLICK");
     float y = 480 - 40;
     if (g->help_shown) {
@@ -402,6 +419,7 @@ void hud_draw(const Game *g, const Input *in) {
         wind_panel(g);
         turn_banner(g);
         callout(g);
+        power_gauge(g);
         shot_arrow(g);
         help_legend(g, in);
         version_corner();
@@ -419,9 +437,11 @@ void hud_draw(const Game *g, const Input *in) {
     }
 }
 
+enum { DEBUG_LINE_HEIGHT = 16, DEBUG_LINES = 11 };
+
 static void debug_line(float x, float *y, unsigned color, const char *text) {
     gfx_text(x, *y, 1, rgb(color), text);
-    *y += 18;
+    *y += DEBUG_LINE_HEIGHT;
 }
 
 static void draw_wiimote_cal(float x, float y, unsigned remote, const HudWiimoteCalibration *cal) {
@@ -439,7 +459,7 @@ static void draw_wiimote_cal(float x, float y, unsigned remote, const HudWiimote
     snprintf(line, sizeof line, "POSE CALIBRATION  REMOTE %u", remote);
     debug_line(x, &y, GOLD, line);
     debug_line(x, &y, CREAM, "A CAPTURE   LEFT/RIGHT POSE   2 LIVE");
-    debug_line(x, &y, CREAM, "POSE     X      Y      Z     |G|  AXIS");
+    debug_line(x, &y, CREAM, "POSE     X     Y     Z    |G| AXIS");
 
     for (unsigned i = 0; i < HUD_WIIMOTE_POSES; ++i) {
         const char focus = i == cal->pose ? '>' : ' ';
@@ -454,7 +474,7 @@ static void draw_wiimote_cal(float x, float y, unsigned remote, const HudWiimote
             double z = i == HUD_WIIMOTE_POSES - 1 ? fabs(g.z) : g.z;
             bool pass = fabs(g.x - target.x) <= .15 && fabs(g.y - target.y) <= .15 &&
                         fabs(z - target.z) <= .15 && fabs(length - 1) <= .15;
-            snprintf(line, sizeof line, "%c%-5s %+.2f  %+.2f  %+.2f  %.2f %c%c %s",
+            snprintf(line, sizeof line, "%c%-5s %+.2f %+.2f %+.2f %.2f %c%c %s",
                      focus, poses[i].label, g.x, g.y, g.z, length, dominant < 0 ? '-' : '+',
                      axis, pass ? "PASS" : "FAIL");
             color = pass ? 0xa7efb1 : RED;
@@ -471,16 +491,23 @@ static void draw_wiimote_cal(float x, float y, unsigned remote, const HudWiimote
         debug_line(x, &y, CREAM, "Z- BUTTONS FACE TV  Z+ FACE YOU");
 }
 
+static int swing_percent(double power) {
+    return (int)lround(100 * power / SWING_POWER_CAP);
+}
+
 void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
                            const HudWiimoteCalibration *cal, bool static_pose) {
     const Swing *s = &in->detector;
     const InputStats *st = &in->stats;
+    const InputSlot *slot = &in->slots[in->active_slot];
     unsigned remote = in->channels[in->active_slot] + 1;
-    const float w = 348, h = 11 * 18 + 10;
-    float x = UI_W - 28 - w, y = 480 - 24 - h;
+    /* At 4:3 the box starts at x=324, just clear of the expanded help at x=322.
+     * Its top clears the wind card, and its bottom clears the help legend. */
+    const float w = 304, h = DEBUG_LINES * DEBUG_LINE_HEIGHT + 8;
+    float x = UI_W - 12 - w, y = 434 - h;
     gfx_rect(x, y, w, h, rgba(TEAL, 0xf0));
-    x += 10;
-    y += 5;
+    x += 4;
+    y += 4;
     if (cal->active) {
         draw_wiimote_cal(x, y, remote, cal);
         return;
@@ -494,24 +521,38 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
     } else snprintf(line, sizeof line, "ACCEL G  NO REPORT");
     debug_line(x, &y, CREAM, line);
 
-    if (p->accel_valid) {
-        double length = sqrt(g.x * g.x + g.y * g.y + g.z * g.z);
-        snprintf(line, sizeof line, "RAW Y%+.2f Z%+.2f  |G| %.2f CLIP %s", g.y, g.z, length, p->clipped ? "YES" : "-");
-    } else snprintf(line, sizeof line, "RAW  -");
+    char speed[12] = "-", peak[12] = "-", preview[8] = "-";
+    if (swing_armed(s) && s->observer_valid) snprintf(speed, sizeof speed, "%.2f", s->speed);
+    if (swing_armed(s) && s->peak > 0) snprintf(peak, sizeof peak, "%.2f", s->peak);
+    snprintf(line, sizeof line, "SWING SPEED %s  PEAK %s M/S", speed, peak);
     debug_line(x, &y, CREAM, line);
+
+    double power, aim;
+    if (swing_preview(s, &slot->profile, slot->height, &power, &aim))
+        snprintf(preview, sizeof preview, "%d%%", swing_percent(power));
+    double full_ref = slot->profile.full_speed * swing_type_scale(slot->height);
+    snprintf(line, sizeof line, "FULL REF %s %.2f M/S LIVE %s", throw_type_names[slot->height], full_ref, preview);
+    debug_line(x, &y, GOLD, line);
+
+    if (st->have_toss)
+        snprintf(line, sizeof line, "LAST %.2f M/S P%d%% A%+.2f S%+.2f", st->last_toss.speed,
+                 swing_percent(st->last_toss.power), st->last_toss.aim, st->last_toss.spin);
+    else snprintf(line, sizeof line, "LAST THROW  -");
+    debug_line(x, &y, GOLD, line);
 
     if (p->accel_valid) {
         bool live = s->have_time && s->last_ms == p->ms;
         double pitch = live ? s->pitch : atan2(-g.y, hypot(g.x, g.z)) * 180 / SWING_PI;
         double face = live ? s->face_pitch : atan2(-g.y, g.z) * 180 / SWING_PI;
         double roll = live ? s->roll : atan2(g.x, g.z) * 180 / SWING_PI;
-        snprintf(line, sizeof line, "PITCH %+.0f DEG %s FACE %+.0f ROLL %+.0f",
+        snprintf(line, sizeof line, "PITCH%+.0f %s FACE%+.0f ROLL%+.0f",
                  pitch, (live ? s->pitch_static : static_pose) ? "STATIC" : "MOVING", face, roll);
     } else snprintf(line, sizeof line, "PITCH  -");
     debug_line(x, &y, CREAM, line);
 
     const char *b = !latest->buttons_valid ? "?" : p->b ? "HELD" : "UP";
-    snprintf(line, sizeof line, "PHASE %s  B %s  PASSES %u", swing_phase_name(s), b, s->passes);
+    snprintf(line, sizeof line, "PHASE %s B %s P%u A POSES", swing_phase_name(s), b,
+             (unsigned)fmin(99, s->passes));
     debug_line(x, &y, GOLD, line);
     snprintf(line, sizeof line, "REJECT %s", swing_reject_name(s->last_reject));
     debug_line(x, &y, s->last_reject == SWING_REJECT_NONE ? CREAM : GOLD, line);
@@ -519,29 +560,21 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
     if (!p->accel_valid) snprintf(line, sizeof line, "TAN - RAD - LAT -");
     else if (s->have_axis) {
         if (s->sign_source != SWING_SIGN_UNKNOWN)
-            snprintf(line, sizeof line, "TAN %+.2f RAD %+.2f LAT %+.2f E %+.2f",
+            snprintf(line, sizeof line, "TAN %+.2f RAD %+.2f LAT %+.2f E%+.2f",
                      s->tangent, s->radial, g.x, s->excess);
         else snprintf(line, sizeof line, "TAN - RAD %+.2f LAT %+.2f E %+.2f", s->radial, g.x, s->excess);
     } else snprintf(line, sizeof line, "TAN - RAD - LAT %+.2f", g.x);
     debug_line(x, &y, CREAM, line);
 
-    if (s->observer_valid)
-        snprintf(line, sizeof line, "ARM~ %+.0f DEG V~ %.1f M/S   A POSES", s->arm_angle, s->speed);
-    else snprintf(line, sizeof line, "ARM~ - V~ -   A POSES");
-    debug_line(x, &y, CREAM, line);
-
+    char arm[12] = "-", bottom[12] = "-";
+    if (s->observer_valid) snprintf(arm, sizeof arm, "%+.0f", s->arm_angle);
     if (s->have_bottom) {
         uint64_t ago = p->ms >= s->bottom_ms ? p->ms - s->bottom_ms : 0;
-        snprintf(line, sizeof line, "FWD PEAK %.2f FIT %.2f BOT +%llu MS", s->peak, s->fitted_speed,
-                 (unsigned long long)(ago < 99999 ? ago : 99999));
-    } else snprintf(line, sizeof line, "FWD PEAK %.2f FIT %.2f BOT -", s->peak, s->fitted_speed);
+        snprintf(bottom, sizeof bottom, "+%uMS", (unsigned)(ago < 99999 ? ago : 99999));
+    }
+    snprintf(line, sizeof line, "FIT %.2f ARM%s BOT%s%s", s->fitted_speed, arm, bottom,
+             p->accel_valid && p->clipped ? " CLIP" : "");
     debug_line(x, &y, CREAM, line);
-
-    if (st->have_toss)
-        snprintf(line, sizeof line, "LAST THROW P%.2f AIM%+.2f SPIN%+.2f",
-                 st->last_toss.power, st->last_toss.aim, st->last_toss.spin);
-    else snprintf(line, sizeof line, "LAST THROW  -");
-    debug_line(x, &y, GOLD, line);
 
     const unsigned *r = s->rejects;
     snprintf(line, sizeof line, "B%u E%u W%u L%u N%u G%u %u/S %uMS",
@@ -555,7 +588,7 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
         const char *source = s->sign_source == SWING_SIGN_GRIP ? "GRIP" :
                              s->sign_source == SWING_SIGN_TURN ? "TURN" : "-";
         char sign = s->sign_source == SWING_SIGN_UNKNOWN ? '?' : s->tangent_sign > 0 ? '+' : '-';
-        snprintf(line, sizeof line, "AXES Y%+.2f Z%+.2f T%c %s G%+.0f D%.0f",
+        snprintf(line, sizeof line, "AXES Y%+.2f Z%+.2f T%c%s G%+.0f D%.0f",
                  s->ny, s->nz, sign, source, s->grip_pitch, s->grip_turn);
     } else snprintf(line, sizeof line, "AXES  -");
     debug_line(x, &y, CREAM, line);

@@ -1,7 +1,7 @@
 /* Combined direction + power arrow (arcade 1.0.7 parity, COMBINED_ARROW_NOTES.md). Platform-free so
  * the exact HUD geometry is host-tested: one compact arrow from the bag/stance, pointing along the
  * launch bearing projected through the main camera, whose length and fill show power on a faint
- * full-power track. There is no separate power meter. */
+ * full-power track. */
 #ifndef BYC_ARROW_H
 #define BYC_ARROW_H
 
@@ -18,6 +18,7 @@
 #define VIEW_AT_Z (-8.7)
 #define VIEW_W 640.0
 #define VIEW_H 480.0
+#define VIEW_HELD_BAG_PAD 26.0f   /* UI pixels around the projected held bag center */
 
 /* 1.0.7 uses a 110 px full-power shaft with a 24 px floor on the cabinet's 1024-wide canvas; the
  * same proportions on the Wii's 480-high virtual screen (640 wide at 4:3, 853.3 at 16:9). */
@@ -39,6 +40,8 @@ typedef struct {
 double view_ui_width(double aspect);
 /* Projects a world point with the main camera onto the view_ui_width(aspect) x 480 screen. */
 bool view_project(Vec3 world, double aspect, double *sx, double *sy);
+/* World-space center of the held bag, including the armed stance dip (0..1). */
+Vec3 view_held_bag_center(double release_x, double dip);
 /* BOARD · 27 FT inset viewport in 2D screen units (view_ui_width wide). 4:3 keeps the 0.1.2
  * rect; 16:9 uses the free top-left corner so the beer-pong table and players stay clear.
  * The drawn frame adds 3 px each side and a 19 px title bar above (hud.c board_view_frame). */

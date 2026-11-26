@@ -66,12 +66,15 @@ Lie game_lie(const Game *g) {
     return l;
 }
 bool game_menu_screen(const Game *g) { return g->ui != UI_NONE; }
+int game_last_shot_percent(const Game *g) {
+    return (int)lround(100 * clampd(g->last_shot_power / SWING_POWER_CAP, 0, 1));
+}
 
 SwingCalibrationLimits game_calibration_limits(const Game *g) {
     double target = g->win->w[0][SIDE_SLICK][ARC_NORMAL].mid;
     /* Provisional limits until P1 hardware traces. Allow a classified 0.5 g
      * reference toss to reach the hole, and keep the 2.0 g profile ceiling. */
-    return (SwingCalibrationLimits){target, SWING_POWER_GAIN * swing_speed(0.5) / (target * swing_type_scale(1)), swing_speed(2.0)};
+    return (SwingCalibrationLimits){target, swing_full_speed_for_power(swing_speed(0.5), target, 1), swing_speed(2.0)};
 }
 
 /* ---------------- menus ---------------- */
@@ -215,6 +218,7 @@ static void show_menu(Game *g) {
     timers_clear(g); g->active = -1; g->nbefore = 0; g->paused = false;
     g->phase = PH_MENU; g->career_match = false; g->resume_pending = false;
     clear_bags(g);
+    g->last_shot = false; g->last_shot_power = 0;
     g->arrow_on = g->arrow_live = false;
     open_ui(g, UI_TITLE);
 }
@@ -237,6 +241,7 @@ void game_start(Game *g, bool practice, bool vs_cpu, bool career) {
     g->scores[0] = g->scores[1] = 0; g->inning = 1; g->winner = -1;
     g->first = practice ? 0 : (rng_next(&g->rng) < 0.5 ? 0 : 1);   /* coin toss */
     g->ui = UI_NONE; g->menu.count = 0;
+    g->last_shot = false; g->last_shot_power = 0;
     g->arrow_on = g->arrow_live = false; g->cpu_planning = false;
     fx(g, FX_DOG_RESET, (Vec3){0, 0, 0}, 0);
     if (g->input) {
@@ -271,13 +276,24 @@ static void next_turn(Game *g) {
     }
 }
 
+static double human_launch_power(const Game *g, int team, double power) {
+    if (g->arc == ARC_KOBE) {
+        /* The legacy Kobe window starts beyond a capped motion throw.
+           Stretch the upper deck range so full effort reaches the back. */
+        const double deck_start = 0.60, back_power = 0.86;
+        double t = clampd((power-deck_start)/(SWING_POWER_CAP-deck_start), 0, 1);
+        power += (back_power-SWING_POWER_CAP)*t;
+    }
+    return physical_power(g->win, team, g->side[team], g->arc, power);
+}
+
 static bool throw_bag(Game *g, double power, double drift, int team) {
     if (g->paused || g->connect_prompt) return false;   /* frozen worlds never take a throw */
     if (!(g->phase == PH_AIM || g->phase == PH_CPU)) return false;
     if (!reserve_bag(g)) { say(g, "OUT OF MEMORY", "HOME: CLEAR BOARD", 2000); return false; }
     BagSide side = g->side[team];
     bool human = game_is_human(g, team);
-    double actual = human ? physical_power(g->win, team, side, g->arc, power) : power;
+    double actual = human ? human_launch_power(g, team, power) : power;
     Bag *b = &g->bags[g->nbags];
     bag_new(b, team, side);
     double rx = game_release_x(g, team);
@@ -285,6 +301,8 @@ static bool throw_bag(Game *g, double power, double drift, int team) {
      * at the hole). The CPU keeps 1.0.3's baseYaw(RX[1]) line; with RX = 0 both bases are 0. */
     double yaw_base = base_yaw(RX[team]);
     bag_launch_yaw(b, rx, yaw_base, actual, g->aim, drift, g->arc, g->spin);
+    /* Give a medium slick Slider room to stop if it passes beside the hole. */
+    if (human && g->arc == ARC_SLIDER && side == SIDE_SLICK) b->land_keep = 0.90;
     b->release_yaw = yaw_base + g->aim;
     if (!human) b->spin += drift * 2;
     b->tumble = 0.6 + rng_next(&g->rng);
@@ -292,6 +310,7 @@ static bool throw_bag(Game *g, double power, double drift, int team) {
     for (int i = 0; i < g->nbags; i++) g->before[i] = g->bags[i].state;
     g->active = g->nbags++;
     g->phase = PH_FLYING; g->meter = power;
+    g->last_shot = true; g->last_shot_power = power;
     if (human) {
         /* 1.0.7 showShotArrow: the actual launch yaw and physical power, from the release x. */
         g->arrow_on = true; g->arrow_live = false; g->arrow_age_ms = 0;
@@ -642,7 +661,7 @@ void game_update(Game *g, double dt, uint64_t now_ms) {
             double power, aim;
             if (!g->paused && !g->connect_prompt && !in->calibrating && swing_preview(&in->detector, &in->slots[t].profile, in->slots[t].height, &power, &aim)) {
                 g->arrow_on = g->arrow_live = true; g->arrow_age_ms = 0;
-                g->arrow_power = physical_power(g->win, t, g->side[t], g->arc, clampd(power, 0, 1));
+                g->arrow_power = human_launch_power(g, t, power);
                 g->arrow_yaw = game_launch_yaw(g, t, aim); g->arrow_x = game_release_x(g, t);
             } else if (g->arrow_live) g->arrow_on = g->arrow_live = false;
         } else if (g->arrow_live) g->arrow_on = g->arrow_live = false;

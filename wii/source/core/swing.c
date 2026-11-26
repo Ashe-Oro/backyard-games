@@ -15,13 +15,26 @@ double swing_speed(double e) {
     return isfinite(e) && e > 0 ? sqrt(SWING_RADIUS_M*SWING_GRAVITY*e) : 0;
 }
 double swing_type_scale(int height) {
-    if (height == 0) return 1.30;
-    if (height == 2) return 1.0/0.90;
-    return 1.20;
+    /* 0.1.8 scale * (27 / felt feet)^(1 / measured launch-speed exponent). */
+    if (height == 0) return 1.7637;
+    if (height == 2) return 1.1618;
+    return 1.4216;
 }
 double swing_power(double peak, double full) {
-    return isfinite(peak) && isfinite(full) && full > 0 ?
-        clamp(SWING_POWER_GAIN * (peak/full), 0, SWING_POWER_CAP) : 0;
+    if (!isfinite(peak) || !isfinite(full) || peak <= 0 || full <= 0) return 0;
+    double ratio = clamp(peak/full, 0, SWING_POWER_CAP_RATIO);
+    /* Bias the midpoint toward a comfortable toss. Smoothstep eases in from
+       zero and preserves headroom through the measured hard swings. */
+    double x = ratio/(ratio + SWING_POWER_CURVE_BIAS*(SWING_POWER_CAP_RATIO-ratio));
+    return SWING_POWER_CAP*x*x*(3-2*x);
+}
+double swing_full_speed_for_power(double peak, double power, int height) {
+    if (!isfinite(peak) || !isfinite(power) || peak <= 0 || power <= 0 || power > SWING_POWER_CAP)
+        return 0;
+    /* Invert smoothstep, then invert the bias above. */
+    double x = 0.5-sin(asin(1-2*power/SWING_POWER_CAP)/3);
+    double ratio = x*SWING_POWER_CURVE_BIAS*SWING_POWER_CAP_RATIO/(1-x*(1-SWING_POWER_CURVE_BIAS));
+    return peak/(ratio*swing_type_scale(height));
 }
 double swing_roll_spin(double roll, const SwingProfile *profile) {
     if (!isfinite(roll) || !isfinite(profile->spin_strength)) return 0;
@@ -120,6 +133,8 @@ static double throw_power(const Swing *s, const SwingProfile *profile, int heigh
     return swing_power(throw_speed(s), profile->full_speed*swing_type_scale(height));
 }
 
+static void fit_forward(Swing *s);
+
 bool swing_preview(const Swing *s, const SwingProfile *profile, int height, double *power, double *aim) {
     if (s->phase != SWING_FORWARD &&
         (s->phase != SWING_PAST_BOTTOM || s->last_ms-s->phase_ms > SWING_RELEASE_WINDOW_MS))
@@ -132,6 +147,9 @@ bool swing_preview(const Swing *s, const SwingProfile *profile, int height, doub
 
 static SwingResult finish(Swing *s, const SwingProfile *profile, int height) {
     if (s->peak < swing_speed(SWING_QUALIFY_E_G)) return reject(s, SWING_REJECT_TOO_WEAK);
+    /* A strong clipped crest can need more of the falling shoulder to fit.
+       Include any additional reports through B-up. */
+    fit_forward(s);
     double roll = s->release_roll-degrees(atan(lateral_mean(s)));
     set_phase(s, SWING_SPENT);
     return (SwingResult){.thrown=true, .power=throw_power(s, profile, height),
@@ -238,9 +256,9 @@ static void measure_forward(Swing *s, const SwingPoint *p, uint64_t dt, unsigned
         s->release_roll = degrees(atan2(p->g.x, fmax(p->radial, 0.3)));
 }
 
-static double fitted_peak(const Swing *s, double peak_load, double rail) {
+static double fitted_peak(const Swing *s, double peak_load, double rail, uint64_t crest_ms) {
     /* Fit radial load = a + b*t + c*t^2 to the unclipped shoulders.
-       Scale t by 100 ms and subtract the bottom time to condition the fit. */
+       Scale t by 100 ms and center it on a clipped point through B-up. */
     double moments[5] = {0}, weighted[3] = {0};
     double half = 1 + 0.5*(peak_load-1);
     unsigned count = 0, before = 0, after = 0;
@@ -248,7 +266,7 @@ static double fitted_peak(const Swing *s, double peak_load, double rail) {
         const SwingPoint *p = read_point(s, i);
         if (s->release_ms && p->ms > s->release_ms) break;
         if (p->clipped || p->radial <= half || p->radial >= rail-SWING_FIT_MARGIN_G) continue;
-        double t = ((double)p->ms-(double)s->bottom_ms)/100, power = 1;
+        double t = ((double)p->ms-(double)crest_ms)/100, power = 1;
         for (unsigned j = 0; j < 5; ++j) {
             moments[j] += power;
             if (j < 3) weighted[j] += power*p->radial;
@@ -280,16 +298,29 @@ static double fitted_peak(const Swing *s, double peak_load, double rail) {
     return swing_speed(fmin(peak, 2*SWING_RAIL_G)-1);
 }
 
+static void fit_forward(Swing *s) {
+    double rail = 0, peak_load = 0;
+    uint64_t crest_ms = 0;
+    for (unsigned i = 0; i < s->count; ++i) {
+        const SwingPoint *p = read_point(s, i);
+        if (s->release_ms && p->ms > s->release_ms) break;
+        peak_load = fmax(peak_load, p->radial);
+        if (p->clipped && p->radial > rail) {
+            rail = p->radial;
+            crest_ms = p->ms;
+        }
+    }
+    if (rail <= 1 + 0.5*(peak_load-1)) return;
+    s->forward_clipped = true;
+    double fit = fitted_peak(s, peak_load, fmin(rail, SWING_RAIL_G), crest_ms);
+    if (fit > 0) s->fitted_speed = fit;
+}
+
 static void confirm_bottom(Swing *s) {
     const uint64_t start = read_point(s, 0)->ms;
     double half = 1 + 0.5*(s->forward_peak-1), weight = 0, total = 0;
-    double rail = 0, peak_load = 0;
     for (unsigned i = 0; i < s->count; ++i) {
         const SwingPoint *p = read_point(s, i);
-        if (!s->release_ms || p->ms <= s->release_ms) {
-            peak_load = fmax(peak_load, p->radial);
-            if (p->clipped) rail = fmax(rail, p->radial);
-        }
         if (p->radial <= half) continue;
         double w = p->radial-half;
         weight += w;
@@ -298,8 +329,7 @@ static void confirm_bottom(Swing *s) {
     s->bottom_ms = start+(uint64_t)(weight > 0 ? total/weight : 0);
     s->have_bottom = true;
     ++s->passes;
-    s->forward_clipped = rail > 1 + 0.5*(peak_load-1);
-    if (s->forward_clipped) s->fitted_speed = fitted_peak(s, peak_load, fmin(rail, SWING_RAIL_G));
+    fit_forward(s);
     if (s->phase != SWING_RESOLVE) set_phase(s, SWING_PAST_BOTTOM);
     s->turn_min = INFINITY;
     s->turn_rise = 0;
@@ -368,12 +398,14 @@ static void track_first_lobe(Swing *s, const SwingSample *p, double load) {
         s->passes = 1;
         s->turn_min = INFINITY;
         s->count = s->first = 0;
+        s->lateral_sum = s->lateral_weight = 0;
         set_phase(s, SWING_TURN);
         return;
     }
 
     /* A tip-forward grip near the bottom can start with a forward pass.
        Its samples only become eligible for power once the crest confirms it. */
+    set_phase(s, SWING_FORWARD);
     for (unsigned i = 0; i < s->count; ++i) {
         SwingPoint *q = point(s, i);
         q->radial = project_radial(s, q->g);
@@ -434,12 +466,13 @@ static void track_motion(Swing *s, const SwingSample *p, double magnitude, uint6
         s->forward_peak = fmax(s->forward_peak, s->radial);
         if (s->phase == SWING_FORWARD && p->b)
             measure_forward(s, read_point(s, s->count-1), dt, s->count);
-        if (s->forward_peak >= SWING_LOBE_ON_G &&
-            s->radial <= s->forward_peak-crest_drop(s->forward_peak)) {
-            if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G) confirm_bottom(s);
+        double drop = fmin(crest_drop(s->forward_peak),
+                           fmax(SWING_CREST_MIN_DROP_G, 0.5*(s->forward_peak-1)));
+        if (s->forward_peak >= SWING_FORWARD_ON_G && s->radial <= s->forward_peak-drop) {
+            if (s->forward_peak >= SWING_FORWARD_MIN_PEAK_G) confirm_bottom(s);
             else s->weak_crest = true;
         }
-        if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G) s->weak_crest = false;
+        if (s->forward_peak >= SWING_FORWARD_MIN_PEAK_G) s->weak_crest = false;
         return;
     }
     if (s->phase == SWING_PAST_BOTTOM && p->ms != s->phase_ms) {
@@ -449,9 +482,9 @@ static void track_motion(Swing *s, const SwingSample *p, double magnitude, uint6
         if (turned && s->turn_min < SWING_LOBE_ON_G) {
             s->window_closed = true;
             set_phase(s, SWING_BACKSWING);
-        } else if (p->b && p->ms-s->phase_ms <= SWING_RELEASE_WINDOW_MS) {
+        } else if (p->ms-s->phase_ms <= SWING_RELEASE_WINDOW_MS) {
             add_point(s, p);
-            measure_forward(s, read_point(s, s->count-1), dt, s->count);
+            if (p->b) measure_forward(s, read_point(s, s->count-1), dt, s->count);
         }
     }
 }
@@ -580,6 +613,7 @@ SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult 
     cal->count = 0;
     for (unsigned i=0; i<SWING_CAL_TOSSES; ++i)
         if (fabs(cal->peaks[i]-median) > SWING_CAL_SPREAD*median) return SWING_CAL_RETRY;
-    profile->full_speed = clamp(SWING_POWER_GAIN * median/(lim.target_power * swing_type_scale(1)), lim.full_speed_floor, lim.clip_ceiling);
+    profile->full_speed = clamp(swing_full_speed_for_power(median, lim.target_power, 1),
+                                lim.full_speed_floor, lim.clip_ceiling);
     return SWING_CAL_DONE;
 }

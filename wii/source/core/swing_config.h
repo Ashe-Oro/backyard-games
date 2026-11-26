@@ -2,15 +2,18 @@
 #define BYC_SWING_CONFIG_H
 
 /* Suggested hardware tuning. Units are ms, g, m/s and degrees. */
-#define SWING_VERSION "bowling-grip-0.1.8"
+#define SWING_VERSION "bowling-grip-0.1.9"
 #define SWING_STATIC_G 0.10
 #define SWING_STATIC_MS 30
 #define SWING_ONSET_G 0.25
 #define SWING_ONSET_MS 20
 #define SWING_LOBE_ON_G 1.20
 #define SWING_LOBE_MIN_PEAK_G 1.30
+#define SWING_FORWARD_ON_G 1.12
+#define SWING_FORWARD_MIN_PEAK_G 1.17
 #define SWING_LOBE_MIN_MS 90
 #define SWING_CREST_DROP_G 0.15
+#define SWING_CREST_MIN_DROP_G 0.09
 #define SWING_CREST_DROP_FRACTION 0.15
 #define SWING_BACK_ROTATION_DEG 20.0
 #define SWING_AMBIGUOUS_PEAK_G 1.60
@@ -19,7 +22,7 @@
 #define SWING_TURN_REPORTS 2
 #define SWING_TURN_MAX_RADIAL_G 2.20
 #define SWING_BACK_PULL_G 0.30
-#define SWING_QUALIFY_E_G 0.30
+#define SWING_QUALIFY_E_G 0.14
 #define SWING_RESOLVE_MS 160
 #define SWING_BOTTOM_TOL_MS 10
 #define SWING_BACK_AXIS_SPREAD_DEG 15.0
@@ -36,9 +39,10 @@
 #define SWING_RAIL_G 3.55
 #define SWING_RAIL_NEAR_G 0.10
 #define SWING_FIT_MARGIN_G 0.15
-#define SWING_DEFAULT_FULL_SPEED 2.45  /* NORMAL reaches the cap at 4.06 m/s. */
-#define SWING_POWER_GAIN 0.55
-#define SWING_POWER_CAP 0.76           /* calm, centered NORMAL lands 8.90 m from release */
+#define SWING_DEFAULT_FULL_SPEED 2.45
+#define SWING_POWER_CAP_RATIO 1.30    /* peak speed / effective reference at the cap */
+#define SWING_POWER_CURVE_BIAS 0.47
+#define SWING_POWER_CAP 0.76          /* calm, centered NORMAL lands 8.90 m from release */
 #define SWING_CAL_TOSSES 3
 #define SWING_CAL_SPREAD 0.30
 #define SWING_ROLL_DEAD_DEG 10.0

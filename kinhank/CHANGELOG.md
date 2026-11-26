@@ -9,6 +9,15 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.9] - 2026-11-25
+
+### Changed
+
+- Updated the BYCEAO disc to Wii v0.1.9 with more control over soft swings and type scales based on Ashe’s 27/18, 27/21 and 27/25 distance targets. The shared 0.76 cap and saved SET POWER references carry over.
+- Restored the LAST SHOT percent bar in play and the measured swing speeds in the 1+2 overlay. The overlay also shows the selected type's speed reference and power percentages.
+- Reduced SLICK Slider roll on landing and extended KOBE’s upper range to reach the back of the board.
+- Clipped the foreground held-bag draw to prevent a full-screen wedge. Gameplay records buffered CSV reports to the emulated SD card at `sd:/apps/backyardcornhole/data/swing-trace.csv`, including with diagnostics closed.
+
 ## [0.1.8] - 2026-11-25
 
 ### Changed

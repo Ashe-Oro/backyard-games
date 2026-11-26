@@ -1,6 +1,6 @@
 # Backyard Cornhole — Kinhank
 
-Dolphin on the Kinhank X5 Pro. The current build is v0.1.8. See
+Dolphin on the Kinhank X5 Pro. The current build is v0.1.9. See
 [TARGETS.md](../TARGETS.md) and [INSTALL.md](INSTALL.md).
 
 The game disc is the Wii ISO (`BYCEAO`). This folder is the source of truth
