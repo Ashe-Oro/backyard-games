@@ -15,7 +15,7 @@ typedef struct {
     bool accel_valid;
     unsigned dropped;    /* informational; the input adapter can keep a partial batch */
 } SwingSample;
-typedef struct { double full_speed, spin_strength; bool left_handed; } SwingProfile;
+typedef struct { double effort_scale, spin_strength; bool left_handed; } SwingProfile;
 typedef enum {
     SWING_READY, SWING_GRIP, SWING_BACKSWING, SWING_TURN, SWING_FORWARD,
     SWING_PAST_BOTTOM, SWING_RESOLVE, SWING_SPENT
@@ -29,7 +29,7 @@ typedef enum {
 typedef enum { SWING_SIGN_UNKNOWN, SWING_SIGN_GRIP, SWING_SIGN_TURN } SwingSignSource;
 typedef struct {
     bool thrown;
-    double power, speed, aim, spin, roll;
+    double power, speed, peak_g, aim, spin, roll;
     bool clipped;
     SwingRelease release;
     SwingReject reject;
@@ -74,18 +74,20 @@ typedef struct {
        through B-up, while RESOLVE may still need the lobe shape. */
     SwingPoint history[SWING_HISTORY];
     unsigned count, first;
-    double forward_peak, peak, fitted_speed, lateral_sum, lateral_weight, release_roll;
+    double forward_peak, peak_speed, fitted_g, lateral_sum, lateral_weight, release_roll;
     bool forward_clipped, weak_crest;
 } Swing;
 
 SwingProfile swing_default_profile(void);
 double swing_speed(double mean_excess_g);
-/* Picker order is SLIDER, NORMAL, KOBE. Scale multiplies the slot reference. */
-double swing_type_scale(int height);
-/* Shared ease curve takes an already scaled reference. */
-double swing_power(double peak_speed, double full_speed);
-double swing_power_for_height(double peak_speed, double full_speed, int height);
-double swing_full_speed_for_power(double peak_speed, double power, int height);
+typedef enum {
+    SWING_POWER_FLOOR, SWING_POWER_SOFT, SWING_POWER_MEDIUM, SWING_POWER_HARD, SWING_POWER_ANCHORS
+} SwingPowerAnchor;
+/* Picker order is SLIDER, NORMAL, KOBE. */
+double swing_anchor_power(int height, SwingPowerAnchor anchor);
+double swing_medium_g(int height, double effort_scale);
+double swing_recent_peak_g(const Swing *s);
+double swing_power_for_height(double peak_g, double effort_scale, int height);
 double swing_roll_spin(double roll_degrees, const SwingProfile *profile);
 /* require_b_up: a B already held must be let go before it can grip (pause, menus, buttons). */
 void swing_reset(Swing *s, bool require_b_up);
@@ -100,10 +102,9 @@ const char *swing_reject_name(SwingReject reason);
 bool swing_preview(const Swing *s, const SwingProfile *profile, int height, double *power, double *aim);
 SwingResult swing_feed(Swing *s, const SwingSample *sample, const SwingProfile *profile, int height);
 
-typedef struct { double target_power, full_speed_floor, clip_ceiling; } SwingCalibrationLimits;
 typedef struct { double peaks[SWING_CAL_TOSSES]; unsigned count; } SwingCalibration;
-typedef enum { SWING_CAL_MORE, SWING_CAL_DONE, SWING_CAL_RETRY, SWING_CAL_BAD_LIMITS } SwingCalibrationStatus;
+typedef enum { SWING_CAL_MORE, SWING_CAL_DONE, SWING_CAL_RETRY } SwingCalibrationStatus;
 SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult *toss,
-                                      SwingCalibrationLimits limits, SwingProfile *profile);
+                                      SwingProfile *profile);
 
 #endif

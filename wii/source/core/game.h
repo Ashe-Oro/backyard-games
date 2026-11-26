@@ -16,7 +16,7 @@
 #include "arrow.h"
 
 #ifndef BYC_VERSION
-#define BYC_VERSION "0.1.10"
+#define BYC_VERSION "0.1.11"
 #endif
 
 #define GAME_MENU_MAX 16
@@ -132,8 +132,6 @@ const char *game_team_name(const Game *g, int team);
 Lie game_lie(const Game *g);
 bool game_menu_screen(const Game *g);     /* a panel/menu is open */
 int game_last_shot_percent(const Game *g);
-/* Provisional SET POWER limits (pending P1 hardware traces; see wii/INPUT.md). */
-SwingCalibrationLimits game_calibration_limits(const Game *g);
 
 /* test/automation hooks */
 void game_start(Game *g, bool practice, bool vs_cpu, bool career);

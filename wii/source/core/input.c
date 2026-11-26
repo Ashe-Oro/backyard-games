@@ -3,7 +3,7 @@
 #include <string.h>
 
 /* 0.1.4: one line per control, split at " | " by the HUD. -/+ do nothing in play. */
-const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING SPEED = POWER | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD UP/DOWN KOBE-NORMAL-SLIDER | D-PAD LEFT/RIGHT MOVE | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
+const char input_help_text[] = "B HOLD, SWING BACK & FORWARD, LET GO | SWING HARDER FOR MORE POWER | SWING LEFT/RIGHT TO AIM | TWIST TO CURL | D-PAD UP/DOWN KOBE-NORMAL-SLIDER | D-PAD LEFT/RIGHT MOVE | A SURFACE | 2 RESET | 1 HELP | HOME PAUSE";
 
 static double bound(double v, double lo, double hi) { return fmax(lo, fmin(hi,v)); }
 static void emit(Input *i, InputAction action, unsigned ch, double value, SwingResult toss) {
@@ -77,21 +77,16 @@ bool input_resume(Input *i) {
     return true;
 }
 bool input_set_profile(Input *i, unsigned slot, SwingProfile p) {
-    if (slot>=2 || !isfinite(p.full_speed) || p.full_speed<=0 ||
+    if (slot>=2 || !isfinite(p.effort_scale) || p.effort_scale<SWING_MIN_EFFORT || p.effort_scale>SWING_MAX_EFFORT ||
         !isfinite(p.spin_strength) || p.spin_strength<0 || p.spin_strength>1) return false;
     i->slots[slot].profile=p;
     if (slot==i->active_slot) swing_cancel(&i->detector,true);
     return true;
 }
-bool input_begin_calibration(Input *i, SwingCalibrationLimits limits) {
-    if (!isfinite(limits.target_power) || limits.target_power<=0 || limits.target_power>SWING_POWER_CAP ||
-        !isfinite(limits.full_speed_floor) || limits.full_speed_floor<=0 ||
-        !isfinite(limits.clip_ceiling) || limits.clip_ceiling<limits.full_speed_floor) return false;
+void input_begin_calibration(Input *i) {
     i->calibration=(SwingCalibration){0};
-    i->calibration_limits=limits;
     i->calibrating=true;
     swing_cancel(&i->detector,true);
-    return true;
 }
 void input_cancel_calibration(Input *i) {
     i->calibrating=false;
@@ -237,7 +232,7 @@ void input_feed(Input *i, unsigned ch, const InputSample *p) {
         i->stats.last_toss=r;
         i->stats.have_toss=true;
         if (i->calibrating) {
-            SwingCalibrationStatus status=swing_calibrate(&i->calibration,&r,i->calibration_limits,&slot->profile);
+            SwingCalibrationStatus status=swing_calibrate(&i->calibration,&r,&slot->profile);
             InputAction a=status==SWING_CAL_DONE ? INPUT_CAL_DONE : status==SWING_CAL_MORE ? INPUT_CAL_MORE : INPUT_CAL_RETRY;
             emit(i,a,ch,i->calibration.count,r);
             if (status==SWING_CAL_DONE) i->calibrating=false;

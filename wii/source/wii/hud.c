@@ -283,7 +283,7 @@ static void panel(const Game *g) {
     case UI_SETPOWER: {
         float h = 170, y = 150; card(x, y, w, h);
         gfx_text_center(UI_CX, y + 12, 2, rgb(GOLD), g->setpower_slot ? "BLUE SET POWER" : "RED SET POWER");
-        gfx_text_center(UI_CX, y + 54, 2, rgb(CREAM), "TOSS EASY x3");
+        gfx_text_center(UI_CX, y + 54, 2, rgb(CREAM), "TOSS COMFORTABLY X3");
         for (int i = 0; i < SWING_CAL_TOSSES; i++) gfx_rect(UI_CX - 40 + i * 30, y + 92, 20, 12, i < g->setpower_count ? rgb(GOLD) : rgba(CREAM, 0x40));
         if (g->setpower_note[0]) gfx_text_center(UI_CX, y + 114, 1, rgb(strcmp(g->setpower_note, "POWER SET!") ? RED : GOLD), g->setpower_note);
         gfx_text_center(UI_CX, y + 140, 1, rgba(CREAM, 0xc0), "HOME: DONE");
@@ -437,7 +437,7 @@ void hud_draw(const Game *g, const Input *in) {
     }
 }
 
-enum { DEBUG_LINE_HEIGHT = 16, DEBUG_LINES = 11 };
+enum { DEBUG_LINE_HEIGHT = 16, DEBUG_LINES = 12 };
 
 static void debug_line(float x, float *y, unsigned color, const char *text) {
     gfx_text(x, *y, 1, rgb(color), text);
@@ -523,22 +523,26 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
 
     char speed[12] = "-", peak[12] = "-", preview[8] = "-";
     if (swing_armed(s) && s->observer_valid) snprintf(speed, sizeof speed, "%.2f", s->speed);
-    if (swing_armed(s) && s->peak > 0) snprintf(peak, sizeof peak, "%.2f", s->peak);
-    snprintf(line, sizeof line, "SWING SPEED %s  PEAK %s M/S", speed, peak);
+    double peak_g = swing_recent_peak_g(s);
+    if (swing_armed(s) && peak_g > 0) snprintf(peak, sizeof peak, "%.2f", peak_g);
+    snprintf(line, sizeof line, "SPEED %s M/S  PEAK %s G", speed, peak);
     debug_line(x, &y, CREAM, line);
 
     double power, aim;
     if (swing_preview(s, &slot->profile, slot->height, &power, &aim))
         snprintf(preview, sizeof preview, "%d%%", swing_percent(power));
-    double full_ref = slot->profile.full_speed * swing_type_scale(slot->height);
-    snprintf(line, sizeof line, "FULL REF %s %.2f M/S LIVE %s", throw_type_names[slot->height], full_ref, preview);
+    double medium_g = swing_medium_g(slot->height, slot->profile.effort_scale);
+    snprintf(line, sizeof line, "%s MED %.2f G LIVE %s", throw_type_names[slot->height], medium_g, preview);
     debug_line(x, &y, GOLD, line);
 
     if (st->have_toss)
-        snprintf(line, sizeof line, "LAST %.2f M/S P%d%% A%+.2f S%+.2f", st->last_toss.speed,
-                 swing_percent(st->last_toss.power), st->last_toss.aim, st->last_toss.spin);
+        snprintf(line, sizeof line, "LAST PEAK %.2f G  %.2f M/S", st->last_toss.peak_g, st->last_toss.speed);
     else snprintf(line, sizeof line, "LAST THROW  -");
     debug_line(x, &y, GOLD, line);
+    if (st->have_toss) {
+        snprintf(line, sizeof line, "LAST P%d%% A%+.2f S%+.2f", swing_percent(st->last_toss.power), st->last_toss.aim, st->last_toss.spin);
+        debug_line(x, &y, GOLD, line);
+    }
 
     if (p->accel_valid) {
         bool live = s->have_time && s->last_ms == p->ms;
@@ -572,7 +576,7 @@ void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
         uint64_t ago = p->ms >= s->bottom_ms ? p->ms - s->bottom_ms : 0;
         snprintf(bottom, sizeof bottom, "+%uMS", (unsigned)(ago < 99999 ? ago : 99999));
     }
-    snprintf(line, sizeof line, "FIT %.2f ARM%s BOT%s%s", s->fitted_speed, arm, bottom,
+    snprintf(line, sizeof line, "FIT %.2f G ARM%s BOT%s%s", s->fitted_g, arm, bottom,
              p->accel_valid && p->clipped ? " CLIP" : "");
     debug_line(x, &y, CREAM, line);
 

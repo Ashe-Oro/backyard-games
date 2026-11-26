@@ -56,7 +56,6 @@ typedef struct {
     unsigned hand_slot;
     bool calibrating;
     SwingCalibration calibration;
-    SwingCalibrationLimits calibration_limits;
     InputStats stats; /* active remote's report timing + last throw, for the 1+2 overlay */
     InputSink sink;
     void *user;
@@ -71,7 +70,7 @@ void input_set_context(Input *input, InputContext context);
 bool input_resume(Input *input); /* reconnect/reassign AND B up required */
 void input_feed(Input *input, unsigned channel, const InputSample *sample);
 bool input_set_profile(Input *input, unsigned slot, SwingProfile profile);
-bool input_begin_calibration(Input *input, SwingCalibrationLimits limits);
+void input_begin_calibration(Input *input);
 void input_cancel_calibration(Input *input);
 unsigned input_largest_gap(const Input *input);
 double input_stance(const Input *input, unsigned slot, uint64_t now_ms);

@@ -11,7 +11,7 @@
 #include "swing.h"
 #include "music.h"
 
-#define SAVE_VERSION 4          /* 0.1.8 factory power reference; same layout as 2 and 3 */
+#define SAVE_VERSION 5          /* Effort multiplier in the former speed field. */
 #define SAVE_MAX_BYTES 256
 
 typedef struct {

@@ -108,6 +108,12 @@ StepEvent bag_step(Bag *b, const Wind *wind, double dt) {
                 if (hole_dist(lp) < BYC_HOLE_R * BYC_SWISH_R_FRAC) { b->state = BAG_HOLE; b->swish = true; b->hy = BYC_BAG_H; return EV_HOLE; }
                 double k = surf_keep(b->side) * b->land_keep;
                 b->lv.y = 0; b->lv.x *= k; b->lv.y *= k; b->lv.z *= k;
+                if (b->rollout_budget > 0) {
+                    double speed = hypot(b->lv.x, b->lv.z);
+                    double deceleration = surf_mu(b->side) * f->g_n + f->g_t;
+                    double cap = sqrt(2 * deceleration * b->rollout_budget);
+                    if (speed > cap) { b->lv.x *= cap / speed; b->lv.z *= cap / speed; }
+                }
                 b->lp.y = BYC_BAG_H; b->state = BAG_SLIDE; b->curl = landing_curl(b->english, b->side);
                 return EV_LAND;
             } else if (b->prev.z > 0) { b->touched = true; b->v.z = fabs(b->v.z) * 0.2; b->v.x *= 0.4; b->p.z = BYC_BOARD_Z + 0.03; }

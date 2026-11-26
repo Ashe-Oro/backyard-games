@@ -2,7 +2,7 @@
 
 Native Wii homebrew port of Backyard Cornhole Arcade **1.0.3** (C, devkitPPC + libogc, raw GX, WPAD).
 
-**Status: 0.1.10.** Practice, 2 Player and the 8-rival Tournament run on a GX
+**Status: 0.1.11.** Practice, 2 Player and the 8-rival Tournament run on a GX
 renderer; physics, scoring and the tournament CPU match the pinned 1.0.3 game on the host golden tests.
 Boots in Dolphin from the ISO (game ID `BYCEAO`) and as a bare DOL. Swing feel and hardware timing are
 not validated yet: that needs a physical Wii Remote retest on a real Wii and on the Kinhank (IMPL_PLAN P1).
@@ -24,7 +24,7 @@ make -C wii smoke OUT=/workspace/uploads/wii-game   # isolated 25-second NoGUI c
 
 ## Controls (Wii Sports Bowling style; no pointer, no sensor bar)
 
-Hold **B**, swing back, and **let go of B** after the forward swing passes the bottom. Swing speed sets power. Swing left/right
+Hold **B**, swing back, and **let go of B** after the forward swing passes the bottom. Swing harder for more power. Swing left/right
 aims; wrist twist / lateral motion at release curls the bag (mirrored for LEFT HAND). **D-pad ↑/↓** picks
 KOBE / NORMAL / SLIDER (the only control for the arc), **←/→** steps along the foul line, **A** SLICK/STICKY,
 **2** reset bag, **1** help (−/+ do nothing in play; they adjust settings in menus),
@@ -48,9 +48,9 @@ wii/
   dolphin/                 apploader/, PROVENANCE.md; GameSettings/BYCEAO.ini is a symlink to kinhank/
 ```
 
-Standing rules: port from the 1.0.3 snapshot only; toss power = swing **speed**, never distance; NTSC/60 Hz
-only; HBC `boot.dol` is byte-identical to the ISO's `sys/main.dol`; shared rules values come from
-`shared/cornhole/` through the generated header.
+Use the 1.0.3 snapshot as the port's source. The port runs at NTSC/60 Hz. Toss power uses
+peak forward acceleration. HBC `boot.dol` is byte-identical to the ISO's `sys/main.dol`.
+The generated header gets shared rules values from `shared/cornhole/`.
 
 Docs: [SPEC.md](../docs/wii-port/SPEC.md) · [IMPL_PLAN.md](../docs/wii-port/IMPL_PLAN.md) · [WIIMOTE_ARCADE_MAPPING.md](../docs/wii-port/WIIMOTE_ARCADE_MAPPING.md) · [ARCADE_PARITY_CHECKLIST.md](../docs/wii-port/ARCADE_PARITY_CHECKLIST.md) · [INPUT.md](INPUT.md)
 

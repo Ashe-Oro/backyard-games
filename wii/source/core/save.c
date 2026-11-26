@@ -36,7 +36,7 @@ size_t save_encode(const SaveData *s, uint8_t *out, size_t cap) {
     size_t start = w.n;
     put8(&w, (uint8_t)s->career_fight); put16(&w, (uint16_t)s->career_wins);
     for (int i = 0; i < 2; i++) {
-        putf64(&w, s->profile[i].full_speed);
+        putf64(&w, s->profile[i].effort_scale);
         putf64(&w, s->profile[i].spin_strength);
         put8(&w, s->profile[i].left_handed ? 1 : 0);
     }
@@ -76,9 +76,17 @@ bool save_decode(SaveData *s, const uint8_t *in, size_t len) {
         SwingProfile p = {getf64(&r), getf64(&r), false};
         uint8_t hand = get8(&r);
         SwingProfile d = swing_default_profile();
-        if ((version < 3 && p.full_speed == swing_speed(1.2)) ||
-            (version < 4 && p.full_speed == swing_speed(1.9))) p.full_speed = d.full_speed;
-        s->profile[i].full_speed = isfinite(p.full_speed) && p.full_speed > 0.05 && p.full_speed < 20 ? p.full_speed : d.full_speed;
+        double effort = p.effort_scale;
+        if (version < 5) {
+            /* Preserve manual difficulty relative to the 0.1.10 factory reference. */
+            const double old_default = 2.45;
+            if (!isfinite(effort) || effort <= 0.05 || effort >= 20 ||
+                (version < 3 && effort == swing_speed(1.2)) ||
+                (version < 4 && effort == swing_speed(1.9))) effort = old_default;
+            effort = fmax(SWING_MIN_EFFORT, fmin(SWING_MAX_EFFORT, effort/old_default));
+        }
+        s->profile[i].effort_scale = isfinite(effort) && effort >= SWING_MIN_EFFORT &&
+                                     effort <= SWING_MAX_EFFORT ? effort : d.effort_scale;
         s->profile[i].spin_strength = isfinite(p.spin_strength) && p.spin_strength >= 0 && p.spin_strength <= 1 ? p.spin_strength : d.spin_strength;
         s->profile[i].left_handed = hand == 1;
     }

@@ -30,53 +30,33 @@ static void arm(Swing *s, double roll) {
     assert(!swing_feed(s,&v,&p,1).thrown);
     assert(s->phase==SWING_GRIP);
 }
-static void power_equation(void) {
-    double full=profile().full_speed;
-    near(full,SWING_DEFAULT_FULL_SPEED);
-    near(swing_power(.1*full,full),.0465208198);
-    near(swing_power(.2*full,full),.1444116608);
-    near(swing_power(.5*full,full),.4601460338);
-    near(swing_power(full,full),.7280505916);
-    near(swing_power(swing_speed(4),full),.76);
-    near(swing_power(swing_speed(12),full),.76);
-    near(swing_power(-1,3),0); near(swing_power(1,0),0);
-    near(swing_power(NAN,3),0); near(swing_speed(INFINITY),0);
-    const double scales[]={1.7637,1.4216,1.1618};
-    const double previous_scales[]={1.30,1.20,1.0/.90};
-    const double ratio[]={27.0/18,27.0/21,27.0/25};
-    const double exponent[]={1.3291,1.4833,1.7257};
+static void power_table_anchors(void) {
+    const double g[][4]={{1.25,2.00,2.70,3.60},{1.25,1.70,2.40,3.30},{1.25,1.50,2.20,3.10}};
+    const double power[][4]={{.381,.461,.605,.683},{.476,.556,.699,.758},{.546,.626,.732,.760}};
     for (int h=0;h<3;++h) {
-        near(swing_type_scale(h),scales[h]);
-        double effective=full*swing_type_scale(h);
-        assert(fabs(pow(scales[h]/previous_scales[h],exponent[h])-ratio[h]) < .0001);
-        near(swing_power(swing_speed(12),effective),.76);
-        const double powers[]={.03,.15*.76,.25,.50,.57,.70,.76};
-        for (unsigned p=0;p<sizeof powers/sizeof powers[0];++p) {
-            double peak=swing_speed(.8);
-            double reference=swing_full_speed_for_power(peak,powers[p],h);
-            near(swing_power_for_height(peak,reference,h),powers[p]);
+        near(swing_power_for_height(1.199,1,h),0);
+        near(swing_power_for_height(1.20,1,h),power[h][0]);
+        for (unsigned k=0;k<4;++k) {
+            near(swing_anchor_power(h,k),power[h][k]);
+            near(swing_power_for_height(g[h][k],1,h),power[h][k]);
+            near(swing_power_for_height(1.25+1.5*(g[h][k]-1.25),1.5,h),power[h][k]);
+            if (k>0) near(swing_power_for_height((g[h][k-1]+g[h][k])/2,1,h),
+                          (power[h][k-1]+power[h][k])/2);
         }
+        double knee=fmin(SWING_POWER_CAP,power[h][3]+.025*(power[h][3]-power[h][2])/(g[h][3]-g[h][2]));
+        near(swing_power_for_height(g[h][3]+.1,1,h),knee);
+        near(swing_power_for_height(10,1,h),SWING_POWER_CAP);
+        near(swing_medium_g(h,1),g[h][2]);
     }
+    near(swing_power_for_height(NAN,1,1),0);
+    near(swing_power_for_height(2.4,0,1),0);
+    near(swing_speed(INFINITY),0);
 }
-static void normal_power_anchors(void) {
-    double full=profile().full_speed;
-    double old_cap=1.30*full*1.4216;
-    double new_cap=swing_speed(2*SWING_RAIL_G-1);
-    near(swing_power(old_cap,full*1.4216),.76);
-    near(swing_power_for_height(old_cap,full,1),.57);
-    near(swing_power_for_height(new_cap,full,1),.76);
-    double previous=0;
-    for (int i=1;i<100;++i) {
-        double peak=new_cap*i/100;
-        double normal=swing_power_for_height(peak,full,1);
-        assert(normal>previous && normal<.76);
-        previous=normal;
-        for (int h=0;h<=2;h+=2) {
-            double scale=h==0 ? 1.7637 : 1.1618;
-            assert(swing_power_for_height(peak,full,h)==swing_power(peak,full*scale));
-            assert(swing_power_for_height(peak,3.1,h)==swing_power(peak,3.1*scale));
-        }
-    }
+
+static void trace_peak_power(void) {
+    const double expected[]={.709173333333,.760,.760};
+    for (int height=0;height<3;++height)
+        near(swing_power_for_height(4.808,1,height),expected[height]);
 }
 /* 0.1.2 answered these presses with HOLD STILL and no grip. */
 static void moving_press_grips_immediately(void) {
@@ -129,27 +109,27 @@ static void roll_sign_deadzone_and_hand(void) {
 }
 static void calibration_median_floor_clip_outlier(void) {
     SwingCalibration c={0}; SwingProfile p=profile();
-    SwingCalibrationLimits lim={.target_power=.6,.full_speed_floor=1,.clip_ceiling=2};
-    const double sets[][3]={{2.1,2.2,2},{.1,.11,.1},{4.8,4.7,4.9},{.1,1.2,1.3}};
+    const double sets[][3]={{2.1,2.2,2},{1.21,1.21,1.21},{4.8,4.7,4.9},{2.2,2.1,1.3}};
     for (unsigned set=0;set<4;++set) {
-        double before=p.full_speed;
+        double before=p.effort_scale;
         for (unsigned n=0;n<3;++n) {
-            SwingResult r={.thrown=true,.speed=sets[set][n]};
-            SwingCalibrationStatus status=swing_calibrate(&c,&r,lim,&p);
+            SwingResult r={.thrown=true,.peak_g=sets[set][n]};
+            SwingCalibrationStatus status=swing_calibrate(&c,&r,&p);
             assert(status==(n<2?SWING_CAL_MORE:(set==3?SWING_CAL_RETRY:SWING_CAL_DONE)));
         }
         if (set==0) {
-            near(p.full_speed,swing_full_speed_for_power(2.1,lim.target_power,1));
-            near(swing_power_for_height(2.1,p.full_speed,1),lim.target_power);
+            near(swing_medium_g(1,p.effort_scale),2.1);
+            near(swing_power_for_height(2.1,p.effort_scale,1),.699);
         }
-        if (set==1) near(p.full_speed,lim.full_speed_floor);
-        if (set==2) near(p.full_speed,lim.clip_ceiling);
-        if (set==3) near(p.full_speed,before);
+        if (set==1) near(p.effort_scale,SWING_MIN_EFFORT);
+        if (set==2) near(p.effort_scale,SWING_MAX_EFFORT);
+        if (set==3) near(p.effort_scale,before);
     }
-    SwingResult bad={.thrown=true,.speed=1,.clipped=true};
-    assert(swing_calibrate(&c,&bad,lim,&p)==SWING_CAL_RETRY);
-    lim.target_power=0; assert(swing_calibrate(&c,&bad,lim,&p)==SWING_CAL_BAD_LIMITS);
-    lim.target_power=.8; assert(swing_calibrate(&c,&bad,lim,&p)==SWING_CAL_BAD_LIMITS);
+    SwingResult bad={.thrown=true,.peak_g=3.6,.clipped=true};
+    assert(swing_calibrate(&c,&bad,&p)==SWING_CAL_RETRY);
+    bad.clipped=false;
+    bad.peak_g=1.19;
+    assert(swing_calibrate(&c,&bad,&p)==SWING_CAL_RETRY);
 }
 typedef struct { InputEvent events[256]; unsigned count; } Events;
 static void sink(void *user, const InputEvent *event) {
@@ -254,7 +234,7 @@ static void menu_confirm_back_navigation(void) {
 }
 static void slots_and_disconnect_reassignment(void) {
     Input i; Events e; input_ready(&i,&e,true);
-    SwingProfile p={3,.4,true}; assert(input_set_profile(&i,1,p));
+    SwingProfile p={1.3,.4,true}; assert(input_set_profile(&i,1,p));
     input_next_turn(&i,1);
     input_sample(&i,0,510,INPUT_A,0,0); assert(!i.slots[1].sticky);
     input_sample(&i,1,510,INPUT_A,0,0); assert(i.slots[1].sticky);
@@ -265,16 +245,16 @@ static void slots_and_disconnect_reassignment(void) {
     input_sample(&i,0,530,INPUT_A|INPUT_B,0,0);
     assert(i.channels[1]==0 && i.paused); /* A reassigns, held B still blocks resume. */
     input_sample(&i,0,540,0,0,0); assert(input_resume(&i));
-    near(i.slots[1].profile.full_speed,3); assert(i.slots[1].profile.left_handed);
+    near(i.slots[1].profile.effort_scale,1.3); assert(i.slots[1].profile.left_handed);
     assert(i.detector.phase==SWING_READY);
 }
 static void pass_and_play_profile_is_slot_owned(void) {
     Input i; Events e; input_ready(&i,&e,false);
     assert(i.channels[1]==0);
-    SwingProfile p={3,.2,true}; assert(input_set_profile(&i,1,p));
+    SwingProfile p={1.3,.2,true}; assert(input_set_profile(&i,1,p));
     input_next_turn(&i,1); input_connection(&i,1,true);
-    assert(i.channels[1]==0); near(i.slots[1].profile.full_speed,3);
-    near(i.slots[0].profile.full_speed,SWING_DEFAULT_FULL_SPEED);
+    assert(i.channels[1]==0); near(i.slots[1].profile.effort_scale,1.3);
+    near(i.slots[0].profile.effort_scale,SWING_DEFAULT_EFFORT);
     input_connection(&i,0,false); input_connection(&i,0,true);
     assert(!input_resume(&i));
     input_sample(&i,0,510,INPUT_B,0,0); assert(!input_resume(&i));
@@ -290,8 +270,7 @@ static void input_throw_only_on_release_and_spent(void) {
 }
 static void calibration_route_does_not_throw_game_bags(void) {
     Input i; Events e; input_ready(&i,&e,false);
-    assert(!input_begin_calibration(&i,(SwingCalibrationLimits){0,1,3}));
-    assert(input_begin_calibration(&i,(SwingCalibrationLimits){.6,1.5,3}));
+    input_begin_calibration(&i);
     BowlingTrace trace=bowling_trace();
     trace.forward_s=.65;
     assert(!feed_toss(&i,&e,&trace,510,0));
@@ -322,20 +301,20 @@ static void setup_pause_hand_selection_and_calibration(void) {
     SwingProfile saved=i.slots[1].profile;
     SwingCalibration c={0};
     for (unsigned n=0;n<3;++n) {
-        SwingResult toss={.thrown=true,.speed=1.2};
-        swing_calibrate(&c,&toss,(SwingCalibrationLimits){.6,.5,3},&saved);
+        SwingResult toss={.thrown=true,.peak_g=2.0};
+        swing_calibrate(&c,&toss,&saved);
     }
-    assert(saved.left_handed); near(swing_power_for_height(1.2,saved.full_speed,1),.6);
+    assert(saved.left_handed); near(swing_power_for_height(2.0,saved.effort_scale,1),.699);
     assert(input_set_profile(&i,1,saved));
     input_set_context(&i,INPUT_DISABLED); /* pause also works during flight */
     input_sample(&i,0,520,INPUT_HOME,0,0); assert(i.paused);
     assert(input_focus_hand(&i,1));
     input_sample(&i,0,530,INPUT_RIGHT,0,0);
-    assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.full_speed,saved.full_speed);
+    assert(!i.slots[1].profile.left_handed); near(i.slots[1].profile.effort_scale,saved.effort_scale);
     input_blur_hand(&i); assert(!i.hand_option);
     assert(strstr(input_help_text,"SWING LEFT/RIGHT TO AIM"));
-    /* 0.1.4 help matches the controls: speed = power, D-pad up/down = arc, no -/+ fine aim. */
-    const char *want[]={"B HOLD, SWING BACK & FORWARD, LET GO","SWING SPEED = POWER","TWIST TO CURL",
+    /* 0.1.4 help matches the controls: D-pad up/down = arc, no -/+ fine aim. */
+    const char *want[]={"B HOLD, SWING BACK & FORWARD, LET GO","SWING HARDER FOR MORE POWER","TWIST TO CURL",
         "D-PAD UP/DOWN KOBE-NORMAL-SLIDER","D-PAD LEFT/RIGHT MOVE","A SURFACE","2 RESET","1 HELP","HOME PAUSE"};
     for (unsigned n=0;n<sizeof want/sizeof want[0];++n) assert(strstr(input_help_text,want[n]));
     assert(!strstr(input_help_text,"-/+") && !strstr(input_help_text,"FINE AIM") && !strstr(input_help_text,"POINT"));
@@ -374,12 +353,12 @@ static void menu_a_or_two_from_any_remote(void) {
     input_sample(&i,0,50,INPUT_A,0,0);
     assert(i.slots[0].sticky);
 }
-static void bowling_waits_for_b_release_after_follow_through(void) {
+static void bowling_late_release_outside_peak_window(void) {
     Input i; Events e; input_ready(&i,&e,false);
     BowlingTrace trace=bowling_trace();
-    trace.release_s=1.95; /* After motion stops, within the forward release window. */
+    trace.release_s=1.95; /* Past bottom, but the crest has aged out of the power window. */
     assert(!feed_toss(&i,&e,&trace,510,0));
-    assert(occurrences(&e,INPUT_THROW)==1 && e.events[e.count-1].toss.release==SWING_B_UP);
+    assert(occurrences(&e,INPUT_THROW)==0 && i.detector.last_reject==SWING_REJECT_TOO_WEAK);
 }
 static void debug_chord_requires_two_seconds_and_release(void) {
     Input i; Events e; input_ready(&i,&e,true);
@@ -400,14 +379,14 @@ static void debug_chord_requires_two_seconds_and_release(void) {
 }
 int main(void) {
     TEST(subgravity_press_still_grips); TEST(straight_swing_from_shifted_stance);
-    TEST(setup_pause_hand_selection_and_calibration); TEST(power_equation); TEST(normal_power_anchors);
+    TEST(setup_pause_hand_selection_and_calibration); TEST(power_table_anchors); TEST(trace_peak_power);
     TEST(moving_press_grips_immediately); TEST(gaps_drops_and_bad_samples_keep_grip);
     TEST(ready_at_once_and_one_throw); TEST(roll_sign_deadzone_and_hand);
     TEST(calibration_median_floor_clip_outlier); TEST(plus_minus_change_nothing_in_play);
     TEST(buttons_mapping_and_easing); TEST(buttons_blocked_while_b_held); TEST(menu_confirm_back_navigation);
     TEST(slots_and_disconnect_reassignment); TEST(pass_and_play_profile_is_slot_owned);
     TEST(input_throw_only_on_release_and_spent); TEST(calibration_route_does_not_throw_game_bags);
-    TEST(menu_a_or_two_from_any_remote); TEST(bowling_waits_for_b_release_after_follow_through);
+    TEST(menu_a_or_two_from_any_remote); TEST(bowling_late_release_outside_peak_window);
     TEST(debug_chord_requires_two_seconds_and_release);
     printf("%u input tests passed\n",tests);
     return 0;

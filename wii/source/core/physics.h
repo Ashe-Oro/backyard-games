@@ -22,6 +22,7 @@ typedef struct {
     int team;
     BagSide side;
     double spin, tumble, english, curl, t, rest_t, hy, land_keep;
+    double rollout_budget;  /* metres of uphill travel after deck contact; zero disables the cap */
     BagArc arc;
     BagState state;
     Vec3 p, v, lp, lv, prev;
