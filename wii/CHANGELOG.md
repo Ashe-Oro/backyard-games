@@ -10,6 +10,15 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.11] - 2026-11-26
+
+### Changed
+
+- SLIDER, NORMAL and KOBE each use a power table based on peak acceleration in the final 100 ms of the forward swing. Soft, medium and hard swings target the front, hole and back of the board. A weak release keeps the bag.
+- Hard player-thrown SLIDER and NORMAL bags have less rollout after landing on the back deck.
+- SET POWER uses three comfortable throws to calibrate the Normal medium anchor. Existing saves retain player settings and migrate custom power references.
+- The 1+2 overlay shows peak acceleration in g alongside swing speed in m/s. LAST SHOT still shows controller power as a percentage of the 0.76 cap.
+
 ## [0.1.10] - 2026-11-25
 
 ### Changed

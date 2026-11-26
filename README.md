@@ -7,7 +7,7 @@ The current test target is **Kinhank** (Dolphin on the Kinhank). See [TARGETS.md
 |---|---|---|---|---|
 | [`web/`](web/) | Buildless static site: home page + five Three.js yard games (phones and desktops) | Vercel project `backyard-games` → https://playbackyardgames.vercel.app/ | [web/CHANGELOG.md](web/CHANGELOG.md) | as they are today (`web-vX.Y.Z` when cut) |
 | [`arcade/`](arcade/) | Backyard Cornhole Arcade: Electron, trackball + buttons. The released 1.0.3 app is `arcade/cabinet-snapshots/1.0.3/` | The Batocera arcade cabinet (Ports) | [arcade/CHANGELOG.md](arcade/CHANGELOG.md) | `arcade-vX.Y.Z` |
-| [`wii/`](wii/) | Native Wii homebrew port of cornhole (libogc/devkitPPC), 0.1.10 playable | Original Wii via Homebrew Channel zip and ISO (480p/480i) | [wii/CHANGELOG.md](wii/CHANGELOG.md) | `wii-vX.Y.Z` |
+| [`wii/`](wii/) | Native Wii homebrew port of cornhole (libogc/devkitPPC), 0.1.11 playable | Original Wii via Homebrew Channel zip and ISO (480p/480i) | [wii/CHANGELOG.md](wii/CHANGELOG.md) | `wii-vX.Y.Z` |
 | [`kinhank/`](kinhank/) | Same Wii ISO plus Dolphin GameSettings at 3× (about 1080p) | Kinhank X5 Pro, installed by Retro over ADB | [kinhank/CHANGELOG.md](kinhank/CHANGELOG.md) | `kinhank-vX.Y.Z` |
 | [`shared/`](shared/) | Cornhole rules data (geometry, physics constants, scoring, wind) + drift check. Data only | Not shipped; checked against web and arcade | — | — |
 | [`docs/`](docs/) | Wii port spec, plan, repo layout, Wiimote mapping | — | — | — |

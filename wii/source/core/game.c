@@ -70,13 +70,6 @@ int game_last_shot_percent(const Game *g) {
     return (int)lround(100 * clampd(g->last_shot_power / SWING_POWER_CAP, 0, 1));
 }
 
-SwingCalibrationLimits game_calibration_limits(const Game *g) {
-    double target = g->win->w[0][SIDE_SLICK][ARC_NORMAL].mid;
-    /* Provisional limits until P1 hardware traces. Allow a classified 0.5 g
-     * reference toss to reach the hole, and keep the 2.0 g profile ceiling. */
-    return (SwingCalibrationLimits){target, swing_full_speed_for_power(swing_speed(0.5), target, 1), swing_speed(2.0)};
-}
-
 /* ---------------- menus ---------------- */
 static MenuItem *menu_add(Game *g, MenuItemId id, const char *label) {
     Menu *m = &g->menu;
@@ -90,12 +83,11 @@ static void menu_values(Game *g) {
         MenuItem *it = &g->menu.items[i];
         const SwingProfile *p0 = g->input ? &g->input->slots[0].profile : &g->save.profile[0];
         const SwingProfile *p1 = g->input ? &g->input->slots[1].profile : &g->save.profile[1];
-        double def = swing_default_profile().full_speed;
         switch (it->id) {
         case MI_HAND_RED: copy(it->value, sizeof it->value, p0->left_handed ? "< LEFT" : "RIGHT >"); break;
         case MI_HAND_BLUE: copy(it->value, sizeof it->value, p1->left_handed ? "< LEFT" : "RIGHT >"); break;
-        case MI_POWER_RED: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p0->full_speed / def * 100)); break;
-        case MI_POWER_BLUE: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p1->full_speed / def * 100)); break;
+        case MI_POWER_RED: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p0->effort_scale * 100)); break;
+        case MI_POWER_BLUE: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p1->effort_scale * 100)); break;
         case MI_CURL_RED: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p0->spin_strength * 100)); break;
         case MI_CURL_BLUE: snprintf(it->value, sizeof it->value, "- %d%% +", (int)lround(p1->spin_strength * 100)); break;
         case MI_WIND: copy(it->value, sizeof it->value, g->save.wind_on ? "ON" : "CALM"); break;
@@ -287,6 +279,19 @@ static double human_launch_power(const Game *g, int team, double power) {
     return physical_power(g->win, team, g->side[team], g->arc, power);
 }
 
+static double human_rollout_budget(BagArc arc, BagSide side, double power) {
+    if (arc == ARC_KOBE) return 0;
+    double soft = swing_anchor_power(arc, SWING_POWER_SOFT);
+    if (power <= soft) return 0;
+    static const double soft_budget[2][2] = {
+        [ARC_SLIDER] = {[SIDE_SLICK] = 0.40, [SIDE_STICKY] = 0.58},
+        [ARC_NORMAL] = {[SIDE_SLICK] = 0.30, [SIDE_STICKY] = 0.21}
+    };
+    double hard = swing_anchor_power(arc, SWING_POWER_HARD);
+    double t = clampd((power - soft) / (hard - soft), 0, 1);
+    return soft_budget[arc][side] * (1 - t) + 0.033 * t;
+}
+
 static bool throw_bag(Game *g, double power, double drift, int team) {
     if (g->paused || g->connect_prompt) return false;   /* frozen worlds never take a throw */
     if (!(g->phase == PH_AIM || g->phase == PH_CPU)) return false;
@@ -303,6 +308,7 @@ static bool throw_bag(Game *g, double power, double drift, int team) {
     bag_launch_yaw(b, rx, yaw_base, actual, g->aim, drift, g->arc, g->spin);
     /* Give a medium slick Slider room to stop if it passes beside the hole. */
     if (human && g->arc == ARC_SLIDER && side == SIDE_SLICK) b->land_keep = 0.90;
+    if (human) b->rollout_budget = human_rollout_budget(g->arc, side, power);
     b->release_yaw = yaw_base + g->aim;
     if (!human) b->spin += drift * 2;
     b->tumble = 0.6 + rng_next(&g->rng);
@@ -430,7 +436,7 @@ static void begin_setpower(Game *g, int slot) {
         input_next_turn(g->input, (unsigned)slot);
         input_set_context(g->input, INPUT_PLAY);
         g->resume_pending = true;
-        if (!input_begin_calibration(g->input, game_calibration_limits(g))) copy(g->setpower_note, sizeof g->setpower_note, "TRY AGAIN");
+        input_begin_calibration(g->input);
     }
 }
 static void end_setpower(Game *g) {
@@ -525,11 +531,8 @@ static void adjust(Game *g, int dir) {
     MenuItemId id = g->menu.items[g->menu.sel].id;
     int s = (id == MI_POWER_BLUE || id == MI_CURL_BLUE || id == MI_HAND_BLUE) ? 1 : 0;
     SwingProfile p = g->input ? g->input->slots[s].profile : g->save.profile[s];
-    double def = swing_default_profile().full_speed;
     if (id == MI_POWER_RED || id == MI_POWER_BLUE) {
-        SwingCalibrationLimits l = game_calibration_limits(g);
-        /* Higher full speed = harder to reach full power. Shown as % of the default. */
-        p.full_speed = clampd(p.full_speed + dir * def * 0.05, l.full_speed_floor, l.clip_ceiling);
+        p.effort_scale = clampd(p.effort_scale + dir * 0.05, SWING_MIN_EFFORT, SWING_MAX_EFFORT);
         set_profile(g, s, p);
     } else if (id == MI_CURL_RED || id == MI_CURL_BLUE) {
         p.spin_strength = clampd(round((p.spin_strength + dir * 0.1) * 10) / 10, 0, 1);

@@ -8,81 +8,52 @@ static double norm(SwingVector v) { return sqrt(v.x*v.x + v.y*v.y + v.z*v.z); }
 static double degrees(double radians) { return radians*180/SWING_PI; }
 static double tip_pitch(SwingVector g) { return degrees(atan2(-g.y, hypot(g.x, g.z))); }
 
-static const double normal_type_scale = 1.4216;
-static const double normal_soft_fraction = 0.15;
-static const double normal_hard_fraction = 0.75;
+typedef struct { double peak_g, power; } PowerPoint;
+static const PowerPoint power_table[][SWING_POWER_ANCHORS] = {
+    {{1.25, .381}, {2.00, .461}, {2.70, .605}, {3.60, .683}},
+    {{1.25, .476}, {1.70, .556}, {2.40, .699}, {3.30, .758}},
+    {{1.25, .546}, {1.50, .626}, {2.20, .732}, {3.10, SWING_POWER_CAP}}
+};
+
+static const PowerPoint *power_points(int height) {
+    return power_table[height == 0 || height == 2 ? height : 1];
+}
+
+double swing_anchor_power(int height, SwingPowerAnchor anchor) {
+    return power_points(height)[anchor].power;
+}
+
+double swing_medium_g(int height, double effort_scale) {
+    const PowerPoint *points = power_points(height);
+    double floor = points[SWING_POWER_FLOOR].peak_g;
+    return floor + (points[SWING_POWER_MEDIUM].peak_g-floor)*effort_scale;
+}
 
 SwingProfile swing_default_profile(void) {
-    return (SwingProfile){SWING_DEFAULT_FULL_SPEED, 1, false};
+    return (SwingProfile){SWING_DEFAULT_EFFORT, 1, false};
 }
+
 double swing_speed(double e) {
     return isfinite(e) && e > 0 ? sqrt(SWING_RADIUS_M*SWING_GRAVITY*e) : 0;
 }
-double swing_type_scale(int height) {
-    /* 0.1.8 scale * (27 / felt feet)^(1 / measured launch-speed exponent). */
-    if (height == 0) return 1.7637;
-    if (height == 2) return 1.1618;
-    return normal_type_scale;
-}
-double swing_power(double peak, double full) {
-    if (!isfinite(peak) || !isfinite(full) || peak <= 0 || full <= 0) return 0;
-    double ratio = clamp(peak/full, 0, SWING_POWER_CAP_RATIO);
-    /* Bias the midpoint toward a comfortable toss. Smoothstep eases in from
-       zero and preserves headroom through the measured hard swings. */
-    double x = ratio/(ratio + SWING_POWER_CURVE_BIAS*(SWING_POWER_CAP_RATIO-ratio));
-    return SWING_POWER_CAP*x*x*(3-2*x);
-}
 
-static double normal_cap_ratio(void) {
-    /* At factory settings, both 60 and 100 Hz replays reach the fit ceiling. */
-    return swing_speed(2*SWING_RAIL_G-1)/(SWING_DEFAULT_FULL_SPEED*normal_type_scale);
-}
+double swing_power_for_height(double peak_g, double effort_scale, int height) {
+    if (!isfinite(peak_g) || peak_g < SWING_QUALIFY_G ||
+        !isfinite(effort_scale) || effort_scale <= 0) return 0;
 
-static double normal_compression(void) {
-    double span = 1-normal_soft_fraction;
-    return (1-normal_hard_fraction)/(span*span);
-}
-
-double swing_power_for_height(double peak, double full_speed, int height) {
-    double full = full_speed*swing_type_scale(height);
-    if (height == 0 || height == 2) return swing_power(peak, full);
-    if (!isfinite(peak) || !isfinite(full) || peak <= 0 || full <= 0) return 0;
-    double ratio = peak/full;
-    if (ratio >= normal_cap_ratio()) return SWING_POWER_CAP;
-    if (ratio >= SWING_POWER_CAP_RATIO) {
-        double x = (ratio-SWING_POWER_CAP_RATIO)/(normal_cap_ratio()-SWING_POWER_CAP_RATIO);
-        return SWING_POWER_CAP*(normal_hard_fraction+(1-normal_hard_fraction)*x*x*(3-2*x));
+    const PowerPoint *points = power_points(height);
+    double floor = points[SWING_POWER_FLOOR].peak_g;
+    double effort = floor + fmax(0, peak_g-floor)/effort_scale;
+    for (unsigned i = 1; i < SWING_POWER_ANCHORS; ++i) {
+        PowerPoint from = points[i-1], to = points[i];
+        if (effort <= to.peak_g)
+            return from.power + (to.power-from.power)*(effort-from.peak_g)/(to.peak_g-from.peak_g);
     }
-    /* Keep the lightest input intact and compress progressively toward 75%. */
-    double power = swing_power(peak, full);
-    double excess = fmax(0, power/SWING_POWER_CAP-normal_soft_fraction);
-    return power-SWING_POWER_CAP*normal_compression()*excess*excess;
-}
 
-static double inverse_smoothstep(double fraction) {
-    return 0.5-sin(asin(1-2*fraction)/3);
-}
-
-double swing_full_speed_for_power(double peak, double power, int height) {
-    if (!isfinite(peak) || !isfinite(power) || peak <= 0 || power <= 0 || power > SWING_POWER_CAP)
-        return 0;
-    double fraction = power/SWING_POWER_CAP;
-    double scale = swing_type_scale(height);
-    if (height != 0 && height != 2) {
-        if (fraction >= normal_hard_fraction) {
-            double x = inverse_smoothstep((fraction-normal_hard_fraction)/(1-normal_hard_fraction));
-            double ratio = SWING_POWER_CAP_RATIO+x*(normal_cap_ratio()-SWING_POWER_CAP_RATIO);
-            return peak/(ratio*scale);
-        }
-        if (fraction > normal_soft_fraction) {
-            double excess = fraction-normal_soft_fraction;
-            fraction = normal_soft_fraction+2*excess/(1+sqrt(1-4*normal_compression()*excess));
-        }
-    }
-    /* Invert smoothstep, then invert the bias above. */
-    double x = inverse_smoothstep(fraction);
-    double ratio = x*SWING_POWER_CURVE_BIAS*SWING_POWER_CAP_RATIO/(1-x*(1-SWING_POWER_CURVE_BIAS));
-    return peak/(ratio*scale);
+    PowerPoint medium = points[SWING_POWER_MEDIUM], hard = points[SWING_POWER_HARD];
+    if (hard.power >= SWING_POWER_CAP) return SWING_POWER_CAP;
+    double knee_slope = .25*(hard.power-medium.power)/(hard.peak_g-medium.peak_g);
+    return fmin(SWING_POWER_CAP, hard.power + (effort-hard.peak_g)*knee_slope);
 }
 double swing_roll_spin(double roll, const SwingProfile *profile) {
     if (!isfinite(roll) || !isfinite(profile->spin_strength)) return 0;
@@ -173,35 +144,27 @@ static double throw_aim(const Swing *s) {
         -SWING_AIM_MAX * clamp(lateral/SWING_LATERAL_FULL, -1, 1);
 }
 
-static double throw_speed(const Swing *s) {
-    return fmax(s->peak, s->fitted_speed);
-}
-
-static double throw_power(const Swing *s, const SwingProfile *profile, int height) {
-    return swing_power_for_height(throw_speed(s), profile->full_speed, height);
-}
-
-static void fit_forward(Swing *s);
+static double fit_forward(Swing *s, uint64_t end, double peak_g, int height);
 
 bool swing_preview(const Swing *s, const SwingProfile *profile, int height, double *power, double *aim) {
     if (s->phase != SWING_FORWARD &&
         (s->phase != SWING_PAST_BOTTOM || s->last_ms-s->phase_ms > SWING_RELEASE_WINDOW_MS))
         return false;
-    if (s->peak < swing_speed(SWING_QUALIFY_E_G)) return false;
-    *power = throw_power(s, profile, height);
+    *power = swing_power_for_height(swing_recent_peak_g(s), profile->effort_scale, height);
+    if (*power <= 0) return false;
     *aim = throw_aim(s);
     return true;
 }
 
 static SwingResult finish(Swing *s, const SwingProfile *profile, int height) {
-    if (s->peak < swing_speed(SWING_QUALIFY_E_G)) return reject(s, SWING_REJECT_TOO_WEAK);
-    /* A strong clipped crest can need more of the falling shoulder to fit.
-       Include any additional reports through B-up. */
-    fit_forward(s);
+    double measured_g = swing_recent_peak_g(s);
+    if (measured_g < SWING_QUALIFY_G) return reject(s, SWING_REJECT_TOO_WEAK);
+    s->fitted_g = fit_forward(s, s->release_ms, measured_g, height);
+    double peak_g = fmax(measured_g, s->fitted_g);
     double roll = s->release_roll-degrees(atan(lateral_mean(s)));
     set_phase(s, SWING_SPENT);
-    return (SwingResult){.thrown=true, .power=throw_power(s, profile, height),
-        .speed=throw_speed(s), .aim=throw_aim(s), .spin=swing_roll_spin(roll, profile),
+    return (SwingResult){.thrown=true, .power=swing_power_for_height(peak_g, profile->effort_scale, height),
+        .speed=s->peak_speed, .peak_g=peak_g, .aim=throw_aim(s), .spin=swing_roll_spin(roll, profile),
         .roll=roll, .clipped=s->forward_clipped, .release=SWING_B_UP, .release_ms=s->release_ms};
 }
 
@@ -262,7 +225,8 @@ static double crest_drop(double peak) {
 }
 
 static bool near_rail(const SwingSample *p) {
-    return p->clipped || fabs(p->g.y) >= SWING_RAIL_G-SWING_RAIL_NEAR_G ||
+    return p->clipped || fabs(p->g.x) >= SWING_RAIL_G-SWING_RAIL_NEAR_G ||
+                         fabs(p->g.y) >= SWING_RAIL_G-SWING_RAIL_NEAR_G ||
                          fabs(p->g.z) >= SWING_RAIL_G-SWING_RAIL_NEAR_G;
 }
 
@@ -283,16 +247,29 @@ static void add_point(Swing *s, const SwingSample *p) {
     ++s->count;
 }
 
+double swing_recent_peak_g(const Swing *s) {
+    if (s->phase < SWING_FORWARD) return 0;
+    uint64_t end = s->release_ms ? s->release_ms : s->last_ms;
+    double peak = 0;
+    for (unsigned i = s->count; i > 0; --i) {
+        const SwingPoint *p = read_point(s, i-1);
+        if (p->ms > end) continue;
+        if (end-p->ms > SWING_POWER_WINDOW_MS) break;
+        peak = fmax(peak, norm(p->g));
+    }
+    return peak;
+}
+
 static void measure_forward(Swing *s, const SwingPoint *p, uint64_t dt, unsigned count) {
     double sum = 0;
     unsigned n = 0;
     while (count > 0) {
         const SwingPoint *q = read_point(s, --count);
-        if (p->ms-q->ms > SWING_POWER_WINDOW_MS) break;
+        if (p->ms-q->ms > SWING_SPEED_WINDOW_MS) break;
         sum += fmax(0, q->radial-1);
         ++n;
     }
-    if (n >= 2) s->peak = fmax(s->peak, swing_speed(sum/n));
+    if (n >= 2) s->peak_speed = fmax(s->peak_speed, swing_speed(sum/n));
     double excess = fmax(0, p->radial-1);
     if (excess > 0.1) {
         double weight = excess*(double)dt;
@@ -304,20 +281,22 @@ static void measure_forward(Swing *s, const SwingPoint *p, uint64_t dt, unsigned
         s->release_roll = degrees(atan2(p->g.x, fmax(p->radial, 0.3)));
 }
 
-static double fitted_peak(const Swing *s, double peak_load, double rail, uint64_t crest_ms) {
-    /* Fit radial load = a + b*t + c*t^2 to the unclipped shoulders.
+static double fitted_peak(const Swing *s, double peak_load, uint64_t crest_ms, uint64_t end) {
+    /* Fit total load = a + b*t + c*t^2 to the unclipped shoulders.
        Scale t by 100 ms and center it on a clipped point through B-up. */
     double moments[5] = {0}, weighted[3] = {0};
     double half = 1 + 0.5*(peak_load-1);
     unsigned count = 0, before = 0, after = 0;
     for (unsigned i = 0; i < s->count; ++i) {
         const SwingPoint *p = read_point(s, i);
-        if (s->release_ms && p->ms > s->release_ms) break;
-        if (p->clipped || p->radial <= half || p->radial >= rail-SWING_FIT_MARGIN_G) continue;
+        if (p->ms > end) break;
+        if (end-p->ms > SWING_POWER_WINDOW_MS) continue;
+        double load = norm(p->g);
+        if (p->clipped || load <= half || load >= peak_load-SWING_FIT_MARGIN_G) continue;
         double t = ((double)p->ms-(double)crest_ms)/100, power = 1;
         for (unsigned j = 0; j < 5; ++j) {
             moments[j] += power;
-            if (j < 3) weighted[j] += power*p->radial;
+            if (j < 3) weighted[j] += power*load;
             power *= t;
         }
         ++count;
@@ -341,27 +320,28 @@ static double fitted_peak(const Swing *s, double peak_load, double rail, uint64_
     if (c >= 0) return 0;
     double b = (m[1][3]-m[1][2]*c)/m[1][1];
     double a = (m[0][3]-m[0][1]*b-m[0][2]*c)/m[0][0];
+    double vertex_ms = crest_ms-100*b/(2*c);
+    if (vertex_ms < (double)end-SWING_POWER_WINDOW_MS || vertex_ms > end) return 0;
     double peak = a-b*b/(4*c);
-    if (!isfinite(peak) || peak < peak_load) return 0;
-    return swing_speed(fmin(peak, 2*SWING_RAIL_G)-1);
+    return isfinite(peak) && peak >= peak_load ? peak : 0;
 }
 
-static void fit_forward(Swing *s) {
-    double rail = 0, peak_load = 0;
+static double fit_forward(Swing *s, uint64_t end, double peak_g, int height) {
+    double rail = 0;
     uint64_t crest_ms = 0;
-    for (unsigned i = 0; i < s->count; ++i) {
-        const SwingPoint *p = read_point(s, i);
-        if (s->release_ms && p->ms > s->release_ms) break;
-        peak_load = fmax(peak_load, p->radial);
-        if (p->clipped && p->radial > rail) {
-            rail = p->radial;
+    for (unsigned i = s->count; i > 0; --i) {
+        const SwingPoint *p = read_point(s, i-1);
+        if (p->ms > end) continue;
+        if (end-p->ms > SWING_POWER_WINDOW_MS) break;
+        if (p->clipped && norm(p->g) > rail) {
+            rail = norm(p->g);
             crest_ms = p->ms;
         }
     }
-    if (rail <= 1 + 0.5*(peak_load-1)) return;
+    if (rail <= 1 + .5*(peak_g-1)) return 0;
     s->forward_clipped = true;
-    double fit = fitted_peak(s, peak_load, fmin(rail, SWING_RAIL_G), crest_ms);
-    if (fit > 0) s->fitted_speed = fit;
+    double fit = fitted_peak(s, peak_g, crest_ms, end);
+    return fmin(fit, 1.2*power_points(height)[SWING_POWER_HARD].peak_g);
 }
 
 static void confirm_bottom(Swing *s) {
@@ -377,7 +357,6 @@ static void confirm_bottom(Swing *s) {
     s->bottom_ms = start+(uint64_t)(weight > 0 ? total/weight : 0);
     s->have_bottom = true;
     ++s->passes;
-    fit_forward(s);
     if (s->phase != SWING_RESOLVE) set_phase(s, SWING_PAST_BOTTOM);
     s->turn_min = INFINITY;
     s->turn_rise = 0;
@@ -644,24 +623,24 @@ SwingResult swing_feed(Swing *s, const SwingSample *in, const SwingProfile *prof
     return r.thrown || r.reject != SWING_REJECT_NONE ? r : bridged;
 }
 SwingCalibrationStatus swing_calibrate(SwingCalibration *cal, const SwingResult *toss,
-                                      SwingCalibrationLimits lim, SwingProfile *profile) {
-    if (!isfinite(lim.target_power) || lim.target_power <= 0 || lim.target_power > SWING_POWER_CAP ||
-        !isfinite(lim.full_speed_floor) || lim.full_speed_floor <= 0 ||
-        !isfinite(lim.clip_ceiling) || lim.clip_ceiling < lim.full_speed_floor)
-        return SWING_CAL_BAD_LIMITS;
-    if (!toss->thrown || toss->clipped || !isfinite(toss->speed) || toss->speed <= 0) {
+                                      SwingProfile *profile) {
+    if (!toss->thrown || toss->clipped || !isfinite(toss->peak_g) || toss->peak_g < SWING_QUALIFY_G) {
         cal->count = 0;
         return SWING_CAL_RETRY;
     }
     if (cal->count >= SWING_CAL_TOSSES) cal->count = 0;
-    cal->peaks[cal->count++] = toss->speed;
+    cal->peaks[cal->count++] = toss->peak_g;
     if (cal->count < SWING_CAL_TOSSES) return SWING_CAL_MORE;
     double a=cal->peaks[0], b=cal->peaks[1], c=cal->peaks[2];
     double median = fmax(fmin(a,b), fmin(fmax(a,b),c));
     cal->count = 0;
+    const PowerPoint *normal = power_points(1);
+    double floor = normal[SWING_POWER_FLOOR].peak_g;
+    double effort = median-floor;
     for (unsigned i=0; i<SWING_CAL_TOSSES; ++i)
-        if (fabs(cal->peaks[i]-median) > SWING_CAL_SPREAD*median) return SWING_CAL_RETRY;
-    profile->full_speed = clamp(swing_full_speed_for_power(median, lim.target_power, 1),
-                                lim.full_speed_floor, lim.clip_ceiling);
+        if (fabs(cal->peaks[i]-median) > SWING_CAL_SPREAD*fmax(effort, 0))
+            return SWING_CAL_RETRY;
+    profile->effort_scale = clamp(effort/(normal[SWING_POWER_MEDIUM].peak_g-floor),
+                                  SWING_MIN_EFFORT, SWING_MAX_EFFORT);
     return SWING_CAL_DONE;
 }
