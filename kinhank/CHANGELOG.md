@@ -9,6 +9,13 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.9] - 2026-11-25
+
+### Changed
+
+- Updated the BYCEAO disc to Wii v0.1.9. For the same power, swing 30% faster for SLIDER, 15% faster for NORMAL or 10% slower for KOBE. Power still caps at 0.76. Factory and custom SET POWER references carry over as stored.
+- Restored the LAST SHOT percent bar in play and the measured swing speeds in the 1+2 overlay. The overlay also shows the selected type's speed reference and power percentages.
+
 ## [0.1.8] - 2026-11-25
 
 ### Changed

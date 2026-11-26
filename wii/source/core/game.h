@@ -16,7 +16,7 @@
 #include "arrow.h"
 
 #ifndef BYC_VERSION
-#define BYC_VERSION "0.1.8"
+#define BYC_VERSION "0.1.9"
 #endif
 
 #define GAME_MENU_MAX 16
@@ -82,8 +82,10 @@ typedef struct {
     /* HUD */
     char msg_big[24], msg_small[48];
     bool msg_on;
-    /* The one combined direction + power arrow (arcade 1.0.7): live during the forward swing,
-     * then held ARROW_HOLD_MS after release and faded. There is no separate power meter. */
+    bool last_shot;
+    double last_shot_power;       /* physical power of the most recent launch */
+    /* The combined direction + power arrow (arcade 1.0.7) previews the forward swing,
+     * then holds ARROW_HOLD_MS after release and fades. */
     double arrow_yaw, arrow_power, arrow_x, arrow_age_ms;
     bool arrow_on, arrow_live;
     bool help_shown;
@@ -129,6 +131,7 @@ double game_release_x(const Game *g, int team);
 const char *game_team_name(const Game *g, int team);
 Lie game_lie(const Game *g);
 bool game_menu_screen(const Game *g);     /* a panel/menu is open */
+int game_last_shot_percent(const Game *g);
 /* Provisional SET POWER limits (pending P1 hardware traces; see wii/INPUT.md). */
 SwingCalibrationLimits game_calibration_limits(const Game *g);
 

@@ -66,6 +66,10 @@ Lie game_lie(const Game *g) {
     return l;
 }
 bool game_menu_screen(const Game *g) { return g->ui != UI_NONE; }
+int game_last_shot_percent(const Game *g) {
+    /* KOBE's physical-power remap can exceed the controller cap. */
+    return (int)lround(100 * clampd(g->last_shot_power / SWING_POWER_CAP, 0, 1));
+}
 
 SwingCalibrationLimits game_calibration_limits(const Game *g) {
     double target = g->win->w[0][SIDE_SLICK][ARC_NORMAL].mid;
@@ -215,6 +219,7 @@ static void show_menu(Game *g) {
     timers_clear(g); g->active = -1; g->nbefore = 0; g->paused = false;
     g->phase = PH_MENU; g->career_match = false; g->resume_pending = false;
     clear_bags(g);
+    g->last_shot = false; g->last_shot_power = 0;
     g->arrow_on = g->arrow_live = false;
     open_ui(g, UI_TITLE);
 }
@@ -237,6 +242,7 @@ void game_start(Game *g, bool practice, bool vs_cpu, bool career) {
     g->scores[0] = g->scores[1] = 0; g->inning = 1; g->winner = -1;
     g->first = practice ? 0 : (rng_next(&g->rng) < 0.5 ? 0 : 1);   /* coin toss */
     g->ui = UI_NONE; g->menu.count = 0;
+    g->last_shot = false; g->last_shot_power = 0;
     g->arrow_on = g->arrow_live = false; g->cpu_planning = false;
     fx(g, FX_DOG_RESET, (Vec3){0, 0, 0}, 0);
     if (g->input) {
@@ -292,6 +298,7 @@ static bool throw_bag(Game *g, double power, double drift, int team) {
     for (int i = 0; i < g->nbags; i++) g->before[i] = g->bags[i].state;
     g->active = g->nbags++;
     g->phase = PH_FLYING; g->meter = power;
+    g->last_shot = true; g->last_shot_power = actual;
     if (human) {
         /* 1.0.7 showShotArrow: the actual launch yaw and physical power, from the release x. */
         g->arrow_on = true; g->arrow_live = false; g->arrow_age_ms = 0;

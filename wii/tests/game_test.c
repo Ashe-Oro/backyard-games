@@ -319,7 +319,9 @@ static void test_save_roundtrip(void) {
     s.career_fight = 5; s.career_wins = 7; s.profile[1].left_handed = true; s.profile[0].full_speed = 3.1;
     s.profile[1].spin_strength = 0.4; s.help_tucked = true; s.wind_on = true;
     uint8_t buf[SAVE_MAX_BYTES]; size_t n = save_encode(&s, buf, sizeof buf);
-    CHECK(n > 12 && memcmp(buf, "BYCS", 4) == 0 && buf[4] == 0 && buf[5] == SAVE_VERSION, "magic + big-endian version");
+    CHECK(n > 12 && memcmp(buf, "BYCS", 4) == 0 && buf[4] == 0 && buf[5] == 4, "magic + big-endian version 4");
+    CHECK(save_decode(&d, buf, n) && d.profile[0].full_speed == 3.1 && d.profile[1].full_speed == 2.45,
+          "version 4 preserves custom SET POWER and factory speed references");
     CHECK(save_decode(&d, buf, n) && d.career_fight == 5 && d.career_wins == 7 && d.profile[1].left_handed &&
           d.profile[0].full_speed == 3.1 && d.profile[1].spin_strength == 0.4 && d.help_tucked && d.wind_on, "round trip");
     buf[8] ^= 1;
@@ -334,7 +336,7 @@ static void test_save_roundtrip(void) {
     uint32_t crc = save_crc32(buf, n - 4);
     for (int i = 0; i < 4; i++) buf[n - 4 + i] = (uint8_t)(crc >> (24 - i * 8));
     CHECK(save_decode(&d, buf, n) && d.profile[0].full_speed == 3.1 &&
-          d.profile[1].full_speed == swing_default_profile().full_speed &&
+          d.profile[1].full_speed == 2.45 &&
           d.profile[1].left_handed && d.profile[1].spin_strength == .4,
           "older saves update the factory speed and keep custom speed, hand and curl");
     s.profile[1].full_speed=swing_speed(1.9);
@@ -345,7 +347,7 @@ static void test_save_roundtrip(void) {
     crc=save_crc32(buf,n-4);
     for (int i=0;i<4;i++) buf[n-4+i]=(uint8_t)(crc>>(24-i*8));
     CHECK(save_decode(&d,buf,n) && d.profile[0].full_speed==3.1 &&
-          d.profile[1].full_speed==SWING_DEFAULT_FULL_SPEED && d.profile[1].left_handed,
+          d.profile[1].full_speed==2.45 && d.profile[1].left_handed,
           "version 3 migrates the 0.1.7 factory speed and keeps custom power and hand");
     CHECK(save_crc32((const uint8_t *)"123456789", 9) == 0xCBF43926u, "CRC-32 check value");
 }
@@ -356,6 +358,27 @@ static void practice_ready(uint32_t seed) {
     game_start(&game, true, false, false);
     while (game.phase != PH_AIM) frames(1);
     frames(1);
+}
+
+static void test_last_shot_gauge(void) {
+    practice_ready(113);
+    CHECK(!game.last_shot, "no LAST SHOT until a bag launches");
+    CHECK(game_throw(&game, SWING_POWER_CAP, 0, 0), "cap throw launches");
+    CHECK(game.phase == PH_FLYING && game.last_shot && game_last_shot_percent(&game) == 100,
+          "LAST SHOT shows 100%% in flight at the cap");
+    CHECK(!game_throw(&game, .25, 0, 0) && game_last_shot_percent(&game) == 100,
+          "a rejected throw leaves LAST SHOT in place");
+    frames(300);
+    CHECK(game.phase == PH_AIM && game.practice_throws == 1 && !game.arrow_on &&
+          game.last_shot && game.last_shot_power == SWING_POWER_CAP && game_last_shot_percent(&game) == 100,
+          "LAST SHOT survives scoring, the next aim phase and the arrow fading");
+    CHECK(game_throw(&game, .40, 0, 0) && game.last_shot && game.last_shot_power == .40 &&
+          game_last_shot_percent(&game) == 53, "the next launch replaces LAST SHOT with its rounded percent");
+    frames(300);
+    game.arc = ARC_KOBE;
+    double lob_power = physical_power(game.win, 0, game.side[0], ARC_KOBE, SWING_POWER_CAP);
+    CHECK(game_throw(&game, SWING_POWER_CAP, 0, 0) && game.last_shot_power == lob_power &&
+          game_last_shot_percent(&game) == 100, "LAST SHOT uses remapped KOBE launch power and clamps the label");
 }
 
 static void test_deferred_release_stance(void) {
@@ -732,7 +755,7 @@ static void test_set_power_reaches_hole(void) {
     SwingCalibrationLimits limits = game_calibration_limits(&game);
     CHECK(game.setpower_count == 3 && !input.calibrating && game.save_dirty && game.nbags == 0,
           "SET POWER saves three easy tosses without launching a bag");
-    CHECK(fabs(swing_power(calibrated_speed, game.save.profile[0].full_speed * 1.20) - limits.target_power) < 1e-9,
+    CHECK(fabs(swing_power(calibrated_speed, game.save.profile[0].full_speed * swing_type_scale(1)) - limits.target_power) < 1e-9,
           "the saved easy toss power matches the hole target");
     CHECK(!input_begin_calibration(&input, (SwingCalibrationLimits){.8, limits.full_speed_floor, limits.clip_ceiling}),
           "SET POWER rejects an unreachable target above the cap");
@@ -825,8 +848,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.8") == 0, "version is 0.1.8 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.8") == 0, "version tag v0.1.8 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.9") == 0, "version is 0.1.9 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.9") == 0, "version tag v0.1.9 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -1129,6 +1152,7 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
+    test_last_shot_gauge();
     test_deferred_release_stance();
     test_set_power_reaches_hole();
     test_practice_cancel_and_retry();

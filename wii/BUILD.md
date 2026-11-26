@@ -1,4 +1,4 @@
-# Build Backyard Cornhole Wii 0.1.8
+# Build Backyard Cornhole Wii 0.1.9
 
 Run the commands below from the repository root after cloning this repository
 with the Wii source tree present. For playing on hardware, see [INSTALL-WII.md](INSTALL-WII.md).
@@ -130,8 +130,8 @@ make -C wii release OUT=dist
   make -C wii release OUT=/workspace/uploads/wii-game
   ```
 
-The HBC ZIP is `BackyardCornhole-HBC-v0.1.8.zip`; the full ZIP is
-`BackyardCornhole-BYCEAO-v0.1.8-release.zip`. The ISO and HBC ZIP are always
+The HBC ZIP is `BackyardCornhole-HBC-v0.1.9.zip`; the full ZIP is
+`BackyardCornhole-BYCEAO-v0.1.9-release.zip`. The ISO and HBC ZIP are always
 built in `wii/dist/` first, even with a different OUT. ZIP metadata is fixed
 and entries/checksums are sorted for repeatable packaging.
 

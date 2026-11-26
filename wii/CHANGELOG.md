@@ -10,6 +10,18 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.9] - 2026-11-25
+
+### Added
+
+- Restored the teal LAST SHOT bar and percent in the gameplay HUD alongside the combined aim and power arrow. The bar holds the launched power until the next throw. The controller cap of 0.76 is 100%.
+- The 1+2 overlay again shows live and last-throw swing speeds in m/s, plus the selected throw type's calibrated speed reference and live and last-throw power percentages.
+
+### Changed
+
+- For the same power below the cap, SLIDER takes 30% more swing speed, NORMAL takes 15% more and KOBE takes 10% less. The factory reference stays at 2.45 m/s, and saved custom SET POWER references carry over as stored. The shared power cap remains 0.76.
+- Forward aim uses sideways motion from the forward stroke. LEFT HAND continues to mirror curl.
+
 ## [0.1.8] - 2026-11-25
 
 ### Changed

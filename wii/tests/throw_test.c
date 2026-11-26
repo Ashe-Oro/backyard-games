@@ -90,12 +90,18 @@ static void replay_into(Input *in, Outcome *out, const BowlingTrace *trace, unsi
     out->reject=in->detector.last_reject;
 }
 
-static Outcome replay(const BowlingTrace *trace, unsigned rate, uint32_t seed, bool gaps, bool duplicate_reports) {
+static Outcome replay_height(const BowlingTrace *trace, unsigned rate, uint32_t seed,
+                             bool gaps, bool duplicate_reports, int height) {
     Input in;
     Outcome out={0};
     begin(&in,&out);
+    in.slots[0].height=height;
     replay_into(&in,&out,trace,rate,seed,1000,gaps,duplicate_reports);
     return out;
+}
+
+static Outcome replay(const BowlingTrace *trace, unsigned rate, uint32_t seed, bool gaps, bool duplicate_reports) {
+    return replay_height(trace,rate,seed,gaps,duplicate_reports,1);
 }
 
 static void check_result(const char *name, const Outcome *out, SwingReject reject) {
@@ -246,12 +252,65 @@ static void forward_power_and_clip_reconstruction(void) {
     check_result("clipped forward lobe",&clipped,SWING_REJECT_NONE);
     CHECK(clipped.toss.clipped && clipped.toss.speed>swing_speed(2.55),
           "clipped shoulders did not recover speed above the assumed rail (%.3f m/s)",clipped.toss.speed);
-    CHECK(clipped.toss.power==SWING_POWER_CAP,"the factory power cap is unreachable (%.3f)",clipped.toss.power);
     t.release_deg=15;
     Outcome deferred=replay(&t,100,7,false,false);
     check_result("clipped lobe resolved after B-up",&deferred,SWING_REJECT_NONE);
     CHECK(deferred.resolved && deferred.toss.clipped && deferred.fitted_speed==0,
           "deferred fit used shoulders after B-up (%.3f m/s)",deferred.fitted_speed);
+}
+
+static void throw_type_power_and_cap(void) {
+    const double previous_scales[]={1.30,1.20,1.0/.90};
+    const double effort[]={1.30,1.15,.90};
+    BowlingTrace mid=bowling_trace(), strong=bowling_trace();
+    mid.forward_s=.75;
+    mid.release_deg=40;
+    strong.back_deg=-90;
+    strong.forward_deg=90;
+    strong.forward_s=.45;
+    strong.release_deg=75;
+    strong.inline_grip=true;
+    /* Center the clipped crest differently relative to the 60 Hz report times. */
+    BowlingTrace strong_60=strong;
+    strong_60.back_deg=-88;
+    strong_60.forward_deg=89;
+    strong_60.back_s=.578;
+    strong_60.forward_s=.438;
+    strong_60.release_deg=79;
+    strong_60.pitch_at_bottom=-5;
+    strong_60.rolled=true;
+    for (int height=0;height<3;++height) {
+        Outcome toss=replay_height(&mid,100,7,false,false,height);
+        check_result("unclipped mid-range power",&toss,SWING_REJECT_NONE);
+        double old_power=swing_power(toss.toss.speed,SWING_DEFAULT_FULL_SPEED*previous_scales[height]);
+        CHECK(!toss.toss.clipped && old_power>0 && old_power<SWING_POWER_CAP &&
+              toss.toss.power<SWING_POWER_CAP && fabs(toss.toss.power-old_power/effort[height])<1e-12,
+              "type %d: mid-range power %.3f vs 0.1.8 power %.3f",height,toss.toss.power,old_power);
+
+        for (unsigned rate=60;rate<=100;rate+=40) {
+            Outcome cap=replay_height(rate==60 ? &strong_60 : &strong,rate,rate==60 ? 33 : 7,false,false,height);
+            check_result("strong clipped forward swing",&cap,SWING_REJECT_NONE);
+            double uncapped=SWING_POWER_GAIN*cap.toss.speed/(SWING_DEFAULT_FULL_SPEED*swing_type_scale(height));
+            CHECK(cap.toss.clipped && cap.fitted_speed>swing_speed(SWING_RAIL_G-1) &&
+                  uncapped>SWING_POWER_CAP && cap.toss.power==SWING_POWER_CAP,
+                  "type %d at %u Hz: fitted speed %.3f m/s, uncapped power %.3f, result %.3f",
+                  height,rate,cap.fitted_speed,uncapped,cap.toss.power);
+        }
+    }
+}
+
+static void crooked_backswing_does_not_aim(void) {
+    BowlingTrace trace=bowling_trace();
+    trace.backswing_lateral_g=1.25;
+    for (unsigned rate=60;rate<=100;rate+=40) {
+        trace.inline_grip=false;
+        for (unsigned grip=0;grip<2;++grip) {
+            Outcome out=replay(&trace,rate,7,false,false);
+            check_result("crooked backswing, straight forward",&out,SWING_REJECT_NONE);
+            CHECK(out.toss.aim==0,"backswing biased aim by %.4f at %u Hz, grip %u",out.toss.aim,rate,grip);
+            trace.inline_grip=true;
+        }
+    }
 }
 
 static void low_radial_load_rejects_as_too_weak(void) {
@@ -407,6 +466,8 @@ int main(void) {
     TEST(quasistatic_rotation_is_not_a_swing);
     TEST(named_bowling_scenarios);
     TEST(forward_power_and_clip_reconstruction);
+    TEST(throw_type_power_and_cap);
+    TEST(crooked_backswing_does_not_aim);
     TEST(low_radial_load_rejects_as_too_weak);
     TEST(release_during_turn_confirmation);
     TEST(sustained_noise_and_short_gaps);

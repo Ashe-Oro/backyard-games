@@ -2,7 +2,7 @@
 #define BYC_SWING_CONFIG_H
 
 /* Suggested hardware tuning. Units are ms, g, m/s and degrees. */
-#define SWING_VERSION "bowling-grip-0.1.8"
+#define SWING_VERSION "bowling-grip-0.1.9"
 #define SWING_STATIC_G 0.10
 #define SWING_STATIC_MS 30
 #define SWING_ONSET_G 0.25
@@ -36,7 +36,7 @@
 #define SWING_RAIL_G 3.55
 #define SWING_RAIL_NEAR_G 0.10
 #define SWING_FIT_MARGIN_G 0.15
-#define SWING_DEFAULT_FULL_SPEED 2.45  /* NORMAL reaches the cap at 4.06 m/s. */
+#define SWING_DEFAULT_FULL_SPEED 2.45  /* NORMAL reaches the cap at 4.67 m/s. */
 #define SWING_POWER_GAIN 0.55
 #define SWING_POWER_CAP 0.76           /* calm, centered NORMAL lands 8.90 m from release */
 #define SWING_CAL_TOSSES 3
