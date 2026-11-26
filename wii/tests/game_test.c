@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "game.h"
+#include "bowling_trace.h"
 #include "party.h"
 
 static int failures, checks;
@@ -336,6 +337,16 @@ static void test_save_roundtrip(void) {
           d.profile[1].full_speed == swing_default_profile().full_speed &&
           d.profile[1].left_handed && d.profile[1].spin_strength == .4,
           "older saves update the factory speed and keep custom speed, hand and curl");
+    s.profile[1].full_speed=swing_speed(1.9);
+    n=save_encode(&s,buf,sizeof buf);
+    CHECK(save_decode(&d,buf,n) && d.profile[1].full_speed==s.profile[1].full_speed,
+          "version 4 keeps a custom speed equal to the 0.1.7 factory speed");
+    buf[5]=3;
+    crc=save_crc32(buf,n-4);
+    for (int i=0;i<4;i++) buf[n-4+i]=(uint8_t)(crc>>(24-i*8));
+    CHECK(save_decode(&d,buf,n) && d.profile[0].full_speed==3.1 &&
+          d.profile[1].full_speed==SWING_DEFAULT_FULL_SPEED && d.profile[1].left_handed,
+          "version 3 migrates the 0.1.7 factory speed and keeps custom power and hand");
     CHECK(save_crc32((const uint8_t *)"123456789", 9) == 0xCBF43926u, "CRC-32 check value");
 }
 
@@ -345,6 +356,22 @@ static void practice_ready(uint32_t seed) {
     game_start(&game, true, false, false);
     while (game.phase != PH_AIM) frames(1);
     frames(1);
+}
+
+static void test_deferred_release_stance(void) {
+    practice_ready(109);
+    InputSlot *slot = &input.slots[0];
+    slot->stance_from = 0;
+    slot->stance = SWING_STEP;
+    slot->stance_ms = now_ms;
+    uint64_t release_ms = now_ms + SWING_STEP_EASE_MS / 2;
+    frames(8);
+    CHECK(game.position[0] == SWING_STEP, "stance finishes easing before release confirmation");
+    InputEvent e = {.action=INPUT_THROW,
+        .toss={.thrown=true, .power=0.5, .release=SWING_B_UP, .release_ms=release_ms}};
+    game_input(&game, &e);
+    CHECK(game.nbags == 1 && fabs(game.arrow_x - SWING_STEP / 2) < 1e-9,
+          "deferred launch uses the stance at B-up (%.3f)", game.arrow_x);
 }
 static void test_clear_board_any_phase(void) {
     /* WG-1: CLEAR BOARD while the bag is in the air must leave a playable practice. */
@@ -521,38 +548,49 @@ static void test_unlimited_practice(void) {
     CHECK(game.nbags <= game.bag_cap_limit, "stayed inside the fixed block (%d)", game.nbags);
 }
 
-/* Synthetic remote: 10 ms reports through the real input layer, one game frame per report. */
-static void remote(double e, double pitch, double roll, bool b) {
-    now_ms += 10;
-    double p = pitch * SWING_PI / 180, r = roll * SWING_PI / 180;
-    InputSample s; memset(&s, 0, sizeof s);
-    s.motion.ms = now_ms; s.motion.g = (SwingVector){(1 + e) * sin(r) * cos(p), (1 + e) * sin(p), (1 + e) * cos(r) * cos(p)};
-    s.motion.accel_valid = true; s.motion.b = b; s.buttons_valid = true; s.buttons = b ? INPUT_B : 0;
-    input_feed(&input, 0, &s); drain();
-    game_update(&game, 0.01, now_ms); drain();
-}
+/* Physical reports through the real input and game update routes. */
 typedef struct { bool live_seen, thrown; double live_yaw, live_power, live_x, yaw, power, bag_yaw, back_live; } SwingSeen;
-/* Hold B, backswing, top-of-backswing pause, forward swing (lateral = sideways lean), let go. */
-static SwingSeen bowling_swing(double forward_e, double lateral, bool release) {
-    SwingSeen seen; memset(&seen, 0, sizeof seen);
-    for (int i = 0; i < 70; i++) remote(0, 0, 0, false);
-    for (int i = 0; i < 8; i++) remote(0, 0, 0, true);
-    for (int i = 0; i < 15; i++) { remote(0.5, 0, 0, true); seen.back_live += game.arrow_live; }
-    for (int i = 0; i < 20; i++) { remote(0, -35, 0, true); seen.back_live += game.arrow_live; }
-    int bags = game.nbags;
-    for (int i = 0; i < 18; i++) {
-        remote(forward_e, 0, lateral, true);
-        if (game.arrow_on && game.arrow_live) { seen.live_seen = true; seen.live_yaw = game.arrow_yaw; seen.live_power = game.arrow_power; seen.live_x = game.arrow_x; }
-    }
-    if (!release) { for (int i = 0; i < 20; i++) remote(0, -35, 0, true); return seen; }
-    remote(forward_e, 0, lateral, false);
-    for (int i = 0; i < 3 && game.nbags == bags; i++) remote(0, 25, 0, false);
-    seen.thrown = game.nbags == bags + 1;
-    if (seen.thrown) {
-        const Bag *b = &game.bags[game.nbags - 1];
-        seen.yaw = game.arrow_yaw; seen.power = game.arrow_power; seen.bag_yaw = atan2(b->v.x, -b->v.z);
+
+static SwingSeen drive_bowling(const BowlingTrace *trace, double release_pitch, uint32_t noise, Bag *launch) {
+    SwingSeen seen={0};
+    int bags=game.nbags;
+    double release=bowling_release(trace);
+    for (unsigned tick=0;tick<=3000;tick+=10) {
+        double seconds=tick/1000.0;
+        bool held=bowling_button(trace,seconds);
+        SwingVector g=bowling_force(trace,seconds);
+        if (isfinite(release_pitch) && seconds>=release && seconds<release+.01) {
+            double pitch=release_pitch*SWING_PI/180;
+            g=(SwingVector){0,-sin(pitch),cos(pitch)};
+        }
+        uint32_t buttons=(held ? INPUT_B : 0) | ((tick/10)%2 ? noise : 0);
+        InputSample report={.motion={.ms=(now_ms+=10),.g=g,.accel_valid=true},
+            .buttons=buttons,.buttons_valid=true};
+        input_feed(&input,0,&report); drain();
+        if (game.nbags==bags+1) {
+            const Bag *b=&game.bags[game.nbags-1];
+            if (launch) *launch=*b;
+            seen.thrown=true;
+            seen.yaw=game.arrow_yaw; seen.power=game.arrow_power; seen.bag_yaw=atan2(b->v.x,-b->v.z);
+            break;
+        }
+        game_update(&game,.01,now_ms); drain();
+        if (seconds<bowling_forward(trace)) seen.back_live+=game.arrow_live;
+        if (game.arrow_on && game.arrow_live) {
+            seen.live_seen=true; seen.live_yaw=game.arrow_yaw;
+            seen.live_power=game.arrow_power; seen.live_x=game.arrow_x;
+        }
     }
     return seen;
+}
+
+static SwingSeen bowling_swing(double forward_s, double lateral, bool release) {
+    BowlingTrace trace=bowling_trace();
+    trace.forward_s=forward_s;
+    trace.lateral_g=-lateral; /* Raw +X points left, positive game yaw points right. */
+    trace.release_deg=40;
+    trace.held=!release;
+    return drive_bowling(&trace,NAN,0,NULL);
 }
 static void next_bag(void) { int guard = 0; while (game.phase != PH_AIM && guard++ < 6000) frames(1); frames(1); }
 /* ---------------- Swing speed and direction, picker-only height ---------------- */
@@ -560,7 +598,7 @@ static void remote_feed_channel(unsigned ch, double e, double pitch, double roll
     now_ms += 10;
     double p = pitch * SWING_PI / 180, r = roll * SWING_PI / 180;
     InputSample s; memset(&s, 0, sizeof s);
-    s.motion.ms = now_ms; s.motion.g = (SwingVector){(1 + e) * sin(r) * cos(p), (1 + e) * sin(p), (1 + e) * cos(r) * cos(p)};
+    s.motion.ms = now_ms; s.motion.g = (SwingVector){(1 + e) * sin(r) * cos(p), -(1 + e) * sin(p), (1 + e) * cos(r) * cos(p)};
     s.motion.accel_valid = true; s.motion.b = (buttons & INPUT_B) != 0; s.buttons_valid = true; s.buttons = buttons;
     input_feed(&input, ch, &s); drain();
 }
@@ -609,12 +647,10 @@ static void test_practice_boot_ignores_stale_b(void) {
 
         remote_buttons(.25, -5, 0, INPUT_B);
         CHECK(swing_armed(&input.detector), "%s: a fresh moving B-down grips at once", cases[k].name);
-        for (int n = 0; n < 15; n++) remote_buttons(.5, 0, 0, INPUT_B);
-        for (int n = 0; n < 20; n++) remote_buttons(0, -35, 0, INPUT_B);
-        for (int n = 0; n < 18; n++) remote_buttons(2.5, 0, 0, INPUT_B);
-        CHECK(game.practice_throws == 0 && game.nbags == 0, "%s: holds the bag until B-up", cases[k].name);
-        remote_buttons(0, 25, 0, 0);
-        for (int n = 0; n < 30 && game.nbags == 0; n++) remote_buttons(0, 25, 0, 0);
+        remote_buttons(.25, -5, 0, 0);
+        CHECK(game.practice_throws==0 && game.nbags==0, "%s: a grip without a swing keeps the bag", cases[k].name);
+        SwingSeen fresh=bowling_swing(.45,0,true);
+        CHECK(fresh.thrown,"%s: deliberate physical swing throws",cases[k].name);
         CHECK(game.phase == PH_FLYING && game.nbags == 1,
               "%s: a fresh bowling swing launches one bag", cases[k].name);
         frames(300);
@@ -623,22 +659,21 @@ static void test_practice_boot_ignores_stale_b(void) {
 }
 static void test_practice_cancel_and_retry(void) {
     practice_ready(143);
-    for (int gesture = 0; gesture < 3; gesture++) {
-        remote(0, 0, 0, false);
-        remote(0, 0, 0, true);
-        CHECK(input.detector.phase == SWING_GRIP, "gesture %d grips on B-down", gesture);
-        for (int n = 0; n < 24; n++) {
-            double pitch = gesture == 2 ? -35 : gesture == 1 ? 2 * sin(n * .5) : 0;
-            remote(0, pitch, 0, true);
-        }
-        CHECK(input.detector.peak == 0, "gesture %d has no forward peak", gesture);
-        remote(0, gesture == 2 ? -35 : 0, 0, false);
-        CHECK(input.detector.phase == SWING_READY, "gesture %d returns to READY", gesture);
-        frames(300);
-        CHECK(game.phase == PH_AIM && game.nbags == 0 && game.practice_throws == 0,
-              "gesture %d keeps the practice bag and the throw count", gesture);
+    for (int gesture=0;gesture<3;gesture++) {
+        BowlingTrace trace=bowling_trace();
+        trace.still=gesture==0;
+        trace.release_going_back=gesture==1;
+        trace.release_deg=-20;
+        SwingSeen rejected=drive_bowling(&trace,NAN,0,NULL);
+        SwingReject reason=gesture==0 ? SWING_REJECT_NO_SWING :
+            gesture==1 ? SWING_REJECT_BACKSWING : SWING_REJECT_BEFORE_BOTTOM;
+        CHECK(!rejected.thrown && input.detector.last_reject==reason,
+              "gesture %d rejected with reason %d",gesture,input.detector.last_reject);
+        CHECK(input.detector.phase==SWING_READY,"gesture %d returns to READY",gesture);
+        CHECK(game.phase==PH_AIM && game.nbags==0 && game.practice_throws==0,
+              "gesture %d keeps the practice bag and the throw count",gesture);
     }
-    SwingSeen toss = bowling_swing(2.5, 0, true);
+    SwingSeen toss=bowling_swing(.45,0,true);
     CHECK(toss.thrown && game.phase == PH_FLYING, "the next forward swing launches on B-up");
     frames(300);
     CHECK(game.practice_throws == 1, "only the forward swing counts");
@@ -650,33 +685,20 @@ static void pick_height(int h) {
 }
 #define LAND_MAX 600
 typedef struct { bool thrown, deck; double land_x, land_z, peak_y, power, aim, preview_power; int n; double y[LAND_MAX], x[LAND_MAX], z[LAND_MAX]; } Landing;
-/* Hold B, swing back, swing forward (lateral = sideways lean in degrees), let go with the remote at
- * release_pitch. The flight is the launched bag stepped at the game's fixed 240 Hz until it first
- * touches down (independent of where the frame accumulator happened to be). */
-static Landing swing_and_land(double forward_e, double lateral, double release_pitch, uint32_t noise) {
-    static Landing l; memset(&l, 0, sizeof l);
+/* Step the launched bag from release at the game's fixed 240 Hz until touchdown. */
+static Landing swing_and_land(double forward_s, double lateral, double release_pitch, uint32_t noise) {
+    static Landing l; memset(&l,0,sizeof l);
     next_bag();
-    game_clear_board(&game); frames(1);   /* an empty board: no earlier bag to land on */
-    for (int i = 0; i < 30; i++) remote_buttons(0, 0, 0, (i % 2) ? noise : 0);
-    for (int i = 0; i < 8; i++) remote_buttons(0, 0, 0, INPUT_B | ((i % 2) ? noise : 0));
-    for (int i = 0; i < 15; i++) remote_buttons(0.5, 0, 0, INPUT_B);
-    for (int i = 0; i < 20; i++) remote_buttons(0, -35, 0, INPUT_B | ((i % 2) ? noise : 0));
-    int bags = game.nbags;
-    for (int i = 0; i < 18; i++) {
-        remote_buttons(forward_e, 0, lateral, INPUT_B | ((i % 2) ? noise : 0));
-        if (game.arrow_live) l.preview_power = game.arrow_power;
-    }
-    Bag launch; memset(&launch, 0, sizeof launch);
-    remote_feed(forward_e, release_pitch, lateral, 0);
-    if (game.nbags == bags + 1) launch = game.bags[game.nbags - 1];
-    game_update(&game, 0.01, now_ms); drain();
-    for (int i = 0; i < 3 && game.nbags == bags; i++) {
-        remote_feed(0, release_pitch, 0, 0);
-        if (game.nbags == bags + 1) launch = game.bags[game.nbags - 1];
-        game_update(&game, 0.01, now_ms); drain();
-    }
-    l.thrown = game.nbags == bags + 1;
+    game_clear_board(&game); frames(1);
+    BowlingTrace trace=bowling_trace();
+    trace.forward_s=forward_s;
+    trace.lateral_g=-lateral;
+    trace.release_s=bowling_forward(&trace)+forward_s+.06;
+    Bag launch={0};
+    SwingSeen seen=drive_bowling(&trace,release_pitch,noise,&launch);
+    l.thrown=seen.thrown;
     if (!l.thrown) return l;
+    l.preview_power=seen.live_power;
     l.power = input.stats.last_toss.power; l.aim = input.stats.last_toss.aim;
     Wind calm = game.wind;
     while (launch.state == BAG_FLY && l.n < LAND_MAX) {
@@ -702,18 +724,15 @@ static void test_set_power_reaches_hole(void) {
     tap(INPUT_A);
     game_menu_select(&game, MI_SETTINGS);
     game_menu_select(&game, MI_SETPOWER_RED);
-    remote_buttons(0, 0, 0, 0);
-    for (int toss = 0; toss < 3; toss++) {
-        remote_buttons(0, 0, 0, INPUT_B);
-        for (int n = 0; n < 15; n++) remote_buttons(.5, 0, 0, INPUT_B);
-        for (int n = 0; n < 20; n++) remote_buttons(0, -35, 0, INPUT_B);
-        for (int n = 0; n < 18; n++) remote_buttons(.65, 0, 0, INPUT_B);
-        for (int n = 0; n < 30; n++) remote_buttons(0, 25, 0, 0);
-    }
+    BowlingTrace easy=bowling_trace();
+    easy.forward_s=.65;
+    easy.release_s=bowling_forward(&easy)+easy.forward_s+.06;
+    for (int toss=0;toss<3;toss++) drive_bowling(&easy,NAN,0,NULL);
+    double calibrated_speed=input.stats.last_toss.speed;
     SwingCalibrationLimits limits = game_calibration_limits(&game);
     CHECK(game.setpower_count == 3 && !input.calibrating && game.save_dirty && game.nbags == 0,
           "SET POWER saves three easy tosses without launching a bag");
-    CHECK(fabs(swing_power(swing_speed(.65), game.save.profile[0].full_speed * 1.20) - limits.target_power) < 1e-9,
+    CHECK(fabs(swing_power(calibrated_speed, game.save.profile[0].full_speed * 1.20) - limits.target_power) < 1e-9,
           "the saved easy toss power matches the hole target");
     CHECK(!input_begin_calibration(&input, (SwingCalibrationLimits){.8, limits.full_speed_floor, limits.clip_ceiling}),
           "SET POWER rejects an unreachable target above the cap");
@@ -721,7 +740,7 @@ static void test_set_power_reaches_hole(void) {
     game_menu_select(&game, MI_OK);
     game_menu_select(&game, MI_BACK);
     tap(INPUT_A);
-    Landing l = swing_and_land(.65, 0, 25, 0);
+    Landing l = swing_and_land(.65, 0, NAN, 0);
     CHECK(l.thrown && fabs(l.power - limits.target_power) < 1e-9 && game.practice_in == 1,
           "a calibrated easy toss scores a NORMAL/SLICK cornhole in Practice (power %.3f, in %d)",
           l.power, game.practice_in);
@@ -729,53 +748,55 @@ static void test_set_power_reaches_hole(void) {
 static void test_swing_to_landing(void) {
     practice_ready(141);
     CHECK(game.wind.mph == 0, "practice is calm (%g mph)", game.wind.mph);
-    const double energies[] = {.9, 1.5, 2, 3, 4, 6.5, 7};
-    const double scales[] = {1.30, 1.20, 1.0/.90};
-    const char *names[] = {"SLIDER", "NORMAL", "KOBE"};
-    const double front = BYC_REL_Z - BYC_BOARD_Z, back = front + BYC_L * cos(BYC_TH);
-    printf("  deck spans %.4f–%.4f m from release\n", front, back);
-    for (int h = 0; h < 3; h++) {
+    const double durations[]={.75,.65,.55,.50,.46};
+    const char *names[]={"SLIDER","NORMAL","KOBE"};
+    const double front=BYC_REL_Z-BYC_BOARD_Z, back=front+BYC_L*cos(BYC_TH);
+    printf("  deck spans %.4f–%.4f m from release\n",front,back);
+    for (int h=0;h<3;h++) {
         next_bag(); pick_height(h);
-        CHECK(game.arc == (BagArc)h && game.heights[0] == h, "picker on %s", names[h]);
-        double previous_distance = 0, previous_power = 0;
-        for (unsigned k = 0; k < sizeof energies / sizeof energies[0]; k++) {
-            double e = energies[k], speed = swing_speed(e);
-            Landing l = swing_and_land(e, 0, 25, 0);
-            double distance = BYC_REL_Z - l.land_z;
-            double expected = fmin(.55 * sqrt(e / 1.9) / scales[h], .76);
-            printf("  %s %.2f g: %.3f m/s -> %.6f power -> %.6f m (%s)\n",
-                   names[h], e, speed, l.power, distance, l.deck ? "deck" : "ground");
-            CHECK(l.thrown && l.n > 20, "%s %g g throws and flies (%d steps)", names[h], e, l.n);
-            CHECK(fabs(l.land_x) < 1e-9, "a straight swing lands on the centre line (x=%g)", l.land_x);
-            CHECK(fabs(l.power - expected) < 1e-9, "%s %g g gives %.3f power (got %.3f)", names[h], e, expected, l.power);
-            CHECK(fabs(l.preview_power - physical_power(game.win, 0, SIDE_SLICK, (BagArc)h, expected)) < 1e-9,
-                  "%s %g g preview matches release power", names[h], e);
-            if (previous_power < .76)
-                CHECK(previous_power < l.power && previous_distance < distance, "%s %g g lands farther (%.2f m)", names[h], e, distance);
+        CHECK(game.arc==(BagArc)h && game.heights[0]==h,"picker on %s",names[h]);
+        double previous_distance=0,previous_power=0;
+        for (unsigned k=0;k<sizeof durations/sizeof durations[0];k++) {
+            double duration=durations[k];
+            Landing l=swing_and_land(duration,0,NAN,0);
+            double distance=BYC_REL_Z-l.land_z;
+            double expected=swing_power(input.stats.last_toss.speed,
+                                        SWING_DEFAULT_FULL_SPEED*swing_type_scale(h));
+            printf("  %s %.2f s: %.6f power -> %.6f m (%s)\n",
+                   names[h],duration,l.power,distance,l.deck ? "deck" : "ground");
+            CHECK(l.thrown && l.n>20,"%s %.2f s throws and flies (%d steps)",names[h],duration,l.n);
+            CHECK(fabs(l.land_x)<1e-9,"a straight swing lands on the centre line (x=%g)",l.land_x);
+            CHECK(fabs(l.power-expected)<1e-9,"%s %.2f s gives %.3f power (got %.3f)",names[h],duration,expected,l.power);
+            CHECK(fabs(l.preview_power-physical_power(game.win,0,SIDE_SLICK,(BagArc)h,expected))<1e-9,
+                  "%s %.2f s preview matches release power",names[h],duration);
+            if (previous_power<SWING_POWER_CAP)
+                CHECK(previous_power<l.power && previous_distance<distance,
+                      "%s %.2f s lands farther (%.2f m)",names[h],duration,distance);
             else
-                CHECK(l.power == .76 && distance == previous_distance, "%s %g g stays at the cap (%.2f m)", names[h], e, distance);
-            previous_power = l.power;
-            previous_distance = distance;
+                CHECK(l.power==SWING_POWER_CAP && distance==previous_distance,
+                      "%s %.2f s stays at the cap (%.2f m)",names[h],duration,distance);
+            previous_power=l.power;
+            previous_distance=distance;
         }
     }
     next_bag(); pick_height(1);
-    /* direction: left vs right swing, mirrored for left-handed */
-    Landing r = swing_and_land(0.6, 12, 25, 0), lft = swing_and_land(0.6, -12, 25, 0);
+    /* The same direction of motion aims the same way for either hand. */
+    Landing r = swing_and_land(.65, .55, NAN, 0), lft = swing_and_land(.65, -.55, NAN, 0);
     printf("  swing right -> x %+.3f m, swing left -> x %+.3f m\n", r.land_x, lft.land_x);
     CHECK(r.thrown && lft.thrown && r.land_x > 0.1 && lft.land_x < -0.1, "right swing lands right, left swing lands left (%g, %g)", r.land_x, lft.land_x);
     CHECK(fabs(r.land_x + lft.land_x) < 1e-9, "mirror images");
     SwingProfile lefty = input.slots[0].profile; lefty.left_handed = true; input_set_profile(&input, 0, lefty);
-    Landing lr = swing_and_land(0.6, 12, 25, 0), ll = swing_and_land(0.6, -12, 25, 0);
-    CHECK(lr.land_x < -0.1 && ll.land_x > 0.1 && fabs(lr.land_x + r.land_x) < 1e-9, "LEFT HAND mirrors (%g, %g)", lr.land_x, ll.land_x);
+    Landing lr = swing_and_land(.65, .55, NAN, 0), ll = swing_and_land(.65, -.55, NAN, 0);
+    CHECK(lr.land_x>.1 && ll.land_x<-.1 && fabs(lr.land_x-r.land_x)<1e-9, "LEFT HAND uses the same world-space aim (%g, %g)", lr.land_x, ll.land_x);
     lefty.left_handed = false; input_set_profile(&input, 0, lefty);
     /* -/+ pressed throughout the swing change nothing */
-    Landing base = swing_and_land(0.6, 12, 25, 0), plus = swing_and_land(0.6, 12, 25, INPUT_PLUS), minus = swing_and_land(0.6, 12, 25, INPUT_MINUS);
+    Landing base = swing_and_land(.65, .55, NAN, 0), plus = swing_and_land(.65, .55, NAN, INPUT_PLUS), minus = swing_and_land(.65, .55, NAN, INPUT_MINUS);
     CHECK(plus.thrown && minus.thrown && same_flight(&base, &plus, false) && same_flight(&base, &minus, false), "-/+ during play leave the flight identical");
     /* height: release pitch never changes the arc; only the picker does */
     const double pitches[4] = {-30, 0, 25, 80};
     Landing straight[4], lean[4];
-    for (int k = 0; k < 4; k++) { straight[k] = swing_and_land(0.6, 0, pitches[k], 0); }
-    for (int k = 0; k < 4; k++) { lean[k] = swing_and_land(0.6, 12, pitches[k], 0); }
+    for (int k = 0; k < 4; k++) { straight[k] = swing_and_land(.65, 0, pitches[k], 0); }
+    for (int k = 0; k < 4; k++) { lean[k] = swing_and_land(.65, .55, pitches[k], 0); }
     bool same = true, same_lean = true;
     for (int k = 1; k < 4; k++) {
         same = same && straight[k].thrown && same_flight(&straight[0], &straight[k], false);
@@ -787,7 +808,7 @@ static void test_swing_to_landing(void) {
     for (int h = 0; h < 3; h++) {
         next_bag(); pick_height(h);
         CHECK(game.heights[0] == h, "picker set to %d", h);
-        arc[h] = swing_and_land(0.6, 0, 25, 0);
+        arc[h] = swing_and_land(.65, 0, NAN, 0);
         next_bag();
         CHECK(game.arc == (BagArc)h, "picker stays on %d for the next bag", h);
     }
@@ -804,8 +825,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.7") == 0, "version is 0.1.7 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.7") == 0, "version tag v0.1.7 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.8") == 0, "version is 0.1.8 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.8") == 0, "version tag v0.1.8 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -838,7 +859,7 @@ static void test_widescreen_layout(void) {
 static void test_combined_arrow(void) {
     /* WG-3: one arrow, live during the forward swing, direction = launch, length = power. */
     practice_ready(131);
-    SwingSeen straight = bowling_swing(0.8, 0, true);
+    SwingSeen straight = bowling_swing(.65, 0, true);
     CHECK(straight.back_live == 0, "no arrow during the backswing or the top-of-backswing pause");
     CHECK(straight.live_seen, "arrow appears during the forward swing, before release");
     CHECK(straight.thrown, "letting go of B throws");
@@ -856,51 +877,51 @@ static void test_combined_arrow(void) {
     frames(20);
     CHECK(!game.arrow_on, "gone after 2.4 s");
     next_bag();
-    SwingSeen right = bowling_swing(0.8, 12, true);
+    SwingSeen right = bowling_swing(.65, .55, true);
     next_bag();
-    SwingSeen left = bowling_swing(0.8, -12, true);
+    SwingSeen left = bowling_swing(.65, -.55, true);
     CHECK(right.thrown && left.thrown && right.live_seen && left.live_seen, "leaning swings throw and preview");
     CHECK(right.yaw > 0.02 && left.yaw < -0.02, "swing right -> arrow right, swing left -> arrow left (%g, %g)", right.yaw, left.yaw);
     CHECK(fabs(right.yaw + left.yaw) < 1e-9, "left and right mirror");
     CHECK(fabs(right.yaw - right.bag_yaw) < 1e-12 && fabs(left.yaw - left.bag_yaw) < 1e-12, "arrow yaw is exactly the bag's launch yaw");
     CHECK(fabs(right.live_yaw - right.yaw) < 1e-9 && fabs(left.live_yaw - left.yaw) < 1e-9, "the preview direction matches the released direction");
     next_bag();
-    SwingSeen hard = bowling_swing(0.8, 28, true);
+    SwingSeen hard = bowling_swing(.65, 1.1, true);
     CHECK(hard.yaw > right.yaw + 0.02, "a hard right swing points farther right than a slight one (%g > %g)", hard.yaw, right.yaw);
     CHECK(hard.yaw <= BYC_AIM_MAX + 1e-12, "within the aim limit");
     /* power variation */
     next_bag();
-    SwingSeen soft = bowling_swing(0.45, 0, true);
+    SwingSeen soft = bowling_swing(.75, 0, true);
     next_bag();
-    SwingSeen firm = bowling_swing(1.1, 0, true);
+    SwingSeen firm = bowling_swing(.55, 0, true);
     CHECK(soft.thrown && firm.thrown, "soft and firm swings throw");
     CHECK(soft.power < straight.power && straight.power < firm.power, "faster swing -> more power on the arrow (%g < %g < %g)", soft.power, straight.power, firm.power);
     CHECK(arrow_length(soft.power) < arrow_length(straight.power) && arrow_length(straight.power) < arrow_length(firm.power), "and a longer arrow");
     CHECK(fabs(soft.yaw) < 1e-12 && fabs(firm.yaw) < 1e-12, "power does not change direction");
-    /* left hand mirrors the lean */
+    /* Left hand keeps the physical aim direction. */
     next_bag();
     SwingProfile lefty = input.slots[0].profile; lefty.left_handed = true;
     input_set_profile(&input, 0, lefty);
-    SwingSeen lh = bowling_swing(0.8, 12, true);
-    CHECK(lh.thrown && lh.live_seen && fabs(lh.yaw + right.yaw) < 1e-9 && fabs(lh.live_yaw + right.yaw) < 1e-9, "LEFT HAND: the same lean mirrors the arrow (%g vs %g)", lh.yaw, right.yaw);
+    SwingSeen lh = bowling_swing(.65, .55, true);
+    CHECK(lh.thrown && lh.live_seen && fabs(lh.yaw - right.yaw) < 1e-9 && fabs(lh.live_yaw - right.yaw) < 1e-9, "LEFT HAND: the same motion preserves the arrow (%g vs %g)", lh.yaw, right.yaw);
     CHECK(fabs(lh.yaw - lh.bag_yaw) < 1e-12, "LEFT HAND: arrow still equals the launch");
     next_bag();
-    SwingSeen lh_straight = bowling_swing(0.8, 0, true);
+    SwingSeen lh_straight = bowling_swing(.65, 0, true);
     CHECK(fabs(lh_straight.yaw) < 1e-12 && fabs(lh_straight.power - straight.power) < 1e-9, "LEFT HAND: straight is straight, same power");
     lefty.left_handed = false; input_set_profile(&input, 0, lefty);
     /* a forward swing that is not released hides the preview once it ends */
     next_bag();
     while (game.arrow_on) frames(1);
     int bags = game.nbags;
-    SwingSeen held = bowling_swing(0.8, 12, false);
+    SwingSeen held = bowling_swing(.65, .55, false);
     CHECK(held.live_seen && game.nbags == bags, "held swing previews but does not throw");
     CHECK(!game.arrow_on, "a swing that ends without a throw hides the arrow");
-    remote(0, -35, 0, false);
+    remote_buttons(0, -35, 0, 0);
     CHECK(game.nbags == bags && input.detector.phase == SWING_READY, "a late B-up cancels");
     /* shifted stance, straight swing: starts at the stance, still straight */
     next_bag();
     input.slots[0].stance = input.slots[0].stance_from = 0.3;
-    SwingSeen shifted = bowling_swing(0.8, 0, true);
+    SwingSeen shifted = bowling_swing(.65, 0, true);
     CHECK(shifted.thrown && fabs(shifted.live_x - 0.3) < 1e-9 && fabs(game.arrow_x - 0.3) < 1e-9 && fabs(shifted.yaw) < 1e-12, "stance 0.3: arrow starts there and stays straight (no auto-aim)");
     /* stepping / height / surface / pause hide it */
     CHECK(game.arrow_on, "arrow up");
@@ -1108,6 +1129,7 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
+    test_deferred_release_stance();
     test_set_power_reaches_hole();
     test_practice_cancel_and_retry();
     test_swing_to_landing();

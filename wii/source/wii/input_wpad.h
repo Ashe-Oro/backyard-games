@@ -17,6 +17,7 @@ typedef struct {
     const Swing *detector;
 } InputWpadTrace;
 typedef void (*InputWpadTraceSink)(void *user, const InputWpadTrace *row);
+typedef uint32_t (*InputWpadButtonFilter)(unsigned channel, const InputSample *sample);
 typedef struct {
     WPADData events[2][INPUT_WPAD_EVENTS]; /* persistent WPAD registrations */
     WPADData batch[INPUT_WPAD_EVENTS];
@@ -30,6 +31,7 @@ typedef struct {
     Input *input;
     InputWpadTraceSink trace;
     void *trace_user;
+    InputWpadButtonFilter button_filter; /* optional UI control mask, applied before input_feed */
 } InputWpad;
 
 /* Caller owns Input and InputWpad for the application's lifetime. No other WPAD queue consumer. */

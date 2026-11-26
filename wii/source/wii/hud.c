@@ -419,37 +419,144 @@ void hud_draw(const Game *g, const Input *in) {
     }
 }
 
-void hud_draw_wiimote_debug(const Input *in, const InputSample *latest) {
+static void debug_line(float x, float *y, unsigned color, const char *text) {
+    gfx_text(x, *y, 1, rgb(color), text);
+    *y += 18;
+}
+
+static void draw_wiimote_cal(float x, float y, unsigned remote, const HudWiimoteCalibration *cal) {
+    static const struct {
+        const char *label, *instruction, *expected;
+        SwingVector g;
+    } poses[HUD_WIIMOTE_POSES] = {
+        {"UP", "HOLD UPRIGHT WITH THE TIP UP", "EXPECT X+0.00 Y-1.00 Z+0.00", {0, -1, 0}},
+        {"FLAT", "POINT AT TV WITH BUTTONS UP", "EXPECT X+0.00 Y+0.00 Z+1.00", {0, 0, 1}},
+        {"RIGHT", "FROM FLAT, ROLL RIGHT 90 DEG", "DROP RIGHT EDGE  EXPECT X+1.00", {1, 0, 0}},
+        {"DOWN", "POINT TIP DOWN, PORT END UP", "EXPECT X+0.00 Y+1.00 Z+0.00", {0, 1, 0}},
+        {"LEAN", "LEAN UPRIGHT TIP 30 DEG TOWARD TV", "EXPECT Y-0.87 AND Z+/-0.50", {0, -0.866, 0.50}},
+    };
+    char line[64];
+    snprintf(line, sizeof line, "POSE CALIBRATION  REMOTE %u", remote);
+    debug_line(x, &y, GOLD, line);
+    debug_line(x, &y, CREAM, "A CAPTURE   LEFT/RIGHT POSE   2 LIVE");
+    debug_line(x, &y, CREAM, "POSE     X      Y      Z     |G|  AXIS");
+
+    for (unsigned i = 0; i < HUD_WIIMOTE_POSES; ++i) {
+        const char focus = i == cal->pose ? '>' : ' ';
+        unsigned color = CREAM;
+        if (cal->captured[i]) {
+            SwingVector g = cal->poses[i], target = poses[i].g;
+            double length = sqrt(g.x * g.x + g.y * g.y + g.z * g.z);
+            char axis = 'X';
+            double dominant = g.x;
+            if (fabs(g.y) > fabs(dominant)) { dominant = g.y; axis = 'Y'; }
+            if (fabs(g.z) > fabs(dominant)) { dominant = g.z; axis = 'Z'; }
+            double z = i == HUD_WIIMOTE_POSES - 1 ? fabs(g.z) : g.z;
+            bool pass = fabs(g.x - target.x) <= .15 && fabs(g.y - target.y) <= .15 &&
+                        fabs(z - target.z) <= .15 && fabs(length - 1) <= .15;
+            snprintf(line, sizeof line, "%c%-5s %+.2f  %+.2f  %+.2f  %.2f %c%c %s",
+                     focus, poses[i].label, g.x, g.y, g.z, length, dominant < 0 ? '-' : '+',
+                     axis, pass ? "PASS" : "FAIL");
+            color = pass ? 0xa7efb1 : RED;
+        } else snprintf(line, sizeof line, "%c%-5s  -", focus, poses[i].label);
+        debug_line(x, &y, color, line);
+    }
+
+    debug_line(x, &y, GOLD, poses[cal->pose].instruction);
+    debug_line(x, &y, CREAM, poses[cal->pose].expected);
+    if (cal->status == HUD_POSE_CAPTURING) debug_line(x, &y, GOLD, "HOLD STILL  CAPTURING 300 MS");
+    else if (cal->status == HUD_POSE_INTERRUPTED) debug_line(x, &y, RED, "REPORT GAP  A RETRY");
+    else if (cal->status == HUD_POSE_MOVED) debug_line(x, &y, RED, "HOLD STILL NEAR 1 G  A RETRY");
+    else if (cal->pose == HUD_WIIMOTE_POSES - 1)
+        debug_line(x, &y, CREAM, "Z- BUTTONS FACE TV  Z+ FACE YOU");
+}
+
+void hud_draw_wiimote_debug(const Input *in, const InputSample *latest,
+                           const HudWiimoteCalibration *cal, bool static_pose) {
     const Swing *s = &in->detector;
-    unsigned ch = in->channels[in->active_slot];
     const InputStats *st = &in->stats;
-    /* Seven lines for a phone photo of the TV: live accel; B and swing phase; report rate and
-       largest gap; live and peak speed; the last throw's peak speed, power and aim. */
-    float x = UI_W - 28 - 348, y = 480 - 24 - 7 * 18 - 10;
-    gfx_rect(x, y, 348, 7 * 18 + 10, rgba(TEAL, 0xf0));
-    char line[48];
+    unsigned remote = in->channels[in->active_slot] + 1;
+    const float w = 348, h = 11 * 18 + 10;
+    float x = UI_W - 28 - w, y = 480 - 24 - h;
+    gfx_rect(x, y, w, h, rgba(TEAL, 0xf0));
+    x += 10;
+    y += 5;
+    if (cal->active) {
+        draw_wiimote_cal(x, y, remote, cal);
+        return;
+    }
+
+    char line[72];
+    const SwingSample *p = &latest->motion;
+    SwingVector g = p->g;
     if (latest->motion.accel_valid) {
-        SwingVector g = latest->motion.g;
         snprintf(line, sizeof line, "ACCEL G  X %+.2f  Y %+.2f  Z %+.2f", g.x, g.y, g.z);
     } else snprintf(line, sizeof line, "ACCEL G  NO REPORT");
-    gfx_text(x + 10, y + 5, 1, rgb(CREAM), line);
-    const char *b = !latest->buttons_valid ? "?" : latest->motion.b ? "HELD" : "UP";
-    snprintf(line, sizeof line, "REMOTE %u  B %s  PHASE %s", ch + 1, b, swing_phase_name(s));
-    gfx_text(x + 10, y + 23, 1, rgb(GOLD), line);
-    snprintf(line, sizeof line, "REPORTS %u/S  MAX GAP %u MS", st->rate, input_largest_gap(in));
-    gfx_text(x + 10, y + 41, 1, rgb(CREAM), line);
-    snprintf(line, sizeof line, "SWING SPEED %.2f  PEAK %.2f M/S", s->speed, s->peak);
-    gfx_text(x + 10, y + 59, 1, rgb(CREAM), line);
+    debug_line(x, &y, CREAM, line);
+
+    if (p->accel_valid) {
+        double length = sqrt(g.x * g.x + g.y * g.y + g.z * g.z);
+        snprintf(line, sizeof line, "RAW Y%+.2f Z%+.2f  |G| %.2f CLIP %s", g.y, g.z, length, p->clipped ? "YES" : "-");
+    } else snprintf(line, sizeof line, "RAW  -");
+    debug_line(x, &y, CREAM, line);
+
+    if (p->accel_valid) {
+        bool live = s->have_time && s->last_ms == p->ms;
+        double pitch = live ? s->pitch : atan2(-g.y, hypot(g.x, g.z)) * 180 / SWING_PI;
+        double face = live ? s->face_pitch : atan2(-g.y, g.z) * 180 / SWING_PI;
+        double roll = live ? s->roll : atan2(g.x, g.z) * 180 / SWING_PI;
+        snprintf(line, sizeof line, "PITCH %+.0f DEG %s FACE %+.0f ROLL %+.0f",
+                 pitch, (live ? s->pitch_static : static_pose) ? "STATIC" : "MOVING", face, roll);
+    } else snprintf(line, sizeof line, "PITCH  -");
+    debug_line(x, &y, CREAM, line);
+
+    const char *b = !latest->buttons_valid ? "?" : p->b ? "HELD" : "UP";
+    snprintf(line, sizeof line, "PHASE %s  B %s  PASSES %u", swing_phase_name(s), b, s->passes);
+    debug_line(x, &y, GOLD, line);
+    snprintf(line, sizeof line, "REJECT %s", swing_reject_name(s->last_reject));
+    debug_line(x, &y, s->last_reject == SWING_REJECT_NONE ? CREAM : GOLD, line);
+
+    if (!p->accel_valid) snprintf(line, sizeof line, "TAN - RAD - LAT -");
+    else if (s->have_axis) {
+        if (s->sign_source != SWING_SIGN_UNKNOWN)
+            snprintf(line, sizeof line, "TAN %+.2f RAD %+.2f LAT %+.2f E %+.2f",
+                     s->tangent, s->radial, g.x, s->excess);
+        else snprintf(line, sizeof line, "TAN - RAD %+.2f LAT %+.2f E %+.2f", s->radial, g.x, s->excess);
+    } else snprintf(line, sizeof line, "TAN - RAD - LAT %+.2f", g.x);
+    debug_line(x, &y, CREAM, line);
+
+    if (s->observer_valid)
+        snprintf(line, sizeof line, "ARM~ %+.0f DEG V~ %.1f M/S   A POSES", s->arm_angle, s->speed);
+    else snprintf(line, sizeof line, "ARM~ - V~ -   A POSES");
+    debug_line(x, &y, CREAM, line);
+
+    if (s->have_bottom) {
+        uint64_t ago = p->ms >= s->bottom_ms ? p->ms - s->bottom_ms : 0;
+        snprintf(line, sizeof line, "FWD PEAK %.2f FIT %.2f BOT +%llu MS", s->peak, s->fitted_speed,
+                 (unsigned long long)(ago < 99999 ? ago : 99999));
+    } else snprintf(line, sizeof line, "FWD PEAK %.2f FIT %.2f BOT -", s->peak, s->fitted_speed);
+    debug_line(x, &y, CREAM, line);
+
     if (st->have_toss)
-        snprintf(line, sizeof line, "LAST THROW PEAK %.2f M/S", st->last_toss.speed);
+        snprintf(line, sizeof line, "LAST THROW P%.2f AIM%+.2f SPIN%+.2f",
+                 st->last_toss.power, st->last_toss.aim, st->last_toss.spin);
     else snprintf(line, sizeof line, "LAST THROW  -");
-    gfx_text(x + 10, y + 77, 1, rgb(GOLD), line);
-    /* 0.1.4: power is the swing speed, aim the sideways swing (the arc is the D-pad picker) */
-    if (st->have_toss) snprintf(line, sizeof line, "LAST POWER %.2f", st->last_toss.power);
-    else snprintf(line, sizeof line, "LAST POWER  -");
-    gfx_text(x + 10, y + 95, 1, rgb(GOLD), line);
-    if (st->have_toss) snprintf(line, sizeof line, "LAST AIM %+.3f RAD (%+.1f DEG)", st->last_toss.aim,
-                                st->last_toss.aim * 180 / SWING_PI);
-    else snprintf(line, sizeof line, "LAST AIM  -");
-    gfx_text(x + 10, y + 113, 1, rgb(GOLD), line);
+    debug_line(x, &y, GOLD, line);
+
+    const unsigned *r = s->rejects;
+    snprintf(line, sizeof line, "B%u E%u W%u L%u N%u G%u %u/S %uMS",
+             (unsigned)fmin(99, r[SWING_REJECT_BACKSWING]), (unsigned)fmin(99, r[SWING_REJECT_BEFORE_BOTTOM]),
+             (unsigned)fmin(99, r[SWING_REJECT_TOO_WEAK]), (unsigned)fmin(99, r[SWING_REJECT_TOO_LATE]),
+             (unsigned)fmin(99, r[SWING_REJECT_NO_SWING]), (unsigned)fmin(99, r[SWING_REJECT_REPORT_GAP]),
+             (unsigned)fmin(999, st->rate), (unsigned)fmin(9999, input_largest_gap(in)));
+    debug_line(x, &y, CREAM, line);
+
+    if (s->have_axis) {
+        const char *source = s->sign_source == SWING_SIGN_GRIP ? "GRIP" :
+                             s->sign_source == SWING_SIGN_TURN ? "TURN" : "-";
+        char sign = s->sign_source == SWING_SIGN_UNKNOWN ? '?' : s->tangent_sign > 0 ? '+' : '-';
+        snprintf(line, sizeof line, "AXES Y%+.2f Z%+.2f T%c %s G%+.0f D%.0f",
+                 s->ny, s->nz, sign, source, s->grip_pitch, s->grip_turn);
+    } else snprintf(line, sizeof line, "AXES  -");
+    debug_line(x, &y, CREAM, line);
 }

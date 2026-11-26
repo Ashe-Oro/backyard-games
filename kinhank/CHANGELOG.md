@@ -9,6 +9,17 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.8] - 2026-11-25
+
+### Changed
+
+- Updated to Wii v0.1.8 (BYCEAO) with learned swing axes, a forward bottom-of-arc release gate and a lower factory speed reference.
+- Added live swing diagnostics, buffered CSV logging with idle flush and rotation, and five Wii Remote calibration poses for DolphinBar testing. STRAP ON! and the in-game HUD show v0.1.8.
+
+### Fixed
+
+- The detector uses the measured tip-up Y sign and rejects early releases while keeping the bag for the next swing.
+
 ## [0.1.7] - 2026-11-22
 
 ### Changed
