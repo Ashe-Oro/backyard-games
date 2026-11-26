@@ -22,3 +22,9 @@ gameplay values is logged in **each** affected platform's changelog and gets an 
 
 ### Changed
 - Removed committed agent run logs, Codex/Claude task and review markdown, Codex output files, a leftover git bundle, and agent QA screenshots (`shots/task*`, `shots/review2/`) from the tree, and gitignored that class of files. Going forward, agents should write this material to `/agent-logs/` (ignored) or outside the repo. Release notes (`WII-0.1.x-LOG.md`), product docs, tests, and non-task screenshots stay. History is not rewritten, so the files remain in earlier commits.
+
+## Wii and Kinhank 0.1.12 - 2026-11-26
+
+### Fixed
+
+- Fixed stretched bag rendering in the main view and guarded the board inset against close flybys. See the [Wii changelog](wii/CHANGELOG.md#0112---2026-11-26) and [Kinhank changelog](kinhank/CHANGELOG.md#0112---2026-11-26).

@@ -2,7 +2,7 @@
 #define BYC_SWING_CONFIG_H
 
 /* Suggested hardware tuning. Units are ms, g, m/s and degrees. */
-#define SWING_VERSION "bowling-grip-0.1.11"
+#define SWING_VERSION "bowling-grip-0.1.12"
 #define SWING_STATIC_G 0.10
 #define SWING_STATIC_MS 30
 #define SWING_ONSET_G 0.25

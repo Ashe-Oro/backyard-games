@@ -7,13 +7,13 @@ The original Wii hardware target is separate: see [../wii/INSTALL-WII.md](../wii
 and [../TARGETS.md](../TARGETS.md). Do not put this bundle's `GameSettings` on
 a real Wii; that hardware ignores it and tops out at 480p.
 
-This is the playable 0.1.11 Bowling-throw build, rendered at 3× (about 1080p) in
+This is the playable 0.1.12 Bowling-throw build, rendered at 3× (about 1080p) in
 Dolphin. Desktop smoke does not validate real Wiimote feel or Android
 performance. Owner: Ashe.
 
 ## Bundle
 
-From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.11.zip` release:
+From `make -C kinhank` or the `BackyardCornhole-Kinhank-v0.1.12.zip` release:
 
 ```text
 BackyardCornhole-BYCEAO.iso
@@ -102,7 +102,7 @@ Hold B, swing back, then release B after the forward swing passes the bottom. Sw
 for more power. Swing left or right to aim and twist your wrist to curl the bag. D-pad up/down picks
 KOBE / NORMAL / SLIDER (the only control for height); D-pad left/right slides
 along the foul line. -/+ do nothing in play. The pointer is never used. The
-version (v0.1.11) shows on the STRAP ON! screen and in the bottom-right corner. Choose
+version (v0.1.12) shows on the STRAP ON! screen and in the bottom-right corner. Choose
 LEFT/RIGHT hand for each player in SETTINGS. Hold 1+2 for two seconds to
 toggle live swing diagnostics. Press A on the overlay to open the five-pose
 calibration page. See [Wiimote input](../wii/INPUT.md#trace-hooks-and-timing-limits) for the CSV capture location.

@@ -8,6 +8,8 @@ import zipfile
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--version', required=True)
+p.add_argument('--iso', type=Path, default=Path('dist/BackyardCornhole-BYCEAO.iso'))
+p.add_argument('--hbc-zip', type=Path)
 p.add_argument('--out', type=Path, required=True)
 a = p.parse_args()
 out = a.out.resolve()
@@ -17,8 +19,8 @@ files = {
     'BUILD.md': Path('BUILD.md'),
     'INSTALL-WII.md': Path('INSTALL-WII.md'),
     'boot.dol': Path('build/boot.dol'),
-    'BackyardCornhole-BYCEAO.iso': Path('dist/BackyardCornhole-BYCEAO.iso'),
-    f'BackyardCornhole-HBC-v{a.version}.zip': Path(f'dist/BackyardCornhole-HBC-v{a.version}.zip'),
+    'BackyardCornhole-BYCEAO.iso': a.iso,
+    f'BackyardCornhole-HBC-v{a.version}.zip': a.hbc_zip or Path(f'dist/BackyardCornhole-HBC-v{a.version}.zip'),
 }
 for name in ('boot.dol', 'meta.xml', 'icon.png'):
     files[f'apps/backyardcornhole/{name}'] = Path(f'hbc/apps/backyardcornhole/{name}')

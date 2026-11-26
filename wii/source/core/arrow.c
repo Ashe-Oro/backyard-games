@@ -24,6 +24,25 @@ Vec3 view_held_bag_center(double release_x, double dip) {
     return (Vec3){release_x, BYC_REL_Y - dip * .05, BYC_REL_Z + dip * .04};
 }
 
+bool view_bag_bounds(Vec3 eye, float scale, float near, float proj_x, float proj_y,
+                     ViewBounds *bounds) {
+    /* Every orientation fits in this sphere, including the puffed faces. Project an
+     * enclosing box to get conservative bounds without transforming the mesh twice. */
+    const float half = (float)BYC_BAG * .5f, height = (float)BYC_BAG_H;
+    float radius = sqrtf(2 * half * half + height * height) * scale;
+    float closest = -(float)eye.z - radius, farthest = -(float)eye.z + radius;
+    if (!isfinite(eye.x) || !isfinite(eye.y) || !isfinite(closest) || closest <= near)
+        return false;
+
+    float low_x = (float)eye.x - radius, high_x = (float)eye.x + radius;
+    float low_y = (float)eye.y - radius, high_y = (float)eye.y + radius;
+    bounds->left = fmaxf(-1, proj_x * low_x / (low_x < 0 ? closest : farthest));
+    bounds->bottom = fmaxf(-1, proj_y * low_y / (low_y < 0 ? closest : farthest));
+    bounds->right = fminf(1, proj_x * high_x / (high_x > 0 ? closest : farthest));
+    bounds->top = fminf(1, proj_y * high_y / (high_y > 0 ? closest : farthest));
+    return bounds->left < bounds->right && bounds->bottom < bounds->top;
+}
+
 void view_board_inset(double aspect, int *x, int *y, int *w, int *h) {
     if (aspect > 1.5) { *x = 12; *y = 28; *w = 136; *h = 100; }
     else { *x = 28; *y = 92; *w = 132; *h = 150; }

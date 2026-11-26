@@ -9,6 +9,12 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.12] - 2026-11-26
+
+### Fixed
+
+- Updated the BYCEAO disc to Wii v0.1.12 with the held-bag stretch fix and near-plane protection in the board inset.
+
 ## [0.1.11] - 2026-11-26
 
 ### Changed

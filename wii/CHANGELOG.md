@@ -10,6 +10,12 @@ This changelog covers the original Wii target (480p/480i, Homebrew Channel zip a
 The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tags; see
 [../kinhank/CHANGELOG.md](../kinhank/CHANGELOG.md) and [../TARGETS.md](../TARGETS.md).
 
+## [0.1.12] - 2026-11-26
+
+### Fixed
+
+- Transformed bag vertices on the CPU to prevent the GX modelview stretch seen on the idle held bag. Bag draws use their projected bounds, and the board inset skips bags that touch or cross its near plane.
+
 ## [0.1.11] - 2026-11-26
 
 ### Changed

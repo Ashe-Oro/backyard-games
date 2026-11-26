@@ -7,7 +7,7 @@
 #   make iso          dist/BackyardCornhole-BYCEAO.iso (WIT), main.dol == boot.dol check
 #   make release      dist/: HBC zip, ISO, INSTALL-WII.md, SHA256SUMS (real Wii only)
 
-VERSION := 0.1.11
+VERSION := 0.1.12
 GAME_ID := BYCEAO
 TITLE := Backyard Cornhole
 
@@ -19,6 +19,7 @@ WIT ?= $(firstword $(wildcard /opt/wit/bin/wit) wit)   # pinned: Wiimms ISO Tool
 NODE ?= node
 PYTHON ?= python3
 OUT ?= dist
+DIST ?= dist
 
 HOST_CC ?= cc
 HOST_CFLAGS ?= -std=c11 -O2 -Wall -Wextra -Werror -pedantic
@@ -44,7 +45,8 @@ vpath %.c source/core source/wii build/gen
 
 HBC_DIR := hbc/apps/backyardcornhole
 ISO_ROOT := dolphin/iso-root
-ISO := dist/BackyardCornhole-$(GAME_ID).iso
+ISO := $(DIST)/BackyardCornhole-$(GAME_ID).iso
+HBC_ZIP := $(DIST)/BackyardCornhole-HBC-v$(VERSION).zip
 
 .PHONY: all host-test iso release clean version check-generated icon soak smoke wiimote-e2e export-release
 
@@ -138,13 +140,13 @@ build/apploader.bin: build/apploader.elf
 	$(PPC)objcopy -O binary $< $@
 
 iso: build/boot.dol build/apploader.bin
-	@mkdir -p dist
+	@mkdir -p "$$(dirname "$(ISO)")"
 	$(NODE) tools/mkdisc.mjs $(ISO_ROOT) build/boot.dol build/apploader.bin \
 		$$($(PPC)nm build/apploader.elf | awk '/ T apploader_entry$$/{print $$1}') $(GAME_ID) "$(TITLE)"
-	rm -f $(ISO)
-	$(WIT) copy $(ISO_ROOT) $(ISO) --iso --id $(GAME_ID) --name "$(TITLE)" --region USA --ios 58 --trunc --overwrite
-	$(WIT) dump $(ISO) > build/iso-dump.txt
-	rm -rf build/iso-check && $(WIT) extract $(ISO) build/iso-check --psel DATA --files +/sys/main.dol --overwrite >/dev/null
+	rm -f "$(ISO)"
+	$(WIT) copy $(ISO_ROOT) "$(ISO)" --iso --id $(GAME_ID) --name "$(TITLE)" --region USA --ios 58 --trunc --overwrite
+	$(WIT) dump "$(ISO)" > build/iso-dump.txt
+	rm -rf build/iso-check && $(WIT) extract "$(ISO)" build/iso-check --psel DATA --files +/sys/main.dol --overwrite >/dev/null
 	@a=$$(sha256sum build/boot.dol | cut -d' ' -f1); b=$$(sha256sum build/iso-check/sys/main.dol | cut -d' ' -f1); \
 		if [ "$$a" != "$$b" ]; then echo "ISO main.dol $$b != boot.dol $$a" >&2; exit 1; fi; \
 		echo "ISO ok: $(ISO) ID $(GAME_ID), main.dol == boot.dol ($$a)"
@@ -156,9 +158,10 @@ release: all iso
 	rm -rf build/hbc-zip && mkdir -p build/hbc-zip/apps/backyardcornhole
 	cp $(HBC_DIR)/boot.dol $(HBC_DIR)/meta.xml $(HBC_DIR)/icon.png build/hbc-zip/apps/backyardcornhole/
 	cp INSTALL-WII.md build/hbc-zip/INSTALL-WII.md
-	cd build/hbc-zip && rm -f ../../dist/BackyardCornhole-HBC-v$(VERSION).zip && \
-		$(NODE) ../../tools/zip.mjs ../../dist/BackyardCornhole-HBC-v$(VERSION).zip apps INSTALL-WII.md
-	$(PYTHON) tools/release.py --version $(VERSION) --out "$(OUT)"
+	cd build/hbc-zip && $(NODE) ../../tools/zip.mjs BackyardCornhole-HBC-v$(VERSION).zip apps INSTALL-WII.md
+	@mkdir -p "$$(dirname "$(HBC_ZIP)")"
+	mv build/hbc-zip/BackyardCornhole-HBC-v$(VERSION).zip "$(HBC_ZIP)"
+	$(PYTHON) tools/release.py --version $(VERSION) --iso "$(ISO)" --hbc-zip "$(HBC_ZIP)" --out "$(OUT)"
 	@cat "$(OUT)/SHA256SUMS"
 
 export-release: release
