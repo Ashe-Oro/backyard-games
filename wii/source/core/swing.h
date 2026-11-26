@@ -80,9 +80,11 @@ typedef struct {
 
 SwingProfile swing_default_profile(void);
 double swing_speed(double mean_excess_g);
-/* Picker order is SLIDER, NORMAL, KOBE. Scale applies before the common cap. */
+/* Picker order is SLIDER, NORMAL, KOBE. Scale multiplies the slot reference. */
 double swing_type_scale(int height);
+/* Shared ease curve takes an already scaled reference. */
 double swing_power(double peak_speed, double full_speed);
+double swing_power_for_height(double peak_speed, double full_speed, int height);
 double swing_full_speed_for_power(double peak_speed, double power, int height);
 double swing_roll_spin(double roll_degrees, const SwingProfile *profile);
 /* require_b_up: a B already held must be let go before it can grip (pause, menus, buttons). */

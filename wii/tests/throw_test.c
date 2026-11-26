@@ -273,11 +273,11 @@ static void throw_type_power_and_cap(void) {
     strong.inline_grip=true;
     /* Center the clipped crest differently relative to the 60 Hz report times. */
     BowlingTrace strong_60=strong;
-    strong_60.back_deg=-88;
-    strong_60.forward_deg=89;
-    strong_60.back_s=.578;
-    strong_60.forward_s=.438;
-    strong_60.release_deg=79;
+    strong_60.back_deg=-91;
+    strong_60.forward_deg=100;
+    strong_60.back_s=.560;
+    strong_60.forward_s=.462;
+    strong_60.release_deg=90;
     strong_60.pitch_at_bottom=-5;
     strong_60.rolled=true;
     for (int height=0;height<3;++height) {
@@ -285,13 +285,14 @@ static void throw_type_power_and_cap(void) {
         check_result("unclipped mid-range power",&toss,SWING_REJECT_NONE);
         double base_power=swing_power(toss.toss.speed/effort[height],SWING_DEFAULT_FULL_SPEED*previous_scales[height]);
         CHECK(!toss.toss.clipped && toss.toss.power>0 && toss.toss.power<SWING_POWER_CAP &&
-              fabs(toss.toss.power-base_power)<.00003,
-              "type %d: mid-range power %.3f vs feel-adjusted reference %.3f",height,toss.toss.power,base_power);
+              (height==1 ? toss.toss.power<base_power : fabs(toss.toss.power-base_power)<.00003),
+              "type %d: mid-range power %.3f vs 0.1.9 reference %.3f",height,toss.toss.power,base_power);
 
         for (unsigned rate=60;rate<=100;rate+=40) {
             Outcome cap=replay_height(rate==60 ? &strong_60 : &strong,rate,rate==60 ? 33 : 7,false,false,height);
             check_result("strong clipped forward swing",&cap,SWING_REJECT_NONE);
-            double cap_speed=SWING_POWER_CAP_RATIO*SWING_DEFAULT_FULL_SPEED*swing_type_scale(height);
+            double cap_speed=height==1 ? swing_speed(2*SWING_RAIL_G-1) :
+                SWING_POWER_CAP_RATIO*SWING_DEFAULT_FULL_SPEED*swing_type_scale(height);
             CHECK(cap.toss.clipped && cap.fitted_speed>swing_speed(SWING_RAIL_G-1) &&
                   cap.toss.speed>=cap_speed && cap.toss.power==SWING_POWER_CAP,
                   "type %d at %u Hz: fitted speed %.3f m/s, cap speed %.3f, result %.3f",
@@ -335,9 +336,9 @@ static void soft_swing_resolution(void) {
     }
     for (int h=0;h<3;++h) {
         CHECK(largest[h]<=4*smallest[h],"type %d: soft steps %.5f–%.5f",h,smallest[h],largest[h]);
-        double full=SWING_DEFAULT_FULL_SPEED*swing_type_scale(h);
-        double soft=swing_speed(.50), center=swing_power(soft,full);
-        double low=swing_power(.9*soft,full)/center, high=swing_power(1.1*soft,full)/center;
+        double full=SWING_DEFAULT_FULL_SPEED;
+        double soft=swing_speed(.50), center=swing_power_for_height(soft,full,h);
+        double low=swing_power_for_height(.9*soft,full,h)/center, high=swing_power_for_height(1.1*soft,full,h)/center;
         CHECK(low>=.86 && low<=.95 && high>=1.05 && high<=1.14,
               "type %d: ±10%% soft speed produces %.3f–%.3f times the center power",h,low,high);
     }

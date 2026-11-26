@@ -9,6 +9,12 @@ Releases are tagged `kinhank-vX.Y.Z`. The version source is `VERSION` in
 `kinhank/Makefile`, which must match this file. This target uses the same
 game disc as the original Wii build and adds Dolphin `GameSettings`.
 
+## [0.1.10] - 2026-11-25
+
+### Changed
+
+- Updated the BYCEAO disc to Wii v0.1.10. The old full-power Normal swing now gives a 75% throw, with the same landing as the previous 75% throw. Full power requires a stronger swing.
+
 ## [0.1.9] - 2026-11-25
 
 ### Changed
