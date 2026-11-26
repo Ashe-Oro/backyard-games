@@ -24,6 +24,9 @@
 #define SAVE_BAK SAVE_DIR "/save.bak"
 #define SAVE_TMP SAVE_DIR "/save.tmp"
 #define SWING_TRACE SAVE_DIR "/swing-trace.csv"
+#define SWING_TRACE_OLD SAVE_DIR "/swing-trace.1.csv"
+#define SWING_TRACE_LIMIT (1024 * 1024)
+#define SWING_TRACE_FLUSH (16 * 1024)
 #define POSE_CAPTURE_MS 300
 
 static Input input;
@@ -40,8 +43,13 @@ static unsigned debug_channel, pose_reports;
 static uint32_t debug_held[2], debug_blocked[2];
 static SwingVector pose_sum;
 static uint64_t pose_start_ms, pose_report_ms, static_start_ms, static_report_ms;
-static bool static_tracking, static_pose, tracing;
-static FILE *swing_trace;
+static bool static_tracking, static_pose, tracing, trace_sd_failed;
+static char trace_buffer[64 * 1024];
+static size_t trace_used;
+static unsigned trace_dropped;
+static const char trace_columns[] =
+    "build,report_ms,drain_ms,remote,slot,index,dropped,raw_x,raw_y,raw_z,"
+    "accel,buttons,clip,x_g,y_g,z_g,abs_g,phase,radial_g,tangent_g,excess_g,b,reject\n";
 
 static void on_input(void *user, const InputEvent *e) {
     (void)user;
@@ -106,10 +114,14 @@ static uint32_t debug_controls(unsigned ch, const InputSample *p) {
     return debug_blocked[ch];
 }
 
-static void capture_pose(const SwingSample *p) {
-    if (pose_cal.status != HUD_POSE_CAPTURING || !p->accel_valid) return;
+static void capture_pose(const SwingSample *p, double length) {
+    if (pose_cal.status != HUD_POSE_CAPTURING || !p->accel_valid || p->ms <= pose_start_ms) return;
     if (p->ms - pose_report_ms > SWING_BRIDGE_MS) {
         pose_cal.status = HUD_POSE_INTERRUPTED;
+        return;
+    }
+    if (!isfinite(length) || fabs(length - 1) >= SWING_STATIC_G) {
+        pose_cal.status = HUD_POSE_MOVED;
         return;
     }
     pose_report_ms = p->ms;
@@ -121,40 +133,69 @@ static void capture_pose(const SwingSample *p) {
     }
     if (p->ms - pose_start_ms >= POSE_CAPTURE_MS) {
         unsigned pose = pose_cal.pose;
-        pose_cal.poses[pose] = (SwingVector){pose_sum.x / pose_reports, pose_sum.y / pose_reports,
-                                           pose_sum.z / pose_reports};
+        SwingVector mean = {pose_sum.x / pose_reports, pose_sum.y / pose_reports, pose_sum.z / pose_reports};
+        if (fabs(sqrt(mean.x * mean.x + mean.y * mean.y + mean.z * mean.z) - 1) >= SWING_STATIC_G) {
+            pose_cal.status = HUD_POSE_MOVED;
+            return;
+        }
+        pose_cal.poses[pose] = mean;
         pose_cal.captured[pose] = true;
         pose_cal.status = HUD_POSE_IDLE;
     }
 }
 
-static void start_swing_trace(void) {
-    static const char columns[] =
-        "build,report_ms,drain_ms,remote,slot,index,dropped,raw_x,raw_y,raw_z,"
-        "accel,buttons,clip,x_g,y_g,z_g,abs_g,phase,radial_g,tangent_g,excess_g,b,reject\n";
-    tracing = true;
-    if (fat_ok) {
-        ensure_data_dir();
-        swing_trace = fopen(SWING_TRACE, "a");
-        if (swing_trace) {
-            setvbuf(swing_trace, NULL, _IOFBF, 16384);
-            if (fseek(swing_trace, 0, SEEK_END) == 0 && ftell(swing_trace) == 0)
-                fputs(columns, swing_trace);
-            return;
-        }
-    }
-    SYS_Report("BYC-SWING,%s", columns);
+static bool buffer_trace(const char *line, size_t size) {
+    if (size > sizeof trace_buffer - trace_used) return false;
+    memcpy(trace_buffer + trace_used, line, size);
+    trace_used += size;
+    return true;
 }
 
-static void stop_swing_trace(void) {
-    if (swing_trace) fclose(swing_trace);
-    swing_trace = NULL;
-    tracing = false;
+static bool write_trace_sd(const char *dropped) {
+    ensure_data_dir();
+    struct stat info;
+    bool exists = stat(SWING_TRACE, &info) == 0;
+    if (exists && (size_t)info.st_size + trace_used + strlen(dropped) > SWING_TRACE_LIMIT) {
+        remove(SWING_TRACE_OLD);
+        if (rename(SWING_TRACE, SWING_TRACE_OLD) != 0) return false;
+        exists = false;
+    }
+    FILE *file = fopen(SWING_TRACE, "a");
+    if (!file) return false;
+    bool ok = true;
+    if ((!exists || info.st_size == 0) && trace_buffer[0] != '#') {
+        ok = fputs("# continued session\n", file) != EOF && fputs(trace_columns, file) != EOF;
+    }
+    ok = ok && fwrite(trace_buffer, 1, trace_used, file) == trace_used && fputs(dropped, file) != EOF;
+    return fclose(file) == 0 && ok;
+}
+
+/* Called outside the WPAD drain. Keep writes off the swing path, even if the
+ * overlay closes while B is held. A full buffer drops new rows until idle. */
+static void flush_swing_trace(bool force) {
+    if (!trace_used || swing_armed(&input.detector) || (!force && trace_used < SWING_TRACE_FLUSH)) return;
+    char dropped[64] = "";
+    if (trace_dropped) snprintf(dropped, sizeof dropped, "# dropped %u buffered reports\n", trace_dropped);
+    if (fat_ok && !trace_sd_failed) trace_sd_failed = !write_trace_sd(dropped);
+    if (!fat_ok || trace_sd_failed) {
+        const char *line = trace_buffer, *end = trace_buffer + trace_used;
+        while (line < end) {
+            size_t length = (size_t)((const char *)memchr(line, '\n', (size_t)(end - line)) - line) + 1;
+            SYS_Report("BYC-SWING,%.*s", (int)length, line);
+            line += length;
+        }
+        if (trace_dropped) SYS_Report("BYC-SWING,%s", dropped);
+    }
+    trace_used = trace_dropped = 0;
 }
 
 static void on_wiimote_report(void *user, const InputWpadTrace *row) {
     (void)user;
-    if (!input.debug_visible || row->channel != input.channels[row->player_slot]) return;
+    if (!input.debug_visible) {
+        tracing = false;
+        return;
+    }
+    if (row->channel != input.channels[row->player_slot]) return;
     if (row->channel != debug_channel) clear_pose_cal(row->channel);
     const SwingSample *p = &row->sample->motion;
     const Swing *s = row->detector;
@@ -165,11 +206,15 @@ static void on_wiimote_report(void *user, const InputWpadTrace *row) {
         static_report_ms = p->ms;
         static_pose = p->ms - static_start_ms >= SWING_STATIC_MS;
     } else static_tracking = static_pose = false;
-    capture_pose(p);
+    capture_pose(p, length);
 
-    if (!tracing) start_swing_trace();
     char line[256];
-    snprintf(line, sizeof line, "%s,%llu,%llu,%u,%u,%u,%u,%u,%u,%u,%d,%d,%d,"
+    if (!tracing) {
+        int size = snprintf(line, sizeof line, "# session %s at %llu ms\n%s", SWING_VERSION,
+                            (unsigned long long)row->estimated_ms, trace_columns);
+        tracing = size > 0 && (size_t)size < sizeof line && buffer_trace(line, (size_t)size);
+    }
+    int size = snprintf(line, sizeof line, "%s,%llu,%llu,%u,%u,%u,%u,%u,%u,%u,%d,%d,%d,"
              "%+.5f,%+.5f,%+.5f,%.5f,%s,%+.5f,%+.5f,%+.5f,%d,%s\n",
              SWING_VERSION, (unsigned long long)row->estimated_ms, (unsigned long long)row->drain_ms,
              row->channel + 1, row->player_slot + 1, row->event_index, row->dropped,
@@ -177,12 +222,8 @@ static void on_wiimote_report(void *user, const InputWpadTrace *row) {
              p->accel_valid, row->sample->buttons_valid, p->clipped,
              p->g.x, p->g.y, p->g.z, length, swing_phase_name(s), s->radial, s->tangent, s->excess,
              p->b, swing_reject_name(s->last_reject));
-    if (swing_trace) {
-        if (fputs(line, swing_trace) != EOF) return;
-        fclose(swing_trace);
-        swing_trace = NULL;
-    }
-    SYS_Report("BYC-SWING,%s", line);
+    if (!tracing || size <= 0 || (size_t)size >= sizeof line || !buffer_trace(line, (size_t)size))
+        ++trace_dropped;
 }
 
 #ifdef BYC_SOAK
@@ -322,11 +363,11 @@ int main(void) {
             if (!input.connected[ch]) debug_held[ch] = debug_blocked[ch] = 0;
         if (pose_cal.status == HUD_POSE_CAPTURING && now - pose_report_ms > SWING_BRIDGE_MS)
             pose_cal.status = HUD_POSE_INTERRUPTED;
-        if (!input.debug_visible && tracing) {
+        if (!input.debug_visible && debug_was_visible) {
             pose_cal.active = false;
             pose_cal.status = HUD_POSE_IDLE;
             static_tracking = static_pose = false;
-            stop_swing_trace();
+            tracing = false;
         }
         if (input.debug_visible != debug_was_visible)
             SYS_Report("BYC: wiimote debug %s\n", input.debug_visible ? "on" : "off");
@@ -341,6 +382,7 @@ int main(void) {
         queued = 0;
         unsigned active_ch = input.channels[input.active_slot];
         if (active_ch != debug_channel || !input.connected[active_ch]) clear_pose_cal(active_ch);
+        flush_swing_trace(!input.debug_visible);
 
         Fx fx;
         while (game_pop_fx(&game, &fx)) {
@@ -421,7 +463,8 @@ int main(void) {
             }
         }
     }
-    stop_swing_trace();
+    swing_cancel(&input.detector, true);
+    flush_swing_trace(true);
     for (int ch = 0; ch < 2; ch++) WPAD_Rumble(ch, 0);
     music_shutdown(&music);
     music_wii_shutdown();

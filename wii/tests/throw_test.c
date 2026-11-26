@@ -15,7 +15,7 @@ typedef struct {
     SwingResult toss;
     SwingReject reject;
     bool ready, gripped, have_axis, resolved;
-    double ny, nz, backswing_peak;
+    double ny, nz, backswing_peak, fitted_speed;
     uint64_t release_ms, throw_ms, back_ms, forward_ms, bottom_ms;
 } Outcome;
 
@@ -71,6 +71,7 @@ static void replay_into(Input *in, Outcome *out, const BowlingTrace *trace, unsi
         if (phase==SWING_BACKSWING && !out->back_ms) out->back_ms=at-base;
         if (phase==SWING_FORWARD && !out->forward_ms) out->forward_ms=at-base;
         if (phase==SWING_RESOLVE) out->resolved=true;
+        out->fitted_speed=detector->fitted_speed;
         if (detector->have_bottom) out->bottom_ms=detector->bottom_ms-base;
         if (detector->have_axis) {
             out->have_axis=true;
@@ -118,6 +119,7 @@ static void check_result(const char *name, const Outcome *out, SwingReject rejec
 static void exact_static_seeds(void) {
     const SwingVector seeds[]={{0,-1,0},{0,0,1},{0,1,0},{1,0,0},{0,-.8660254,.5},{0,-.8660254,-.5}};
     const double pitches[]={90,0,-90,0,60,60};
+    const double faces[]={90,0,-90,0,60,120};
     for (unsigned n=0;n<sizeof seeds/sizeof seeds[0];++n) {
         Input in;
         Outcome out={0};
@@ -129,6 +131,9 @@ static void exact_static_seeds(void) {
         }
         CHECK(in.detector.pitch_static && fabs(in.detector.pitch-pitches[n])<.5,
               "seed %u: expected static pitch %.1f, got %.1f",n,pitches[n],in.detector.pitch);
+        if (n!=3) CHECK(fabs(in.detector.face_pitch-faces[n])<.5,
+                        "seed %u: expected FACE %.1f, got %.1f",n,faces[n],in.detector.face_pitch);
+        else CHECK(fabs(in.detector.roll-90)<.5,"right-roll seed: expected ROLL +90, got %.1f",in.detector.roll);
         CHECK(!in.detector.have_axis && out.throws==0 && in.detector.phase==SWING_READY &&
               in.detector.last_reject==SWING_REJECT_NO_SWING,"seed %u did not reject NO SWING",n);
     }
@@ -228,6 +233,7 @@ static void forward_power_and_clip_reconstruction(void) {
     CHECK(min_power>0 && (max_power-min_power)/max_power<=.05,
           "backswing alone varied power from %.3f to %.3f",min_power,max_power);
     t.back_s=.55;
+    t.release_deg=40; /* Leave room for both unclipped shoulders before B-up. */
     for (unsigned n=0;n<sizeof forward_times/sizeof forward_times[0];++n) {
         t.forward_s=forward_times[n];
         Outcome out=replay(&t,100,7,false,false);
@@ -241,6 +247,11 @@ static void forward_power_and_clip_reconstruction(void) {
     CHECK(clipped.toss.clipped && clipped.toss.speed>swing_speed(2.55),
           "clipped shoulders did not recover speed above the assumed rail (%.3f m/s)",clipped.toss.speed);
     CHECK(clipped.toss.power==SWING_POWER_CAP,"the factory power cap is unreachable (%.3f)",clipped.toss.power);
+    t.release_deg=15;
+    Outcome deferred=replay(&t,100,7,false,false);
+    check_result("clipped lobe resolved after B-up",&deferred,SWING_REJECT_NONE);
+    CHECK(deferred.resolved && deferred.toss.clipped && deferred.fitted_speed==0,
+          "deferred fit used shoulders after B-up (%.3f m/s)",deferred.fitted_speed);
 }
 
 static void low_radial_load_rejects_as_too_weak(void) {
@@ -249,6 +260,27 @@ static void low_radial_load_rejects_as_too_weak(void) {
     Outcome out=replay(&trace,100,7,false,false);
     check_result("weak forward radial lobe",&out,SWING_REJECT_TOO_WEAK);
     CHECK(out.bottom_ms>0,"weak lobe did not get a bottom marker");
+    trace.forward_s=.98;
+    out=replay(&trace,100,7,false,false);
+    check_result("forward crest below 1.30 g",&out,SWING_REJECT_TOO_WEAK);
+    CHECK(out.resolved && !out.bottom_ms,"subthreshold lobe did not use the deferred reject path");
+}
+
+static void release_during_turn_confirmation(void) {
+    BowlingTrace t=bowling_trace();
+    Input in; Outcome out={0};
+    begin(&in,&out);
+    unsigned ms=0;
+    for (;ms<1350;ms+=10) {
+        double seconds=ms/1000.0;
+        feed(&in,1000+ms,bowling_force(&t,seconds),bowling_button(&t,seconds),0);
+    }
+    CHECK(in.detector.phase==SWING_TURN && in.detector.have_axis && !in.detector.turn_rise,
+          "fixture did not reach the turnaround minimum");
+    feed(&in,1000+ms,bowling_force(&t,ms/1000.0),false,0);
+    CHECK(!out.throws && in.detector.phase==SWING_READY && !in.detector.have_axis &&
+          in.detector.last_reject==SWING_REJECT_BEFORE_BOTTOM,
+          "B-up on the first turnaround rise should reject as before bottom and clear the axis");
 }
 
 static void sustained_noise_and_short_gaps(void) {
@@ -304,6 +336,14 @@ static void retry_and_handed_controls(void) {
     check_result("same physical controls, left hand",&out,SWING_REJECT_NONE);
     CHECK(fabs(right.aim-out.toss.aim)<1e-12 && fabs(right.spin+out.toss.spin)<1e-12 &&
           fabs(right.power-out.toss.power)<1e-12,"changing hands changed aim/power or failed to mirror curl");
+    swing_cancel(&in.detector,true);
+    CHECK(in.detector.phase==SWING_READY && !in.detector.have_axis && !in.detector.observer_valid,
+          "cancel kept the learned axis or arm estimate");
+    t.rolled=true;
+    out=replay(&t,100,7,false,false);
+    check_result("same trace rolled 180 degrees",&out,SWING_REJECT_NONE);
+    CHECK(out.toss.aim>0 && right.spin*out.toss.spin<0,
+          "180 degree roll did not reverse lateral and twist inputs");
 }
 
 static void pending_release_expires_without_reports(void) {
@@ -358,7 +398,9 @@ static void randomized_releases(void) {
         CHECK(throws[grip][0]>=450 && !throws[grip][1] && !throws[grip][3],
               "valid release, outgoing backswing or stillness regression (grip %u)",grip);
     }
-    CHECK(throws[0][2]<=15,"tip-forward early-return misfires exceeded 3%%");
+    /* Fixed-seed baselines are 15 and 66. Allow 5 and 14 extra throws per 500. */
+    CHECK(throws[0][2]<=20,"tip-forward early-return misfires exceeded 20/500");
+    CHECK(throws[1][2]<=80,"in-line early-return misfires exceeded 80/500");
 }
 int main(void) {
     TEST(exact_static_seeds);
@@ -366,6 +408,7 @@ int main(void) {
     TEST(named_bowling_scenarios);
     TEST(forward_power_and_clip_reconstruction);
     TEST(low_radial_load_rejects_as_too_weak);
+    TEST(release_during_turn_confirmation);
     TEST(sustained_noise_and_short_gaps);
     TEST(release_gap_and_overflow);
     TEST(retry_and_handed_controls);

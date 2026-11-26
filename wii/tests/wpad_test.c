@@ -217,15 +217,76 @@ static void event_path_does_not_replay_stale_snapshot(void) {
     input_wpad_poll(&w,1020);
     assert(traced==before);
 }
-/* Pass the same physical trace as raw accelerometer codes and calibrated gforce. */
-static WPADData bowling_report(const BowlingTrace *trace, double s, uint32_t *seed) {
-    SwingVector g=bowling_force(trace,s);
-    uint16_t x=(uint16_t)bowling_raw_axis(g.x,false,seed);
-    uint16_t y=(uint16_t)bowling_raw_axis(g.y,true,seed);
-    uint16_t z=(uint16_t)bowling_raw_axis(g.z,true,seed);
+/* libogc provides raw counts and calculates gforce from those same counts. */
+static WPADData accel_report(SwingVector g, uint32_t buttons, uint32_t *seed) {
+    uint16_t x=seed ? bowling_raw_axis(g.x,false,seed) : lround(512+104*g.x);
+    uint16_t y=seed ? bowling_raw_axis(g.y,true,seed) : (lround(512+104*g.y)&~1L);
+    uint16_t z=seed ? bowling_raw_axis(g.z,true,seed) : (lround(512+104*g.z)&~1L);
     return (WPADData){.data_present=WPAD_DATA_BUTTONS|WPAD_DATA_ACCEL,
-        .btns_h=bowling_button(trace,s) ? INPUT_B : 0,.accel={x,y,z},
+        .btns_h=buttons,.accel={x,y,z},
         .gforce={(x-512.f)/104.f,(y-512.f)/104.f,(z-512.f)/104.f}};
+}
+
+static WPADData bowling_report(const BowlingTrace *trace, double s, uint32_t *seed) {
+    return accel_report(bowling_force(trace,s),bowling_button(trace,s) ? INPUT_B : 0,seed);
+}
+
+static void static_poses_through_wpad(void) {
+    const struct {
+        SwingVector g;
+        double pitch, face;
+        bool right_roll, rotate_to_flat;
+    } poses[]={
+        {{0,-1,0},90,90,false,false}, {{0,0,1},0,0,false,false},
+        {{0,1,0},-90,-90,false,false}, {{1,0,0},0,0,true,false},
+        {{0,-.8660254,.5},60,60,false,false}, {{0,-.8660254,-.5},60,120,false,false},
+        {{0,-1,0},0,0,false,true}
+    };
+    for (unsigned n=0;n<sizeof poses/sizeof poses[0];++n) {
+        for (unsigned batched=0;batched<2;++batched) {
+            Input i; InputWpad w; setup(&i,&w,false);
+            uint32_t seed=2026+n;
+            unsigned report=1, frame=1;
+            WPADData previous={0};
+            bool saw_grip=false, saw_batch=false;
+            /* 100 Hz source, with jitter, duplicates and 60 Hz drains in the second run. */
+            int at=10;
+            while (report<=200) {
+                unsigned elapsed=batched ? frame++*50/3 : report*10;
+                FakeRemote *r=&remotes[0];
+                r->read=r->count=0;
+                while (report<=200 && at<=(int)elapsed) {
+                    unsigned ms=report*10;
+                    SwingVector g=poses[n].g;
+                    if (poses[n].rotate_to_flat) {
+                        double angle=SWING_PI/2*(1-bowling_fraction((ms-700.0)/300));
+                        g=(SwingVector){0,-sin(angle),cos(angle)};
+                    }
+                    uint32_t buttons=ms>=(poses[n].rotate_to_flat ? 600u : 1000u) && ms<1500 ? INPUT_B : 0;
+                    WPADData row=accel_report(g,buttons,batched ? &seed : NULL);
+                    if (batched && report%7==0 && buttons==previous.btns_h) row=previous;
+                    r->queue[r->count++]=previous=row;
+                    ++report;
+                    at=(int)report*10;
+                    if (batched) at+=(int)(bowling_uniform(&seed)*7)-3;
+                }
+                saw_batch |= r->count>1;
+                input_wpad_poll(&w,1000+elapsed);
+                if (last_sample.buttons&INPUT_B) {
+                    saw_grip=true;
+                    assert(i.detector.phase==SWING_GRIP);
+                }
+            }
+            const Swing *s=&i.detector;
+            double tolerance=batched ? 3.0 : 1.0; /* Count quantization loses the Y/Z LSB. */
+            assert(saw_grip && saw_batch==(batched!=0) && traced==200);
+            assert(s->pitch_static && fabs(s->pitch-poses[n].pitch)<tolerance);
+            if (poses[n].right_roll) assert(fabs(s->roll-90)<tolerance);
+            else assert(fabs(s->face_pitch-poses[n].face)<tolerance);
+            assert(s->phase==SWING_READY && !s->have_axis && !throws && s->last_reject==SWING_REJECT_NO_SWING);
+        }
+    }
+    puts("  14 static-pose and rotation replays via WPAD");
 }
 
 static unsigned replay_realistic(const BowlingTrace *trace, bool left, bool batched) {
@@ -372,6 +433,6 @@ int main(int argc, char **argv) {
     TEST(batched_reports_fit_poll_window_and_full_buffer_is_fed);
     TEST(snapshot_fallback_accepts_buttons_without_accel); TEST(event_path_does_not_replay_stale_snapshot);
     TEST(pending_drain_preserves_edges_and_motion); TEST(realistic_wiimote_releases);
-    TEST(bowling_through_jittery_wpad);
+    TEST(bowling_through_jittery_wpad); TEST(static_poses_through_wpad);
     printf("%u WPAD adapter tests passed\n",tests); return 0;
 }

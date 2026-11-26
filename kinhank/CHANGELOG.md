@@ -14,7 +14,7 @@ game disc as the original Wii build and adds Dolphin `GameSettings`.
 ### Changed
 
 - Updated to Wii v0.1.8 (BYCEAO) with learned swing axes, a forward bottom-of-arc release gate and a lower factory speed reference.
-- Added live swing diagnostics, CSV report logging and five Wii Remote calibration poses for DolphinBar testing. STRAP ON! and the in-game HUD show v0.1.8.
+- Added live swing diagnostics, buffered CSV logging with idle flush and rotation, and five Wii Remote calibration poses for DolphinBar testing. STRAP ON! and the in-game HUD show v0.1.8.
 
 ### Fixed
 

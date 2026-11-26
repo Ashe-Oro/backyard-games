@@ -50,6 +50,13 @@ static void set_phase(Swing *s, SwingPhase phase) {
     s->phase_ms = s->last_ms;
 }
 
+static void clear_axis(Swing *s) {
+    s->have_axis = s->observer_valid = false;
+    s->ny = s->nz = s->radial = s->tangent = s->excess = 0;
+    s->tangent_sign = 0;
+    s->sign_source = SWING_SIGN_UNKNOWN;
+}
+
 void swing_reset(Swing *s, bool require_b_up) {
     memset(s, 0, sizeof(*s));
     s->require_b_up = require_b_up;
@@ -57,6 +64,7 @@ void swing_reset(Swing *s, bool require_b_up) {
 
 void swing_cancel(Swing *s, bool require_b_up) {
     set_phase(s, SWING_READY);
+    clear_axis(s);
     s->have_time = s->have_g = s->pitch_static = false;
     s->still_ms = 0;
     s->previous_b = false;
@@ -71,6 +79,7 @@ static SwingResult reject(Swing *s, SwingReject reason) {
     s->last_reject = reason;
     ++s->rejects[reason];
     set_phase(s, SWING_READY);
+    clear_axis(s);
     s->require_b_up = s->previous_b;
     return (SwingResult){.reject=reason};
 }
@@ -83,9 +92,13 @@ void swing_report_gap(Swing *s) {
     if (s->phase != SWING_SPENT) swing_cancel(s, true);
 }
 
+static SwingReject unresolved_reason(const Swing *s) {
+    return s->weak_crest ? SWING_REJECT_TOO_WEAK : SWING_REJECT_BEFORE_BOTTOM;
+}
+
 void swing_expire(Swing *s, uint64_t now) {
     if (s->phase == SWING_RESOLVE && now >= s->release_ms &&
-        now-s->release_ms >= SWING_RESOLVE_MS) reject(s, SWING_REJECT_BEFORE_BOTTOM);
+        now-s->release_ms >= SWING_RESOLVE_MS) reject(s, unresolved_reason(s));
 }
 
 static double lateral_mean(const Swing *s) {
@@ -225,13 +238,15 @@ static void measure_forward(Swing *s, const SwingPoint *p, uint64_t dt, unsigned
         s->release_roll = degrees(atan2(p->g.x, fmax(p->radial, 0.3)));
 }
 
-static double fitted_peak(const Swing *s, double half, double rail) {
+static double fitted_peak(const Swing *s, double peak_load, double rail) {
     /* Fit radial load = a + b*t + c*t^2 to the unclipped shoulders.
        Scale t by 100 ms and subtract the bottom time to condition the fit. */
     double moments[5] = {0}, weighted[3] = {0};
+    double half = 1 + 0.5*(peak_load-1);
     unsigned count = 0, before = 0, after = 0;
     for (unsigned i = 0; i < s->count; ++i) {
         const SwingPoint *p = read_point(s, i);
+        if (s->release_ms && p->ms > s->release_ms) break;
         if (p->clipped || p->radial <= half || p->radial >= rail-SWING_FIT_MARGIN_G) continue;
         double t = ((double)p->ms-(double)s->bottom_ms)/100, power = 1;
         for (unsigned j = 0; j < 5; ++j) {
@@ -261,27 +276,30 @@ static double fitted_peak(const Swing *s, double half, double rail) {
     double b = (m[1][3]-m[1][2]*c)/m[1][1];
     double a = (m[0][3]-m[0][1]*b-m[0][2]*c)/m[0][0];
     double peak = a-b*b/(4*c);
-    if (!isfinite(peak) || peak < s->forward_peak) return 0;
+    if (!isfinite(peak) || peak < peak_load) return 0;
     return swing_speed(fmin(peak, 2*SWING_RAIL_G)-1);
 }
 
 static void confirm_bottom(Swing *s) {
     const uint64_t start = read_point(s, 0)->ms;
     double half = 1 + 0.5*(s->forward_peak-1), weight = 0, total = 0;
-    double rail = 0;
+    double rail = 0, peak_load = 0;
     for (unsigned i = 0; i < s->count; ++i) {
         const SwingPoint *p = read_point(s, i);
+        if (!s->release_ms || p->ms <= s->release_ms) {
+            peak_load = fmax(peak_load, p->radial);
+            if (p->clipped) rail = fmax(rail, p->radial);
+        }
         if (p->radial <= half) continue;
         double w = p->radial-half;
         weight += w;
         total += w*(double)(p->ms-start);
-        if (p->clipped) rail = fmax(rail, p->radial);
     }
     s->bottom_ms = start+(uint64_t)(weight > 0 ? total/weight : 0);
     s->have_bottom = true;
     ++s->passes;
-    s->forward_clipped = rail > 0;
-    if (s->forward_clipped) s->fitted_speed = fitted_peak(s, half, fmin(rail, SWING_RAIL_G));
+    s->forward_clipped = rail > 1 + 0.5*(peak_load-1);
+    if (s->forward_clipped) s->fitted_speed = fitted_peak(s, peak_load, fmin(rail, SWING_RAIL_G));
     if (s->phase != SWING_RESOLVE) set_phase(s, SWING_PAST_BOTTOM);
     s->turn_min = INFINITY;
     s->turn_rise = 0;
@@ -416,9 +434,12 @@ static void track_motion(Swing *s, const SwingSample *p, double magnitude, uint6
         s->forward_peak = fmax(s->forward_peak, s->radial);
         if (s->phase == SWING_FORWARD && p->b)
             measure_forward(s, read_point(s, s->count-1), dt, s->count);
-        if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G &&
-            s->radial <= s->forward_peak-crest_drop(s->forward_peak))
-            confirm_bottom(s);
+        if (s->forward_peak >= SWING_LOBE_ON_G &&
+            s->radial <= s->forward_peak-crest_drop(s->forward_peak)) {
+            if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G) confirm_bottom(s);
+            else s->weak_crest = true;
+        }
+        if (s->forward_peak >= SWING_LOBE_MIN_PEAK_G) s->weak_crest = false;
         return;
     }
     if (s->phase == SWING_PAST_BOTTOM && p->ms != s->phase_ms) {
@@ -437,7 +458,7 @@ static void track_motion(Swing *s, const SwingSample *p, double magnitude, uint6
 
 static SwingResult resolve(Swing *s, const SwingProfile *profile, int height) {
     if (s->last_ms-s->release_ms > SWING_RESOLVE_MS)
-        return reject(s, SWING_REJECT_BEFORE_BOTTOM);
+        return reject(s, unresolved_reason(s));
     if (s->have_bottom) {
         unsigned tolerance = s->unstable_axis ? 0 : SWING_BOTTOM_TOL_MS;
         if (s->bottom_ms > s->release_ms && s->bottom_ms-s->release_ms > tolerance)
@@ -445,7 +466,7 @@ static SwingResult resolve(Swing *s, const SwingProfile *profile, int height) {
         return finish(s, profile, height);
     }
     if (s->last_ms-s->release_ms == SWING_RESOLVE_MS)
-        return reject(s, SWING_REJECT_BEFORE_BOTTOM);
+        return reject(s, unresolved_reason(s));
     return (SwingResult){0};
 }
 
@@ -477,16 +498,18 @@ static SwingResult advance(Swing *s, const SwingSample *p, bool motion, double m
     }
 
     if (s->phase == SWING_RESOLVE && down) return reject(s, SWING_REJECT_BEFORE_BOTTOM);
+    if (up) s->release_ms = p->ms;
     if (motion) track_motion(s, p, magnitude, dt);
     if (s->phase == SWING_RESOLVE) return resolve(s, profile, height);
     if (!up) return (SwingResult){0};
 
-    s->release_ms = p->ms;
     if (s->window_closed) return reject(s, SWING_REJECT_TOO_LATE);
     switch (s->phase) {
     case SWING_GRIP: return reject(s, SWING_REJECT_NO_SWING);
-    case SWING_BACKSWING:
-    case SWING_TURN: return reject(s, SWING_REJECT_BACKSWING);
+    case SWING_BACKSWING: return reject(s, SWING_REJECT_BACKSWING);
+    case SWING_TURN:
+        return reject(s, s->turn_radial < SWING_TURN_MAX_RADIAL_G && s->turn_rise > 0 ?
+                         SWING_REJECT_BEFORE_BOTTOM : SWING_REJECT_BACKSWING);
     case SWING_FORWARD:
         set_phase(s, SWING_RESOLVE);
         break;

@@ -75,7 +75,7 @@ typedef struct {
     SwingPoint history[SWING_HISTORY];
     unsigned count, first;
     double forward_peak, peak, fitted_speed, lateral_sum, lateral_weight, release_roll;
-    bool forward_clipped;
+    bool forward_clipped, weak_crest;
 } Swing;
 
 SwingProfile swing_default_profile(void);

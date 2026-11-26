@@ -466,6 +466,7 @@ static void draw_wiimote_cal(float x, float y, unsigned remote, const HudWiimote
     debug_line(x, &y, CREAM, poses[cal->pose].expected);
     if (cal->status == HUD_POSE_CAPTURING) debug_line(x, &y, GOLD, "HOLD STILL  CAPTURING 300 MS");
     else if (cal->status == HUD_POSE_INTERRUPTED) debug_line(x, &y, RED, "REPORT GAP  A RETRY");
+    else if (cal->status == HUD_POSE_MOVED) debug_line(x, &y, RED, "HOLD STILL NEAR 1 G  A RETRY");
     else if (cal->pose == HUD_WIIMOTE_POSES - 1)
         debug_line(x, &y, CREAM, "Z- BUTTONS FACE TV  Z+ FACE YOU");
 }

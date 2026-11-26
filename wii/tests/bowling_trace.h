@@ -87,7 +87,6 @@ static inline SwingVector bowling_force(const BowlingTrace *t, double s) {
     double forward=(f2-2*f1+f0)/(h*h*SWING_GRAVITY);
     double up=1+(u2-2*u1+u0)/(h*h*SWING_GRAVITY);
     SwingVector g={0,-(forward*cos(tip)+up*sin(tip)),up*cos(tip)-forward*sin(tip)};
-    if (t->rolled) g.z=-g.z;
     double velocity=(f2-f0)/(2*h);
     g.x=t->lateral_g*bowling_fraction((velocity-.3)/2);
     if (t->twist_deg!=0) {
@@ -96,6 +95,10 @@ static inline SwingVector bowling_force(const BowlingTrace *t, double s) {
         double x=g.x*cos(twist)+g.z*sin(twist);
         g.z=g.z*cos(twist)-g.x*sin(twist);
         g.x=x;
+    }
+    if (t->rolled) {
+        g.x=-g.x;
+        g.z=-g.z;
     }
     return g;
 }

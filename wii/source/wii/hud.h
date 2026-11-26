@@ -10,7 +10,7 @@ void hud_board_view_rect(int *x, int *y, int *w, int *h);
 bool hud_board_view_visible(const Game *g);
 
 enum { HUD_WIIMOTE_POSES = 5 };
-typedef enum { HUD_POSE_IDLE, HUD_POSE_CAPTURING, HUD_POSE_INTERRUPTED } HudPoseStatus;
+typedef enum { HUD_POSE_IDLE, HUD_POSE_CAPTURING, HUD_POSE_INTERRUPTED, HUD_POSE_MOVED } HudPoseStatus;
 typedef struct {
     bool active;
     unsigned pose;

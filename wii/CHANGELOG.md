@@ -16,11 +16,12 @@ The Kinhank (Dolphin, 3×) target has its own changelog and `kinhank-vX.Y.Z` tag
 
 - The detector learns the remote's radial axis from the backswing and confirms the bottom of the forward arc before accepting a B release. Only forward radial load sets power. A fit can recover clipped peaks.
 - Lowered the factory speed reference to 2.45 m/s so a strong NORMAL swing can reach the 0.76 cap. Saves at the previous factory reference migrate automatically. Custom SET POWER values carry over.
-- The 1+2 overlay shows phase, pitch, radial and tangential load, learned axes and the last reject reason. Press A to open the five-pose calibration page.
+- The 1+2 overlay shows phase, pitch, radial and tangential load, learned axes and the last reject reason. Press A to open the five-pose calibration page. CSV reports flush while idle and rotate at 1 MiB.
 
 ### Fixed
 
 - The detector uses the Wii Remote's raw negative Y axis for a tip-up grip. Letting go on the backswing or early in the return keeps the bag, with the reason shown in the overlay.
+- Deferred clipped-peak fits use samples through B-up. Weak forward crests and releases on the first turnaround rise show the corresponding reject reasons.
 - The same sideways swing aims in the same direction for either hand. LEFT HAND still mirrors curl.
 
 ## [0.1.7] - 2026-11-22

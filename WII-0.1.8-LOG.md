@@ -12,7 +12,7 @@ Every rejected release keeps the bag and returns to READY. The last reason is **
 
 ## Forward power
 
-Power uses the strongest 40 ms mean of forward radial excess above 1 g, from the turnaround through B-up. The shoulder model uses a **0.60 m** radius. The forward peak needs **0.30 g** excess to qualify. Near the **3.55 g** rail, a quadratic fit can recover the peak from unclipped shoulders. With too few shoulders, the detector uses the measured speed.
+Power uses the strongest 40 ms mean of forward radial excess above 1 g, from the turnaround through B-up. The shoulder model uses a **0.60 m** radius. The forward peak needs **0.30 g** excess to qualify. Near the **3.55 g** rail, a quadratic fit can recover the peak from unclipped shoulders recorded through B-up. With too few shoulders, the detector uses the measured speed.
 
 The factory speed reference drops from **3.344 to 2.45 m/s**. Preview and release still use `clamp(0.55 * peak_speed / (full_speed * type_scale), 0, 0.76)`. The NORMAL cap moves from 5.54 to **4.06 m/s**, within reach of a strong modeled throw with clipping reconstruction. The host game lands a centered NORMAL throw at the cap **8.9025 m** from release, inside the **7.7796–8.9795 m** deck span.
 
@@ -51,13 +51,13 @@ The seeded host sweep mixes both rolls and rates. Each entry is throws per 500 t
 
 Hold **1+2** for two seconds to open the overlay. It keeps the original `ACCEL G` row and adds signed raw Y/Z, magnitude and clipping, static or moving pitch, face and roll, phase/B/pass count, reject reason, tangent/radial/lateral load and excess, estimated arm angle and speed, forward peak and fit, bottom timing, last throw, reject counts and report timing, and the learned axis and sign source.
 
-With B up, press **A** to open pose calibration. Select upright, flat at the TV, roll right 90°, tip down, or a 30° lean toward the TV. **A** captures 300 ms and **2** goes back to the live view. The lean's Z sign identifies which way the buttons face. The live overlay appends active-remote CSV reports to `sd:/apps/backyardcornhole/data/swing-trace.csv` or uses OSReport when SD is unavailable. Turn the overlay off to close the file.
+With B up, press **A** to open pose calibration. Select upright, flat at the TV, roll right 90°, tip down, or a 30° lean toward the TV. **A** captures 300 ms of readings near 1 g starting after the press, and **2** goes back to the live view. The lean's Z sign identifies which way the buttons face. The overlay buffers CSV reports in RAM and flushes in READY or DONE to `sd:/apps/backyardcornhole/data/swing-trace.csv` or OSReport. Each session starts with a header, and the SD trace rotates at 1 MiB with one backup. The learned axis clears on cancel and reject.
 
 ## Verification
 
 - `bowling_trace.h`, `throw_test.c`, `input_test.c`, `wpad_test.c` and the game swing fixtures use the physical shoulder-pivot model and its negative-Y tip. The old expectation that −5° releases throw was removed. The emulated Wiimote DTM generator uses the same kinematics and report convention. The repository has no recorded physical Wiimote traces.
 - The 0.1.7 baseline passed 36 input tests, 14 throw-test groups, 12 WPAD tests, 938 physics checks, 2,451 game checks and 209,137 party checks. Generated-file and no-IR checks passed.
-- `make -C wii -j2 host-test` on 0.1.8 passed 20 input tests, 10 throw-test groups, 12 WPAD tests, 938 physics checks, 2,426 game checks and 209,137 party checks. The throw tests ran 160 named replays and 4,000 randomized trials. Generated-file and no-IR checks passed.
+- `make -C wii -j2 host-test` on 0.1.8 passed 20 input tests, 11 throw-test groups, 13 WPAD tests, 938 physics checks, 2,426 game checks and 209,137 party checks. The suites ran 160 named swing replays, 4,000 randomized trials and 14 WPAD pose and rotation replays. Generated-file and no-IR checks passed.
 - Built the DOL, ISO, HBC ZIP, Wii release ZIP and Kinhank ZIP with devkitPPC r51 and WIT 3.05a r8638. The ISO's `main.dol` matches `boot.dol` byte for byte. Both release checksum lists passed.
 - The 3× Vulkan Dolphin replay booted to STRAP ON!, entered Practice, toggled the overlay, and scored a cornhole on one B-up throw at 0.700 power. The ASND check passed. All six generated movie tosses threw in host packet replay.
 
