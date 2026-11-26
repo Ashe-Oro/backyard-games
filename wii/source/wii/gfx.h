@@ -35,6 +35,8 @@ void gfx_begin_2d(void);
 void gfx_depth(bool test, bool write);
 void gfx_blend(bool on);
 bool gfx_project(V3 world, float *sx, float *sy);  /* using the last perspective + look */
+bool gfx_bag_scissor(V3 center, float scale);
+void gfx_reset_scissor(void);
 
 /* Textures */
 typedef struct { GXTexObj obj; void *data; int w, h; } Tex;

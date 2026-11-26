@@ -1,4 +1,5 @@
 #include "gfx.h"
+#include "../core/arrow.h"
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
@@ -14,6 +15,8 @@ static void *xfb[2];
 static int fb;
 static Mtx view;
 static Mtx44 proj;
+static float near_plane;
+static int viewport_x, viewport_y, viewport_w, viewport_h;
 static bool textured;
 extern const u8 console_font_8x16[];
 static Tex font;
@@ -106,8 +109,12 @@ void gfx_end_frame(void) {
 
 /* ---------------- state ---------------- */
 void gfx_viewport(int x, int y, int w, int h) {
+    viewport_x = x; viewport_y = y; viewport_w = w; viewport_h = h;
     GX_SetViewport((f32)x, (f32)y, (f32)w, (f32)h, 0, 1);
-    GX_SetScissor((u32)x, (u32)y, (u32)w, (u32)h);
+    gfx_reset_scissor();
+}
+void gfx_reset_scissor(void) {
+    GX_SetScissor((u32)viewport_x, (u32)viewport_y, (u32)viewport_w, (u32)viewport_h);
 }
 void gfx_full_viewport(void) { gfx_viewport(0, 0, gfx_mode->fbWidth, gfx_mode->efbHeight); }
 void gfx_depth(bool test, bool write) { GX_SetZMode(test ? GX_TRUE : GX_FALSE, GX_LEQUAL, write ? GX_TRUE : GX_FALSE); }
@@ -121,6 +128,7 @@ void gfx_fog(bool on) {
     else GX_SetFog(GX_FOG_NONE, 0, 0, 0, 0, c);
 }
 void gfx_perspective(float fovy, float aspect, float znear, float zfar) {
+    near_plane = znear;
     guPerspective(proj, fovy, aspect, znear, zfar);
     GX_LoadProjectionMtx(proj, GX_PERSPECTIVE);
 }
@@ -156,16 +164,37 @@ void gfx_begin_2d(void) {
     gfx_depth(false, false);
     gfx_blend(true);
 }
+static V3 gfx_eye_position(V3 world) {
+    return (V3){
+        view[0][0] * world.x + view[0][1] * world.y + view[0][2] * world.z + view[0][3],
+        view[1][0] * world.x + view[1][1] * world.y + view[1][2] * world.z + view[1][3],
+        view[2][0] * world.x + view[2][1] * world.y + view[2][2] * world.z + view[2][3]
+    };
+}
 bool gfx_project(V3 w, float *sx, float *sy) {
-    float ex = view[0][0] * w.x + view[0][1] * w.y + view[0][2] * w.z + view[0][3];
-    float ey = view[1][0] * w.x + view[1][1] * w.y + view[1][2] * w.z + view[1][3];
-    float ez = view[2][0] * w.x + view[2][1] * w.y + view[2][2] * w.z + view[2][3];
-    float cx = proj[0][0] * ex + proj[0][1] * ey + proj[0][2] * ez + proj[0][3];
-    float cy = proj[1][0] * ex + proj[1][1] * ey + proj[1][2] * ez + proj[1][3];
-    float cw = -ez;
+    V3 e = gfx_eye_position(w);
+    float cx = proj[0][0] * e.x + proj[0][1] * e.y + proj[0][2] * e.z + proj[0][3];
+    float cy = proj[1][0] * e.x + proj[1][1] * e.y + proj[1][2] * e.z + proj[1][3];
+    float cw = -e.z;
     if (cw <= 0.001f) return false;
     *sx = (cx / cw + 1) * gfx_ui_w * 0.5f;
     *sy = (1 - cy / cw) * 240.0f;
+    return true;
+}
+
+bool gfx_bag_scissor(V3 center, float scale) {
+    V3 eye = gfx_eye_position(center);
+    ViewBounds bounds;
+    if (!view_bag_bounds((Vec3){eye.x, eye.y, eye.z}, scale, near_plane,
+                         proj[0][0], proj[1][1], &bounds))
+        return false;
+    /* Round outward and allow one pixel for GX transform/rasterization precision. */
+    int x0 = (int)fmaxf(0, floorf((1 + bounds.left) * viewport_w * .5f) - 1);
+    int y0 = (int)fmaxf(0, floorf((1 - bounds.top) * viewport_h * .5f) - 1);
+    int x1 = (int)fminf(viewport_w, ceilf((1 + bounds.right) * viewport_w * .5f) + 1);
+    int y1 = (int)fminf(viewport_h, ceilf((1 - bounds.bottom) * viewport_h * .5f) + 1);
+    GX_SetScissor((u32)(viewport_x + x0), (u32)(viewport_y + y0),
+                  (u32)(x1 - x0), (u32)(y1 - y0));
     return true;
 }
 

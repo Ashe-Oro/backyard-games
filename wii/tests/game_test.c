@@ -929,8 +929,8 @@ static void test_swing_to_landing(void) {
     tap(INPUT_TWO); frames(10);
 }
 static void test_version_tag(void) {
-    CHECK(strcmp(BYC_VERSION, "0.1.11") == 0, "version is 0.1.11 (%s)", BYC_VERSION);
-    CHECK(strcmp(game_version_tag(), "v0.1.11") == 0, "version tag v0.1.11 (%s)", game_version_tag());
+    CHECK(strcmp(BYC_VERSION, "0.1.12") == 0, "version is 0.1.12 (%s)", BYC_VERSION);
+    CHECK(strcmp(game_version_tag(), "v0.1.12") == 0, "version tag v0.1.12 (%s)", game_version_tag());
 }
 /* 0.1.3: at 16:9 the 2D layer is 853.3 x 480 square units and the BOARD inset sits clear of the
  * beer-pong table and both players; 4:3 keeps the 0.1.2 layout. */
@@ -1061,29 +1061,69 @@ static void test_combined_arrow(void) {
           arrow_alpha(ARROW_HOLD_MS + ARROW_FADE_MS, false) == 0 && arrow_alpha(99999, true) == 1, "2 s hold, 0.4 s fade; live preview never fades");
 }
 
-static void test_held_bag_footprint(void) {
-    /* The radius contains every rotated mesh vertex. Check its enclosing cube for
-     * the full stance/dip range and both supported aspect ratios. */
+static Vec3 bag_eye_position(Vec3 world, double eye_y, double eye_z, double at_y, double at_z) {
+    double dy = at_y - eye_y, dz = at_z - eye_z;
+    double length = hypot(dy, dz);
+    double y = world.y - eye_y, z = world.z - eye_z;
+    return (Vec3){world.x, (dy * z - dz * y) / length, -(dy * y + dz * z) / length};
+}
+
+static void test_bag_projection(void) {
+    /* Check that the actual screen bounds contain the rotated mesh's bounding sphere. */
     double radius = sqrt(BYC_BAG * BYC_BAG / 2 + BYC_BAG_H * BYC_BAG_H);
-    double max_extent = 0;
+    double main_f = 1 / tan(VIEW_FOV_DEG * BYC_PI / 360);
     for (int wide = 0; wide < 2; wide++) {
         double aspect = wide ? 16.0 / 9 : 4.0 / 3;
         for (int stance = -1; stance <= 1; stance += 2) for (int dip = 0; dip < 2; dip++) {
             Vec3 center = view_held_bag_center(stance * SWING_STEP_CLAMP, dip);
-            double cx = 0, cy = 0;
-            CHECK(view_project(center, aspect, &cx, &cy), "held bag center projects into the main view");
+            Vec3 eye = bag_eye_position(center, VIEW_EYE_Y, VIEW_EYE_Z, VIEW_AT_Y, VIEW_AT_Z);
+            ViewBounds bounds = {0};
+            CHECK(view_bag_bounds(eye, 1, VIEW_NEAR, main_f / aspect, main_f, &bounds),
+                  "held bag center projects into the main view");
+            CHECK((bounds.top - bounds.bottom) * VIEW_H / 2 < 45 &&
+                  (bounds.right - bounds.left) * view_ui_width(aspect) / 2 < 45,
+                  "held bag scissor stays compact");
             for (unsigned corner = 0; corner < 8; corner++) {
-                Vec3 vertex = {center.x + (corner & 1 ? radius : -radius),
-                               center.y + (corner & 2 ? radius : -radius),
-                               center.z + (corner & 4 ? radius : -radius)};
-                double x = 0, y = 0;
-                CHECK(view_project(vertex, aspect, &x, &y), "held bag bound projects into the main view");
-                max_extent = fmax(max_extent, fmax(fabs(x - cx), fabs(y - cy)));
+                Vec3 vertex = {eye.x + (corner & 1 ? radius : -radius),
+                               eye.y + (corner & 2 ? radius : -radius),
+                               eye.z + (corner & 4 ? radius : -radius)};
+                double x = main_f / aspect * vertex.x / -vertex.z;
+                double y = main_f * vertex.y / -vertex.z;
+                CHECK(x >= bounds.left - 1e-6 && x <= bounds.right + 1e-6 &&
+                      y >= bounds.bottom - 1e-6 && y <= bounds.top + 1e-6,
+                      "held bag scissor contains projected corner");
             }
         }
     }
-    CHECK(max_extent + 1 <= VIEW_HELD_BAG_PAD && VIEW_HELD_BAG_PAD <= 30,
-          "held bag scissor covers its projected footprint (%.1f px) and stays compact", max_extent);
+
+    const double inset_f = 1 / tan(15 * BYC_PI / 180), inset_aspect = 132.0 / 150;
+    const float old_inset_near = .05f;
+    const Wind calm = {0};
+    Bag bag;
+    bag_new(&bag, 1, SIDE_SLICK);
+    bag_launch(&bag, 0, .781, 0, 0, ARC_KOBE, -1);
+    for (int i = 0; i < 338; i++) bag_step(&bag, &calm, BYC_PHYSICS_DT);
+    Vec3 inset = bag_eye_position(bag.p, VIEW_INSET_EYE_Y, VIEW_INSET_EYE_Z, VIEW_INSET_AT_Y, VIEW_INSET_AT_Z);
+    Vec3 main = bag_eye_position(bag.p, VIEW_EYE_Y, VIEW_EYE_Z, VIEW_AT_Y, VIEW_AT_Z);
+    ViewBounds bounds;
+    CHECK(bag.state == BAG_FLY && fabs(inset.y) < .01 && -inset.z - radius < old_inset_near &&
+          -inset.z + radius > old_inset_near, "Kobe bag crossed the old inset near plane in front of the lens");
+    CHECK(!view_bag_bounds(inset, 1, VIEW_INSET_NEAR, inset_f / inset_aspect, inset_f, &bounds),
+          "skip the near-plane bag in the inset");
+    CHECK(-main.z - radius > VIEW_NEAR, "the same shot clears the main camera near plane");
+
+    for (int i = 0; i < 7; i++) bag_step(&bag, &calm, BYC_PHYSICS_DT);
+    inset = bag_eye_position(bag.p, VIEW_INSET_EYE_Y, VIEW_INSET_EYE_Z, VIEW_INSET_AT_Y, VIEW_INSET_AT_Z);
+    CHECK(view_bag_bounds(inset, 1, old_inset_near, inset_f / inset_aspect, inset_f, &bounds) &&
+          bounds.right - bounds.left > 1.9f, "the close pass took up almost the full inset width");
+    CHECK(!view_bag_bounds(inset, 1, VIEW_INSET_NEAR, inset_f / inset_aspect, inset_f, &bounds),
+          "skip the oversized bag as it passes the inset camera");
+
+    Vec3 hole = bag_eye_position(byc_board.hole_world, VIEW_INSET_EYE_Y, VIEW_INSET_EYE_Z, VIEW_INSET_AT_Y, VIEW_INSET_AT_Z);
+    CHECK(view_bag_bounds(hole, .53f, VIEW_INSET_NEAR, inset_f / inset_aspect, inset_f, &bounds),
+          "the shrinking bag remains visible at the hole");
+    CHECK(!view_bag_bounds((Vec3){0, 0, NAN}, 1, VIEW_NEAR, main_f, main_f, &bounds),
+          "a non-finite bag never reaches the renderer");
 }
 
 /* ---------------- WG-4: MUSIC, wind streaks ---------------- */
@@ -1258,7 +1298,7 @@ int main(void) {
     test_clear_board_any_phase();
     test_pause_on_summary();
     test_combined_arrow();
-    test_held_bag_footprint();
+    test_bag_projection();
     test_last_shot_gauge();
     test_power_anchor_landings();
     test_medium_slider_rest();

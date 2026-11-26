@@ -322,11 +322,18 @@ static void bag_vertex(int face, float u, float v, V3 *out) {
     float puff = 1 - .45f * (x * x + z * z) / 2;
     *out = (V3){x * (float)BYC_BAG / 2, y * (float)BYC_BAG_H * puff, z * (float)BYC_BAG / 2};
 }
-static void draw_bag_faces(const M3 *r, Rgba tint, bool down_only, bool skip_down, bool lit) {
+static V3 bag_world_vertex(V3 local, const M3 *r, V3 origin, float scale) {
+    V3 p = m3_apply(r, local);
+    return (V3){p.x * scale + origin.x, p.y * scale + origin.y, p.z * scale + origin.z};
+}
+
+/* Use the camera matrix for all bags. The per-bag GX model matrix path could
+ * stretch the idle held bag even though the pose and its projected bounds were finite. */
+static void draw_bag_faces(V3 p, const M3 *r, float scale, bool down_only, bool skip_down) {
     for (int f = 0; f < 6; f++) {
         if (down_only && f != 3) continue;
         if (skip_down && f == 3) continue;
-        int su = (f == 2 || f == 3 || f == 4 || f == 5 || f == 0 || f == 1) ? BAG_SEG : BAG_SEG;
+        int su = BAG_SEG;
         int sv = (f == 2 || f == 3) ? BAG_SEG : 1;
         GX_Begin(GX_QUADS, GX_VTXFMT1, (u16)(su * sv * 4));
         for (int i = 0; i < su; i++) for (int j = 0; j < sv; j++) {
@@ -340,7 +347,9 @@ static void draw_bag_faces(const M3 *r, Rgba tint, bool down_only, bool skip_dow
             V3 out = {a.x * 2 / (float)BYC_BAG, a.y, a.z * 2 / (float)BYC_BAG};
             if (n.x * out.x + n.y * out.y * 40 + n.z * out.z < 0) { n.x = -n.x; n.y = -n.y; n.z = -n.z; }
             V3 wn = m3_apply(r, n);
-            Rgba col = lit ? shade(tint, wn) : tint;
+            Rgba col = shade((Rgba){255, 255, 255, 255}, wn);
+            a = bag_world_vertex(a, r, p, scale); b = bag_world_vertex(b, r, p, scale);
+            c = bag_world_vertex(c, r, p, scale); d = bag_world_vertex(d, r, p, scale);
             GX_Position3f32(a.x, a.y, a.z); GX_Color4u8(col.r, col.g, col.b, col.a); GX_TexCoord2f32(u0, v0);
             GX_Position3f32(b.x, b.y, b.z); GX_Color4u8(col.r, col.g, col.b, col.a); GX_TexCoord2f32(u1, v0);
             GX_Position3f32(c.x, c.y, c.z); GX_Color4u8(col.r, col.g, col.b, col.a); GX_TexCoord2f32(u1, v1);
@@ -351,12 +360,12 @@ static void draw_bag_faces(const M3 *r, Rgba tint, bool down_only, bool skip_dow
 }
 /* Material rule (makeBagMesh): the chosen surface is thrown DOWN; top + sides show the other one. */
 static void draw_bag_mesh(V3 p, const M3 *r, float scale, int team, BagSide side) {
-    gfx_model(p, r, (V3){scale, scale, scale});
+    if (!gfx_bag_scissor(p, scale)) return;
     tex_bind(&tex_bag[team][side == SIDE_SLICK ? 1 : 0]);
-    draw_bag_faces(r, (Rgba){255, 255, 255, 255}, false, true, true);
+    draw_bag_faces(p, r, scale, false, true);
     tex_bind(&tex_bag[team][side]);
-    draw_bag_faces(r, (Rgba){255, 255, 255, 255}, true, false, true);
-    gfx_model_identity();
+    draw_bag_faces(p, r, scale, true, false);
+    gfx_reset_scissor();
 }
 static M3 board_q(void) { return board_rot3(); }
 static M3 bag_rotation(const Bag *b, bool *ok) {
@@ -388,23 +397,11 @@ static void draw_held(const Game *g, float dip) {
     M3 r = m3_euler_xyz(.7f + dip * .35f, (float)-yaw, 0);
     Vec3 center = view_held_bag_center(rx, dip);
     V3 p = {(float)center.x, (float)center.y, (float)center.z};
-    /* Confine the foreground mesh to its camera footprint so a stretched primitive
-     * cannot cover the lane. The pad includes the rotated bag and the armed dip. */
-    float x, y;
-    if (!gfx_project(p, &x, &y)) return;
-    const float pad = VIEW_HELD_BAG_PAD;
-    int x0 = (int)fmaxf(0, floorf(gfx_ui_to_efb(x - pad)));
-    int x1 = (int)fminf(gfx_mode->fbWidth, ceilf(gfx_ui_to_efb(x + pad)));
-    int y0 = (int)fmaxf(0, floorf(y - pad));
-    int y1 = (int)fminf(gfx_mode->efbHeight, ceilf(y + pad));
-    if (x0 >= x1 || y0 >= y1) return;
-    GX_SetScissor((u32)x0, (u32)y0, (u32)(x1 - x0), (u32)(y1 - y0));
+    if (!gfx_bag_scissor(p, 1)) return;
     /* held = TEAM_MATS[t][side=='slick' ? 'sticky' : 'slick'] on every face */
-    gfx_model(p, &r, (V3){1, 1, 1});
     tex_bind(&tex_bag[t][g->side[t] == SIDE_SLICK ? 1 : 0]);
-    draw_bag_faces(&r, (Rgba){255, 255, 255, 255}, false, false, true);
-    gfx_model_identity();
-    GX_SetScissor(0, 0, gfx_mode->fbWidth, gfx_mode->efbHeight);
+    draw_bag_faces(p, &r, 1, false, false);
+    gfx_reset_scissor();
 }
 
 /* ---------------- board deck with a real hole ---------------- */
@@ -599,7 +596,7 @@ static void draw_wind_streaks(void) {
 }
 
 void scene_draw(const Game *g, float held_dip) {
-    gfx_perspective((float)VIEW_FOV_DEG, gfx_aspect, .1f, 200);   /* effective landscape FOV 18 (resize(): 18 + 6*portrait) */
+    gfx_perspective((float)VIEW_FOV_DEG, gfx_aspect, VIEW_NEAR, 200); /* effective landscape FOV 18 (resize(): 18 + 6*portrait) */
     gfx_look((V3){(float)VIEW_EYE_X, (float)VIEW_EYE_Y, (float)VIEW_EYE_Z}, (V3){(float)VIEW_AT_X, (float)VIEW_AT_Y, (float)VIEW_AT_Z});
     gfx_fog(true);
     gfx_depth(true, true); gfx_blend(false);
@@ -630,8 +627,8 @@ void scene_draw_board_view(const Game *g, int x, int y, int w, int h) {
     GX_Position3f32(gfx_ui_w, 480, zf); GX_Color4u8(0, 0, 0, 255); GX_Position3f32(0, 480, zf); GX_Color4u8(0, 0, 0, 255);
     GX_End();
     /* EFB pixels are 4:3-shaped; in 16:9 each one shows wider, so use the displayed aspect. */
-    gfx_perspective(30, (float)w / h * gfx_aspect / (4.0f / 3.0f), .05f, 30);
-    gfx_look((V3){0, 2.5f, (float)BYC_BOARD_Z + .75f}, (V3){0, .16f, (float)BYC_BOARD_Z - .55f});
+    gfx_perspective(30, (float)w / h * gfx_aspect / (4.0f / 3.0f), VIEW_INSET_NEAR, 30);
+    gfx_look((V3){0, VIEW_INSET_EYE_Y, (float)VIEW_INSET_EYE_Z}, (V3){0, VIEW_INSET_AT_Y, (float)VIEW_INSET_AT_Z});
     gfx_fog(true); gfx_depth(true, true);
     draw_ground(30, 24);
     draw_deck();
@@ -645,7 +642,7 @@ void scene_draw_board_view(const Game *g, int x, int y, int w, int h) {
     draw_bags(g);
     gfx_full_viewport();
     /* restore the main camera so later projections (shot arrow) use it */
-    gfx_perspective((float)VIEW_FOV_DEG, gfx_aspect, .1f, 200);
+    gfx_perspective((float)VIEW_FOV_DEG, gfx_aspect, VIEW_NEAR, 200);
     gfx_look((V3){(float)VIEW_EYE_X, (float)VIEW_EYE_Y, (float)VIEW_EYE_Z}, (V3){(float)VIEW_AT_X, (float)VIEW_AT_Y, (float)VIEW_AT_Z});
 }
 
